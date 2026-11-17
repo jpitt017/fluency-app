@@ -1,249 +1,159 @@
 'use client';
 
-import { useState } from 'react';
-import { getWritingScaffold } from '@/lib/writingScaffolds';
-import { getSpeakingScaffold, compareSpokenWords } from '@/lib/speakingScaffolds';
+import React, { useState } from 'react';
 import WritingLab from './labs/WritingLab';
 
-interface QuizData {
+export interface WritingScaffold {
+  prompt?: string;
+  targetKeywords?: string[];
+}
+
+export interface QuizData {
   question: string;
   options: string[];
   correctIndex: number;
 }
 
-interface BlockPracticeDrawerProps {
-  blockNumber: number;
-  skillLabel: string;
-  scriptText: string;
-  quizData: QuizData | null;
-  targetDrillPhrase: string;
-  slowAudio: boolean;
-  onSpeak: (text: string) => void;
+export interface BlockPracticeDrawerProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  blockNumber?: number;
+  scaffold?: WritingScaffold;
+  onSpeak?: (text: string) => void;
+  skillLabel?: string;
+  scriptText?: string;
+  quizData?: QuizData | null;
+  targetDrillPhrase?: string;
+  slowAudio?: boolean;
 }
 
 export default function BlockPracticeDrawer({
-  blockNumber,
+  isOpen = false,
+  onClose = () => {},
+  blockNumber = 1,
+  scaffold = {},
+  onSpeak = () => {},
   skillLabel,
   scriptText,
-  quizData,
-  slowAudio,
-  onSpeak,
+  quizData = null,
+  targetDrillPhrase,
 }: BlockPracticeDrawerProps) {
-  const [speakingStep, setSpeakingStep] = useState<'drill' | 'free'>('drill');
-  const [isListeningMic, setIsListeningMic] = useState(false);
-  const [spokenTranscript, setSpokenTranscript] = useState('');
-  const [wordAnalysis, setWordAnalysis] = useState<{
-    results: { word: string; matched: boolean }[];
-    score: number;
-  } | null>(null);
-  const [speechNote, setSpeechNote] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [showTranscript, setShowTranscript] = useState(false);
-
-  const startAdvancedSpeechRecording = async (targetPhrase: string, isFreeMode: boolean) => {
-    setWordAnalysis(null);
-    setSpeechNote(null);
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setIsListeningMic(true);
-      setSpokenTranscript('Practice recording active...');
-      setTimeout(() => {
-        setIsListeningMic(false);
-        const simulated = isFreeMode
-          ? 'Hello, I am excited to work with our international team and share my perspective.'
-          : targetPhrase;
-        setSpokenTranscript(simulated);
-        if (!isFreeMode) {
-          setWordAnalysis(compareSpokenWords(targetPhrase, simulated));
-        }
-        setSpeechNote('Great rhythm! Listen to your recorded voice playback below.');
-      }, 2500);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-GB';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    setIsListeningMic(true);
-    setSpokenTranscript('Listening... Speak clearly.');
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setSpokenTranscript(transcript);
-      setIsListeningMic(false);
-
-      if (!isFreeMode) {
-        const analysis = compareSpokenWords(targetPhrase, transcript);
-        setWordAnalysis(analysis);
-        setSpeechNote('Clarity score: ' + analysis.score + '% match.');
-      } else {
-        setSpeechNote('Fantastic fluency! Spoken response captured successfully.');
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListeningMic(false);
-      setSpokenTranscript('Microphone check needed.');
-    };
-
-    recognition.onend = () => setIsListeningMic(false);
-    recognition.start();
-  };
-
-  const speakingScaffold = getSpeakingScaffold(blockNumber);
-  const writingScaffold = getWritingScaffold(blockNumber);
+  if (!isOpen) return null;
 
   return (
-    <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-4 rounded-xl space-y-4">
-      {/* SPEAKING LAB */}
-      {skillLabel === 'Speaking' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <h4 className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wide">
-              British RP Speaking Lab
-            </h4>
-            <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setSpeakingStep('drill');
-                  setSpokenTranscript('');
-                  setWordAnalysis(null);
-                  setSpeechNote(null);
-                }}
-                className={
-                  speakingStep === 'drill'
-                    ? 'px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-600 text-white'
-                    : 'px-2.5 py-1 text-[11px] font-semibold rounded-lg text-zinc-600'
-                }
-              >
-                Step 1: RP Drill
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSpeakingStep('free');
-                  setSpokenTranscript('');
-                  setWordAnalysis(null);
-                  setSpeechNote(null);
-                }}
-                className={
-                  speakingStep === 'free'
-                    ? 'px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-600 text-white'
-                    : 'px-2.5 py-1 text-[11px] font-semibold rounded-lg text-zinc-600'
-                }
-              >
-                Step 2: Free Speak
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs">
+      <div className="relative h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl dark:bg-zinc-900">
+        <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4 dark:border-zinc-800">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              {skillLabel || 'Interactive Practice'}
+            </span>
+            <h2 className="mt-0.5 text-xl font-bold text-gray-900 dark:text-white">
+              Practice Block {blockNumber}
+            </h2>
           </div>
-
-          {speakingStep === 'drill' ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onSpeak(speakingScaffold.modelPhrase)}
-                className="px-3.5 py-2 bg-zinc-200 dark:bg-zinc-800 text-xs font-semibold rounded-xl"
-              >
-                Hear Model Audio
-              </button>
-              <button
-                type="button"
-                onClick={() => startAdvancedSpeechRecording(speakingScaffold.modelPhrase, false)}
-                disabled={isListeningMic}
-                className="px-4 py-2 bg-sky-600 text-white text-xs font-semibold rounded-xl"
-              >
-                {isListeningMic ? 'Recording...' : 'Record Voice'}
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => startAdvancedSpeechRecording('', true)}
-              disabled={isListeningMic}
-              className="px-4 py-2 bg-sky-600 text-white text-xs font-semibold rounded-xl"
-            >
-              Record Spoken Answer
-            </button>
-          )}
-
-          {spokenTranscript && (
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 italic">
-              “{spokenTranscript}”
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* LISTENING PRACTICE */}
-      {skillLabel === 'Listening' && scriptText && (
-        <div className="space-y-3">
           <button
-            onClick={() => onSpeak(scriptText)}
-            className="px-4 py-2.5 bg-amber-600 text-white text-xs font-semibold rounded-xl"
+            type="button"
+            onClick={onClose}
+            aria-label="Close practice drawer"
+            className="rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-zinc-800 dark:hover:text-gray-300"
           >
-            Play Audio ({slowAudio ? '0.82x' : '1.0x'})
+            ✕
           </button>
         </div>
-      )}
 
-      {/* WRITING LAB COMPONENT */}
-      {skillLabel === 'Writing' && (
-        <WritingLab
-          blockNumber={blockNumber}
-          scaffold={writingScaffold}
-          onSpeak={onSpeak}
-        />
-      )}
-
-      {/* QUIZ CHECKPOINT */}
-      {quizData && (
-        <div className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wide">
-            Quick Knowledge Check
-          </h5>
-          <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-            {quizData.question}
-          </p>
-          <div className="space-y-2">
-            {quizData.options.map((option, idx) => {
-              const isSelected = quizAnswers[blockNumber] === option;
-              const isCorrect = idx === quizData.correctIndex;
-              const answered = quizAnswers[blockNumber] !== undefined;
-
-              let btnStyle =
-                'w-full text-left p-2.5 text-xs rounded-xl border transition flex items-center justify-between bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300';
-              if (answered && isCorrect) {
-                btnStyle =
-                  'w-full text-left p-2.5 text-xs rounded-xl border transition flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-semibold';
-              } else if (answered && isSelected) {
-                btnStyle =
-                  'w-full text-left p-2.5 text-xs rounded-xl border transition flex items-center justify-between bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-200';
-              }
-
-              return (
+        <div className="space-y-6">
+          {scriptText && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/70">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Reference Script
+                </span>
                 <button
-                  key={idx}
-                  onClick={() => setQuizAnswers({ ...quizAnswers, [blockNumber]: option })}
-                  className={btnStyle}
+                  type="button"
+                  onClick={() => onSpeak(scriptText)}
+                  className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-2xs hover:bg-gray-100 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600"
                 >
-                  <span>
-                    {String.fromCharCode(65 + idx)}) {option}
-                  </span>
-                  {answered && isCorrect && (
-                    <span className="text-emerald-600 font-medium">Correct</span>
-                  )}
+                  Listen
                 </button>
-              );
-            })}
-          </div>
+              </div>
+              <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                {scriptText}
+              </p>
+            </div>
+          )}
+
+          {targetDrillPhrase && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/40 dark:bg-blue-950/30">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                    Target Drill Phrase
+                  </span>
+                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    “{targetDrillPhrase}”
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onSpeak(targetDrillPhrase)}
+                  className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                >
+                  Speak
+                </button>
+              </div>
+            </div>
+          )}
+
+          {quizData && (
+            <div className="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-zinc-800">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Comprehension Check
+              </span>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {quizData.question}
+              </p>
+              <div className="space-y-2">
+                {quizData.options.map((option, idx) => {
+                  const isSelected = selectedOption === idx;
+                  const isCorrect = idx === quizData.correctIndex;
+                  let buttonStyle =
+                    'border-gray-200 hover:bg-gray-50 dark:border-zinc-700 dark:hover:bg-zinc-800';
+
+                  if (selectedOption !== null) {
+                    if (isCorrect) {
+                      buttonStyle =
+                        'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200';
+                    } else if (isSelected) {
+                      buttonStyle =
+                        'border-red-500 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedOption(idx)}
+                      className={`w-full rounded-lg border p-3 text-left text-sm transition ${buttonStyle}`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <WritingLab
+            prompt={scaffold.prompt}
+            targetKeywords={scaffold.targetKeywords}
+            onSpeak={onSpeak}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
