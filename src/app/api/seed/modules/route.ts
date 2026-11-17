@@ -116,35 +116,39 @@ const CURRICULUM_DATA = [
 
 export async function GET() {
   try {
+    // Optional: clear existing sessions/modules to prevent foreign key issues during clean insert
+    await supabaseAdmin.schema('course').from('sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabaseAdmin.schema('course').from('modules').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
     for (const mod of CURRICULUM_DATA) {
       const { data: moduleRecord, error: modError } = await supabaseAdmin
         .schema('course')
         .from('modules')
-        .upsert({
+        .insert({
           module_number: mod.module_number,
           title: mod.title,
           hours: mod.hours,
           global_theme: mod.global_theme,
           focus: mod.focus
-        }, { onConflict: 'module_number' })
+        })
         .select()
         .single();
 
       if (modError) throw modError;
 
-      for (const sess of mod.sessions) {
-        const { error: sessError } = await supabaseAdmin
-          .schema('course')
-          .from('sessions')
-          .upsert({
-            module_id: moduleRecord.id,
-            session_number: sess.session_number,
-            title: sess.title,
-            focus: sess.focus
-          }, { onConflict: 'module_id, session_number' }); // Updated constraint handler
+      const sessionsToInsert = mod.sessions.map(sess => ({
+        module_id: moduleRecord.id,
+        session_number: sess.session_number,
+        title: sess.title,
+        focus: sess.focus
+      }));
 
-        if (sessError) throw sessError;
-      }
+      const { error: sessError } = await supabaseAdmin
+        .schema('course')
+        .from('sessions')
+        .insert(sessionsToInsert);
+
+      if (sessError) throw sessError;
     }
 
     return NextResponse.json({ 
