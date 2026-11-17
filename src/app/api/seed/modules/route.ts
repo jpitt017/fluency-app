@@ -141,7 +141,7 @@ export async function GET() {
             session_number: sess.session_number,
             title: sess.title,
             focus: sess.focus
-          }, { onConflict: 'session_number' });
+          }, { onConflict: 'module_id, session_number' }); // Updated constraint handler
 
         if (sessError) throw sessError;
       }
