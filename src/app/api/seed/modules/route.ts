@@ -107,7 +107,7 @@ const CURRICULUM_DATA = [
     sessions: [
       { session_number: 29, title: "Intensive Shadowing & Fluency Integration (Part 1)", focus: "End-to-end shadowing of international keynote speakers (TED/UN)." },
       { session_number: 30, title: "Intensive Shadowing & Fluency Integration (Part 2)", focus: "Cumulative review of B2 grammar structures and hedging devices." },
-      { session_number: 31, title: "Final B2 Global Assessment (Listening)", focus: "Multi-Accent Listening Exam comprehension comprehension across diverse global clips." },
+      { session_number: 31, title: "Final B2 Global Assessment (Listening)", focus: "Multi-Accent Listening Exam comprehension across diverse global clips." },
       { session_number: 32, title: "Final B2 Global Assessment (Speaking Capstone)", focus: "Spontaneous international networking, individual monologue, and problem-solving." }
     ]
   }
@@ -116,7 +116,6 @@ const CURRICULUM_DATA = [
 export async function GET() {
   try {
     for (const mod of CURRICULUM_DATA) {
-      // Explicitly target the 'course' schema
       const { data: moduleRecord, error: modError } = await supabaseAdmin
         .schema('course')
         .from('modules')
