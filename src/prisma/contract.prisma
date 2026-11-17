@@ -1,0 +1,47 @@
+// use prisma-8
+
+model User {
+  id        Int                @id @default(autoincrement())
+  email     String             @unique
+  username  String?
+  name      String?
+  posts     Post[]
+  createdAt DateTime           @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model Post {
+  id        Int                @id @default(autoincrement())
+  title     String
+  content   String?
+  author    User               @relation(fields: [authorId], references: [id])
+  authorId  Int
+  createdAt DateTime           @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model Lesson {
+  id           String           @id @onCreate(cuid(2))
+  code         String           @unique
+  module       String
+  title        String
+  order        Int
+  durationMin  Int
+  exerciseType String
+  videoUrl     String
+  pdfUrl     String
+  transcript   String
+  vaultItems   ShadowingVault[]
+}
+
+model ShadowingVault {
+  id               String @id @onCreate(cuid(2))
+  lessonId         String
+  lesson           Lesson @relation(fields: [lessonId], references: [code])
+  code             String @unique
+  type             String
+  transcript       String
+  order            Int
+  modelAudioUrl75  String
+  modelAudioUrl100 String
+}
