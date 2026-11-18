@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+// Forces Next.js to treat this exclusively as a dynamic runtime route (never static)
+export const dynamic = 'force-dynamic';
+
 const CURRICULUM_DATA = [
   {
     module_number: 1,
