@@ -1,11 +1,5 @@
-// Force deployment trigger - Diagnostic version
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const CURRICULUM_DATA = [
   {
@@ -116,6 +110,18 @@ const CURRICULUM_DATA = [
 
 export async function GET() {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { success: false, error: 'Missing Supabase URL or Service Role Key in environment variables.' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
     // Clear sessions and modules safely
     await supabaseAdmin.schema('course').from('sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseAdmin.schema('course').from('modules').delete().neq('id', '00000000-0000-0000-0000-000000000000');
