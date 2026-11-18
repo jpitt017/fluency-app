@@ -5,6 +5,9 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  // Debug log to verify if env vars are present in the client bundle
+  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,7 +21,6 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Instantiated inside try/catch to safely catch missing env or client init errors
       const supabase = createClient();
 
       if (isSignUp) {
@@ -46,7 +48,6 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
-      // Always guarantees loading state resets even if an unexpected error occurs
       setLoading(false);
     }
   }
