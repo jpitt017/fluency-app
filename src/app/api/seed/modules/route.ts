@@ -1,4 +1,4 @@
-// Force deployment trigger
+// Force deployment trigger - Diagnostic version
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
@@ -116,7 +116,7 @@ const CURRICULUM_DATA = [
 
 export async function GET() {
   try {
-    // Optional: clear existing sessions/modules to prevent foreign key issues during clean insert
+    // Clear sessions and modules safely
     await supabaseAdmin.schema('course').from('sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseAdmin.schema('course').from('modules').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
@@ -134,7 +134,9 @@ export async function GET() {
         .select()
         .single();
 
-      if (modError) throw modError;
+      if (modError) {
+        return NextResponse.json({ success: false, phase: `Module ${mod.module_number} insert`, error: modError }, { status: 500 });
+      }
 
       const sessionsToInsert = mod.sessions.map(sess => ({
         module_id: moduleRecord.id,
@@ -148,7 +150,14 @@ export async function GET() {
         .from('sessions')
         .insert(sessionsToInsert);
 
-      if (sessError) throw sessError;
+      if (sessError) {
+        return NextResponse.json({ 
+          success: false, 
+          phase: `Module ${mod.module_number} sessions insert`, 
+          error: sessError,
+          attemptedData: sessionsToInsert 
+        }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ 
