@@ -17,23 +17,36 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Instantiate client safely inside the handler to prevent SSR prerender execution
-    const supabase = createClient();
-
     try {
+      // Instantiated inside try/catch to safely catch missing env or client init errors
+      const supabase = createClient();
+
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+
+        if (data.session) {
+          router.push('/');
+          router.refresh();
+        } else {
+          alert('Check your email for the confirmation link!');
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push('/sessions/11111111-1111-1111-1111-000000000001');
+        router.push('/');
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Authentication failed');
     } finally {
+      // Always guarantees loading state resets even if an unexpected error occurs
       setLoading(false);
     }
   }
