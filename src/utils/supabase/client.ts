@@ -1,12 +1,13 @@
 import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Fallbacks allow local testing and prevent hard crashes if Vercel env vars aren't baked yet
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://YOUR_PROJECT_REF.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJ...YOUR_SUPABASE_ANON_KEY';
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables. Please check your Vercel project settings.'
+  if (!supabaseUrl || supabaseUrl.includes('YOUR_PROJECT_REF') || !supabaseKey || supabaseKey.includes('YOUR_SUPABASE_ANON_KEY')) {
+    console.error(
+      'CRITICAL: Supabase environment variables are missing! Check your Vercel project settings or ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are defined.'
     );
   }
 
