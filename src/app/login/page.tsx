@@ -1,123 +1,151 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function LoginPage() {
-  // Debug log to verify if env vars are present in the client bundle
-  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  async function handleAuth(e: React.FormEvent) {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     try {
       const supabase = createClient();
 
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
-        if (error) throw error;
 
-        if (data.session) {
-          router.push('/');
-          router.refresh();
+        if (signUpError) throw signUpError;
+
+        if (data?.user && !data.session) {
+          setMessage('Check your email for a confirmation link to activate your account.');
         } else {
-          alert('Check your email for the confirmation link!');
+          router.push('/onboarding/placement');
+          router.refresh();
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        router.push('/');
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        router.push('/dashboard');
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unexpected authentication error occurred.');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-            🇬🇧 B1 British English Platform
-          </span>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">
-            {isSignUp ? 'Create an Account' : 'Welcome Back'}
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isSignUp ? 'Create Your Account' : 'Welcome Back'}
           </h1>
+          <p className="text-sm text-slate-600 mt-2">
+            {isSignUp
+              ? 'Start your B1 British English fluency journey'
+              : 'Sign in to continue your lessons and speaking labs'}
+          </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg border border-red-100">
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+            {message}
           </div>
         )}
 
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
               Email Address
             </label>
             <input
+              id="email"
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="student@example.co.uk"
+              placeholder="you@example.com"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
               Password
             </label>
             <input
+              id="password"
               type="password"
+              required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors cursor-pointer"
           >
-            {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            {loading
+              ? isSignUp
+                ? 'Creating Account...'
+                : 'Signing In...'
+              : isSignUp
+              ? 'Sign Up'
+              : 'Sign In'}
           </button>
         </form>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className="mt-6 text-center">
           <button
             type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-blue-600 font-medium hover:underline"
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setError(null);
+              setMessage(null);
+            }}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
           >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Sign up"}
           </button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
