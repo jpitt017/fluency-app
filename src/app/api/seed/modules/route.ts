@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       auth: { persistSession: false },
     });
 
-    // 3. Define curriculum modules to seed (matching database schema columns)
+    // 3. Define curriculum modules to seed
     const modulesToSeed = [
       {
         title: 'Module 1: Foundations of B1 Communication',
@@ -52,13 +52,12 @@ export async function GET(request: Request) {
         title: 'Module 4: Meetings, Negotiations & Assertiveness',
         description: 'Contributing confidently and respectfully in team discussions and negotiations.'
       }
-      // You can add your remaining curriculum modules here as needed
     ];
 
-    // 4. Insert modules into Supabase using upsert
+    // 4. Insert modules into Supabase using standard insert
     const { data, error } = await supabase
       .from('modules')
-      .upsert(modulesToSeed, { onConflict: 'title' })
+      .insert(modulesToSeed)
       .select();
 
     if (error) {
