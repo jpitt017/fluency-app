@@ -1,93 +1,91 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { b1Curriculum, getLessonActivity, type CurriculumLesson, type CurriculumModule } from '@/lib/curriculum';
+import { moduleOneActivities, moduleOneRubric, type ModuleOneActivity, type Question } from '@/lib/module1-exercises';
+
+function CheckQuestions({ questions, answers, onChange }: { questions: Question[]; answers: Record<number, string>; onChange: (index: number, answer: string) => void }) {
+  return <div className="space-y-4">{questions.map((question, index) => <fieldset key={question.prompt} className="rounded-lg border border-slate-200 p-4"><legend className="px-1 text-sm font-semibold text-slate-900">{index + 1}. {question.prompt}</legend><div className="mt-2 flex flex-wrap gap-2">{question.options.map((option) => <button type="button" key={option} onClick={() => onChange(index, option)} aria-pressed={answers[index] === option} className={`rounded-lg border px-3 py-2 text-sm ${answers[index] === option ? 'border-indigo-600 bg-indigo-50 text-indigo-800' : 'border-slate-300 hover:bg-slate-50'}`}>{option}</button>)}</div>{answers[index] && <p className={`mt-2 text-xs ${answers[index] === question.answer ? 'text-emerald-700' : 'text-rose-700'}`}>{answers[index] === question.answer ? 'Correct.' : `Try again. ${question.explanation ?? ''}`}</p>}</fieldset>)}</div>;
+}
 
 export default function CurriculumLessonClient({ module, lesson }: { module: CurriculumModule; lesson: CurriculumLesson }) {
   const activity = useMemo(() => getLessonActivity(lesson.stage, lesson.title), [lesson]);
+  const exercise: ModuleOneActivity | undefined = module.module_number === 1 ? moduleOneActivities[lesson.lesson_number] : undefined;
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [sortAnswers, setSortAnswers] = useState<Record<number, string>>({});
   const [response, setResponse] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<{ attempt?: { id: string; recording_url?: string | null }; transcript?: string; passed: boolean; mastery: number; rubric: Record<string, unknown>; reviewDeck?: string[] } | null>(null);
+  const [result, setResult] = useState<{ passed: boolean; mastery?: number; score?: number; rubric?: Record<string, unknown>; reviewDeck?: string[] } | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const recorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
-  const audioBlob = useRef<Blob | null>(null);
-  const recordingStarted = useRef(0);
-  const isCheckpoint = lesson.stage === 'CEFR Can-Do Checkpoint' && lesson.lesson_number === 32;
+  const [seconds, setSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function startRecording() {
-    setError(''); audioBlob.current = null; chunks.current = [];
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError('Audio recording is not supported in this browser. You can paste a transcript instead.'); return;
-    }
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((type) => MediaRecorder.isTypeSupported(type));
-      const instance = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      recorder.current = instance;
-      instance.ondataavailable = (event) => { if (event.data.size) chunks.current.push(event.data); };
-      instance.onstop = () => {
-        audioBlob.current = new Blob(chunks.current, { type: instance.mimeType || 'audio/webm' });
-        stream.getTracks().forEach((track) => track.stop());
-      };
-      recordingStarted.current = Date.now();
-      instance.start(); setRecording(true); setRecordingSeconds(0);
-      const timer = window.setInterval(() => {
-        if (instance.state === 'recording') setRecordingSeconds(Math.floor((Date.now() - recordingStarted.current) / 1000));
-        else window.clearInterval(timer);
-      }, 500);
-    }).catch(() => setError('Microphone access was denied or unavailable. You can paste a transcript instead.'));
+  function setAnswer(index: number, value: string) { setAnswers((current) => ({ ...current, [index]: value })); }
+  function startTimer(duration: number) {
+    if (timer.current) clearInterval(timer.current);
+    setSeconds(duration); setTimerRunning(true);
+    timer.current = setInterval(() => setSeconds((current) => {
+      if (current <= 1) { if (timer.current) clearInterval(timer.current); timer.current = null; setTimerRunning(false); return 0; }
+      return current - 1;
+    }), 1000);
   }
+  function completeLocal() { setSubmitted(true); }
 
-  function stopRecording() {
-    if (recorder.current?.state === 'recording') { recorder.current.stop(); setRecording(false); setRecordingSeconds(Math.floor((Date.now() - recordingStarted.current) / 1000)); }
-  }
-
-  useEffect(() => () => { if (recorder.current?.state === 'recording') recorder.current.stop(); }, []);
-
-  async function submitCheckpoint() {
-    setBusy(true); setError(''); setResult(null);
+  async function submitWriting() {
+    if (!exercise || exercise.type !== 'checkpoint_writing') return;
+    setBusy(true); setError('');
     try {
-      const details = { moduleNumber: module.module_number, objectiveId: `B1_M${module.module_number}_SI`, durationSeconds: recordingSeconds || Math.max(module.checkpoint_task.min_duration_seconds, Math.round(response.trim().split(/\s+/).length / 1.8 * 60)) };
-      let res: Response;
-      if (audioBlob.current) {
-        const form = new FormData();
-        form.set('moduleNumber', String(details.moduleNumber)); form.set('objectiveId', details.objectiveId); form.set('durationSeconds', String(details.durationSeconds));
-        form.set('audio', audioBlob.current, `module-${module.module_number}-checkpoint.webm`);
-        res = await fetch('/api/checkpoints/evaluate', { method: 'POST', body: form });
-      } else {
-        res = await fetch('/api/checkpoints/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...details, transcript: response, targetStructures: module.target_grammar }) });
-      }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Unable to evaluate this checkpoint.');
+      const moduleObjective = `B1_M${module.module_number}_WR`;
+      const response = await fetch('/api/checkpoints/writing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleNumber: module.module_number, objectiveId: moduleObjective, writing: responseText }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to evaluate your writing. Sign in and try again.');
       setResult(data); setSubmitted(true);
-      if (data.transcript) setResponse(data.transcript);
-    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Checkpoint evaluation failed.'); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Writing checkpoint failed.'); }
     finally { setBusy(false); }
   }
 
+  async function submitSpeaking() {
+    if (!exercise || exercise.type !== 'checkpoint_speaking') return;
+    setBusy(true); setError('');
+    try {
+      const objectiveId = `B1_M${module.module_number}_${exercise.skill === 'Spoken Interaction' ? 'SI' : 'SP'}`;
+      const res = await fetch('/api/checkpoints/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleNumber: module.module_number, objectiveId, transcript: response, durationSeconds: exercise.durationSeconds, targetStructures: module.target_grammar }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to evaluate your checkpoint. Sign in and try again.');
+      setResult(data); setSubmitted(true);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Speaking checkpoint failed.'); }
+    finally { setBusy(false); }
+  }
+
+  // Keep the writing value distinct from the timer and answer inputs.
+  const responseText = response;
   const nextLesson = module.lessons.find((item) => item.lesson_number === lesson.lesson_number + 1);
   const nextModule = module.module_number < 8 ? b1Curriculum.modules[module.module_number] : null;
   const nextHref = nextLesson ? `/curriculum/modules/${module.module_number}/lessons/${nextLesson.lesson_number}` : nextModule ? `/curriculum/modules/${nextModule.module_number}/lessons/1` : '/curriculum';
+  const wordCount = response.trim() ? response.trim().split(/\s+/).length : 0;
 
-  return <main className="mx-auto max-w-3xl px-4 py-10">
-    <Link href="/curriculum" className="text-sm font-medium text-indigo-700 hover:text-indigo-900">← All modules</Link>
-    <header className="mt-6 rounded-2xl bg-slate-900 p-6 text-white"><p className="text-xs font-bold uppercase tracking-widest text-indigo-300">Module {module.module_number} · Lesson {lesson.lesson_number}/32 · {lesson.duration_minutes} min</p><h1 className="mt-2 text-2xl font-bold">{lesson.title}</h1><p className="mt-2 text-sm text-slate-300">{lesson.stage} · Course hour {lesson.course_hour}</p></header>
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-bold text-slate-900">Your activity</h2><p className="mt-2 text-slate-700">{activity.instruction}</p><div className="mt-5 rounded-xl bg-indigo-50 p-4"><p className="text-xs font-bold uppercase text-indigo-700">Your task</p><p className="mt-1 text-sm text-indigo-950">{activity.task}</p></div><div className="mt-5"><h3 className="text-sm font-bold text-slate-800">Target grammar</h3><div className="mt-2 flex flex-wrap gap-2">{lesson.grammar.map((item) => <span key={item} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">{item}</span>)}</div></div><div className="mt-4"><h3 className="text-sm font-bold text-slate-800">Vocabulary</h3><div className="mt-2 flex flex-wrap gap-2">{lesson.vocabulary.map((item) => <span key={item} className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-800">{item}</span>)}</div></div></section>
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="text-sm font-bold text-slate-900">{isCheckpoint ? 'Checkpoint submission' : 'Practice response'}</h2>
-      {isCheckpoint && <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{module.checkpoint_task.prompt}</p>}
-      {isCheckpoint && <div className="mt-4 flex flex-wrap items-center gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} disabled={busy} className={recording ? 'rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white' : 'rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white'}>{recording ? 'Stop recording' : 'Record checkpoint audio'}</button><span aria-live="polite" className="text-sm text-slate-600">{recording ? `Recording · ${recordingSeconds}s` : audioBlob.current ? `Recording ready · ${recordingSeconds}s` : 'Or paste a transcript below.'}</span></div>}
-      <label htmlFor="lesson-response" className="mt-4 block text-sm font-medium text-slate-800">{isCheckpoint ? 'Transcript (optional when audio is recorded)' : 'Your response'}</label>
-      <textarea id="lesson-response" value={response} onChange={(event) => setResponse(event.target.value)} rows={8} className="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" placeholder="Type your response here…" />
-      {isCheckpoint ? <button type="button" onClick={submitCheckpoint} disabled={busy || (!audioBlob.current && response.trim().split(/\s+/).filter(Boolean).length < 20)} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Transcribing and evaluating…' : 'Submit CEFR checkpoint'}</button> : <button type="button" onClick={() => setSubmitted(true)} disabled={!response.trim()} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">Mark practice complete</button>}
-      {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {submitted && !isCheckpoint && <p role="status" className="mt-3 text-sm font-medium text-emerald-700">Practice marked complete on this device.</p>}
-      {result && <div role="status" className="mt-4 rounded-xl border border-slate-200 p-4"><h3 className={result.passed ? 'font-bold text-emerald-700' : 'font-bold text-amber-700'}>{result.passed ? 'Can-Do achieved!' : 'Not quite yet — review and retry.'}</h3><p className="mt-1 text-sm text-slate-700">Objective mastery: {result.mastery}%</p><pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">{JSON.stringify(result.rubric, null, 2)}</pre>{result.attempt?.id && result.attempt.recording_url && <audio className="mt-3 w-full" controls src={`/api/checkpoints/recording/${result.attempt.id}`} />}{!result.passed && result.reviewDeck?.length ? <div className="mt-3"><h4 className="text-sm font-semibold">Targeted review deck</h4><ul className="mt-1 list-disc pl-5 text-sm text-slate-700">{result.reviewDeck.map((card, index) => <li key={index}>{card}</li>)}</ul></div> : null}</div>}
-    </section>
-    {(submitted || !isCheckpoint) && <div className="mt-6 flex justify-end"><Link href={nextHref} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">{nextLesson ? 'Next lesson →' : nextModule ? 'Next module →' : 'Back to curriculum'}</Link></div>}
-  </main>;
+  function renderActivity() {
+    if (!exercise) return <><p className="text-sm text-slate-700">{activity.instruction}</p><p className="mt-3 rounded-lg bg-indigo-50 p-4 text-sm text-indigo-950">{activity.task}</p></>;
+    switch (exercise.type) {
+      case 'reading_check': return <><h2 className="text-lg font-bold">{exercise.title}</h2><p className="mt-3 leading-7 text-slate-700">{exercise.passage}</p><div className="mt-5"><CheckQuestions questions={exercise.questions} answers={answers} onChange={setAnswer} /></div><button type="button" onClick={completeLocal} disabled={exercise.questions.some((_, i) => answers[i] !== exercise.questions[i].answer)} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Complete reading</button></>;
+      case 'notice': return <><h2 className="text-lg font-bold">{exercise.title}</h2><p className="mt-1 text-sm text-slate-600">Classify each phrase as a routine or a temporary situation.</p><div className="mt-4 space-y-3">{exercise.examples.map((item, index) => <div key={item.phrase} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"><span className="text-sm">{item.phrase}</span><select aria-label={`Classify ${item.phrase}`} value={answers[index] ?? ''} onChange={(event) => setAnswer(index, event.target.value)} className="rounded border p-2 text-sm"><option value="">Choose…</option><option value="routine">Routine</option><option value="temporary">Temporary</option></select>{answers[index] && <span className="text-xs">{answers[index] === item.answer ? '✓' : 'Try again'}</span>}</div>)}</div><button type="button" onClick={completeLocal} disabled={exercise.examples.some((item, i) => answers[i] !== item.answer)} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check classifications</button></>;
+      case 'match': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 space-y-3">{exercise.pairs.map((pair, index) => <label key={pair.term} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2"><span className="font-semibold">{pair.term}</span><select value={answers[index] ?? ''} onChange={(event) => setAnswer(index, event.target.value)} className="rounded border p-2 text-sm"><option value="">Choose a definition…</option>{exercise.pairs.map((option) => <option key={option.term} value={option.definition}>{option.definition}</option>)}</select></label>)}</div><button type="button" onClick={completeLocal} disabled={exercise.pairs.some((pair, i) => answers[i] !== pair.definition)} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check matches</button></>;
+      case 'sort': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 grid gap-2 sm:grid-cols-2">{exercise.items.map((item, index) => <label key={item.phrase} className="flex items-center justify-between gap-2 rounded-lg border p-3 text-sm">{item.phrase}<select aria-label={item.phrase} value={sortAnswers[index] ?? ''} onChange={(event) => setSortAnswers((current) => ({ ...current, [index]: event.target.value }))} className="rounded border p-2"><option value="">Sort…</option><option value="make">MAKE</option><option value="do">DO</option></select></label>)}</div><button type="button" onClick={completeLocal} disabled={exercise.items.some((item, i) => sortAnswers[i] !== item.answer)} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check sorting</button></>;
+      case 'listening': return <><h2 className="text-lg font-bold">{exercise.title}</h2><details className="mt-3 rounded-lg bg-slate-50 p-4"><summary className="cursor-pointer text-sm font-semibold">Read listening script</summary><p className="mt-2 text-sm leading-6">{exercise.script}</p></details><div className="mt-4"><CheckQuestions questions={exercise.questions} answers={answers} onChange={setAnswer} /></div><button type="button" onClick={completeLocal} disabled={exercise.questions.some((_, i) => answers[i] !== exercise.questions[i].answer)} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check listening</button></>;
+      case 'gap_fill': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 space-y-3">{exercise.items.map((item, index) => <div key={item.prompt} className="rounded-lg border p-3"><label className="block text-sm" htmlFor={`answer-${index}`}>{item.prompt}</label><input id={`answer-${index}`} value={answers[index] ?? ''} onChange={(event) => setAnswer(index, event.target.value)} className="mt-2 rounded border p-2 text-sm" />{answers[index] && <p className="mt-1 text-xs">{answers[index].trim().toLowerCase() === item.answer.toLowerCase() ? `✓ ${item.explanation}` : 'Check your answer and try again.'}</p>}</div>)}</div><button type="button" onClick={completeLocal} disabled={exercise.items.some((item, i) => (answers[i] ?? '').trim().toLowerCase() !== item.answer.toLowerCase())} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check answers</button></>;
+      case 'error_correction': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 space-y-3">{exercise.items.map((item, index) => <div key={item.sentence} className="rounded-lg border p-3"><p className="text-sm">{item.sentence}</p><div className="mt-2 flex gap-2"><button type="button" onClick={() => setAnswer(index, 'correct')} className="rounded border px-3 py-1 text-xs">Correct</button><button type="button" onClick={() => setAnswer(index, 'fix')} className="rounded border px-3 py-1 text-xs">Needs a fix</button></div>{answers[index] && <p className="mt-2 text-xs">{(answers[index] === 'correct') === item.isCorrect ? `✓ ${item.answer}` : 'Try again.'}</p>}</div>)}</div><button type="button" onClick={completeLocal} disabled={exercise.items.some((item, i) => !answers[i] || ((answers[i] === 'correct') !== item.isCorrect))} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check sentences</button></>;
+      case 'reorder': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 space-y-4">{exercise.items.map((item, index) => <label key={item.answer} className="block rounded-lg border p-3"><span className="block text-sm font-semibold">Arrange these words:</span><span className="mt-1 block text-xs text-slate-500">{item.tiles.join(' / ')}</span><input value={answers[index] ?? ''} onChange={(event) => setAnswer(index, event.target.value)} className="mt-2 w-full rounded border p-2 text-sm" /></label>)}</div><button type="button" onClick={completeLocal} disabled={exercise.items.some((item, i) => (answers[i] ?? '').trim().replace(/[?.!]/g, '').toLowerCase() !== item.answer.replace(/[?.!]/g, '').toLowerCase())} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check word order</button></>;
+      case 'transform': return <><h2 className="text-lg font-bold">{exercise.title}</h2><div className="mt-4 space-y-4">{exercise.items.map((item, index) => <label key={item.prompt} className="block rounded-lg border p-3"><span className="block text-sm">{item.prompt}</span><span className="mt-1 block text-xs font-bold text-indigo-700">Use: {item.keyword}</span><input value={answers[index] ?? ''} onChange={(event) => setAnswer(index, event.target.value)} className="mt-2 w-full rounded border p-2 text-sm" /><span className="mt-1 block text-xs text-slate-500">Model: {item.answer}</span></label>)}</div><button type="button" onClick={completeLocal} disabled={exercise.items.some((item, i) => (answers[i] ?? '').trim().toLowerCase() !== item.answer.toLowerCase())} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Check transformations</button></>;
+      case 'timed_speaking': return <><h2 className="text-lg font-bold">{exercise.title}</h2><p className="mt-3 text-sm text-slate-700">{exercise.prompt}</p><button type="button" onClick={() => timerRunning ? (timer.current && clearInterval(timer.current), setTimerRunning(false)) : startTimer(exercise.durationSeconds)} className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{timerRunning ? 'Pause timer' : seconds ? `Resume · ${seconds}s` : `Start ${exercise.durationSeconds}-second timer`}</button><p className="mt-2 text-2xl font-bold tabular-nums">{String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</p><ul className="mt-3 list-disc pl-5 text-sm text-slate-600">{exercise.targets.map((target) => <li key={target}>{target}</li>)}</ul><textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={5} className="mt-3 w-full rounded border p-3 text-sm" placeholder="Optional notes or transcript…" /><button type="button" onClick={completeLocal} disabled={seconds > 0 && seconds === exercise.durationSeconds} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Mark practice complete</button></>;
+      case 'roleplay': return <><h2 className="text-lg font-bold">{exercise.title}</h2><p className="mt-2 rounded-lg bg-indigo-50 p-3 text-sm">{exercise.opening}</p><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">{exercise.followUps.map((question) => <li key={question}>{question}</li>)}</ol><textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={6} className="mt-3 w-full rounded border p-3 text-sm" placeholder="Write your replies and two questions…" /><button type="button" onClick={completeLocal} disabled={wordCount < 20} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Complete roleplay practice</button></>;
+      case 'checkpoint_reading': return <><h2 className="text-lg font-bold">{exercise.title}</h2><h3 className="mt-4 font-semibold">Flatshare advert</h3><p className="mt-2 leading-6 text-slate-700">{exercise.advert}</p><details className="mt-4 rounded-lg bg-slate-50 p-4"><summary className="cursor-pointer text-sm font-semibold">Listen to voicemail script</summary><p className="mt-2 text-sm leading-6">{exercise.voicemail}</p></details><div className="mt-4"><CheckQuestions questions={exercise.questions} answers={answers} onChange={setAnswer} /></div><p className="mt-3 text-sm font-semibold">Score: {Object.entries(answers).filter(([index, value]) => exercise.questions[Number(index)]?.answer === value).length}/{exercise.questions.length} · Pass: 5/6</p><button type="button" onClick={completeLocal} disabled={Object.keys(answers).length !== exercise.questions.length} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Submit comprehension checkpoint</button></>;
+      case 'checkpoint_speaking': return <><h2 className="text-lg font-bold">{exercise.title} · {exercise.skill}</h2><p className="mt-2 text-sm">{exercise.prompt}</p><ul className="mt-3 list-disc pl-5 text-sm text-slate-600">{exercise.followUps.map((item) => <li key={item}>{item}</li>)}</ul><textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={7} className="mt-3 w-full rounded border p-3 text-sm" placeholder="Record audio using the recording control, or paste your transcript…" /><button type="button" onClick={submitSpeaking} disabled={busy || wordCount < 20} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Evaluating…' : 'Submit speaking checkpoint'}</button></>;
+      case 'checkpoint_writing': return <><h2 className="text-lg font-bold">{exercise.title} · Writing</h2><p className="mt-2 text-sm">{exercise.prompt}</p><textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={9} className="mt-3 w-full rounded border p-3 text-sm" placeholder="Write your email here…" /><p className="mt-1 text-xs text-slate-500">{wordCount} words · target {exercise.minWords}–{exercise.maxWords}</p><ul className="mt-3 list-disc pl-5 text-xs text-slate-600">{moduleOneRubric.map((criterion) => <li key={criterion}>{criterion}</li>)}</ul><button type="button" onClick={submitWriting} disabled={busy || wordCount < exercise.minWords || wordCount > exercise.maxWords} className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Evaluating…' : 'Submit writing checkpoint'}</button></>;
+    }
+  }
+
+  return <main className="mx-auto max-w-3xl px-4 py-10"><Link href="/curriculum" className="text-sm font-medium text-indigo-700">← All modules</Link><header className="mt-6 rounded-2xl bg-slate-900 p-6 text-white"><p className="text-xs font-bold uppercase tracking-widest text-indigo-300">Module {module.module_number} · Lesson {lesson.lesson_number}/32 · {lesson.duration_minutes} min</p><h1 className="mt-2 text-2xl font-bold">{exercise?.title ?? lesson.title}</h1><p className="mt-2 text-sm text-slate-300">{lesson.stage} · Course hour {lesson.course_hour}</p></header><section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">{renderActivity()}</section>{error && <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}{submitted && <p role="status" className="mt-4 rounded bg-emerald-50 p-3 text-sm font-medium text-emerald-800">Activity completed. Sign in to save progress and checkpoint results.</p>}{result && <section className="mt-4 rounded-xl border p-4"><h2 className={result.passed ? 'font-bold text-emerald-700' : 'font-bold text-amber-700'}>{result.passed ? 'Checkpoint passed' : 'Review and retry'}</h2><p className="mt-1 text-sm">Score: {result.score ?? result.mastery ?? 0}</p>{result.rubric && <pre className="mt-2 whitespace-pre-wrap text-xs">{JSON.stringify(result.rubric, null, 2)}</pre>}{result.reviewDeck && <ul className="mt-2 list-disc pl-5 text-sm">{result.reviewDeck.map((card, i) => <li key={i}>{card}</li>)}</ul>}</section>}{(submitted || !exercise || !['checkpoint_speaking', 'checkpoint_writing'].includes(exercise.type)) && <div className="mt-6 flex justify-end"><Link href={nextHref} className="rounded-lg border px-4 py-2 text-sm font-semibold">{nextLesson ? 'Next lesson →' : nextModule ? 'Next module →' : 'Back to curriculum'}</Link></div>}</main>;
 }
