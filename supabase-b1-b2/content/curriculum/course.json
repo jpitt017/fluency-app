@@ -1,0 +1,97 @@
+{
+  "course_slug": "english-b1-b2",
+  "course": {
+    "slug": "english-b1-b2",
+    "title": "English B1 → B2: Independent User",
+    "subtitle": "64 guided hours across 8 modules, built around the Learn → Practise → Produce → Review → Get feedback loop.",
+    "description": "A 64-hour guided course that takes a B1 learner to a solid B2. Eight themed modules of eight lessons each cover grammar, vocabulary, listening, reading, speaking and writing, with spaced-repetition vocabulary, AI feedback on every recording and draft, and four assessment checkpoints. Designed for 8 hours a week over 8 weeks, or 45 minutes a day over roughly 9 weeks.",
+    "level_from": "B1",
+    "level_to": "B2",
+    "total_hours": 64,
+    "weekly_hours": 8,
+    "duration_weeks": 8,
+    "daily_minutes_min": 20,
+    "daily_minutes_max": 45,
+    "daily_flow": [
+      { "block": "warm_up", "minutes": 3, "label": "Warm-up", "description": "Review 5–10 spaced-repetition cards." },
+      { "block": "input", "minutes": 8, "label": "Input", "description": "Short grammar explanation, article or audio." },
+      { "block": "practice", "minutes": 10, "label": "Practice", "description": "Interactive exercises, listening questions or reading tasks." },
+      { "block": "output", "minutes": 10, "label": "Output", "description": "Voice recording, writing prompt or chat-based role-play." },
+      { "block": "feedback", "minutes": 4, "label": "Feedback", "description": "Corrections, alternative phrasing and a progress update." }
+    ],
+    "skill_balance": [
+      { "skill": "grammar", "hours": 10 },
+      { "skill": "vocabulary", "hours": 8 },
+      { "skill": "listening", "hours": 12 },
+      { "skill": "reading", "hours": 10 },
+      { "skill": "speaking", "hours": 12 },
+      { "skill": "writing", "hours": 10 },
+      { "skill": "review", "hours": 2 }
+    ]
+  },
+  "checkpoints": [
+    {
+      "code": "b1_consolidation",
+      "module": 2,
+      "title": "B1 consolidation",
+      "timing": "End of Module 2",
+      "description": "A grammar quiz on the two module grammar areas, a two-minute recording and a short email. Confirms the learner can operate reliably at B1 before the pace lifts.",
+      "minutes": 40,
+      "skills": ["grammar", "speaking", "writing"],
+      "tasks": [
+        { "kind": "quiz", "title": "Grammar quiz", "detail": "24 items: present perfect vs. past simple, narrative tenses, future forms, conditionals.", "minutes": 12 },
+        { "kind": "speaking", "title": "Two-minute recording", "detail": "Describe a major change in your life and one plan for the next year.", "minutes": 3 },
+        { "kind": "writing", "title": "Short email", "detail": "An informal email of 120–150 words catching up with a friend.", "minutes": 15 }
+      ]
+    },
+    {
+      "code": "mid_course_review",
+      "module": 4,
+      "title": "Mid-course review",
+      "timing": "End of Module 4",
+      "description": "A listening task, a reading task and a 180-word review. Checks that comprehension keeps pace with production.",
+      "minutes": 45,
+      "skills": ["listening", "reading", "writing"],
+      "tasks": [
+        { "kind": "listening", "title": "Listening task", "detail": "Two short audio extracts with detail and inference questions.", "minutes": 12 },
+        { "kind": "reading", "title": "Reading task", "detail": "A 400-word article with skimming, scanning and inference questions.", "minutes": 13 },
+        { "kind": "writing", "title": "Review", "detail": "A 180-word review of an app, film or product.", "minutes": 20 }
+      ]
+    },
+    {
+      "code": "b2_readiness",
+      "module": 6,
+      "title": "B2 readiness",
+      "timing": "End of Module 6",
+      "description": "A 200-word essay and a three-minute opinion talk. The first checkpoint scored against B2 criteria.",
+      "minutes": 55,
+      "skills": ["writing", "speaking"],
+      "tasks": [
+        { "kind": "writing", "title": "Argument essay", "detail": "200 words on a health or ethics question.", "minutes": 25 },
+        { "kind": "speaking", "title": "Three-minute opinion talk", "detail": "Present and defend a position, then answer two follow-up questions.", "minutes": 10 }
+      ]
+    },
+    {
+      "code": "final_b2_assessment",
+      "module": 8,
+      "title": "Final B2 assessment",
+      "timing": "End of Module 8",
+      "description": "Timed reading and listening, a 200–220-word essay and a speaking interview. Produces the personalised B2-readiness report.",
+      "minutes": 90,
+      "skills": ["reading", "listening", "writing", "speaking"],
+      "tasks": [
+        { "kind": "reading", "title": "Timed reading", "detail": "Two texts in 25 minutes: meaning, information, opinion, detail.", "minutes": 25 },
+        { "kind": "listening", "title": "Timed listening", "detail": "Three extracts in 20 minutes with note-taking.", "minutes": 20 },
+        { "kind": "writing", "title": "Essay", "detail": "200–220 words arguing a position with examples.", "minutes": 30 },
+        { "kind": "speaking", "title": "Speaking interview", "detail": "Three-minute talk plus follow-up questions on organisation and pronunciation.", "minutes": 15 }
+      ]
+    }
+  ],
+  "badges": [
+    { "code": "first_monologue", "title": "First 2-Minute Monologue", "icon": "🎙️", "xp": 60, "description": "Record a spoken answer of at least two minutes and have it evaluated.", "criteria": { "type": "speaking_seconds", "seconds": 120 } },
+    { "code": "essay_completed", "title": "Essay Completed", "icon": "✍️", "xp": 70, "description": "Submit an essay or formal piece and receive feedback.", "criteria": { "type": "writing_tasks", "count": 1 } },
+    { "code": "streak_7", "title": "7-Day Streak", "icon": "🔥", "xp": 50, "description": "Study on seven consecutive days.", "criteria": { "type": "streak_days", "days": 7 } },
+    { "code": "collocations_100", "title": "100 Collocations Learned", "icon": "🧩", "xp": 100, "description": "Recall 100 vocabulary items correctly in review.", "criteria": { "type": "collocations", "count": 100 } },
+    { "code": "speaking_lab_10", "title": "Ten Recordings", "icon": "🎧", "xp": 80, "description": "Submit ten speaking recordings across the course.", "criteria": { "type": "speaking_seconds", "seconds": 600 } }
+  ]
+}
