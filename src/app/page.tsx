@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <main className="min-h-[calc(100vh-57px)] bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center space-y-6">
         <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
           🇬🇧 B1 British English Platform
@@ -17,6 +17,12 @@ export default function Home() {
             className="block w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm"
           >
             Sign In / Get Started
+          </Link>
+          <Link
+            href="/curriculum"
+            className="block w-full py-3 bg-white text-indigo-700 border border-indigo-200 font-semibold rounded-lg hover:bg-indigo-50 transition-colors text-sm"
+          >
+            Browse Curriculum
           </Link>
           <Link
             href="/labs"
