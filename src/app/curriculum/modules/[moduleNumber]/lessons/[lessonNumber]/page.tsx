@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import CurriculumLessonClient from './CurriculumLessonClient';
 import LessonLabs from '@/components/labs/LessonLabs';
+import LessonNineExperience from '@/components/labs/LessonNineExperience';
 import { b1Curriculum } from '@/lib/curriculum';
 
 export function generateStaticParams() {
@@ -15,5 +16,6 @@ export default async function CurriculumLessonPage({ params }: { params: Promise
   const module = b1Curriculum.modules.find((item) => item.module_number === Number(moduleNumber));
   const lesson = module?.lessons.find((item) => item.lesson_number === Number(lessonNumber));
   if (!module || !lesson) notFound();
+  if (module.module_number === 1 && lesson.lesson_number === 9) return <LessonNineExperience module={module} lesson={lesson} />;
   return <><CurriculumLessonClient module={module} lesson={lesson} /><LessonLabs module={module} lesson={lesson} /></>;
 }
