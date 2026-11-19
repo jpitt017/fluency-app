@@ -228,7 +228,50 @@ These are deliberate gaps, not oversights — say the word and I'll build them n
 2. **AI feedback endpoints** for speaking/writing scoring. The schema already
    stores the five-criterion rubrics, `overall`, strengths, improvements and an
    `ai_model` field; only the server route is missing.
-3. **App wiring.** The existing Next.js app in this repo still points at the old
-   `fluency-app` project (`iqekdshyoqgyqzckmgas`) and its `course` schema. Nothing
-   in this folder changes that app — wiring it to `ebzmkhrssgnzmixfsuso` is a
-   separate, deliberate step.
+3. **Checkpoint runner.** The four `checkpoints` are seeded and linked to their
+   module, but the lesson pages lead to the module's last lesson; a dedicated
+   checkpoint screen (quiz + recording + writing, scored into
+   `checkpoint_attempts`) is still to build.
+
+---
+
+## App wiring (done)
+
+The Next.js app reads this project directly; there is no build step and no
+duplicated course data.
+
+| App surface | Reads / writes |
+|---|---|
+| `/curriculum` | `get_curriculum_outline()` — modules, 64 lessons, per-skill completion, due cards, checkpoints |
+| `/curriculum/lessons/:n` | `get_lesson(n)` — lesson, module, 5 blocks, practice items, input, speaking/writing task, progress |
+| Warm-up block | `ensure_vocab_cards()` → `get_due_cards(8)` → `review_vocab_card(card, grade)` |
+| Output block | `storage('speaking-recordings')` + `speaking_attempts`; `writing_submissions` |
+| Feedback block | `POST /api/curriculum/progress` → `lesson_progress` (XP via `lesson_progress_reward`) |
+| `/api/progress` | same table, addressed by lesson number |
+
+Aliases: `lib/b1b2/{types,data}.ts`, `components/b1b2/*`, `utils/supabase/server.ts`.
+The repo's `@/*` path alias points at the repo **root**, not `src/`.
+
+### Environment variables the app needs
+
+Set these in `.env.local` and in Vercel (Preview + Production):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://ebzmkhrssgnzmixfsuso.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=...        # Stripe webhook + admin paths only
+```
+
+Until the Vercel values change, deployments keep talking to the old project and
+`/curriculum` will show its "Curriculum unavailable" state — `get_lesson` and
+`get_curriculum_outline` do not exist there.
+
+### Legacy URLs
+
+Old 32-session links are permanent redirects, never 404s:
+
+- `/curriculum/modules/:m/lessons/:l` → `/curriculum/lessons/(m−1)·8 + (l−1)·2 + 1`
+- `/lessons/:sessionId` and `/sessions/:n` → `/curriculum/lessons/2n − 1`
+
+Session `l` covered two new lessons (`2l−1` and `2l`), so the redirect lands on
+the first of the pair.

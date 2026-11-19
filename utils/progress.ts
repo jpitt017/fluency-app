@@ -1,22 +1,24 @@
-import { createClient } from '@/utils/supabase/client';
-
-export async function logStudentProgress(sessionId: string, score: number) {
-  const supabase = createClient();
-  
+/**
+ * Client helper: record completion for a lesson of the B1 → B2 course.
+ * The route resolves the lesson id from the lesson number.
+ */
+export async function logStudentProgress(lessonNumber: number, score?: number) {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('User not authenticated.');
-
-    const { error } = await supabase.from('progress_logs').insert({
-      user_id: user.id,
-      session_id: sessionId,
-      score: score,
+    const response = await fetch('/api/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lessonNumber, completed: true, score }),
     });
 
-    if (error) throw error;
-    return { success: true };
-  } catch (err: any) {
-    console.error('Failed to log student progress:', err.message);
-    return { success: false, error: err.message };
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(payload.error ?? 'Failed to save progress');
+    }
+
+    return { success: true as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to save progress';
+    console.error('Failed to log student progress:', message);
+    return { success: false as const, error: message };
   }
 }

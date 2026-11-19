@@ -1,112 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerSupabase } from '@/utils/supabase/server';
 
-async function getSupabaseServer() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+/**
+ * Lesson completion for the B1 → B2 course, addressed by lesson number.
+ * The lesson id is resolved server-side so the client never sends row ids.
+ */
+async function resolveLesson(supabase: Awaited<ReturnType<typeof createServerSupabase>>, lessonNumber: number) {
+  if (!supabase) return { error: 'Supabase is not configured', status: 500 as const };
 
-  if (!url || !anonKey) {
-    throw new Error('Supabase public environment variables are not configured');
+  const { data, error } = await supabase.from('lessons').select('id, lesson_number').eq('lesson_number', lessonNumber).maybeSingle();
+  if (error) return { error: error.message, status: 400 as const };
+  if (!data) return { error: `Lesson ${lessonNumber} does not exist`, status: 404 as const };
+  return { lesson: data };
+}
+
+export async function GET(request: NextRequest) {
+  const lessonNumber = Number(request.nextUrl.searchParams.get('lessonNumber'));
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) {
+    return NextResponse.json({ error: 'lessonNumber must be between 1 and 64' }, { status: 400 });
   }
 
-  const cookieStore = await cookies();
+  const supabase = await createServerSupabase();
+  if (!supabase) return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
 
-  return createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        } catch {
-          // Ignored when called from a read-only server context
-        }
-      },
-    },
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ completed: false, signedIn: false });
+
+  const resolved = await resolveLesson(supabase, lessonNumber);
+  if ('error' in resolved) return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+
+  const { data, error } = await supabase
+    .from('lesson_progress')
+    .select('status, practice_correct, practice_total, completed_at')
+    .eq('user_id', user.id)
+    .eq('lesson_id', resolved.lesson.id)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({
+    completed: data?.status === 'completed',
+    signedIn: true,
+    progress: data ?? null,
   });
 }
 
-export async function GET() {
-  try {
-    const supabase = await getSupabaseServer();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+export async function POST(request: NextRequest) {
+  const supabase = await createServerSupabase();
+  if (!supabase) return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data, error } = await supabase
-      .from('user_progress')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('updated_at', { ascending: false });
+  const body = (await request.json().catch(() => ({}))) as {
+    lessonNumber?: number;
+    completed?: boolean;
+    score?: number | null;
+    correctCount?: number;
+    totalCount?: number;
+  };
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ progress: data ?? [] });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || 'Failed to fetch user progress' },
-      { status: 500 }
-    );
+  const lessonNumber = Number(body.lessonNumber);
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) {
+    return NextResponse.json({ error: 'lessonNumber must be between 1 and 64' }, { status: 400 });
   }
-}
 
-export async function POST(req: NextRequest) {
-  try {
-    const supabase = await getSupabaseServer();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  const resolved = await resolveLesson(supabase, lessonNumber);
+  if ('error' in resolved) return NextResponse.json({ error: resolved.error }, { status: resolved.status });
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const completed = body.completed !== false;
+  const correct = Math.max(0, Number(body.correctCount ?? body.score ?? 0) || 0);
+  const total = Math.max(0, Number(body.totalCount) || 0);
 
-    const body = await req.json().catch(() => ({}));
-    const { sessionId, completed = true, score = null } = body;
+  const { data, error } = await supabase
+    .from('lesson_progress')
+    .upsert(
+      {
+        user_id: user.id,
+        lesson_id: resolved.lesson.id,
+        status: completed ? 'completed' : 'in_progress',
+        blocks_completed: completed ? 5 : 1,
+        practice_correct: correct,
+        practice_total: total,
+        completed_at: completed ? new Date().toISOString() : null,
+        last_viewed_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,lesson_id' },
+    )
+    .select('lesson_id, status, practice_correct, practice_total, completed_at')
+    .single();
 
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: 'sessionId is required' },
-        { status: 400 }
-      );
-    }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    const { data, error } = await supabase
-      .from('user_progress')
-      .upsert(
-        {
-          user_id: user.id,
-          session_id: sessionId,
-          completed: Boolean(completed),
-          score: typeof score === 'number' ? score : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,session_id' }
-      )
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ progress: data });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || 'Failed to save user progress' },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ completed: data.status === 'completed', progress: data });
 }

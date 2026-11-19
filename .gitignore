@@ -30,3 +30,6 @@ lerna-debug.log*
 
 # vercel
 .vercel
+
+# typescript
+tsconfig.tsbuildinfo
