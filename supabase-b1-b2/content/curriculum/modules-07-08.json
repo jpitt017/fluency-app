@@ -1,0 +1,269 @@
+{
+  "course_slug": "english-b1-b2",
+  "modules": [
+    {
+      "number": 7,
+      "title": "Persuasion and debate",
+      "summary": "Argue under pressure: emphasise with inversion, hedge with precision and rebut without hostility.",
+      "hours": 8,
+      "vocabularyTopic": "Persuasion, evidence, policy and disagreement",
+      "grammar": [
+        {
+          "key": "inversion-emphasis",
+          "name": "Inversion for emphasis: Not only…, Rarely…",
+          "explanation": "After a negative or limiting adverbial at the start of a sentence, invert the subject and auxiliary to add emphasis.",
+          "keyPoints": [
+            "Not only did the policy cut emissions, but it also created jobs.",
+            "Rarely have I seen such a weak argument.",
+            "Never before has the city faced this choice. / Little did we know…"
+          ],
+          "example": "Not only did the levy reduce consumption, but it also funded school meals; rarely has a policy faced such organised opposition.",
+          "items": [
+            { "prompt": "Not only ___ the policy cut emissions, but it also created jobs.", "options": ["did", "has", "did it"], "answer": "did", "explanation": "Not only + auxiliary + subject + verb: Not only did the policy cut emissions…", "difficulty": 2 },
+            { "prompt": "Rarely ___ such a weak argument.", "options": ["I have heard", "have I heard", "I heard"], "answer": "have I heard", "explanation": "A fronted negative adverbial triggers inversion: Rarely have I heard…", "difficulty": 2 },
+            { "prompt": "Which sentence is correctly inverted?", "options": ["Never the city has faced this choice.", "Never has the city faced this choice.", "Never has faced the city this choice."], "answer": "Never has the city faced this choice.", "explanation": "Auxiliary before subject, then the main verb.", "difficulty": 3 }
+          ]
+        },
+        {
+          "key": "hedging",
+          "name": "Hedging: It appears that…, This may suggest…",
+          "explanation": "Hedging shows how confident you are, protects you from overclaiming and makes debate sound reasonable rather than dogmatic.",
+          "keyPoints": [
+            "It appears that the data supports the claim, although further study is needed.",
+            "This may suggest a link between the two, rather than prove one.",
+            "Use tend to, arguably, to some extent and it is likely that to soften claims."
+          ],
+          "example": "The figures appear to support the tax, although they may also reflect a broader change in buying habits.",
+          "items": [
+            { "prompt": "Which sentence is best hedged for an academic essay?", "options": ["Sugar taxes definitely work.", "The evidence suggests that sugar taxes tend to reduce consumption.", "Everyone knows sugar taxes work."], "answer": "The evidence suggests that sugar taxes tend to reduce consumption.", "explanation": "Suggests and tend to signal limited confidence without weakening the point.", "difficulty": 1 },
+            { "prompt": "This ___ suggest a link, but it does not prove one.", "options": ["may", "must", "will"], "answer": "may", "explanation": "May expresses possibility and keeps the claim proportionate.", "difficulty": 1 },
+            { "prompt": "Which phrase overclaims?", "options": ["It is likely that...", "This arguably shows...", "This proves beyond doubt..."], "answer": "This proves beyond doubt...", "explanation": "Beyond doubt is an absolute claim, the opposite of hedging.", "difficulty": 2 }
+          ]
+        }
+      ],
+      "vocab": [
+        { "term": "persuasive", "pos": "adjective", "definition": "able to convince people to agree", "example": "Her closing argument was quietly persuasive.", "collocations": ["a persuasive argument"], "translation": "persuasivo" },
+        { "term": "compelling evidence", "pos": "noun", "definition": "evidence strong enough to convince", "example": "There is compelling evidence that the scheme works.", "collocations": ["provide compelling evidence"], "translation": "pruebas convincentes" },
+        { "term": "counter-argument", "pos": "noun", "definition": "a reason against a position", "example": "He answered the counter-argument before it was raised.", "collocations": ["address the counter-argument"], "translation": "contraargumento" },
+        { "term": "concede a point", "pos": "phrase", "definition": "admit that the other side is partly right", "example": "I concede the point about cost, but not about fairness.", "collocations": ["willing to concede a point"], "translation": "conceder un punto" },
+        { "term": "policy proposal", "pos": "noun", "definition": "a suggested plan of action for an organisation", "example": "The policy proposal goes to the committee in May.", "collocations": ["draft a policy proposal"], "translation": "propuesta política" },
+        { "term": "common ground", "pos": "noun", "definition": "shared opinions or interests", "example": "We found common ground on transport.", "collocations": ["find common ground"], "translation": "terreno común" },
+        { "term": "weak argument", "pos": "noun", "definition": "a reason that does not convince", "example": "Saying 'it has always been like this' is a weak argument.", "collocations": ["a fundamentally weak argument"], "translation": "argumento débil" },
+        { "term": "rebut", "pos": "verb", "definition": "answer an argument with evidence or reasoning", "example": "She rebutted the claim in two sentences.", "collocations": ["rebut a claim"], "translation": "refutar" },
+        { "term": "credibility", "pos": "noun", "definition": "the quality of being believed or trusted", "example": "Overstating the case costs you credibility.", "collocations": ["lose credibility"], "translation": "credibilidad" },
+        { "term": "call for action", "pos": "noun", "definition": "a public demand that something be done", "example": "The report ends with a call for action on air quality.", "collocations": ["an urgent call for action"], "translation": "llamada a la acción" }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 4,
+          "title": "Panel debate: should cities ban cars from the centre?",
+          "source": "Studio original — panel discussion",
+          "accent": "British and American",
+          "seconds": 105,
+          "body": "HOST: Is a car-free centre realistic? COUNCILLOR REID: Not only has it worked elsewhere, but it has also increased footfall in the shops. That is the part people miss. TRADER MS KOVAC: With respect, that has not been our experience. Our deliveries arrive before seven, and the loading bay is gone. COUNCILLOR REID: Then let us concede that point and solve it — timed access. MS KOVAC: I would accept timed access, provided it is enforced. My worry is that it looks good in a report and fails in the street.",
+          "questions": [
+            { "prompt": "What does Councillor Reid claim about shops?", "options": ["Footfall increased elsewhere", "Shops closed", "Deliveries stopped"], "answer": "Footfall increased elsewhere" },
+            { "prompt": "What does Ms Kovac accept in the end?", "options": ["Timed access with enforcement", "A total ban", "No change at all"], "answer": "Timed access with enforcement" }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 5,
+          "title": "How to write a proposal that gets read",
+          "source": "Studio original",
+          "body": "Most proposals fail for a boring reason: the reader cannot find the recommendation. A useful proposal opens with the decision required, not with background. It states the problem in one paragraph, the options in three, and the recommendation in one sentence that could be quoted. Evidence should be proportionate: two strong figures persuade more than ten weak ones. Finally, anticipate the objection your reader will raise and answer it on the page, in their words. Not only does this show respect, but it also removes the easiest reason to say no.",
+          "questions": [
+            { "prompt": "What should a proposal open with?", "options": ["The decision required", "Long background", "A list of sources"], "answer": "The decision required" },
+            { "prompt": "What does the writer advise about evidence?", "options": ["Use two strong figures", "Include everything", "Avoid figures"], "answer": "Use two strong figures" }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Three-minute persuasive monologue and rebuttal",
+          "prompt": "Choose a policy you would change. Present it in two minutes, then respond to a counter-argument read aloud in the third minute.",
+          "seconds": 180,
+          "phrases": ["Not only does this..., but it also...", "It appears that...", "I would concede that..., however..."],
+          "linkers": ["moreover", "nevertheless", "in other words"],
+          "terms": ["policy proposal", "compelling evidence", "counter-argument"]
+        },
+        {
+          "kind": "role_play",
+          "title": "Role-play: negotiating with an opponent",
+          "prompt": "You are negotiating a joint statement with someone who opposes your position. Find common ground, concede one point and secure one commitment. Two to three minutes.",
+          "seconds": 150,
+          "phrases": ["Could we agree that...?", "I take your point about...", "What would you need in return?"],
+          "linkers": ["provided that", "on condition that", "whereas"],
+          "terms": ["common ground", "concede a point", "credibility"]
+        },
+        {
+          "kind": "shadowing",
+          "title": "Shadowing: inversion under pressure",
+          "prompt": "Shadow the clip, keeping the falling intonation on the inverted clause and the pause before the rebuttal.",
+          "seconds": 60,
+          "phrases": ["Not only did the policy work, / but it also / won over its critics."],
+          "linkers": ["not only", "rarely", "little"],
+          "terms": ["rebut", "weak argument"]
+        }
+      ],
+      "writing": {
+        "title": "Formal proposal: a change worth making",
+        "prompt": "Write a 180–200-word formal proposal to a decision-maker recommending one change to a policy you know. Include the decision required, the options and a clear recommendation.",
+        "format": "formal proposal",
+        "wordMin": 180,
+        "wordMax": 200,
+        "outline": {
+          "analyze": "Purpose: secure a decision. Audience: a busy official. Register: formal and direct.",
+          "plan": "Decision required → problem → three options → recommendation → one anticipated objection.",
+          "draft": "Use one inversion, two hedges and a conditional offer (provided that).",
+          "improve": "Cut background; make the recommendation quotable in one sentence.",
+          "review": "Check that a reader could act on the proposal after one reading."
+        }
+      },
+      "lessons": [
+        { "title": "Inversion for emphasis", "objective": "Front a negative adverbial and invert the subject and auxiliary correctly.", "canDo": "I can add emphasis with Not only, Rarely and Little did without breaking word order.", "skill": "grammar", "input": "listening", "outputTitle": "Emphasise it", "output": "Record five sentences using inversion to emphasise a real opinion.", "targetSeconds": 60 },
+        { "title": "Hedging: saying it without overclaiming", "objective": "Calibrate certainty with it appears that, may suggest and tend to.", "canDo": "I can express confidence at the right level instead of overclaiming.", "skill": "grammar", "input": "reading", "outputTitle": "Hedge the claim", "output": "Take five strong claims and rewrite each one with appropriate hedging.", "wordRange": [60, 90] },
+        { "title": "Vocabulary: persuasion and evidence", "objective": "Debate with ten precise expressions for arguments, evidence and concessions.", "canDo": "I can name the parts of an argument and evaluate evidence precisely.", "skill": "vocabulary", "input": "reading", "outputTitle": "Weigh the argument", "output": "Record 60 seconds evaluating an argument you have heard recently.", "targetSeconds": 60 },
+        { "title": "Listening: should cities ban cars?", "objective": "Track positions, concessions and conditions across a heated panel.", "canDo": "I can follow a panel debate and note who conceded what and on which condition.", "skill": "listening", "input": "listening", "outputTitle": "Position and concession", "output": "Note each speaker's position, one concession and one condition.", "wordRange": [50, 80] },
+        { "title": "Reading: writing a proposal that gets read", "objective": "Extract the recommended structure and the writer's advice on evidence.", "canDo": "I can read advice on formal writing and apply its structure to my own proposal.", "skill": "reading", "input": "reading", "outputTitle": "Structure checklist", "output": "Turn the article into a five-point checklist for your own proposal.", "wordRange": [60, 90] },
+        { "title": "Speaking: persuade, then rebut", "objective": "Deliver a three-minute persuasive case and answer a counter-argument.", "canDo": "I can present a persuasive case and rebut an objection without losing composure.", "skill": "speaking", "input": "listening", "outputTitle": "Monologue plus rebuttal", "output": "Use the prompt card: two minutes of argument, one minute of rebuttal.", "targetSeconds": 180 },
+        { "title": "Writing: formal proposal", "objective": "Write a decision-ready proposal of 180–200 words.", "canDo": "I can write a formal proposal with a clear recommendation and an anticipated objection.", "skill": "writing", "input": "reading", "outputTitle": "Proposal", "output": "Draft, then cut every sentence that does not serve the decision.", "wordRange": [180, 200] },
+        { "title": "Review: timed interactive discussion", "objective": "Sustain a ten-minute discussion with a partner, using the module's tools under pressure.", "canDo": "I can hold my own in a ten-minute discussion, hedging, conceding and rebutting appropriately.", "skill": "review", "input": "listening", "outputTitle": "Discussion simulation", "output": "Record a ten-minute simulation: present, respond, concede and conclude.", "targetSeconds": 600 }
+      ]
+    },
+    {
+      "number": 8,
+      "title": "B2 consolidation",
+      "summary": "Pull it together: mixed-skill practice under time pressure, then the final B2 assessment.",
+      "hours": 8,
+      "vocabularyTopic": "High-value B2 lexis for argument and evaluation",
+      "grammar": [
+        {
+          "key": "review-perfect-aspects",
+          "name": "Review: perfect and narrative aspects",
+          "explanation": "B2 accuracy in the perfect family comes from choosing by meaning: present perfect for relevance now, past perfect for a prior past point, and perfect continuous for duration.",
+          "keyPoints": [
+            "Relevance now: I have been working on this since March.",
+            "Prior past: By the time the study was published, the policy had already changed.",
+            "Duration before a past point: They had been negotiating for months."
+          ],
+          "example": "I have been studying for two years, and by the time I finish, I will have completed eleven courses.",
+          "items": [
+            { "prompt": "I ___ on this since March.", "options": ["work", "have been working", "had worked"], "answer": "have been working", "explanation": "Since + a point in time with an ongoing activity requires the present perfect continuous.", "difficulty": 1 },
+            { "prompt": "By the time the study was published, the policy ___.", "options": ["already changed", "had already changed", "has already changed"], "answer": "had already changed", "explanation": "The change happened before a past publication, so the past perfect is required.", "difficulty": 2 },
+            { "prompt": "They ___ for months before the agreement was signed.", "options": ["negotiated", "had been negotiating", "have negotiated"], "answer": "had been negotiating", "explanation": "Duration before a past event takes the past perfect continuous.", "difficulty": 2 }
+          ]
+        },
+        {
+          "key": "review-modals-reported",
+          "name": "Review: conditionals, modals and reported speech",
+          "explanation": "At B2 these systems are combined: conditionals carry modal meaning, modality shifts in reported speech, and hedging keeps claims proportionate.",
+          "keyPoints": [
+            "Had they consulted residents, the plan would have passed.",
+            "She said it might have been avoided if the notice had been longer.",
+            "It may be that the figures understate the effect."
+          ],
+          "example": "Had the consultation been longer, the council might not have lost the vote; several members said they would have supported a revised plan.",
+          "items": [
+            { "prompt": "___ they consulted residents, the plan would have passed.", "options": ["Had", "If", "Have"], "answer": "Had", "explanation": "Inverted third conditional: Had + subject + past participle.", "difficulty": 3 },
+            { "prompt": "She said it ___ if the notice had been longer.", "options": ["might have been avoided", "might be avoided", "might avoid"], "answer": "might have been avoided", "explanation": "Reported past possibility with a passive: might have been avoided.", "difficulty": 3 },
+            { "prompt": "Which sentence is the most cautious?", "options": ["The figures understate the effect.", "The figures may understate the effect.", "The figures definitely understate the effect."], "answer": "The figures may understate the effect.", "explanation": "May keeps the claim provisional, which is the safest B2 academic choice.", "difficulty": 1 }
+          ]
+        }
+      ],
+      "vocab": [
+        { "term": "outweigh", "pos": "verb", "definition": "be more important than something else", "example": "The benefits outweigh the costs in the long run.", "collocations": ["benefits outweigh the risks"], "translation": "superar en importancia" },
+        { "term": "inevitable", "pos": "adjective", "definition": "certain to happen and impossible to avoid", "example": "Some disruption is inevitable during the works.", "collocations": ["a seemingly inevitable outcome"], "translation": "inevitable" },
+        { "term": "mitigate", "pos": "verb", "definition": "reduce the harmful effects of something", "example": "Trees mitigate the heat in dense districts.", "collocations": ["mitigate the impact"], "translation": "mitigar" },
+        { "term": "prevalent", "pos": "adjective", "definition": "common in a particular place or time", "example": "The practice is most prevalent in coastal towns.", "collocations": ["increasingly prevalent"], "translation": "predominante" },
+        { "term": "contend", "pos": "verb", "definition": "argue that something is true", "example": "Critics contend that the figures are incomplete.", "collocations": ["critics contend that"], "translation": "sostener, afirmar" },
+        { "term": "detrimental", "pos": "adjective", "definition": "causing harm", "example": "Long commutes are detrimental to health.", "collocations": ["detrimental to wellbeing"], "translation": "perjudicial" },
+        { "term": "feasible", "pos": "adjective", "definition": "possible and practical to do", "example": "A partial ban is feasible within a year.", "collocations": ["technically feasible"], "translation": "viable" },
+        { "term": "consensus", "pos": "noun", "definition": "general agreement among a group", "example": "There is broad consensus on the diagnosis, not the cure.", "collocations": ["reach a consensus"], "translation": "consenso" },
+        { "term": "nuance", "pos": "noun", "definition": "a small but important difference in meaning", "example": "The argument ignores an important nuance.", "collocations": ["lose the nuance"], "translation": "matiz" },
+        { "term": "deteriorate", "pos": "verb", "definition": "become worse over time", "example": "Air quality deteriorated after the roads reopened.", "collocations": ["conditions deteriorate"], "translation": "deteriorarse" }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 4,
+          "title": "Timed listening: three accents, one topic",
+          "source": "Studio original — mixed accents",
+          "accent": "British, Nigerian and Indian",
+          "seconds": 110,
+          "body": "SPEAKER 1: I grew up in a city where nobody cycled, and now there are more bikes than cars on my old street. SPEAKER 2: The infrastructure came first, which is the opposite of what most cities try. You cannot ask people to change and then blame them when there is nowhere safe to go. SPEAKER 3: What interests me is the budget. Cycle lanes are cheap compared with a motorway, yet they are treated as a luxury. If the same money had gone into roads, nobody would have questioned it.",
+          "questions": [
+            { "prompt": "What does Speaker 2 say cities usually do wrong?", "options": ["Build infrastructure after asking people to change", "Ignore their residents", "Spend too much on bikes"], "answer": "Build infrastructure after asking people to change" },
+            { "prompt": "What surprises Speaker 3?", "options": ["Cycle lanes are treated as a luxury", "Roads are expensive", "Nobody cycles"], "answer": "Cycle lanes are treated as a luxury" }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 6,
+          "title": "Timed reading: the limits of a good statistic",
+          "source": "Studio original",
+          "body": "A single impressive number can end a discussion before it starts, which is precisely why it deserves suspicion. Take the claim that a policy 'created ten thousand jobs'. The figure may be accurate and still misleading: it says nothing about whether those jobs replaced others, how long they lasted, or who got them. Serious evaluation asks for the counterfactual — what would have happened anyway — and that is the question a headline rarely answers. Readers who learn to ask it become considerably harder to persuade with a number alone.",
+          "questions": [
+            { "prompt": "Why does the writer distrust impressive numbers?", "options": ["They can be accurate yet misleading", "They are usually false", "They are hard to read"], "answer": "They can be accurate yet misleading" },
+            { "prompt": "What question does serious evaluation ask?", "options": ["What would have happened anyway?", "Who paid for the study?", "How was it reported?"], "answer": "What would have happened anyway?" }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "monologue",
+          "title": "Final speaking: three-minute opinion talk",
+          "prompt": "Some people believe remote work improves productivity. Do you agree? Give reasons and examples. Speak for three minutes using at least three linking expressions and two topic-specific terms.",
+          "seconds": 180,
+          "phrases": ["On balance...", "The evidence suggests...", "A good illustration of this is..."],
+          "linkers": ["moreover", "whereas", "as a result", "nevertheless"],
+          "terms": ["productivity", "consolidation", "consensus"]
+        },
+        {
+          "kind": "interview",
+          "title": "Speaking interview: follow-up questions",
+          "prompt": "Answer three follow-up questions on your talk: one asking for evidence, one challenging your position, one asking for a prediction.",
+          "seconds": 120,
+          "phrases": ["That is a fair challenge...", "I would qualify that by saying...", "Looking ahead, I expect..."],
+          "linkers": ["although", "in particular", "by contrast"],
+          "terms": ["nuance", "feasible", "mitigate"]
+        },
+        {
+          "kind": "shadowing",
+          "title": "Shadowing: B2 prosody capstone",
+          "prompt": "Shadow the model twice: stress the contrast, chunk the thought groups and keep the intonation falling on statements.",
+          "seconds": 90,
+          "phrases": ["What matters / is not how fast you speak, / but how clearly / you are understood."],
+          "linkers": ["not... but", "rather than", "in fact"],
+          "terms": ["intelligibility", "prosody"]
+        }
+      ],
+      "writing": {
+        "title": "Final essay: an argument with examples",
+        "prompt": "Write a 200–220-word argument essay: is remote work better for productivity and wellbeing? Present both sides, use evidence, and reach a clear conclusion.",
+        "format": "argument essay",
+        "wordMin": 200,
+        "wordMax": 220,
+        "outline": {
+          "analyze": "Purpose: argue and conclude. Audience: an examiner. Register: formal.",
+          "plan": "Introduction with position → for → against → evaluation → conclusion.",
+          "draft": "Use one inversion, two hedges, two advanced linkers and one conditional.",
+          "improve": "Replace generic claims with qualified ones; add one concrete example.",
+          "review": "Check the essay answers the question, not merely the topic."
+        }
+      },
+      "lessons": [
+        { "title": "Review: perfect and narrative aspects", "objective": "Choose accurately across the perfect family in extended speech.", "canDo": "I can use perfect and narrative aspects accurately when I speak at length.", "skill": "grammar", "input": "listening", "outputTitle": "My last two years", "output": "Record 90 seconds on your last two years using four perfect forms.", "targetSeconds": 90 },
+        { "title": "Review: conditionals, modals and reported speech", "objective": "Combine conditionals, modality and reported speech without losing accuracy.", "canDo": "I can combine conditionals and reported speech accurately in a complex sentence.", "skill": "grammar", "input": "reading", "outputTitle": "Complex sentence drill", "output": "Write and record five complex sentences joining a conditional to reported speech.", "targetSeconds": 90 },
+        { "title": "Review: modals of deduction and hedging", "objective": "Calibrate certainty across a long answer.", "canDo": "I can express certainty, possibility and doubt precisely across a long turn.", "skill": "grammar", "input": "listening", "outputTitle": "Calibrate", "output": "Record 60 seconds speculating about a news story with graded certainty.", "targetSeconds": 60 },
+        { "title": "Vocabulary consolidation: B2 lexis", "objective": "Recall and use ten high-value B2 items in argument.", "canDo": "I can use precise B2 academic lexis to evaluate an argument.", "skill": "vocabulary", "input": "reading", "outputTitle": "Ten-item production", "output": "Record 90 seconds using eight of the ten items naturally.", "targetSeconds": 90 },
+        { "title": "Timed listening: three accents", "objective": "Hold comprehension across accents and note-taking under time pressure.", "canDo": "I can follow three accents on one topic and take usable notes without a transcript.", "skill": "listening", "input": "listening", "outputTitle": "Notes and summary", "output": "Take notes while listening once, then summarise in four sentences.", "wordRange": [70, 100] },
+        { "title": "Timed reading: inference under pressure", "objective": "Answer inference questions in a fixed time without rereading everything.", "canDo": "I can answer inference questions against the clock with a defensible reason.", "skill": "reading", "input": "reading", "outputTitle": "Inference answers", "output": "Answer the questions in six minutes and justify each answer in one sentence.", "wordRange": [70, 100] },
+        { "title": "Writing: final essay", "objective": "Produce a 200–220-word essay under exam conditions.", "canDo": "I can write a timed 200–220-word argument essay with evidence and a conclusion.", "skill": "writing", "input": "reading", "outputTitle": "Final essay", "output": "Write in 30 minutes, then spend five minutes editing for linkers and hedging.", "wordRange": [200, 220] },
+        { "title": "Speaking: final B2 capstone", "objective": "Sustain a three-minute talk plus follow-up questions.", "canDo": "I can speak for three minutes on an abstract question and handle follow-ups confidently.", "skill": "speaking", "input": "listening", "outputTitle": "Three-minute talk and follow-ups", "output": "Use the final prompt card, then answer the three follow-up questions.", "targetSeconds": 180 }
+      ]
+    }
+  ]
+}

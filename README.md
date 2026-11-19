@@ -4,6 +4,14 @@ An AI-powered British English learning platform focused on CEFR B1 speaking and 
 
 **Live Production App:** [https://fluency-app-nine.vercel.app](https://fluency-app-nine.vercel.app)
 
+> **New Supabase project (November 2026):** `supabase-b1-b2/` contains a freshly
+> provisioned project (`ebzmkhrssgnzmixfsuso`, eu-west-1) implementing the
+> 64-hour *English B1 → B2* course architecture — 8 modules, 64 lessons, 320
+> lesson blocks, 640 practice items, spaced repetition, XP/skill meters and 4
+> checkpoints, all under RLS. It is independent of the app below, which still
+> points at the original `fluency-app` project. See
+> [`supabase-b1-b2/README.md`](supabase-b1-b2/README.md).
+
 ---
 
 ## Core Features
