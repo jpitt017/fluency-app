@@ -1,37 +1,19 @@
+import Link from 'next/link';
 import WritingLab from '@/components/labs/WritingLab';
 import SpeakingLab from '@/components/labs/SpeakingLab';
+import { createClient } from '@/utils/supabase/client';
+import type { LessonLabContext } from '@/components/labs/LessonLabContext';
 
 export default function LabsPage() {
-  return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto space-y-8">
-        
-        {/* Header Section */}
-        <header className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-            🇬🇧 B1 British English Writing & Speaking Lab
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Real-time explicit grammatical correction and spoken fluency practice powered by AI.
-          </p>
-        </header>
-
-        {/* Labs Container */}
-        <div className="grid grid-cols-1 gap-8">
-          {/* Writing Lab Component */}
-          <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">✍️ Writing Correction Lab</h2>
-            <WritingLab />
-          </section>
-
-          {/* Speaking Lab Component */}
-          <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">🎙️ Spoken English Lab</h2>
-            <SpeakingLab />
-          </section>
-        </div>
-
-      </div>
-    </main>
-  );
+  const freeContext: LessonLabContext = {
+    prompt: 'Choose a topic and practise B1 British English. Use clear examples and natural everyday language.',
+    mode: 'free',
+    targetGrammar: [],
+    targetVocabulary: [],
+  };
+  return <main className="min-h-screen bg-gray-50 p-6 md:p-12"><div className="mx-auto max-w-4xl space-y-8">
+    <header className="rounded-xl border border-gray-100 bg-white p-6"><h1 className="text-3xl font-bold tracking-tight text-gray-900">🇬🇧 B1 British English Writing & Speaking Lab</h1><p className="mt-2 text-gray-600">Free practice, quick drills, and lesson-linked fluency tasks.</p><Link href="/curriculum" className="mt-4 inline-block text-sm font-semibold text-indigo-700 hover:underline">Browse curriculum / continue a lesson →</Link></header>
+    <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><h2 className="mb-4 text-xl font-semibold text-gray-800">✍️ Writing practice</h2><WritingLab lessonContext={freeContext}/></section>
+    <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><h2 className="mb-4 text-xl font-semibold text-gray-800">🎙️ Speaking practice</h2><SpeakingLab lessonContext={freeContext}/></section>
+  </div></main>;
 }
