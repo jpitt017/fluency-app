@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import type { SpeakingTask, WritingTask } from '@/lib/b1b2/types';
+import type { Evaluation, SpeakingTask, WritingTask } from '@/lib/b1b2/types';
 
 function countWords(value: string) {
   return value.trim() ? value.trim().split(/\s+/).length : 0;
@@ -21,6 +21,68 @@ function extensionFor(mimeType: string) {
   return 'webm';
 }
 
+const SCORE_LABEL: Record<string, string> = {
+  fluency: 'Fluency',
+  lexical_range: 'Vocabulary range',
+  grammar_accuracy: 'Grammar accuracy',
+  coherence: 'Coherence',
+  pronunciation: 'Pronunciation',
+  task_response: 'Task response',
+  organisation: 'Organisation',
+  style: 'Style',
+};
+
+export function EvaluationPanel({ evaluation }: { evaluation: Evaluation }) {
+  return (
+    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-emerald-950">Examiner feedback</p>
+        <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white">{evaluation.overall}/100</span>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {Object.entries(evaluation.scores).map(([criterion, score]) => (
+          <div key={criterion}>
+            <div className="mb-1 flex justify-between text-[11px]">
+              <span className="font-semibold text-emerald-900">{SCORE_LABEL[criterion] ?? criterion.replace(/_/g, ' ')}</span>
+              <span className="text-emerald-800">{score}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-white">
+              <div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, score)}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-emerald-950">{evaluation.feedback}</p>
+
+      {evaluation.strengths.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs text-emerald-900">
+          {evaluation.strengths.map((item) => (
+            <li key={item}>✓ {item}</li>
+          ))}
+        </ul>
+      )}
+      {evaluation.improvements.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs text-amber-900">
+          {evaluation.improvements.map((item) => (
+            <li key={item}>→ {item}</li>
+          ))}
+        </ul>
+      )}
+      {evaluation.corrected && (
+        <p className="mt-3 rounded-lg bg-white p-3 text-xs italic leading-5 text-slate-700">{evaluation.corrected}</p>
+      )}
+      {evaluation.transcript && (
+        <details className="mt-3 text-xs text-emerald-900">
+          <summary className="cursor-pointer font-semibold">Transcript</summary>
+          <p className="mt-1 leading-5">{evaluation.transcript}</p>
+        </details>
+      )}
+    </div>
+  );
+}
+
 export default function OutputStudio({
   lessonId,
   lessonNumber,
@@ -28,24 +90,30 @@ export default function OutputStudio({
   writing,
   speaking,
   onSubmitted,
+  onEvaluated,
+  signInLabel = 'Sign in to submit',
 }: {
-  lessonId: string;
-  lessonNumber: number;
+  lessonId: string | null;
+  lessonNumber: number | null;
   signedIn: boolean;
   writing: WritingTask | null;
   speaking: SpeakingTask | null;
-  onSubmitted: (kind: 'speaking' | 'writing') => void;
+  onSubmitted?: (kind: 'speaking' | 'writing', id: string) => void;
+  onEvaluated?: (kind: 'speaking' | 'writing', evaluation: Evaluation) => void;
+  signInLabel?: string;
 }) {
   const supabase = createClient();
   const [writingBody, setWritingBody] = useState('');
-  const [writingSaved, setWritingSaved] = useState(false);
+  const [writingId, setWritingId] = useState<string | null>(null);
+  const [writingEval, setWritingEval] = useState<Evaluation | null>(null);
   const [savingWriting, setSavingWriting] = useState(false);
 
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [clip, setClip] = useState<{ blob: Blob; mimeType: string } | null>(null);
   const [clipUrl, setClipUrl] = useState<string | null>(null);
-  const [savedSpeaking, setSavedSpeaking] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [speakingEval, setSpeakingEval] = useState<Evaluation | null>(null);
   const [savingSpeaking, setSavingSpeaking] = useState(false);
   const [error, setError] = useState('');
 
@@ -116,7 +184,8 @@ export default function OutputStudio({
       recorderRef.current = recorder;
       setElapsed(0);
       setClip(null);
-      setSavedSpeaking(false);
+      setSpeakingId(null);
+      setSpeakingEval(null);
       setRecording(true);
     } catch {
       setError('Microphone access was blocked. Allow it in your browser settings and try again.');
@@ -129,33 +198,58 @@ export default function OutputStudio({
     setRecording(false);
   }
 
+  async function score(kind: 'speaking' | 'writing', id: string) {
+    const response = await fetch('/api/curriculum/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(kind === 'speaking' ? { kind, attemptId: id } : { kind, submissionId: id }),
+    });
+    const payload = (await response.json().catch(() => ({}))) as { evaluation?: Evaluation; error?: string };
+    if (!response.ok || !payload.evaluation) {
+      throw new Error(payload.error ?? 'The examiner could not score that submission.');
+    }
+    return payload.evaluation;
+  }
+
   async function submitRecording() {
-    if (!clip) return;
+    if (!clip || !speaking) return;
     setSavingSpeaking(true);
     setError('');
     try {
       const user = await refreshUser();
       if (!user) throw new Error('Sign in again to save your recording.');
-      const path = `${user.id}/${lessonId}/${crypto.randomUUID()}.${extensionFor(clip.mimeType)}`;
+      const path = `${user.id}/${lessonId ?? 'checkpoint'}/${crypto.randomUUID()}.${extensionFor(clip.mimeType)}`;
       const { error: uploadError } = await supabase.storage.from('speaking-recordings').upload(path, clip.blob, {
         contentType: clip.mimeType,
         upsert: false,
       });
       if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase.from('speaking_attempts').insert({
-        user_id: user.id,
-        task_id: speaking?.id ?? null,
-        lesson_id: lessonId,
-        audio_path: path,
-        mime_type: clip.mimeType,
-        duration_seconds: elapsed,
-        status: 'submitted',
-      });
-      if (insertError) throw insertError;
+      const { data: inserted, error: insertError } = await supabase
+        .from('speaking_attempts')
+        .insert({
+          user_id: user.id,
+          task_id: speaking.id,
+          lesson_id: lessonId,
+          audio_path: path,
+          mime_type: clip.mimeType,
+          duration_seconds: elapsed,
+          status: 'submitted',
+        })
+        .select('id')
+        .single();
+      if (insertError || !inserted) throw insertError ?? new Error('Could not save that recording.');
 
-      setSavedSpeaking(true);
-      onSubmitted('speaking');
+      setSpeakingId(inserted.id);
+      onSubmitted?.('speaking', inserted.id);
+
+      try {
+        const evaluation = await score('speaking', inserted.id);
+        setSpeakingEval(evaluation);
+        onEvaluated?.('speaking', evaluation);
+      } catch (scoringError) {
+        setError(scoringError instanceof Error ? scoringError.message : 'Saved, but scoring failed.');
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save that recording.');
     } finally {
@@ -170,17 +264,30 @@ export default function OutputStudio({
     try {
       const user = await refreshUser();
       if (!user) throw new Error('Sign in again to save your writing.');
-      const { error: insertError } = await supabase.from('writing_submissions').insert({
-        user_id: user.id,
-        task_id: writing.id,
-        lesson_id: lessonId,
-        body: writingBody,
-        word_count: countWords(writingBody),
-        status: 'submitted',
-      });
-      if (insertError) throw insertError;
-      setWritingSaved(true);
-      onSubmitted('writing');
+      const { data: inserted, error: insertError } = await supabase
+        .from('writing_submissions')
+        .insert({
+          user_id: user.id,
+          task_id: writing.id,
+          lesson_id: lessonId,
+          body: writingBody,
+          word_count: countWords(writingBody),
+          status: 'submitted',
+        })
+        .select('id')
+        .single();
+      if (insertError || !inserted) throw insertError ?? new Error('Could not save that draft.');
+
+      setWritingId(inserted.id);
+      onSubmitted?.('writing', inserted.id);
+
+      try {
+        const evaluation = await score('writing', inserted.id);
+        setWritingEval(evaluation);
+        onEvaluated?.('writing', evaluation);
+      } catch (scoringError) {
+        setError(scoringError instanceof Error ? scoringError.message : 'Saved, but scoring failed.');
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save that draft.');
     } finally {
@@ -188,19 +295,27 @@ export default function OutputStudio({
     }
   }
 
+  if (!speaking && !writing) return null;
+
   if (!signedIn) {
     return (
       <div className="rounded-xl bg-slate-50 p-4">
         <p className="text-sm text-slate-700">
           Output is saved to your account{speaking ? ' — record a take' : ''}
-          {writing ? ' and your drafts get feedback' : ''}.
+          {writing ? ' and your drafts get examiner feedback' : ''}.
         </p>
-        <Link
-          href={`/login?next=/curriculum/lessons/${lessonNumber}`}
-          className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          Sign in to submit
-        </Link>
+        {lessonNumber ? (
+          <Link
+            href={`/login?next=/curriculum/lessons/${lessonNumber}`}
+            className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            {signInLabel}
+          </Link>
+        ) : (
+          <Link href="/login" className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+            {signInLabel}
+          </Link>
+        )}
       </div>
     );
   }
@@ -212,7 +327,7 @@ export default function OutputStudio({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-bold text-slate-900">{speaking.title}</p>
             <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
-              {speaking.kind} · {targetSeconds}s
+              {(speaking.kind ?? 'speaking').replace(/_/g, ' ')} · {targetSeconds}s
             </span>
           </div>
           <p className="mt-2 text-sm leading-6 text-slate-700">{speaking.prompt}</p>
@@ -221,6 +336,9 @@ export default function OutputStudio({
           ) : null}
           {speaking.target_linkers?.length ? (
             <p className="mt-1 text-xs text-slate-500">Target linkers: {speaking.target_linkers.join(' · ')}</p>
+          ) : null}
+          {speaking.target_terms?.length ? (
+            <p className="mt-1 text-xs text-slate-500">Target terms: {speaking.target_terms.join(' · ')}</p>
           ) : null}
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -248,15 +366,17 @@ export default function OutputStudio({
                 <button
                   type="button"
                   onClick={submitRecording}
-                  disabled={savingSpeaking || savedSpeaking}
+                  disabled={savingSpeaking || Boolean(speakingId)}
                   className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-slate-300"
                 >
-                  {savedSpeaking ? 'Recording saved' : savingSpeaking ? 'Uploading…' : 'Submit recording'}
+                  {speakingId ? 'Recording saved' : savingSpeaking ? 'Uploading…' : 'Submit for feedback'}
                 </button>
                 <span className="text-xs text-slate-500">{elapsed}s captured</span>
               </div>
             </div>
           )}
+
+          {speakingEval && <EvaluationPanel evaluation={speakingEval} />}
         </div>
       )}
 
@@ -282,7 +402,8 @@ export default function OutputStudio({
             value={writingBody}
             onChange={(event) => {
               setWritingBody(event.target.value);
-              setWritingSaved(false);
+              setWritingId(null);
+              setWritingEval(null);
             }}
             rows={10}
             placeholder="Plan, draft, then improve before you submit."
@@ -295,16 +416,18 @@ export default function OutputStudio({
             <button
               type="button"
               onClick={submitWriting}
-              disabled={savingWriting || writingSaved || countWords(writingBody) < 20}
+              disabled={savingWriting || Boolean(writingId) || countWords(writingBody) < 20}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-slate-300"
             >
-              {writingSaved ? 'Draft saved' : savingWriting ? 'Saving…' : 'Submit draft'}
+              {writingId ? 'Draft submitted' : savingWriting ? 'Saving…' : 'Submit for feedback'}
             </button>
           </div>
+
+          {writingEval && <EvaluationPanel evaluation={writingEval} />}
         </div>
       )}
 
-      {error && <p className="rounded-lg bg-rose-50 p-3 text-xs text-rose-800">{error}</p>}
+      {error && <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{error}</p>}
     </div>
   );
 }

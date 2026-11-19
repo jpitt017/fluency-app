@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
 import WarmUpDeck from '@/components/b1b2/WarmUpDeck';
+import ListenButton from '@/components/b1b2/ListenButton';
 import OutputStudio from '@/components/b1b2/OutputStudio';
 import type {
   BlockKind,
@@ -142,6 +143,8 @@ function WarmUpSection({ content, lessonNumber, signedIn }: { content: WarmUpCon
           signedIn={signedIn}
           cardCount={content.card_count ?? 8}
           reviewLadderDays={content.review_ladder_days ?? [1, 3, 7, 14, 30]}
+          deckSlug={content.deck_slug ?? null}
+          limit={Math.max(content.card_count ?? 8, 8)}
         />
       </div>
     </>
@@ -164,7 +167,13 @@ function InputSection({ content, payload }: { content: InputContent; payload: Le
             {input.duration_seconds ? <span className="text-slate-500">· {input.duration_seconds}s</span> : null}
             {input.word_count ? <span className="text-slate-500">· {input.word_count} words</span> : null}
           </div>
-          <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-800">{input.body}</p>
+          <div className="mt-3">
+            <ListenButton text={input.body} accent={input.accent} />
+          </div>
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs font-semibold text-slate-600">Show transcript</summary>
+            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-800">{input.body}</p>
+          </details>
           <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">Source: {input.source_label}</p>
 
           {input.questions?.length ? (

@@ -36,14 +36,6 @@ function statusLabel(status: string) {
   return 'Not started';
 }
 
-function checkpointLesson(timing: string) {
-  const match = timing.match(/module\s*(\d+)/i);
-  if (!match) return null;
-  const moduleNumber = Number(match[1]);
-  if (!Number.isFinite(moduleNumber) || moduleNumber < 1 || moduleNumber > 8) return null;
-  return moduleNumber * 8;
-}
-
 export default function CurriculumOverview({ outline, signedIn }: { outline: CurriculumOutline; signedIn: boolean }) {
   const { course, modules, checkpoints, due_cards: dueCards } = outline;
   const [filter, setFilter] = useState<'all' | SkillArea>('all');
@@ -118,9 +110,16 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
           <p className="text-sm font-bold text-slate-900">{signedIn ? 'Your progress' : 'Course progress'}</p>
           <p className="mt-1 text-sm text-slate-600">
             {completedCount} / {totalLessons} lessons · {completedHours} / {course?.total_hours ?? 64} hours completed
-            {signedIn && dueCards > 0 ? ` · ${dueCards} vocabulary cards due` : ''}
-          </p>
+            </p>
           {!signedIn && <p className="mt-1 text-xs text-slate-500">Sign in to track lessons, save recordings and keep your review queue.</p>}
+          {signedIn && (
+            <p className="mt-1 text-xs text-slate-600">
+              {dueCards > 0 ? `${dueCards} vocabulary cards due — ` : 'Review queue clear — '}
+              <Link href="/review" className="font-semibold text-indigo-700 hover:underline">
+                open review
+              </Link>
+            </p>
+          )}
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white sm:mt-0 sm:ml-6 sm:max-w-xs">
           <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(100, (completedCount / totalLessons) * 100)}%` }} />
@@ -174,7 +173,6 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700">Assessment checkpoints</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {checkpoints.map((checkpoint) => {
-            const target = checkpointLesson(checkpoint.timing);
             const body = (
               <>
                 <div className="flex items-center justify-between gap-2">
@@ -187,14 +185,14 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
                 <p className="mt-1 text-[11px] leading-4 text-slate-600">{checkpoint.description}</p>
               </>
             );
-            return target ? (
-              <Link key={checkpoint.code} href={`/curriculum/lessons/${target}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-indigo-300 hover:bg-indigo-50/40">
+            return (
+              <Link
+                key={checkpoint.code}
+                href={`/curriculum/checkpoints/${checkpoint.code}`}
+                className="rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-indigo-300 hover:bg-indigo-50/40"
+              >
                 {body}
               </Link>
-            ) : (
-              <div key={checkpoint.code} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                {body}
-              </div>
             );
           })}
         </div>

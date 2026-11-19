@@ -29,15 +29,19 @@ const GRADES = [
  * so the UI never does interval maths.
  */
 export default function WarmUpDeck({
-  lessonNumber,
   signedIn,
-  cardCount,
-  reviewLadderDays,
+  lessonNumber = null,
+  cardCount = 8,
+  reviewLadderDays = [1, 3, 7, 14, 30],
+  deckSlug = null,
+  limit = 8,
 }: {
-  lessonNumber: number;
   signedIn: boolean;
-  cardCount: number;
-  reviewLadderDays: number[];
+  lessonNumber?: number | null;
+  cardCount?: number;
+  reviewLadderDays?: number[];
+  deckSlug?: string | null;
+  limit?: number;
 }) {
   const [cards, setCards] = useState<DueCard[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -53,7 +57,10 @@ export default function WarmUpDeck({
     setError('');
     try {
       await supabase.rpc('ensure_vocab_cards');
-      const { data, error: dueError } = await supabase.rpc('get_due_cards', { p_limit: Math.max(cardCount, 8) });
+      const { data, error: dueError } = await supabase.rpc('get_due_cards', {
+        p_limit: Math.max(limit, cardCount),
+        p_deck_slug: deckSlug,
+      });
       if (dueError) throw dueError;
       setCards((data as DueCard[] | null) ?? []);
       setIndex(0);
@@ -92,7 +99,7 @@ export default function WarmUpDeck({
           {cardCount} cards from this lesson&apos;s deck are waiting in your spaced-repetition queue.
         </p>
         <Link
-          href={`/login?next=/curriculum/lessons/${lessonNumber}`}
+          href={lessonNumber ? `/login?next=/curriculum/lessons/${lessonNumber}` : '/login'}
           className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
         >
           Sign in to review

@@ -16,8 +16,11 @@ An AI-powered British English learning platform focused on CEFR B1 speaking and 
 
 ## Core Features
 
-- **Speaking Lab (`/labs`):** Real-time audio recording transcribed via Groq Whisper and evaluated against B1 British English fluency, pronunciation, and vocabulary benchmarks.
+- **AI examiner:** every lesson recording is transcribed with Groq Whisper and scored 0–100 across fluency, vocabulary, grammar, coherence and pronunciation; writing is scored on task response, organisation, grammar, range and style. Feedback, strengths, improvements and a corrected extract come back in the feedback block.
+- **Speaking Lab (`/labs`):** free-form practice with the same examiner behind it.
 - **Writing Lab (`/labs`):** Interactive writing practice with structured AI grammar corrections, natural British phrasing suggestions, and target keyword tracking.
+- **Progress (`/dashboard`, `/review`):** XP, learner band, streak, six skill meters, badges and a weekly report; a spaced-repetition review queue that is also scoped per lesson.
+- **Checkpoints (`/curriculum/checkpoints/:code`):** four assessment points, each a mixed quiz plus a scored recording and writing sample, recorded with its band and XP.
 - **Structured Curriculum (`/curriculum`):** 64 ten-to-fifteen-minute lessons over 8 modules, each with a warm-up, input, practice, output and feedback block, plus four assessment checkpoints and placement onboarding (`/onboarding/placement`). Legacy `/curriculum/modules/:m/lessons/:l`, `/lessons/:sessionId` and `/sessions/:id` URLs 308-redirect to the matching lesson.
 - **Authentication & Persistence:** Server-side session management and user progress storage powered by Supabase SSR.
 - **Subscription Billing:** End-to-end Stripe Checkout integration with idempotent webhook handlers (`/api/stripe/webhook`) and sliding-window API rate limits.

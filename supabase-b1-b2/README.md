@@ -220,18 +220,36 @@ The DB password was generated at creation. If it is ever exposed, reset it in
 
 ## Not done yet
 
-These are deliberate gaps, not oversights — say the word and I'll build them next:
+These are deliberate gaps, not oversights:
 
-1. **Audio assets.** Listening inputs ship with transcripts and questions, not
-   produced audio. `content_inputs` has `duration_seconds` and an `accent` field
-   ready for either TTS generation or recorded files.
-2. **AI feedback endpoints** for speaking/writing scoring. The schema already
-   stores the five-criterion rubrics, `overall`, strengths, improvements and an
-   `ai_model` field; only the server route is missing.
-3. **Checkpoint runner.** The four `checkpoints` are seeded and linked to their
-   module, but the lesson pages lead to the module's last lesson; a dedicated
-   checkpoint screen (quiz + recording + writing, scored into
-   `checkpoint_attempts`) is still to build.
+1. **Recorded audio for listening inputs.** The app reads transcripts aloud with
+   the browser's speech synthesis (speed control, en-GB voice) and hides the text
+   behind a "Show transcript" toggle, but there are no produced audio files yet.
+   `content_inputs.duration_seconds` and `accent` are ready for them.
+2. **Pronunciation scoring from the audio itself.** Pronunciation is currently
+   inferred from the transcript by the examiner prompt; a phoneme-level model
+   would need the audio features Whisper discards.
+3. **Enrolment bootstrap.** `get_learner_dashboard()` reads `enrollments` for the
+   next lesson; a new sign-up has no enrolment row, so the dashboard falls back
+   to the curriculum outline. An onboarding insert closes that gap.
+
+## Lesson-level output tasks (0008)
+
+Every lesson now owns its output task. The migration derives a speaking task for
+the 56 non-writing lessons and a writing task for the 8 writing lessons from
+each lesson's authored output block (title, prompt, target seconds, word range),
+inheriting the module's phrases, linkers and writing outline as scaffolding.
+
+`get_lesson()` prefers `lesson_id` and falls back to the module-scoped task, so
+results are now attributable per lesson. `get_due_cards(p_limit, p_deck_slug)`
+accepts a deck filter, and `get_checkpoint(code)` plus
+`complete_checkpoint(code, scores, quiz_correct, quiz_total, speaking_attempt_id,
+writing_submission_id)` back the checkpoint screen (24-item mixed quiz, scored
+recording and writing, band recorded in `checkpoint_attempts`, +150 XP).
+
+Applied remotely as two migrations — `b1b2_per_lesson_tasks` and
+`b1b2_checkpoint_runner` — mirrored locally in
+`migrations/0008_per_lesson_tasks.sql`.
 
 ---
 
@@ -248,6 +266,10 @@ duplicated course data.
 | Output block | `storage('speaking-recordings')` + `speaking_attempts`; `writing_submissions` |
 | Feedback block | `POST /api/curriculum/progress` → `lesson_progress` (XP via `lesson_progress_reward`) |
 | `/api/progress` | same table, addressed by lesson number |
+| `POST /api/curriculum/score` | Groq examiner → `speaking_attempts` / `writing_submissions` scores, strengths, improvements |
+| `/dashboard` | `get_learner_dashboard()`, `weekly_reports`, badges |
+| `/review` | `get_due_cards(20)` across decks |
+| `/curriculum/checkpoints/:code` | `get_checkpoint()` → `complete_checkpoint()` |
 
 Aliases: `lib/b1b2/{types,data}.ts`, `components/b1b2/*`, `utils/supabase/server.ts`.
 The repo's `@/*` path alias points at the repo **root**, not `src/`.

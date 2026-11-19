@@ -229,3 +229,99 @@ export interface CurriculumOutline {
   due_cards: number;
   checkpoints: OutlineCheckpoint[];
 }
+
+/* ------------------------------------------------------------------ */
+/* Scoring, checkpoints, learner dashboard                             */
+/* ------------------------------------------------------------------ */
+
+export interface Evaluation {
+  overall: number;
+  scores: Record<string, number>;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  transcript?: string;
+  corrected?: string;
+  model?: string;
+}
+
+export interface CheckpointTaskSpec {
+  kind: string;
+  title: string;
+  detail: string;
+  minutes: number;
+}
+
+export interface CheckpointRow {
+  id: string;
+  code: string;
+  title: string;
+  timing_label: string;
+  description: string;
+  tasks: CheckpointTaskSpec[];
+  duration_minutes: number;
+  skills: SkillArea[];
+  module_id: string | null;
+}
+
+export interface CheckpointAttempt {
+  id: string;
+  status: string;
+  scores: Record<string, number>;
+  result: {
+    overall: number | null;
+    band: string;
+    quiz_correct: number;
+    quiz_total: number;
+    quiz_percent: number | null;
+  } | null;
+  completed_at: string | null;
+}
+
+export interface CheckpointPayload {
+  checkpoint: CheckpointRow;
+  module: { number: number; title: string } | null;
+  items: PracticeItem[];
+  speaking: SpeakingTask | null;
+  writing: WritingTask | null;
+  attempt: CheckpointAttempt | null;
+}
+
+export interface BadgeRow {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+  earned_at?: string | null;
+}
+
+export interface LearnerDashboard {
+  profile: {
+    display_name?: string | null;
+    full_name?: string | null;
+    xp_total?: number;
+    learner_band?: string;
+    streak_days?: number;
+  } | null;
+  xp_total: number | null;
+  learner_band: string | null;
+  streak_days: number | null;
+  skills: Record<string, { score: number; lessons: number }>;
+  due_cards: number;
+  lessons_completed: number;
+  next_lesson: { lesson_number: number; title: string; can_do: string; module_title: string } | null;
+  badges: { code: string; title: string; earned_at: string }[];
+}
+
+export interface WeeklyReport {
+  id: string;
+  week_start: string;
+  study_minutes: number | null;
+  words_learned: number | null;
+  recordings: number | null;
+  writing_tasks: number | null;
+  weakest_skill: SkillArea | null;
+  payload: Record<string, unknown> | null;
+}

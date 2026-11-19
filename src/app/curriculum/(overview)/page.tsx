@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getViewer, loadOutline } from '@/lib/b1b2/data';
-import CurriculumOverview from './CurriculumOverview';
+import CurriculumOverview from '../CurriculumOverview';
 
 export const dynamic = 'force-dynamic';
 
