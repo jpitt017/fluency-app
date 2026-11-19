@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { logStudentProgress } from '@/utils/progress';
@@ -59,11 +59,11 @@ export default function SpeakingLabPage({ params }: { params: { id: string } }) 
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-            🇬🇧 B1 British English Speaking Lab
+            B1 → B2 Global English Speaking Lab
           </span>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">Interactive Audio Session</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Record your response below. Groq Whisper will transcribe your voice and provide instant British coaching feedback.
+            Record your response below. Groq Whisper will transcribe your voice and provide instant CEFR B1 → B2 fluency feedback.
           </p>
         </div>
 

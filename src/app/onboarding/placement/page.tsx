@@ -158,11 +158,11 @@ export default function PlacementQuizPage() {
             </div>
 
             <button
-              onClick={() => router.push('/sessions/11111111-1111-1111-1111-000000000001')}
+              onClick={() => router.push('/curriculum/modules/1/lessons/1')}
               disabled={loading}
               className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
             >
-              Start Your First Session 🇬🇧
+              Start Session 1: Global Identities & Cultural Roots →
             </button>
           </div>
         )}

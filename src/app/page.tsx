@@ -5,11 +5,11 @@ export default function Home() {
     <main className="min-h-[calc(100vh-57px)] bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center space-y-6">
         <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
-          🇬🇧 B1 British English Platform
+          CEFR B1 → B2 Global English Platform · 64 Hours
         </span>
         <h1 className="text-2xl font-bold text-gray-900">Fluency Studio</h1>
         <p className="text-sm text-gray-600">
-          Master British English with AI-powered speaking labs, writing corrections, and interactive lessons.
+          Master international English fluency across 8 modules and 32 two-hour sessions with connected-speech labs, multi-accent listening, and speaking coaching.
         </p>
         <div className="space-y-3 pt-2">
           <Link
