@@ -45,23 +45,11 @@ export default function LessonNineExperience({ module, lesson }: { module: Curri
       </header>
 
       <section aria-labelledby="writing-lab-title" className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 id="writing-lab-title" className="text-lg font-bold text-slate-900">Focused writing practice</h2>
-            <p className="mt-1 text-sm text-slate-600">Use the present simple for habits and the present continuous for temporary changes.</p>
-          </div>
-          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Present simple vs. continuous</span>
+        <div className="mb-4 space-y-2">
+          <h2 id="writing-lab-title" className="text-sm font-semibold text-indigo-700">Present simple vs. present continuous · Target grammar</h2>
+          <p className="text-sm leading-6 text-slate-700">Use the present simple for habits and the present continuous for temporary changes.</p>
         </div>
-
-        <details className="mb-4 rounded-lg border border-slate-200 px-3 py-2">
-          <summary className="cursor-pointer text-xs font-semibold text-slate-600">Module targets</summary>
-          <div className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
-            <div><p className="font-semibold text-slate-700">Grammar</p><ul className="mt-1 list-disc pl-4 text-slate-500">{module.target_grammar.map((target) => <li key={target}>{target}</li>)}</ul></div>
-            <div><p className="font-semibold text-slate-700">Vocabulary</p><ul className="mt-1 list-disc pl-4 text-slate-500">{module.target_vocabulary.map((target) => <li key={target}>{target}</li>)}</ul></div>
-          </div>
-        </details>
-
-        <WritingLab lessonContext={labContext} />
+        <WritingLab lessonContext={labContext} compactLesson />
         <p className="mt-3 text-right text-xs text-slate-400">Want to practise freely? <Link href="/labs" className="font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-indigo-700">Open the /labs sandbox</Link>.</p>
       </section>
 
