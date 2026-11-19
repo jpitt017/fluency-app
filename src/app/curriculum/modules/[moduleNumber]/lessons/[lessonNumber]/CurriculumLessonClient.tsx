@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { getLessonActivity, type CurriculumLesson, type CurriculumModule } from '@/lib/curriculum';
+import { b1Curriculum, getLessonActivity, type CurriculumLesson, type CurriculumModule } from '@/lib/curriculum';
 
 export default function CurriculumLessonClient({ module, lesson }: { module: CurriculumModule; lesson: CurriculumLesson }) {
   const activity = useMemo(() => getLessonActivity(lesson.stage, lesson.title), [lesson]);
