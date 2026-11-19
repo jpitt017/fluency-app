@@ -67,18 +67,11 @@ export async function proxy(request: NextRequest) {
     response.headers.set('X-AI-Usage-Remaining-Day', String(data.daily_units_remaining ?? 0));
   }
 
-  if (!user && pathname.startsWith('/sessions')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-
   return response;
 }
 
 export const config = {
   matcher: [
-    '/sessions/:path*',
     '/api/speaking/:path*',
     '/api/writing/:path*',
     '/api/checkpoints/:path*',

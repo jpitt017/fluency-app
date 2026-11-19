@@ -1,30 +1,23 @@
-import { notFound } from 'next/navigation';
-import CurriculumLessonClient from './CurriculumLessonClient';
-import LessonLabs from '@/components/labs/LessonLabs';
-import { b1Curriculum } from '@/lib/curriculum';
+import { notFound, permanentRedirect } from 'next/navigation';
 
-export function generateStaticParams() {
-  return b1Curriculum.modules.flatMap((module) =>
-    module.lessons.map((lesson) => ({
-      moduleNumber: String(module.module_number),
-      lessonNumber: String(lesson.lesson_number),
-    })),
-  );
-}
+/**
+ * Legacy 32-session URLs (module 1–8 × session 1–4) redirect to the 64-lesson
+ * course. Session `l` covered new lessons `2l−1` and `2l`, so it maps to the
+ * first of the pair and the learner continues from there.
+ */
+export const dynamic = 'force-dynamic';
 
-export default async function CurriculumLessonPage({
+export default async function LegacyLessonRedirect({
   params,
 }: {
   params: Promise<{ moduleNumber: string; lessonNumber: string }>;
 }) {
   const { moduleNumber, lessonNumber } = await params;
-  const curriculumModule = b1Curriculum.modules.find((item) => item.module_number === Number(moduleNumber));
-  const lesson = curriculumModule?.lessons.find((item) => item.lesson_number === Number(lessonNumber));
-  if (!curriculumModule || !lesson) notFound();
-  return (
-    <>
-      <CurriculumLessonClient module={curriculumModule} lesson={lesson} />
-      <LessonLabs module={curriculumModule} lesson={lesson} />
-    </>
-  );
+  const moduleValue = Number(moduleNumber);
+  const lessonValue = Number(lessonNumber);
+
+  if (!Number.isInteger(moduleValue) || !Number.isInteger(lessonValue)) notFound();
+  if (moduleValue < 1 || moduleValue > 8 || lessonValue < 1 || lessonValue > 4) notFound();
+
+  permanentRedirect(`/curriculum/lessons/${(moduleValue - 1) * 8 + (lessonValue - 1) * 2 + 1}`);
 }
