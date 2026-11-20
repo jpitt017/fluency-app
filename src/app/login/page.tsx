@@ -7,6 +7,15 @@ import { createClient } from '@/utils/supabase/client';
 
 type PendingAction = 'auth' | 'magic' | 'reset' | null;
 
+function formatAuthError(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : fallback;
+  const lower = raw.toLowerCase();
+  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit')) {
+    return 'Email sending limit reached (Supabase default allows 2 emails/hour without custom SMTP). Sign in with your password above, or wait before requesting another link.';
+  }
+  return raw;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
@@ -69,7 +78,7 @@ function LoginForm() {
       if (otpError) throw otpError;
       setMessage('Check your email for a one-time sign-in link.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to send a sign-in link.');
+      setError(formatAuthError(err, 'Unable to send a sign-in link.'));
     } finally {
       setPendingAction(null);
     }
@@ -96,7 +105,7 @@ function LoginForm() {
       if (resetError) throw resetError;
       setMessage('If an account exists for that email, a password-reset link will be sent.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to send a password-reset email.');
+      setError(formatAuthError(err, 'Unable to send a password-reset email.'));
     } finally {
       setPendingAction(null);
     }
