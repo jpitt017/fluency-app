@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
   const next = searchParams.get('next');
-  const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+  const defaultNext = type === 'recovery' ? '/login?mode=update-password' : '/dashboard';
+  const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : defaultNext;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
