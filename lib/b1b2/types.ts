@@ -114,6 +114,12 @@ export interface InputQuestion {
   answer: string;
 }
 
+export interface SpeakerAccentMeta {
+  speaker: string;
+  accent: string;
+  label: string;
+}
+
 export interface ContentInput {
   id: string;
   kind: 'listening' | 'reading';
@@ -121,6 +127,7 @@ export interface ContentInput {
   source_label: string;
   accent: string | null;
   audio_url?: string | null;
+  speaker_accents?: SpeakerAccentMeta[];
   body: string;
   duration_seconds: number | null;
   word_count: number | null;
@@ -358,6 +365,9 @@ export interface RecurringErrorTag {
   label: string;
   count: number;
   weeklyCount?: number;
+  per100Words: number;
+  per100WordsPrev: number | null;
+  trend: 'improving' | 'stable' | 'worsening';
 }
 
 export interface ErrorReviewCardRow {
@@ -365,6 +375,10 @@ export interface ErrorReviewCardRow {
   category: string;
   prompt_sentence: string;
   corrected_sentence: string;
+  context_sentence?: string | null;
+  card_format?: string;
+  occurrence_count?: number;
+  mastered?: boolean;
   explanation: string;
   due_at: string;
   interval_days: number;
@@ -386,6 +400,24 @@ export interface PlacementQuestionRow {
   answer_index: number;
 }
 
+export interface AiObservabilitySummary {
+  days: number;
+  total_requests: number;
+  cache_hits: number;
+  cache_hit_rate: number;
+  failure_count: number;
+  avg_latency_ms: number;
+  total_cost_usd: number;
+  endpoints: {
+    endpoint: string;
+    requests: number;
+    cache_hits: number;
+    failures: number;
+    avg_latency_ms: number;
+    total_cost_usd: number;
+  }[];
+}
+
 export interface DashboardSkillTelemetry {
   activeVocabMastered: number;
   activeVocabTotal: number;
@@ -396,7 +428,14 @@ export interface DashboardSkillTelemetry {
   writingLatest: number | null;
   writingDelta: number | null;
   recurringErrors: RecurringErrorTag[];
+  errorsPer100Words: number | null;
+  errorsPer100WordsDelta: number | null;
+  hasEnoughWordData: boolean;
+  hasEnoughTrendData: boolean;
+  minWordsRequired: number;
+  totalWordsEvaluated: number;
   dueErrorCards: number;
+  masteredErrorCards: number;
   missedPracticeCount: number;
   placementRecommendation: {
     band?: string;

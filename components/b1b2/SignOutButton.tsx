@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
 export default function SignOutButton() {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function handleSignOut() {
@@ -13,8 +11,8 @@ export default function SignOutButton() {
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
-      router.push('/');
-      router.refresh();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign('/');
     } finally {
       setBusy(false);
     }

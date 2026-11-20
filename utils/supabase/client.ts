@@ -1,4 +1,31 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient, type CookieOptionsWithName } from '@supabase/ssr';
+
+function isEmbeddedHttpsIframe(): boolean {
+  if (typeof window === 'undefined' || window.location.protocol !== 'https:') return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+function getBrowserCookieOptions(): CookieOptionsWithName | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const isHttps = window.location.protocol === 'https:';
+  if (isEmbeddedHttpsIframe()) {
+    return {
+      path: '/',
+      sameSite: 'none',
+      secure: true,
+      partitioned: true,
+    };
+  }
+  return {
+    path: '/',
+    sameSite: 'lax',
+    secure: isHttps,
+  };
+}
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,5 +37,7 @@ export function createClient() {
     );
   }
 
-  return createBrowserClient(supabaseUrl, supabaseKey);
+  return createBrowserClient(supabaseUrl, supabaseKey, {
+    cookieOptions: getBrowserCookieOptions(),
+  });
 }

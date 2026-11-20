@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { Mic, RotateCcw, Sparkles, Square } from 'lucide-react';
 import ShadowingLab from '@/components/b1b2/ShadowingLab';
+import { computeWordDiff } from '@/lib/b1b2/diff';
 import { speakPhrase } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 import type { SpeakingTask, WritingTask } from '@/lib/b1b2/types';
@@ -17,6 +18,7 @@ interface StructuredCorrection {
   corrected_sentence?: string;
   alternative?: string;
   error_category?: string;
+  other_label?: string;
   explanation?: string;
   reason?: string;
   severity?: 'minor' | 'moderate' | 'major';
@@ -476,10 +478,12 @@ export default function OutputStudio({
                             {c.corrected_sentence || c.alternative}
                           </span>
                         </p>
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center gap-1">
                           {c.error_category && (
                             <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
-                              {c.error_category.replace(/_/g, ' ')}
+                              {c.error_category === 'other' && c.other_label
+                                ? `other: ${c.other_label}`
+                                : c.error_category.replace(/_/g, ' ')}
                             </span>
                           )}
                           {c.severity && (
@@ -679,7 +683,9 @@ export default function OutputStudio({
                         <div className="flex flex-wrap items-center gap-1">
                           {c.error_category && (
                             <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
-                              {c.error_category.replace(/_/g, ' ')}
+                              {c.error_category === 'other' && c.other_label
+                                ? `other: ${c.other_label}`
+                                : c.error_category.replace(/_/g, ' ')}
                             </span>
                           )}
                           {c.severity && (
@@ -713,9 +719,24 @@ export default function OutputStudio({
               )}
 
               {writingResult.corrected && (
-                <div className="rounded-lg border-l-4 border-emerald-500 bg-white p-3 text-xs leading-5 text-stone-700">
-                  <strong className="block text-emerald-900">B2 model rewrite</strong>
-                  {writingResult.corrected}
+                <div className="space-y-2 rounded-lg border-l-4 border-emerald-500 bg-white p-3 text-xs leading-5 text-stone-700">
+                  <strong className="block text-emerald-900">Word-level diff (your draft → B2 model rewrite)</strong>
+                  <div className="flex flex-wrap gap-1 leading-6">
+                    {computeWordDiff(draft, writingResult.corrected).map((tok, i) => (
+                      <span
+                        key={i}
+                        className={
+                          tok.type === 'removed'
+                            ? 'rounded bg-rose-100 px-1 text-rose-800 line-through'
+                            : tok.type === 'added'
+                              ? 'rounded bg-emerald-100 px-1 font-semibold text-emerald-900'
+                              : 'text-stone-800'
+                        }
+                      >
+                        {tok.text}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

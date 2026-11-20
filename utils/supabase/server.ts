@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { cookies, headers } from 'next/headers';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 /**
  * Supabase client for server components and route handlers.
@@ -14,6 +14,13 @@ export async function createServerSupabase() {
   if (!url || !key) return null;
 
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const isHttps = headerStore.get('x-forwarded-proto') === 'https';
+  const isIframe =
+    headerStore.get('sec-fetch-dest') === 'iframe' ||
+    headerStore.get('sec-fetch-site') === 'cross-site';
+  const iframeCookiePatch: Partial<CookieOptions> =
+    isHttps && isIframe ? { sameSite: 'none', secure: true, partitioned: true } : {};
 
   return createServerClient(url, key, {
     cookies: {
@@ -22,7 +29,9 @@ export async function createServerSupabase() {
       },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, { ...options, ...iframeCookiePatch }),
+          );
         } catch {
           // Read-only context: the proxy owns refresh.
         }

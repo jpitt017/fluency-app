@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { createServerSupabase } from '@/utils/supabase/server';
+import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
+import { logAiRequest } from '@/lib/b1b2/observability';
+import {
+  sanitizeLearnerText,
+  UNTRUSTED_DATA_SYSTEM_RULE,
+  wrapLearnerSubmission,
+} from '@/lib/b1b2/prompt-guard';
+
+const ENDPOINT = '/api/lessons/generate';
+const MODEL_ID = 'openai/gpt-oss-20b';
 
 function getGroqClient(): Groq {
   const apiKey = process.env.GROQ_API_KEY;
@@ -17,28 +28,46 @@ interface GenerateLessonBody {
 }
 
 export async function POST(req: NextRequest) {
-  let groq: Groq;
+  const startedAt = Date.now();
+  const supabase = await createServerSupabase();
+  let statusCode = 200;
+  let inputChars = 0;
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let errorMessage: string | null = null;
 
   try {
-    groq = getGroqClient();
-  } catch (err: unknown) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Server configuration error' },
-      { status: 500 },
-    );
-  }
+    const guard = await enforceAiUsage(supabase, ENDPOINT, 5);
+    if (!guard.allowed && guard.response) {
+      statusCode = guard.response.status;
+      return guard.response;
+    }
 
-  try {
+    let groq: Groq;
+    try {
+      groq = getGroqClient();
+    } catch (err: unknown) {
+      statusCode = 503;
+      errorMessage = err instanceof Error ? err.message : 'Server configuration error';
+      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
+    }
+
     const body = (await req.json().catch(() => ({}))) as GenerateLessonBody;
-    const {
-      sessionNumber = 1,
-      topic = 'Everyday B1 → B2 Communication',
-      grammarFocus = 'Present Perfect vs. Past Simple',
-      vocabularyTheme = 'Work, Routines & Change',
-    } = body;
+    const sessionNumber = Number(body.sessionNumber) || 1;
+    const topic = sanitizeLearnerText(body.topic || 'Everyday B1 → B2 Communication', 200).text;
+    const grammarFocus = sanitizeLearnerText(
+      body.grammarFocus || 'Present Perfect vs. Past Simple',
+      200,
+    ).text;
+    const vocabularyTheme = sanitizeLearnerText(
+      body.vocabularyTheme || 'Work, Routines & Change',
+      200,
+    ).text;
+    inputChars = topic.length + grammarFocus.length + vocabularyTheme.length;
 
     const systemPrompt = `You are a CEFR B1 → B2 curriculum designer.
 Generate a structured, practical B1 → B2 English study unit matching the 5-block daily flow.
+${UNTRUSTED_DATA_SYSTEM_RULE}
 Return strictly valid JSON with no markdown fences and the following schema:
 {
   "title": "string",
@@ -66,12 +95,10 @@ Return strictly valid JSON with no markdown fences and the following schema:
 }`;
 
     const userPrompt = `Create B1 → B2 English Lesson ${sessionNumber}:
-- Topic: ${topic}
-- Grammar Focus: ${grammarFocus}
-- Vocabulary Theme: ${vocabularyTheme}`;
+${wrapLearnerSubmission(`Topic: ${topic}\nGrammar Focus: ${grammarFocus}\nVocabulary Theme: ${vocabularyTheme}`)}`;
 
     const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
+      model: MODEL_ID,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -81,17 +108,34 @@ Return strictly valid JSON with no markdown fences and the following schema:
       response_format: { type: 'json_object' },
     });
 
+    promptTokens = completion.usage?.prompt_tokens ?? 0;
+    completionTokens = completion.usage?.completion_tokens ?? 0;
+
     const rawContent = completion.choices[0]?.message?.content;
     if (!rawContent) {
-      return NextResponse.json({ error: 'Empty response from AI lesson generator' }, { status: 502 });
+      statusCode = 502;
+      return NextResponse.json(
+        { error: 'Empty response from AI lesson generator' },
+        { status: 502, headers: guard.headers },
+      );
     }
 
     const lessonContent = JSON.parse(rawContent) as Record<string, unknown>;
-    return NextResponse.json({ lesson: lessonContent });
+    return NextResponse.json({ lesson: lessonContent }, { headers: guard.headers });
   } catch (err: unknown) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to generate lesson' },
-      { status: 500 },
-    );
+    statusCode = 500;
+    errorMessage = err instanceof Error ? err.message : 'Failed to generate lesson';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  } finally {
+    await logAiRequest(supabase, {
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      statusCode,
+      latencyMs: Date.now() - startedAt,
+      inputChars,
+      promptTokens,
+      completionTokens,
+      errorMessage,
+    });
   }
 }
