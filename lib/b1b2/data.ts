@@ -91,6 +91,13 @@ export async function loadOutline(): Promise<CurriculumOutline | null> {
   }
 
   const outline = (data as CurriculumOutline | null) ?? null;
+  if (outline?.modules) {
+    const byNum = new Map<number, (typeof outline.modules)[number]>();
+    for (const mod of outline.modules) {
+      if (!byNum.has(mod.number)) byNum.set(mod.number, mod);
+    }
+    outline.modules = Array.from(byNum.values()).sort((a, b) => a.number - b.number);
+  }
   if (outline?.checkpoints) {
     outline.checkpoints = dedupeCheckpoints(outline.checkpoints);
   }

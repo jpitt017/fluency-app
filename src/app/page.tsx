@@ -91,7 +91,6 @@ export default async function Home() {
       }))
     : SKILL_HOURS_FALLBACK;
 
-  // Signed-in learner metrics
   const lessonsCompleted = dashboard?.lessons_completed ?? 0;
   const streakDays = dashboard?.streak_days ?? 0;
   const dueCards = dashboard?.due_cards ?? 0;
@@ -117,55 +116,53 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-9">
       {signedIn ? (
-        /* Signed-in Command Center */
+        /* Signed-in Study Workspace */
         <section className="grid gap-6 lg:grid-cols-12 lg:items-start">
           <div className="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_10px_28px_-14px_rgba(24,24,27,0.08)] lg:col-span-7">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="relative hidden h-14 w-14 shrink-0 items-center justify-center sm:flex">
-                  <svg className="h-14 w-14 -rotate-90" viewBox="0 0 60 60" aria-hidden="true">
-                    <circle cx="30" cy="30" r="24" fill="none" stroke="#f5f5f4" strokeWidth="5.5" />
-                    <circle
-                      cx="30"
-                      cy="30"
-                      r="24"
-                      fill="none"
-                      stroke="#4338ca"
-                      strokeWidth="5.5"
-                      strokeLinecap="round"
-                      strokeDasharray={ringCircumference}
-                      strokeDashoffset={ringOffset}
-                    />
-                  </svg>
-                  <span className="absolute font-mono text-[11px] font-bold text-stone-900">{progressPct}%</span>
-                </div>
+            <div className="flex items-start gap-4">
+              <div className="relative hidden h-14 w-14 shrink-0 items-center justify-center sm:flex">
+                <svg className="h-14 w-14 -rotate-90" viewBox="0 0 60 60" aria-hidden="true">
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="#f5f5f4" strokeWidth="5.5" />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="24"
+                    fill="none"
+                    stroke="#4338ca"
+                    strokeWidth="5.5"
+                    strokeLinecap="round"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringOffset}
+                  />
+                </svg>
+                <span className="absolute font-mono text-[11px] font-bold text-stone-900">{progressPct}%</span>
+              </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
-                    <span className="rounded-full bg-indigo-700 px-2.5 py-0.5 text-white">
-                      {formatBandLabel(dashboard?.learner_band)}
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-amber-800">
-                      <Flame className="h-3 w-3" />
-                      {streakDays}d streak
-                    </span>
-                    <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-stone-700">
-                      {lessonsCompleted}/64 lessons · {weeklyGoalHours}h/wk
-                    </span>
-                  </div>
-                  <h1 className="mt-2 font-serif text-2xl font-semibold leading-tight tracking-tight text-stone-900 sm:text-[1.75rem]">
-                    {lessonsCompleted === 0 && telemetry.placementRecommendation?.recommended_lesson
-                      ? `Placement Match: Start at Lesson ${recommendedLessonNum}`
-                      : nextLesson
-                        ? `Lesson ${nextLesson.lesson_number}: ${nextLesson.title}`
-                        : 'All 64 B1 → B2 Lessons Completed'}
-                  </h1>
-                  <p className="mt-1 text-xs leading-5 text-stone-600 sm:text-sm">
-                    {nextLesson
-                      ? `${nextLesson.module_title} — ${nextLesson.can_do}`
-                      : 'Review your assessment portfolio or drill any skill in the AI Output Studio.'}
-                  </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+                  <span className="rounded-full bg-indigo-700 px-2.5 py-0.5 text-white">
+                    {formatBandLabel(dashboard?.learner_band)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-amber-800">
+                    <Flame className="h-3 w-3" />
+                    {streakDays}d streak
+                  </span>
+                  <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-stone-700">
+                    {lessonsCompleted}/64 lessons · {weeklyGoalHours}h/wk
+                  </span>
                 </div>
+                <h1 className="mt-2 font-serif text-2xl font-semibold leading-tight tracking-tight text-stone-900 sm:text-[1.75rem]">
+                  {lessonsCompleted === 0 && telemetry.placementRecommendation?.recommended_lesson
+                    ? `Placement Match: Lesson ${recommendedLessonNum}`
+                    : nextLesson
+                      ? `Up next · Lesson ${nextLesson.lesson_number}: ${nextLesson.title}`
+                      : 'All 64 B1 → B2 Lessons Completed'}
+                </h1>
+                <p className="mt-1 text-xs leading-5 text-stone-600 sm:text-sm">
+                  {nextLesson
+                    ? `${nextLesson.module_title} — ${nextLesson.can_do}`
+                    : 'Review your assessment portfolio or practise in the AI Labs.'}
+                </p>
               </div>
             </div>
 
@@ -174,74 +171,60 @@ export default async function Home() {
                 href={`/curriculum/lessons/${recommendedLessonNum}`}
                 className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800"
               >
-                <span>{lessonsCompleted === 0 ? `Start Lesson ${recommendedLessonNum}` : `Resume Lesson ${recommendedLessonNum}`}</span>
+                <span>
+                  {lessonsCompleted === 0 ? `Start Lesson ${recommendedLessonNum}` : `Resume Lesson ${recommendedLessonNum}`}
+                </span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
               >
-                <span>Full Dashboard</span>
-              </Link>
-              <Link
-                href="/labs"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
-              >
-                <Mic className="h-4 w-4 text-indigo-700" />
-                <span>AI Labs</span>
+                <span>Analytics &amp; Pace</span>
               </Link>
             </div>
 
-            {/* Today's 3-Step Daily Queue */}
-            <div className="grid gap-2.5 border-t border-stone-100 pt-4 sm:grid-cols-3">
+            {/* Today's Review Queue (non-duplicative warm-up & repair actions) */}
+            <div className="grid gap-3 border-t border-stone-100 pt-4 sm:grid-cols-2">
               <Link
                 href="/vocabulary"
-                className="group rounded-xl border border-stone-200/80 bg-stone-50/70 p-3 transition hover:border-indigo-300 hover:bg-indigo-50/30"
+                className="group flex items-center justify-between rounded-xl border border-stone-200/80 bg-stone-50/70 p-3.5 transition hover:border-indigo-300 hover:bg-indigo-50/30"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-stone-800">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-emerald-700" />
-                    1. Vocab SRS
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                    <Layers className="h-4 w-4" />
                   </span>
-                  <ArrowRight className="h-3 w-3 text-stone-400 group-hover:text-indigo-700" />
+                  <div>
+                    <p className="text-xs font-bold text-stone-900">Vocabulary Warm-up</p>
+                    <p className="text-[11px] text-stone-600">
+                      {dueCards > 0
+                        ? `${dueCards} SRS cards due today`
+                        : `${telemetry.activeVocabMastered}/${telemetry.activeVocabTotal || 84} retained`}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-[11px] text-stone-600">
-                  {dueCards > 0 ? `${dueCards} cards due today` : `${telemetry.activeVocabMastered}/${telemetry.activeVocabTotal || 84} retained`}
-                </p>
+                <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-indigo-700" />
               </Link>
 
               <Link
                 href="/review"
-                className="group rounded-xl border border-stone-200/80 bg-stone-50/70 p-3 transition hover:border-amber-300 hover:bg-amber-50/30"
+                className="group flex items-center justify-between rounded-xl border border-stone-200/80 bg-stone-50/70 p-3.5 transition hover:border-amber-300 hover:bg-amber-50/30"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-stone-800">
-                  <span className="inline-flex items-center gap-1.5">
-                    <RotateCcw className="h-3.5 w-3.5 text-amber-700" />
-                    2. Error Drill
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+                    <RotateCcw className="h-4 w-4" />
                   </span>
-                  <ArrowRight className="h-3 w-3 text-stone-400 group-hover:text-amber-700" />
+                  <div>
+                    <p className="text-xs font-bold text-stone-900">Mistake Repair Queue</p>
+                    <p className="text-[11px] text-stone-600">
+                      {dueErrors > 0 ? `${dueErrors} items due now` : 'Queue clear right now'}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-[11px] text-stone-600">
-                  {dueErrors > 0 ? `${dueErrors} repairs due` : 'Queue clear right now'}
-                </p>
-              </Link>
-
-              <Link
-                href={`/curriculum/lessons/${recommendedLessonNum}`}
-                className="group rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 transition hover:border-indigo-400"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
-                  <span className="inline-flex items-center gap-1.5">
-                    <BookOpen className="h-3.5 w-3.5 text-indigo-700" />
-                    3. Lesson {recommendedLessonNum}
-                  </span>
-                  <ArrowRight className="h-3 w-3 text-indigo-600" />
-                </div>
-                <p className="mt-1 text-[11px] text-indigo-800/80">5-block study loop</p>
+                <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-amber-700" />
               </Link>
             </div>
 
-            {/* Adaptive Error Focus Snippet */}
             {telemetry.recurringErrors.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200/70 bg-amber-50/40 px-3.5 py-2.5 text-xs">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -262,7 +245,7 @@ export default async function Home() {
             )}
           </div>
 
-          {/* Right Panel: Live Skill Mastery + Output Snapshots */}
+          {/* Right Panel: Live Skill Mastery + Latest Output */}
           <aside className="space-y-4 rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)] lg:col-span-5">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
@@ -309,13 +292,13 @@ export default async function Home() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 border-t border-stone-100 pt-3">
-              <Link href="/portfolio" className="rounded-xl bg-stone-50 p-3 transition hover:bg-stone-100">
+              <Link href="/labs" className="rounded-xl bg-stone-50 p-3 transition hover:bg-stone-100">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Latest Speaking</p>
                 <p className="mt-0.5 font-serif text-xl font-semibold text-stone-900">
                   {telemetry.speakingLatest !== null ? `${telemetry.speakingLatest}%` : '—'}
                 </p>
-                <p className="text-[11px] text-stone-500">
-                  {telemetry.speakingCount > 0 ? `${telemetry.speakingCount} evaluated` : 'Open Speaking Lab'}
+                <p className="text-[11px] text-indigo-700">
+                  {telemetry.speakingCount > 0 ? `${telemetry.speakingCount} evaluated` : 'Open Speaking Lab →'}
                 </p>
               </Link>
               <Link href="/portfolio" className="rounded-xl bg-stone-50 p-3 transition hover:bg-stone-100">
@@ -323,35 +306,32 @@ export default async function Home() {
                 <p className="mt-0.5 font-serif text-xl font-semibold text-stone-900">
                   {telemetry.writingLatest !== null ? `${telemetry.writingLatest}%` : '—'}
                 </p>
-                <p className="text-[11px] text-stone-500">
-                  {telemetry.writingCount > 0 ? `${telemetry.writingCount} evaluated` : 'Open Writing Studio'}
+                <p className="text-[11px] text-indigo-700">
+                  {telemetry.writingCount > 0 ? `${telemetry.writingCount} evaluated` : 'Open Portfolio →'}
                 </p>
               </Link>
             </div>
           </aside>
         </section>
       ) : (
-        /* Signed-out Crisp Command Overview */
+        /* Signed-out Workspace Overview (zero duplicate cards/stats) */
         <section className="grid gap-8 lg:grid-cols-12 lg:items-start">
           <div className="space-y-5 lg:col-span-7">
-            <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-stone-200/90 bg-white px-3.5 py-1 text-xs font-semibold text-stone-700 shadow-2xs">
+            <div className="inline-flex items-center gap-2 rounded-full border border-stone-200/90 bg-white px-3.5 py-1 text-xs font-semibold text-stone-700 shadow-2xs">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               <span>CEFR B1 → B2 · Independent User</span>
-              <span aria-hidden className="text-stone-300">·</span>
-              <span className="text-indigo-700">{course?.total_hours ?? 64} guided hours</span>
             </div>
 
             <h1 className="font-serif text-3xl font-semibold leading-[1.1] tracking-tight text-stone-900 sm:text-4xl lg:text-[2.85rem]">
-              A structured daily workspace to reach{' '}
+              A calm, structured workspace to reach{' '}
               <span className="italic text-indigo-700">solid B2 English.</span>
             </h1>
 
-            <p className="max-w-2xl text-sm leading-6 text-stone-600 sm:text-[15px]">
-              {course?.description ??
-                'Eight themed modules of eight lessons each (64 lessons total) built around FSRS active recall, multi-accent listening, spoken & written output, and targeted AI coaching.'}
+            <p className="max-w-xl text-sm leading-6 text-stone-600 sm:text-[15px]">
+              Build confident B2 fluency with multi-accent listening, FSRS collocation recall, and line-by-line AI feedback on every speaking recording and writing draft.
             </p>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/onboarding/placement"
                 className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800"
@@ -360,88 +340,46 @@ export default async function Home() {
                 <span>3-min Placement Check</span>
               </Link>
               <Link
-                href="/curriculum"
+                href="/labs"
                 className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:border-stone-400 hover:bg-stone-50"
               >
-                <span>Explore 64 Lessons</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/labs"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white/80 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
-              >
                 <Mic className="h-4 w-4 text-indigo-700" />
-                <span>AI Labs</span>
+                <span>Try Speaking &amp; Writing Labs</span>
               </Link>
             </div>
 
-            {/* Interactive Platform Capabilities Strip */}
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <Link
-                href="/vocabulary"
-                className="group rounded-xl border border-stone-200/80 bg-white p-3.5 transition hover:border-indigo-300"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-stone-900">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-emerald-700" />
-                    FSRS Collocation Recall
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-indigo-700" />
-                </div>
-                <p className="mt-1 text-xs text-stone-600">
-                  Cloze prompts, British audio, and spaced scheduling across 84+ B1–B2 chunks.
-                </p>
-              </Link>
-
-              <Link
-                href="/labs"
-                className="group rounded-xl border border-stone-200/80 bg-white p-3.5 transition hover:border-indigo-300"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-stone-900">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Mic className="h-3.5 w-3.5 text-rose-700" />
-                    Whisper Speaking &amp; Writing Diff
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-indigo-700" />
-                </div>
-                <p className="mt-1 text-xs text-stone-600">
-                  Shadowing waveform studio, B2 rewrites, and line-by-line error tracking.
-                </p>
-              </Link>
-            </div>
-
-            <dl className="grid grid-cols-2 gap-3 border-t border-stone-200/80 pt-4 sm:grid-cols-4">
-              <div className="rounded-xl border border-stone-200/70 bg-white/80 p-3">
+            <dl className="grid grid-cols-2 gap-3 border-t border-stone-200/80 pt-5 sm:grid-cols-4">
+              <div className="rounded-xl border border-stone-200/70 bg-white/90 p-3.5">
                 <dt className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                   <Clock className="h-3 w-3 text-indigo-600" />
-                  <span>Length</span>
+                  <span>Guided Hours</span>
                 </dt>
-                <dd className="mt-1 font-serif text-xl font-semibold text-stone-900">
+                <dd className="mt-1 font-serif text-2xl font-semibold text-stone-900">
                   {course?.total_hours ?? 64}h
                 </dd>
               </div>
-              <div className="rounded-xl border border-stone-200/70 bg-white/80 p-3">
+              <div className="rounded-xl border border-stone-200/70 bg-white/90 p-3.5">
                 <dt className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                   <BookOpen className="h-3 w-3 text-indigo-600" />
-                  <span>Structure</span>
+                  <span>Modules</span>
                 </dt>
-                <dd className="mt-1 font-serif text-xl font-semibold text-stone-900">8 × 8</dd>
+                <dd className="mt-1 font-serif text-2xl font-semibold text-stone-900">8 × 8</dd>
               </div>
-              <div className="rounded-xl border border-stone-200/70 bg-white/80 p-3">
+              <div className="rounded-xl border border-stone-200/70 bg-white/90 p-3.5">
                 <dt className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                   <PenLine className="h-3 w-3 text-indigo-600" />
-                  <span>Daily pace</span>
+                  <span>Daily Pace</span>
                 </dt>
-                <dd className="mt-1 font-serif text-xl font-semibold text-stone-900">
+                <dd className="mt-1 font-serif text-2xl font-semibold text-stone-900">
                   {course?.daily_minutes_min ?? 20}–{course?.daily_minutes_max ?? 45}m
                 </dd>
               </div>
-              <div className="rounded-xl border border-stone-200/70 bg-white/80 p-3">
+              <div className="rounded-xl border border-stone-200/70 bg-white/90 p-3.5">
                 <dt className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                   <Award className="h-3 w-3 text-indigo-600" />
                   <span>Checkpoints</span>
                 </dt>
-                <dd className="mt-1 font-serif text-xl font-semibold text-stone-900">M2·4·6·8</dd>
+                <dd className="mt-1 font-serif text-2xl font-semibold text-stone-900">4 Gates</dd>
               </div>
             </dl>
           </div>
@@ -508,7 +446,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* 8-Module Roadmap (live progress when signed in, clean fallback if outline unavailable) */}
+      {/* 8-Module Roadmap */}
       <section className="mt-10 border-t border-stone-200/80 pt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -521,7 +459,7 @@ export default async function Home() {
             href="/curriculum"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline"
           >
-            <span>Explore all 64 lessons</span>
+            <span>Open full syllabus</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -573,11 +511,6 @@ export default async function Home() {
                         {g}
                       </span>
                     ))}
-                    {mod.number % 2 === 0 && (
-                      <span className="ml-auto rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
-                        Checkpoint
-                      </span>
-                    )}
                   </div>
                 </div>
               </Link>
