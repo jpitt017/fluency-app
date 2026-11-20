@@ -10,9 +10,11 @@ type PendingAction = 'auth' | 'magic' | 'reset' | null;
 function LoginForm() {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
+  const mode = searchParams.get('mode');
   const callbackError = searchParams.get('error');
   const safeNext =
     nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/dashboard';
+  const isUpdatePassword = mode === 'update-password';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,7 +90,7 @@ function LoginForm() {
     try {
       const supabase = createClient();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/login?mode=update-password')}`,
       });
 
       if (resetError) throw resetError;
@@ -108,6 +110,14 @@ function LoginForm() {
 
     try {
       const supabase = createClient();
+
+      if (isUpdatePassword) {
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
+        window.location.assign(safeNext);
+        return;
+      }
+
       const normalizedEmail = email.trim();
 
       if (isSignUp) {
@@ -174,16 +184,22 @@ function LoginForm() {
           English B1 → B2 · Fluency Studio
         </span>
         <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-stone-900">
-          {isSignUp ? 'Create your account' : 'Welcome back'}
+          {isUpdatePassword
+            ? 'Set a new password'
+            : isSignUp
+              ? 'Create your account'
+              : 'Welcome back'}
         </h1>
         <p className="mt-1.5 text-sm text-stone-600">
-          {isSignUp
-            ? 'Start your 64-hour B1 → B2 study workspace'
-            : 'Sign in to continue your lessons, SRS reviews, and AI labs'}
+          {isUpdatePassword
+            ? 'Choose a new password (at least 6 characters) for your account'
+            : isSignUp
+              ? 'Start your 64-hour B1 → B2 study workspace'
+              : 'Sign in to continue your lessons, SRS reviews, and AI labs'}
         </p>
       </div>
 
-      {signedInEmail && (
+      {signedInEmail && !isUpdatePassword && (
         <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-950">
           <p className="font-semibold">Already signed in as {signedInEmail}</p>
           <div className="mt-2 flex items-center gap-2">
@@ -223,29 +239,31 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleAuth} className="space-y-4">
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
-            Email address
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-          />
-        </div>
+        {!isUpdatePassword && (
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
-              Password
+              {isUpdatePassword ? 'New password' : 'Password'}
             </label>
-            {!isSignUp && (
+            {!isSignUp && !isUpdatePassword && (
               <button
                 type="button"
                 onClick={handlePasswordReset}
@@ -263,7 +281,7 @@ function LoginForm() {
               type={showPassword ? 'text' : 'password'}
               required
               minLength={6}
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              autoComplete={isSignUp || isUpdatePassword ? 'new-password' : 'current-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
@@ -286,15 +304,19 @@ function LoginForm() {
           className="w-full cursor-pointer rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:bg-indigo-400"
         >
           {pendingAction === 'auth'
-            ? isSignUp
-              ? 'Creating account…'
-              : 'Signing in…'
-            : isSignUp
-              ? 'Create account'
-              : 'Sign in'}
+            ? isUpdatePassword
+              ? 'Updating password…'
+              : isSignUp
+                ? 'Creating account…'
+                : 'Signing in…'
+            : isUpdatePassword
+              ? 'Save new password'
+              : isSignUp
+                ? 'Create account'
+                : 'Sign in'}
         </button>
 
-        {!isSignUp && (
+        {!isSignUp && !isUpdatePassword && (
           <button
             type="button"
             onClick={handleMagicLink}
@@ -307,17 +329,19 @@ function LoginForm() {
         )}
       </form>
 
-      <p className="mt-6 border-t border-stone-100 pt-5 text-center text-xs text-stone-600">
-        {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-        <button
-          type="button"
-          onClick={toggleAuthMode}
-          disabled={pendingAction !== null}
-          className="cursor-pointer font-semibold text-indigo-700 underline-offset-2 hover:underline disabled:text-stone-400"
-        >
-          {isSignUp ? 'Switch to login' : 'Sign up'}
-        </button>
-      </p>
+      {!isUpdatePassword && (
+        <p className="mt-6 border-t border-stone-100 pt-5 text-center text-xs text-stone-600">
+          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+          <button
+            type="button"
+            onClick={toggleAuthMode}
+            disabled={pendingAction !== null}
+            className="cursor-pointer font-semibold text-indigo-700 underline-offset-2 hover:underline disabled:text-stone-400"
+          >
+            {isSignUp ? 'Switch to login' : 'Sign up'}
+          </button>
+        </p>
+      )}
     </div>
   );
 }

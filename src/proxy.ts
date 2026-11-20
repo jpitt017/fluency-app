@@ -17,6 +17,17 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname.replace(/\/$/, '');
   const isAiProtected = AI_PROTECTED_PATHS.has(pathname);
 
+  // Forward Supabase PKCE / OTP callbacks that land on `/` directly to `/auth/callback`.
+  if (
+    pathname === '' &&
+    (request.nextUrl.searchParams.has('code') ||
+      (request.nextUrl.searchParams.has('token_hash') && request.nextUrl.searchParams.has('type')))
+  ) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = '/auth/callback';
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // Fail closed on protected AI API routes when auth is not configured.
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder.supabase.co')) {
     if (request.nextUrl.pathname.startsWith('/api/')) {
