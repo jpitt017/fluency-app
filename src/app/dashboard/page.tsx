@@ -159,7 +159,12 @@ export default async function DashboardPage() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-2xs transition hover:bg-stone-50"
             >
               <RotateCcw className="h-4 w-4 text-amber-700" />
-              <span>Mistake Review{telemetry.missedPracticeCount > 0 ? ` (${telemetry.missedPracticeCount})` : ''}</span>
+              <span>
+                Mistake Review
+                {telemetry.dueErrorCards + telemetry.missedPracticeCount > 0
+                  ? ` (${telemetry.dueErrorCards + telemetry.missedPracticeCount})`
+                  : ''}
+              </span>
             </Link>
           </div>
         </div>
@@ -293,7 +298,7 @@ export default async function DashboardPage() {
                   >
                     <span className="font-semibold text-stone-800">{err.label}</span>
                     <span className="rounded-full bg-white px-2 py-0.5 font-bold text-amber-800 ring-1 ring-amber-200">
-                      {err.count}×
+                      {err.weeklyCount ? `${err.weeklyCount}× wk · ` : ''}{err.count}×
                     </span>
                   </Link>
                 ))}

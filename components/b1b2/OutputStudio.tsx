@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
-import { Mic, RotateCcw, Sparkles, Square, Volume2 } from 'lucide-react';
+import { Mic, RotateCcw, Sparkles, Square } from 'lucide-react';
+import ShadowingLab from '@/components/b1b2/ShadowingLab';
 import { speakPhrase } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 import type { SpeakingTask, WritingTask } from '@/lib/b1b2/types';
@@ -11,10 +12,15 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-interface PronunciationNote {
-  target: string;
-  issue: string;
-  tip: string;
+interface StructuredCorrection {
+  original: string;
+  corrected_sentence?: string;
+  alternative?: string;
+  error_category?: string;
+  explanation?: string;
+  reason?: string;
+  severity?: 'minor' | 'moderate' | 'major';
+  rule?: string;
 }
 
 interface SpeakingEvalResult {
@@ -24,14 +30,15 @@ interface SpeakingEvalResult {
   feedback: string;
   strengths: string[];
   improvements: string[];
-  pronunciationNotes?: PronunciationNote[];
+  corrections?: StructuredCorrection[];
   tips?: string[];
+  transcriptionNote?: string;
+  cached?: boolean;
   rubric: {
-    fluency: number;
+    task_achievement: number;
     lexical_range: number;
     grammar_accuracy: number;
     coherence: number;
-    pronunciation: number;
   };
   score: number;
   newBadges?: string[];
@@ -42,7 +49,8 @@ interface WritingEvalResult {
   corrected: string;
   feedback: string;
   notes: string[];
-  corrections: { original: string; alternative: string; reason: string; rule?: string }[];
+  corrections: StructuredCorrection[];
+  cached?: boolean;
   rubric: {
     task_response: number;
     organisation: number;
@@ -53,6 +61,12 @@ interface WritingEvalResult {
   score: number;
   newBadges?: string[];
 }
+
+const SEVERITY_BADGE: Record<string, string> = {
+  major: 'bg-rose-100 text-rose-800',
+  moderate: 'bg-amber-100 text-amber-800',
+  minor: 'bg-stone-100 text-stone-700',
+};
 
 export default function OutputStudio({
   lessonId,
@@ -76,7 +90,7 @@ export default function OutputStudio({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const [draft, setDraft] = useState('');
-  const [variety, setVariety] = useState<'British' | 'American' | 'International'>('International');
+  const [variety, setVariety] = useState<'British' | 'American' | 'International'>('British');
   const [busy, setBusy] = useState<'speaking' | 'writing' | null>(null);
 
   const [speakingResult, setSpeakingResult] = useState<SpeakingEvalResult | null>(null);
@@ -290,91 +304,103 @@ export default function OutputStudio({
   const writingDelta =
     writingResult && prevWritingScore !== null ? writingResult.score - prevWritingScore : null;
 
+  const shadowingTargets = [
+    ...(speakingResult?.improvedResponse
+      ? [{ label: 'Your B2 upgrade', text: speakingResult.improvedResponse }]
+      : []),
+    ...(speaking?.useful_phrases ?? []).slice(0, 3).map((phrase, idx) => ({
+      label: `Phrase ${idx + 1}`,
+      text: phrase,
+    })),
+  ];
+
   return (
     <div className="space-y-6">
       {speaking && (
-        <div className="rounded-xl border border-stone-200 bg-white p-4">
-          <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-800">
-            Speaking · {speaking.kind}
-          </span>
-          <h3 className="mt-1.5 text-sm font-bold text-stone-900">{speaking.title}</h3>
-          <p className="mt-2 text-sm text-stone-700">{speaking.prompt}</p>
-          <p className="mt-1 text-xs text-stone-500">
-            Target length: ~{speaking.target_seconds}s
-            {speaking.target_terms?.length ? ` · Target vocabulary: ${speaking.target_terms.join(', ')}` : ''}
-          </p>
-
-          {speaking.useful_phrases?.length ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {speaking.useful_phrases.map((phrase) => (
-                <span key={phrase} className="rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700">
-                  {phrase}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {speaking.target_linkers?.length ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {speaking.target_linkers.map((linker) => (
-                <span key={linker} className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
-                  {linker}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {!recording ? (
-              <button
-                type="button"
-                onClick={startRecording}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50"
-              >
-                <Mic className="h-3.5 w-3.5 text-rose-700" />
-                <span>{audioBlob ? 'Re-record mic' : 'Record mic'}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={stopRecording}
-                className="inline-flex animate-pulse items-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
-              >
-                <Square className="h-3 w-3 fill-current" />
-                <span>Stop ({seconds}s)</span>
-              </button>
-            )}
-            {audioUrl && <audio controls src={audioUrl} className="h-8 max-w-full" />}
-          </div>
-
-          <label className="mt-3 block text-xs font-semibold text-stone-600">
-            Spoken transcript (optional when mic recording is attached — Whisper transcribes automatically)
-            <textarea
-              rows={3}
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              placeholder="Record with your mic above or type your spoken answer here…"
-              className="mt-1.5 w-full rounded-xl border border-stone-300 bg-stone-50/50 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
-            />
-          </label>
-
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-stone-500">
-              {audioBlob && !transcript.trim() ? `Audio recorded (${seconds}s)` : `${wordCount(transcript)} words in transcript`}
+        <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
+          <div>
+            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-800">
+              Speaking · {speaking.kind}
             </span>
-            <button
-              type="button"
-              disabled={busy === 'speaking' || (!transcript.trim() && !audioBlob)}
-              onClick={evaluateSpeaking}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate speaking'}</span>
-            </button>
+            <h3 className="mt-1.5 text-sm font-bold text-stone-900">{speaking.title}</h3>
+            <p className="mt-2 text-sm text-stone-700">{speaking.prompt}</p>
+            <p className="mt-1 text-xs text-stone-500">
+              Target length: ~{speaking.target_seconds}s
+              {speaking.target_terms?.length ? ` · Target vocabulary: ${speaking.target_terms.join(', ')}` : ''}
+            </p>
+
+            {speaking.useful_phrases?.length ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {speaking.useful_phrases.map((phrase) => (
+                  <span key={phrase} className="rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                    {phrase}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {speaking.target_linkers?.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {speaking.target_linkers.map((linker) => (
+                  <span key={linker} className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
+                    {linker}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {!recording ? (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50"
+                >
+                  <Mic className="h-3.5 w-3.5 text-rose-700" />
+                  <span>{audioBlob ? 'Re-record mic' : 'Record mic'}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="inline-flex animate-pulse items-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+                >
+                  <Square className="h-3 w-3 fill-current" />
+                  <span>Stop ({seconds}s)</span>
+                </button>
+              )}
+              {audioUrl && <audio controls src={audioUrl} className="h-8 max-w-full" />}
+            </div>
+
+            <label className="mt-3 block text-xs font-semibold text-stone-600">
+              Spoken transcript (Whisper transcribes your mic recording automatically; transcript checks cover content, grammar &amp; vocabulary)
+              <textarea
+                rows={3}
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder="Record with your mic above or type your spoken answer here…"
+                className="mt-1.5 w-full rounded-xl border border-stone-300 bg-stone-50/50 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
+              />
+            </label>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-stone-500">
+                {audioBlob && !transcript.trim() ? `Audio recorded (${seconds}s)` : `${wordCount(transcript)} words in transcript`}
+              </span>
+              <button
+                type="button"
+                disabled={busy === 'speaking' || (!transcript.trim() && !audioBlob)}
+                onClick={evaluateSpeaking}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate spoken content'}</span>
+              </button>
+            </div>
           </div>
 
           {speakingResult && (
-            <div className="mt-4 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
+            <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-lg bg-indigo-700 px-2.5 py-1 text-xs font-bold text-white">
@@ -392,6 +418,11 @@ export default function OutputStudio({
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-indigo-800 ring-1 ring-indigo-200">
                     {speakingResult.score >= 80 ? 'B2 Ready' : speakingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
+                  {speakingResult.cached && (
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
+                      Cached
+                    </span>
+                  )}
                   {speakingResult.newBadges?.map((b) => (
                     <span key={b} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
                       Badge unlocked: {b}
@@ -409,15 +440,19 @@ export default function OutputStudio({
               </div>
 
               <p className="text-sm text-stone-800">{speakingResult.feedback}</p>
+              {speakingResult.transcriptionNote && (
+                <p className="rounded-lg bg-white/80 px-3 py-2 text-[11px] text-stone-600 ring-1 ring-indigo-100">
+                  {speakingResult.transcriptionNote}
+                </p>
+              )}
 
               {speakingResult.rubric && (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
-                    ['Fluency', speakingResult.rubric.fluency],
+                    ['Task', speakingResult.rubric.task_achievement],
                     ['Lexis', speakingResult.rubric.lexical_range],
                     ['Grammar', speakingResult.rubric.grammar_accuracy],
                     ['Coherence', speakingResult.rubric.coherence],
-                    ['Pronunc.', speakingResult.rubric.pronunciation],
                   ].map(([label, val]) => (
                     <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
                       <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
@@ -427,28 +462,38 @@ export default function OutputStudio({
                 </div>
               )}
 
-              {speakingResult.pronunciationNotes && speakingResult.pronunciationNotes.length > 0 && (
-                <div className="space-y-1.5 rounded-lg bg-white p-3 text-xs text-stone-700 ring-1 ring-stone-200">
-                  <p className="font-bold uppercase tracking-wide text-indigo-800">
-                    Pronunciation, sound &amp; stress diagnostics
+              {speakingResult.corrections && speakingResult.corrections.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">
+                    Tracked grammar &amp; vocabulary edits (saved to review deck)
                   </p>
-                  {speakingResult.pronunciationNotes.map((note, idx) => (
-                    <div key={idx} className="flex flex-wrap items-start justify-between gap-2 border-t border-stone-100 pt-2 first:border-t-0 first:pt-0">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-stone-900">
-                          &ldquo;{note.target}&rdquo;{' '}
-                          <span className="font-normal text-stone-500">— {note.issue}</span>
+                  {speakingResult.corrections.map((c, idx) => (
+                    <div key={idx} className="rounded-lg bg-white p-2.5 text-xs text-stone-700 ring-1 ring-stone-200">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p>
+                          <span className="line-through text-rose-700">{c.original}</span> →{' '}
+                          <span className="font-semibold text-emerald-800">
+                            {c.corrected_sentence || c.alternative}
+                          </span>
                         </p>
-                        <p className="mt-0.5 text-stone-600">{note.tip}</p>
+                        <div className="flex items-center gap-1">
+                          {c.error_category && (
+                            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
+                              {c.error_category.replace(/_/g, ' ')}
+                            </span>
+                          )}
+                          {c.severity && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                                SEVERITY_BADGE[c.severity] ?? 'bg-stone-100 text-stone-700'
+                              }`}
+                            >
+                              {c.severity}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void speakPhrase(note.target, 'en-GB', 0.85)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-stone-200 bg-stone-50 px-2 py-1 text-[11px] font-semibold text-stone-700 hover:bg-stone-100"
-                      >
-                        <Volume2 className="h-3 w-3 text-indigo-700" />
-                        <span>Hear model</span>
-                      </button>
+                      <p className="mt-1 text-stone-600">{c.explanation || c.reason}</p>
                     </div>
                   ))}
                 </div>
@@ -493,6 +538,8 @@ export default function OutputStudio({
               )}
             </div>
           )}
+
+          <ShadowingLab targets={shadowingTargets} />
         </div>
       )}
 
@@ -503,7 +550,7 @@ export default function OutputStudio({
               Writing · {writing.format}
             </span>
             <div role="group" aria-label="English variety for writing feedback" className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold">
-              {(['International', 'British', 'American'] as const).map((v) => (
+              {(['British', 'International', 'American'] as const).map((v) => (
                 <button
                   key={v}
                   type="button"
@@ -576,6 +623,11 @@ export default function OutputStudio({
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
                     {writingResult.score >= 80 ? 'B2 Ready' : writingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
+                  {writingResult.cached && (
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
+                      Cached
+                    </span>
+                  )}
                   {writingResult.newBadges?.map((b) => (
                     <span key={b} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
                       Badge unlocked: {b}
@@ -612,21 +664,41 @@ export default function OutputStudio({
 
               {writingResult.corrections?.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">Line-by-line edits &amp; patterns</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">
+                    Line-by-line edits (saved to your error review queue)
+                  </p>
                   {writingResult.corrections.map((c, idx) => (
                     <div key={idx} className="rounded-lg bg-white p-2.5 text-xs text-stone-700 ring-1 ring-stone-200">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p>
                           <span className="line-through text-rose-700">{c.original}</span> →{' '}
-                          <span className="font-semibold text-emerald-800">{c.alternative}</span>
-                        </p>
-                        {c.rule && (
-                          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
-                            {c.rule}
+                          <span className="font-semibold text-emerald-800">
+                            {c.corrected_sentence || c.alternative}
                           </span>
-                        )}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {c.error_category && (
+                            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
+                              {c.error_category.replace(/_/g, ' ')}
+                            </span>
+                          )}
+                          {c.severity && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                                SEVERITY_BADGE[c.severity] ?? 'bg-stone-100 text-stone-700'
+                              }`}
+                            >
+                              {c.severity}
+                            </span>
+                          )}
+                          {c.rule && (
+                            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
+                              {c.rule}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="mt-1 text-stone-500">{c.reason}</p>
+                      <p className="mt-1 text-stone-600">{c.explanation || c.reason}</p>
                     </div>
                   ))}
                 </div>

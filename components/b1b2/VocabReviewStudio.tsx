@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { speakPhrase } from '@/lib/b1b2/speech';
+import { previewFsrsIntervals, type ReviewGrade } from '@/lib/b1b2/fsrs';
+import { playAudioOrSpeak } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 import type { VocabDeckSummary } from '@/lib/b1b2/types';
 
@@ -16,15 +17,25 @@ interface DueCard {
   example: string | null;
   collocations: string[] | null;
   translation_es: string | null;
+  audio_url?: string | null;
   ladder_step: number;
+  due_at?: string | null;
+  interval_days?: number | null;
+  stability?: number | null;
+  difficulty?: number | null;
+  fsrs_state?: number | null;
+  learning_steps?: number | null;
+  reps?: number | null;
+  lapses?: number | null;
+  last_review_at?: string | null;
 }
 
-const GRADES = [
-  { grade: 'again', label: 'Again', hint: '1 day' },
-  { grade: 'hard', label: 'Hard', hint: 'Shorten' },
-  { grade: 'good', label: 'Good', hint: 'Advance' },
-  { grade: 'easy', label: 'Easy', hint: 'Jump +2' },
-] as const;
+const GRADES: { grade: ReviewGrade; label: string }[] = [
+  { grade: 'again', label: 'Again' },
+  { grade: 'hard', label: 'Hard' },
+  { grade: 'good', label: 'Good' },
+  { grade: 'easy', label: 'Easy' },
+];
 
 function maskExample(example: string, term: string): string | null {
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -77,7 +88,7 @@ export default function VocabReviewStudio({
         const { data, error: cardError } = await supabase
           .from('vocab_cards')
           .select(
-            'id, ladder_step, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, translation_es)',
+            'id, ladder_step, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, translation_es, audio_url)',
           )
           .eq('vocab_items.deck_id', deckId)
           .lte('due_at', nowIso)
@@ -96,6 +107,7 @@ export default function VocabReviewStudio({
             example: string | null;
             collocations: string[] | null;
             translation_es: string | null;
+            audio_url: string | null;
           };
           return {
             card_id: String(row.id),
@@ -107,7 +119,17 @@ export default function VocabReviewStudio({
             example: item.example,
             collocations: item.collocations,
             translation_es: item.translation_es,
+            audio_url: item.audio_url,
             ladder_step: Number(row.ladder_step ?? 0),
+            due_at: row.due_at ? String(row.due_at) : null,
+            interval_days: Number(row.interval_days ?? 0),
+            stability: Number(row.stability ?? 0),
+            difficulty: Number(row.difficulty ?? 5),
+            fsrs_state: Number(row.fsrs_state ?? 0),
+            learning_steps: Number(row.learning_steps ?? 0),
+            reps: Number(row.reps ?? 0),
+            lapses: Number(row.lapses ?? 0),
+            last_review_at: row.last_review_at ? String(row.last_review_at) : null,
           };
         });
         setQueue(mapped);
@@ -124,16 +146,22 @@ export default function VocabReviewStudio({
     }
   }
 
-  async function gradeCard(grade: (typeof GRADES)[number]['grade']) {
+  async function gradeCard(grade: ReviewGrade) {
     if (!queue || !queue[index]) return;
     setBusy(true);
     setError('');
     try {
-      const { error: reviewError } = await supabase.rpc('review_vocab_card', {
-        p_card_id: queue[index].card_id,
-        p_grade: grade,
+      const res = await fetch('/api/srs/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: queue[index].card_id,
+          cardType: 'vocab',
+          grade,
+        }),
       });
-      if (reviewError) throw reviewError;
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not save review.');
       setReviewed((n) => n + 1);
       setIndex((i) => i + 1);
       setRevealed(false);
@@ -150,6 +178,7 @@ export default function VocabReviewStudio({
     : 'All due cards';
 
   const currentCard = queue && index < queue.length ? queue[index] : null;
+  const intervalHints = currentCard ? previewFsrsIntervals(currentCard) : null;
   const maskedSentence = currentCard?.example ? maskExample(currentCard.example, currentCard.term) : null;
   const showCloze = Boolean(currentCard && contextMode && maskedSentence);
   const guessMatched = currentCard
@@ -162,7 +191,7 @@ export default function VocabReviewStudio({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">
-              Spaced Repetition (1 → 3 → 7 → 14 → 30 → 60 days)
+              FSRS Spaced Repetition · Memory-Curve Scheduling
             </p>
             <h2 className="mt-1 font-serif text-2xl font-bold text-stone-900">Contextual Vocabulary Queue</h2>
             <p className="mt-1 text-sm text-stone-600">
@@ -216,7 +245,7 @@ export default function VocabReviewStudio({
               <div className="flex items-center gap-3">
                 {currentCard && (
                   <span>
-                    Card {index + 1} / {queue.length} · Ladder step {currentCard.ladder_step}
+                    Card {index + 1} / {queue.length} · Reps {currentCard.reps ?? 0}
                   </span>
                 )}
                 {maskedSentence && (
@@ -292,10 +321,17 @@ export default function VocabReviewStudio({
                       </div>
                       <button
                         type="button"
-                        onClick={() => void speakPhrase(currentCard.example || currentCard.term, accent, 0.95)}
+                        onClick={() =>
+                          void playAudioOrSpeak(
+                            currentCard.audio_url,
+                            currentCard.example || currentCard.term,
+                            accent,
+                            0.95,
+                          )
+                        }
                         className="rounded-xl border border-stone-300 bg-stone-50 px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                       >
-                        Pronounce ({accent === 'en-GB' ? 'UK' : 'US'})
+                        {currentCard.audio_url ? 'Play studio audio' : `Pronounce (${accent === 'en-GB' ? 'UK' : 'US'})`}
                       </button>
                     </div>
 
@@ -344,7 +380,9 @@ export default function VocabReviewStudio({
                         className="rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-xs font-semibold text-stone-800 transition hover:border-indigo-500 hover:bg-indigo-50 disabled:opacity-50"
                       >
                         {g.label}
-                        <span className="mt-0.5 block text-[10px] font-normal text-stone-500">{g.hint}</span>
+                        <span className="mt-0.5 block text-[10px] font-normal text-stone-500">
+                          {intervalHints ? intervalHints[g.grade] : ''}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -416,10 +454,12 @@ export default function VocabReviewStudio({
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => void speakPhrase(item.example || item.term, accent, 0.95)}
+                              onClick={() =>
+                                void playAudioOrSpeak(item.audio_url, item.example || item.term, accent, 0.95)
+                              }
                               className="rounded border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[10px] font-semibold text-stone-700 hover:bg-stone-100"
                             >
-                              Listen
+                              {item.audio_url ? 'Audio' : 'Listen'}
                             </button>
                             <span className="text-[10px] font-semibold uppercase text-indigo-700">{item.band}</span>
                           </div>

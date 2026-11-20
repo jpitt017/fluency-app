@@ -256,7 +256,9 @@ export default function SpeakingLab({
             </p>
           )}
           {typeof feedback.score === 'number' && typeof feedback.passed !== 'boolean' && (
-            <p className="font-semibold text-emerald-700">Fluency score · {feedback.score}%</p>
+            <p className="font-semibold text-emerald-700">
+              Spoken content &amp; grammar score · {feedback.score}%
+            </p>
           )}
           {feedback.transcript && (
             <div>
