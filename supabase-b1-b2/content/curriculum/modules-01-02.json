@@ -19,9 +19,39 @@
           ],
           "example": "I started my first job in 2019, and I have worked in three different cities since then.",
           "items": [
-            { "prompt": "I ___ my first job in 2019.", "options": ["have started", "started", "did start"], "answer": "started", "explanation": "A finished time (2019) takes the past simple.", "difficulty": 1 },
-            { "prompt": "Which sentence describes life experience rather than a finished event?", "options": ["I have visited Lisbon three times.", "I visited Lisbon in 2021.", "I was visiting Lisbon last year."], "answer": "I have visited Lisbon three times.", "explanation": "Experience with no fixed time uses the present perfect.", "difficulty": 1 },
-            { "prompt": "I ___ never flown alone before this trip.", "options": ["did", "have", "was"], "answer": "have", "explanation": "Present perfect with 'never' describes experience up to now.", "difficulty": 1 }
+            {
+              "prompt": "I ___ my first job in 2019.",
+              "options": [
+                "have started",
+                "started",
+                "did start"
+              ],
+              "answer": "started",
+              "explanation": "A finished time (2019) takes the past simple.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence describes life experience rather than a finished event?",
+              "options": [
+                "I have visited Lisbon three times.",
+                "I visited Lisbon in 2021.",
+                "I was visiting Lisbon last year."
+              ],
+              "answer": "I have visited Lisbon three times.",
+              "explanation": "Experience with no fixed time uses the present perfect.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "I ___ never flown alone before this trip.",
+              "options": [
+                "did",
+                "have",
+                "was"
+              ],
+              "answer": "have",
+              "explanation": "Present perfect with 'never' describes experience up to now.",
+              "difficulty": 1
+            }
           ]
         },
         {
@@ -35,25 +65,187 @@
           ],
           "example": "I had been waiting for hours when the bus finally arrived, so I walked the last two kilometres.",
           "items": [
-            { "prompt": "When I arrived, the film ___.", "options": ["already started", "had already started", "was already starting"], "answer": "had already started", "explanation": "Past perfect shows the film started before you arrived.", "difficulty": 2 },
-            { "prompt": "I ___ home when I saw the message.", "options": ["walked", "was walking", "had walked"], "answer": "was walking", "explanation": "Past continuous sets the background action interrupted by a shorter event.", "difficulty": 1 },
-            { "prompt": "We ___ for hours before the bus finally came.", "options": ["waited", "had been waiting", "were waiting"], "answer": "had been waiting", "explanation": "Past perfect continuous emphasises duration before a later past moment.", "difficulty": 3 }
+            {
+              "prompt": "When I arrived, the film ___.",
+              "options": [
+                "already started",
+                "had already started",
+                "was already starting"
+              ],
+              "answer": "had already started",
+              "explanation": "Past perfect shows the film started before you arrived.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "I ___ home when I saw the message.",
+              "options": [
+                "walked",
+                "was walking",
+                "had walked"
+              ],
+              "answer": "was walking",
+              "explanation": "Past continuous sets the background action interrupted by a shorter event.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "We ___ for hours before the bus finally came.",
+              "options": [
+                "waited",
+                "had been waiting",
+                "were waiting"
+              ],
+              "answer": "had been waiting",
+              "explanation": "Past perfect continuous emphasises duration before a later past moment.",
+              "difficulty": 3
+            }
           ]
         }
       ],
       "vocab": [
-        { "term": "outgoing", "pos": "adjective", "definition": "sociable and happy to meet new people", "example": "She is more outgoing now than she was at school.", "collocations": ["an outgoing personality", "naturally outgoing"], "translation": "extrovertido" },
-        { "term": "reserved", "pos": "adjective", "definition": "quiet and slow to show feelings or opinions", "example": "He seems reserved until you get to know him.", "collocations": ["a reserved manner", "quiet and reserved"], "translation": "reservado" },
-        { "term": "get on with", "pos": "phrasal verb", "definition": "have a good, friendly relationship with someone", "example": "I get on with my flatmates really well.", "collocations": ["get on well with", "easy to get on with"], "translation": "llevarse bien con" },
-        { "term": "set in your ways", "pos": "phrase", "definition": "fixed in your habits and unwilling to change them", "example": "My grandfather is kind, but he is set in his ways.", "collocations": ["become set in your ways", "rather set in his ways"], "translation": "ser de costumbres fijas" },
-        { "term": "turning point", "pos": "noun", "definition": "the moment at which something changes decisively", "example": "Moving abroad was the turning point in my career.", "collocations": ["a major turning point", "reach a turning point"], "translation": "punto de inflexión" },
-        { "term": "settle down", "pos": "phrasal verb", "definition": "start a calm, stable life in one place", "example": "They settled down in Valencia after years of travelling.", "collocations": ["settle down somewhere", "settle down with someone"], "translation": "establecerse" },
-        { "term": "look back on", "pos": "phrasal verb", "definition": "think about something that happened in the past", "example": "I look back on that year with real affection.", "collocations": ["look back on the past", "look back fondly"], "translation": "recordar con nostalgia" },
-        { "term": "bring up", "pos": "phrasal verb", "definition": "care for and raise a child", "example": "She was brought up by her grandparents in Galicia.", "collocations": ["bring up children", "be brought up abroad"], "translation": "criar" },
-        { "term": "come round to", "pos": "phrasal verb", "definition": "gradually accept an idea or opinion", "example": "My parents came round to the idea after a few months.", "collocations": ["come round to the idea", "slowly come round"], "translation": "acabar aceptando" },
-        { "term": "get used to", "pos": "phrase", "definition": "become familiar with something new", "example": "It took me a year to get used to the climate.", "collocations": ["get used to the weather", "slowly get used to"], "translation": "acostumbrarse a" },
-        { "term": "upbringing", "pos": "noun", "definition": "the way a person was raised as a child", "example": "Her upbringing was strict but very warm.", "collocations": ["a strict upbringing", "a happy upbringing"], "translation": "educación, crianza" },
-        { "term": "take after", "pos": "phrasal verb", "definition": "look or behave like an older family member", "example": "People say I take after my mother.", "collocations": ["take after your father", "clearly take after"], "translation": "parecerse a" }
+        {
+          "term": "outgoing",
+          "pos": "adjective",
+          "definition": "sociable and happy to meet new people",
+          "example": "She is more outgoing now than she was at school.",
+          "collocations": [
+            "an outgoing personality",
+            "naturally outgoing"
+          ],
+          "translation": "extrovertido",
+          "audioRef": "module-1/outgoing.mp3"
+        },
+        {
+          "term": "reserved",
+          "pos": "adjective",
+          "definition": "quiet and slow to show feelings or opinions",
+          "example": "He seems reserved until you get to know him.",
+          "collocations": [
+            "a reserved manner",
+            "quiet and reserved"
+          ],
+          "translation": "reservado",
+          "audioRef": "module-1/reserved.mp3"
+        },
+        {
+          "term": "get on with",
+          "pos": "phrasal verb",
+          "definition": "have a good, friendly relationship with someone",
+          "example": "I get on with my flatmates really well.",
+          "collocations": [
+            "get on well with",
+            "easy to get on with"
+          ],
+          "translation": "llevarse bien con",
+          "audioRef": "module-1/get-on-with.mp3"
+        },
+        {
+          "term": "set in your ways",
+          "pos": "phrase",
+          "definition": "fixed in your habits and unwilling to change them",
+          "example": "My grandfather is kind, but he is set in his ways.",
+          "collocations": [
+            "become set in your ways",
+            "rather set in his ways"
+          ],
+          "translation": "ser de costumbres fijas",
+          "audioRef": "module-1/set-in-your-ways.mp3"
+        },
+        {
+          "term": "turning point",
+          "pos": "noun",
+          "definition": "the moment at which something changes decisively",
+          "example": "Moving abroad was the turning point in my career.",
+          "collocations": [
+            "a major turning point",
+            "reach a turning point"
+          ],
+          "translation": "punto de inflexión",
+          "audioRef": "module-1/turning-point.mp3"
+        },
+        {
+          "term": "settle down",
+          "pos": "phrasal verb",
+          "definition": "start a calm, stable life in one place",
+          "example": "They settled down in Valencia after years of travelling.",
+          "collocations": [
+            "settle down somewhere",
+            "settle down with someone"
+          ],
+          "translation": "establecerse",
+          "audioRef": "module-1/settle-down.mp3"
+        },
+        {
+          "term": "look back on",
+          "pos": "phrasal verb",
+          "definition": "think about something that happened in the past",
+          "example": "I look back on that year with real affection.",
+          "collocations": [
+            "look back on the past",
+            "look back fondly"
+          ],
+          "translation": "recordar con nostalgia",
+          "audioRef": "module-1/look-back-on.mp3"
+        },
+        {
+          "term": "bring up",
+          "pos": "phrasal verb",
+          "definition": "care for and raise a child",
+          "example": "She was brought up by her grandparents in Galicia.",
+          "collocations": [
+            "bring up children",
+            "be brought up abroad"
+          ],
+          "translation": "criar",
+          "audioRef": "module-1/bring-up.mp3"
+        },
+        {
+          "term": "come round to",
+          "pos": "phrasal verb",
+          "definition": "gradually accept an idea or opinion",
+          "example": "My parents came round to the idea after a few months.",
+          "collocations": [
+            "come round to the idea",
+            "slowly come round"
+          ],
+          "translation": "acabar aceptando",
+          "audioRef": "module-1/come-round-to.mp3"
+        },
+        {
+          "term": "get used to",
+          "pos": "phrase",
+          "definition": "become familiar with something new",
+          "example": "It took me a year to get used to the climate.",
+          "collocations": [
+            "get used to the weather",
+            "slowly get used to"
+          ],
+          "translation": "acostumbrarse a",
+          "audioRef": "module-1/get-used-to.mp3"
+        },
+        {
+          "term": "upbringing",
+          "pos": "noun",
+          "definition": "the way a person was raised as a child",
+          "example": "Her upbringing was strict but very warm.",
+          "collocations": [
+            "a strict upbringing",
+            "a happy upbringing"
+          ],
+          "translation": "educación, crianza",
+          "audioRef": "module-1/upbringing.mp3"
+        },
+        {
+          "term": "take after",
+          "pos": "phrasal verb",
+          "definition": "look or behave like an older family member",
+          "example": "People say I take after my mother.",
+          "collocations": [
+            "take after your father",
+            "clearly take after"
+          ],
+          "translation": "parecerse a",
+          "audioRef": "module-1/take-after.mp3"
+        }
       ],
       "inputs": [
         {
@@ -65,10 +257,53 @@
           "seconds": 95,
           "body": "LAURA: I had been teaching for six years when I finally booked a one-way ticket. I was terrified, but it turned out to be the best decision I have ever made. DIEGO: My parents came round to the idea eventually. At first they thought I was throwing away a good job, and to be honest, so did I. MARI: I only really settled down at thirty-five. Before that I was moving every eighteen months, and I had never owned furniture that I actually chose myself.",
           "questions": [
-            { "prompt": "How long had Laura been teaching before she booked the ticket?", "options": ["Three years", "Six years", "Eighteen months"], "answer": "Six years" },
-            { "prompt": "How do Diego's parents feel now?", "options": ["They still oppose the decision", "They have slowly accepted it", "They never found out"], "answer": "They have slowly accepted it" },
-            { "prompt": "What does Mari say about her earlier life?", "options": ["She moved very often", "She never had a job", "She bought furniture every year"], "answer": "She moved very often" }
-          ]
+            {
+              "prompt": "How long had Laura been teaching before she booked the ticket?",
+              "options": [
+                "Three years",
+                "Six years",
+                "Eighteen months"
+              ],
+              "answer": "Six years"
+            },
+            {
+              "prompt": "How do Diego's parents feel now?",
+              "options": [
+                "They still oppose the decision",
+                "They have slowly accepted it",
+                "They never found out"
+              ],
+              "answer": "They have slowly accepted it"
+            },
+            {
+              "prompt": "What does Mari say about her earlier life?",
+              "options": [
+                "She moved very often",
+                "She never had a job",
+                "She bought furniture every year"
+              ],
+              "answer": "She moved very often"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "LAURA",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "DIEGO",
+              "accent": "en-IE",
+              "label": "Irish"
+            },
+            {
+              "speaker": "MARI",
+              "accent": "en-US",
+              "label": "American"
+            }
+          ],
+          "audioRef": "module-1/three-people-three-changes.mp3",
+          "audioStatus": "bundled"
         },
         {
           "kind": "reading",
@@ -77,10 +312,36 @@
           "source": "Studio original",
           "body": "Most people can name the year their life changed. For Ana it was 2020, when the restaurant she managed closed for good. She had spent a decade building a career she loved, and suddenly it had gone. What she remembers now is not the loss but the noise of it: one week she was planning a menu, the next she was queuing for a job she had never imagined doing. Two years later she runs a small cooking school, and she says she would not go back. The turning point, she insists, was not the closure itself but the first morning she stopped waiting for things to return to normal.",
           "questions": [
-            { "prompt": "What did Ana lose in 2020?", "options": ["A cooking school", "The restaurant she managed", "A house"], "answer": "The restaurant she managed" },
-            { "prompt": "What does she remember most clearly?", "options": ["The suddenness of the change", "The money she earned", "The people she hired"], "answer": "The suddenness of the change" },
-            { "prompt": "What does Ana identify as her real turning point?", "options": ["Losing her job", "Opening the school", "Accepting that normal had gone"], "answer": "Accepting that normal had gone" }
-          ]
+            {
+              "prompt": "What did Ana lose in 2020?",
+              "options": [
+                "A cooking school",
+                "The restaurant she managed",
+                "A house"
+              ],
+              "answer": "The restaurant she managed"
+            },
+            {
+              "prompt": "What does she remember most clearly?",
+              "options": [
+                "The suddenness of the change",
+                "The money she earned",
+                "The people she hired"
+              ],
+              "answer": "The suddenness of the change"
+            },
+            {
+              "prompt": "What does Ana identify as her real turning point?",
+              "options": [
+                "Losing her job",
+                "Opening the school",
+                "Accepting that normal had gone"
+              ],
+              "answer": "Accepting that normal had gone"
+            }
+          ],
+          "audioRef": "module-1/the-year-everything-changed.mp3",
+          "audioStatus": "bundled"
         }
       ],
       "speaking": [
@@ -89,27 +350,60 @@
           "title": "Describe a major change in your life",
           "prompt": "Describe a major change in your life. What happened, how did you feel at the time, and what did you learn? Speak for 90 seconds.",
           "seconds": 90,
-          "phrases": ["What stands out is...", "At the time I felt...", "Looking back, I would say..."],
-          "linkers": ["because", "although", "in the end"],
-          "terms": ["turning point", "settle down", "get used to"]
+          "phrases": [
+            "What stands out is...",
+            "At the time I felt...",
+            "Looking back, I would say..."
+          ],
+          "linkers": [
+            "because",
+            "although",
+            "in the end"
+          ],
+          "terms": [
+            "turning point",
+            "settle down",
+            "get used to"
+          ]
         },
         {
           "kind": "role_play",
           "title": "Role-play: catching up with an old friend",
           "prompt": "You meet a friend you have not seen for five years. Ask about their life, react to their news, and share one change of your own. Two minutes.",
           "seconds": 120,
-          "phrases": ["How have you been?", "That sounds like quite a change.", "Have you kept in touch with...?"],
-          "linkers": ["actually", "to be honest", "by the way"],
-          "terms": ["upbringing", "outgoing", "take after"]
+          "phrases": [
+            "How have you been?",
+            "That sounds like quite a change.",
+            "Have you kept in touch with...?"
+          ],
+          "linkers": [
+            "actually",
+            "to be honest",
+            "by the way"
+          ],
+          "terms": [
+            "upbringing",
+            "outgoing",
+            "take after"
+          ]
         },
         {
           "kind": "shadowing",
           "title": "Shadowing: storytelling rhythm",
           "prompt": "Repeat the model story line by line, copying the stress on content words and the short pause at each thought group.",
           "seconds": 60,
-          "phrases": ["I had been living there / for about a year / when everything changed."],
-          "linkers": ["when", "before", "by the time"],
-          "terms": ["had been", "turning point"]
+          "phrases": [
+            "I had been living there / for about a year / when everything changed."
+          ],
+          "linkers": [
+            "when",
+            "before",
+            "by the time"
+          ],
+          "terms": [
+            "had been",
+            "turning point"
+          ]
         }
       ],
       "writing": {
@@ -127,15 +421,94 @@
         }
       },
       "lessons": [
-        { "title": "Life so far: present perfect vs. past simple", "objective": "Separate finished past events from life experience in a short personal history.", "canDo": "I can tell the story of my life so far, using the past simple for finished events and the present perfect for experience.", "skill": "grammar", "input": "reading", "outputTitle": "Life story in six sentences", "output": "Record six sentences about your life: three finished events in the past simple and three experiences in the present perfect.", "targetSeconds": 60 },
-        { "title": "Listening: three people, three changes", "objective": "Catch time markers and attitude in short personal stories told in three accents.", "canDo": "I can follow a short personal story in a familiar accent and identify the speaker's attitude.", "skill": "listening", "input": "listening", "outputTitle": "Retell one story", "output": "Retell one of the three stories in 60 seconds, keeping the timeline in order.", "targetSeconds": 60 },
-        { "title": "Vocabulary: personality and routines", "objective": "Describe character and daily habits with precise B1 collocations instead of 'nice' and 'good'.", "canDo": "I can describe someone's personality and daily routine using at least six topic collocations.", "skill": "vocabulary", "input": "reading", "outputTitle": "Describe a person you know well", "output": "Record a 60-second description of a person you know well using five of the new collocations.", "targetSeconds": 60 },
-        { "title": "Speaking: describing a major change", "objective": "Structure a 90-second account of a change with a clear beginning, middle and reflection.", "canDo": "I can speak for 90 seconds about a change in my life, linking ideas and reflecting at the end.", "skill": "speaking", "input": "listening", "outputTitle": "90-second monologue", "output": "Use the prompt card below: what happened, how you felt, what you learned.", "targetSeconds": 90 },
-        { "title": "Narrative tenses: telling it properly", "objective": "Combine past continuous, past simple and past perfect so a story's timeline is never ambiguous.", "canDo": "I can tell a story with a clear timeline, using past perfect only where the order matters.", "skill": "grammar", "input": "listening", "outputTitle": "A day that went wrong", "output": "Tell a 90-second story about a day that went wrong, with at least one past perfect sentence.", "targetSeconds": 90 },
-        { "title": "Reading: the year everything changed", "objective": "Identify the main idea, a detail and an inferred attitude in a short narrative article.", "canDo": "I can read a short article about someone's life change and explain what the writer implies.", "skill": "reading", "input": "reading", "outputTitle": "Summary and opinion", "output": "Write four sentences: two summarising the article and two saying whether you agree with Ana.", "wordRange": [60, 90] },
-        { "title": "Writing: informal email about change", "objective": "Plan, draft and edit a 120–150-word informal email with a clear purpose and audience.", "canDo": "I can write an informal email of 120–150 words that shares news, asks questions and suggests a plan.", "skill": "writing", "input": "reading", "outputTitle": "Informal email", "output": "Write the email, then revise it once for vocabulary range and one linker per paragraph.", "wordRange": [120, 150] },
-        { "title": "Review: module 1 consolidation", "objective": "Recall the module's tenses and vocabulary under light time pressure and identify your weakest area.", "canDo": "I can use the module's two tense systems and twelve expressions accurately in a short review task.", "skill": "review", "input": "listening", "outputTitle": "Mixed review", "output": "Do the practice set twice: once untimed, once in six minutes. Note every item you missed.", "targetSeconds": 120 }
-      ]
+        {
+          "title": "Life so far: present perfect vs. past simple",
+          "objective": "Separate finished past events from life experience in a short personal history.",
+          "canDo": "I can tell the story of my life so far, using the past simple for finished events and the present perfect for experience.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Life story in six sentences",
+          "output": "Record six sentences about your life: three finished events in the past simple and three experiences in the present perfect.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Listening: three people, three changes",
+          "objective": "Catch time markers and attitude in short personal stories told in three accents.",
+          "canDo": "I can follow a short personal story in a familiar accent and identify the speaker's attitude.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Retell one story",
+          "output": "Retell one of the three stories in 60 seconds, keeping the timeline in order.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Vocabulary: personality and routines",
+          "objective": "Describe character and daily habits with precise B1 collocations instead of 'nice' and 'good'.",
+          "canDo": "I can describe someone's personality and daily routine using at least six topic collocations.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Describe a person you know well",
+          "output": "Record a 60-second description of a person you know well using five of the new collocations.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Speaking: describing a major change",
+          "objective": "Structure a 90-second account of a change with a clear beginning, middle and reflection.",
+          "canDo": "I can speak for 90 seconds about a change in my life, linking ideas and reflecting at the end.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "90-second monologue",
+          "output": "Use the prompt card below: what happened, how you felt, what you learned.",
+          "targetSeconds": 90
+        },
+        {
+          "title": "Narrative tenses: telling it properly",
+          "objective": "Combine past continuous, past simple and past perfect so a story's timeline is never ambiguous.",
+          "canDo": "I can tell a story with a clear timeline, using past perfect only where the order matters.",
+          "skill": "grammar",
+          "input": "listening",
+          "outputTitle": "A day that went wrong",
+          "output": "Tell a 90-second story about a day that went wrong, with at least one past perfect sentence.",
+          "targetSeconds": 90
+        },
+        {
+          "title": "Reading: the year everything changed",
+          "objective": "Identify the main idea, a detail and an inferred attitude in a short narrative article.",
+          "canDo": "I can read a short article about someone's life change and explain what the writer implies.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Summary and opinion",
+          "output": "Write four sentences: two summarising the article and two saying whether you agree with Ana.",
+          "wordRange": [
+            60,
+            90
+          ]
+        },
+        {
+          "title": "Writing: informal email about change",
+          "objective": "Plan, draft and edit a 120–150-word informal email with a clear purpose and audience.",
+          "canDo": "I can write an informal email of 120–150 words that shares news, asks questions and suggests a plan.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Informal email",
+          "output": "Write the email, then revise it once for vocabulary range and one linker per paragraph.",
+          "wordRange": [
+            120,
+            150
+          ]
+        },
+        {
+          "title": "Review: module 1 consolidation",
+          "objective": "Recall the module's tenses and vocabulary under light time pressure and identify your weakest area.",
+          "canDo": "I can use the module's two tense systems and twelve expressions accurately in a short review task.",
+          "skill": "review",
+          "input": "listening",
+          "outputTitle": "Mixed review",
+          "output": "Do the practice set twice: once untimed, once in six minutes. Note every item you missed.",
+          "targetSeconds": 120
+        }
+      ],
+      "releaseStage": "live"
     },
     {
       "number": 2,
@@ -155,9 +528,39 @@
           ],
           "example": "I'm meeting the recruiter on Thursday, and I'm going to take the online course before then; it will make the interview easier.",
           "items": [
-            { "prompt": "I ___ the recruiter at nine tomorrow — it is already in my calendar.", "options": ["will meet", "am meeting", "meet"], "answer": "am meeting", "explanation": "A fixed arrangement takes the present continuous.", "difficulty": 1 },
-            { "prompt": "Which sentence expresses an intention?", "options": ["I'm going to retrain next year.", "I'll retrain, I promise.", "I retrain next year."], "answer": "I'm going to retrain next year.", "explanation": "'Going to' expresses a plan or intention rather than a promise.", "difficulty": 2 },
-            { "prompt": "The job ___ harder than it looks.", "options": ["is being", "will be", "is going"], "answer": "will be", "explanation": "Predictions about the future use will + infinitive.", "difficulty": 1 }
+            {
+              "prompt": "I ___ the recruiter at nine tomorrow — it is already in my calendar.",
+              "options": [
+                "will meet",
+                "am meeting",
+                "meet"
+              ],
+              "answer": "am meeting",
+              "explanation": "A fixed arrangement takes the present continuous.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence expresses an intention?",
+              "options": [
+                "I'm going to retrain next year.",
+                "I'll retrain, I promise.",
+                "I retrain next year."
+              ],
+              "answer": "I'm going to retrain next year.",
+              "explanation": "'Going to' expresses a plan or intention rather than a promise.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "The job ___ harder than it looks.",
+              "options": [
+                "is being",
+                "will be",
+                "is going"
+              ],
+              "answer": "will be",
+              "explanation": "Predictions about the future use will + infinitive.",
+              "difficulty": 1
+            }
           ]
         },
         {
@@ -171,52 +574,278 @@
           ],
           "example": "If I pass the exam in June, I'll apply for the master's; if I had the money now, I'd already be enrolled.",
           "items": [
-            { "prompt": "If I ___ the exam in June, I will apply for the master's.", "options": ["pass", "passed", "will pass"], "answer": "pass", "explanation": "The first conditional uses the present simple in the if-clause.", "difficulty": 1 },
-            { "prompt": "If I had more time, I ___ a second language.", "options": ["will learn", "would learn", "learn"], "answer": "would learn", "explanation": "Imagined present situations take would + infinitive.", "difficulty": 1 },
-            { "prompt": "Which sentence is the most diplomatic way to give advice?", "options": ["If I am you, I apply.", "If I were you, I would negotiate the salary.", "If I was you, I will negotiate."], "answer": "If I were you, I would negotiate the salary.", "explanation": "'If I were you, I would...' is the standard diplomatic formula.", "difficulty": 2 }
+            {
+              "prompt": "If I ___ the exam in June, I will apply for the master's.",
+              "options": [
+                "pass",
+                "passed",
+                "will pass"
+              ],
+              "answer": "pass",
+              "explanation": "The first conditional uses the present simple in the if-clause.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "If I had more time, I ___ a second language.",
+              "options": [
+                "will learn",
+                "would learn",
+                "learn"
+              ],
+              "answer": "would learn",
+              "explanation": "Imagined present situations take would + infinitive.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence is the most diplomatic way to give advice?",
+              "options": [
+                "If I am you, I apply.",
+                "If I were you, I would negotiate the salary.",
+                "If I was you, I will negotiate."
+              ],
+              "answer": "If I were you, I would negotiate the salary.",
+              "explanation": "'If I were you, I would...' is the standard diplomatic formula.",
+              "difficulty": 2
+            }
           ]
         }
       ],
       "vocab": [
-        { "term": "career path", "pos": "noun", "definition": "the series of jobs a person does over their working life", "example": "Teaching was not the career path she expected.", "collocations": ["choose a career path", "change career path"], "translation": "trayectoria profesional" },
-        { "term": "apply for", "pos": "phrasal verb", "definition": "formally ask for a job, course or permission", "example": "I applied for three roles last week.", "collocations": ["apply for a job", "apply for funding"], "translation": "solicitar" },
-        { "term": "take on", "pos": "phrasal verb", "definition": "accept responsibility or employ someone", "example": "She took on more responsibility without a pay rise.", "collocations": ["take on a role", "take on staff"], "translation": "asumir, contratar" },
-        { "term": "workload", "pos": "noun", "definition": "the amount of work a person has to do", "example": "My workload doubles in September.", "collocations": ["a heavy workload", "manage your workload"], "translation": "carga de trabajo" },
-        { "term": "deadline", "pos": "noun", "definition": "the latest time by which something must be finished", "example": "We missed the deadline by two days.", "collocations": ["meet a deadline", "a tight deadline"], "translation": "fecha límite" },
-        { "term": "qualification", "pos": "noun", "definition": "an exam pass or official skill that allows you to do something", "example": "The role requires a teaching qualification.", "collocations": ["gain a qualification", "formal qualifications"], "translation": "titulación" },
-        { "term": "promotion", "pos": "noun", "definition": "a move to a more important position at work", "example": "He got a promotion after eighteen months.", "collocations": ["get a promotion", "be offered a promotion"], "translation": "ascenso" },
-        { "term": "job satisfaction", "pos": "noun", "definition": "the feeling that your work is worthwhile", "example": "Job satisfaction matters more to me than salary.", "collocations": ["high job satisfaction", "a sense of job satisfaction"], "translation": "satisfacción laboral" },
-        { "term": "retrain", "pos": "verb", "definition": "learn new skills in order to change career", "example": "He retrained as a nurse at forty.", "collocations": ["retrain as a teacher", "retrain mid-career"], "translation": "reciclarse profesionalmente" },
-        { "term": "short-term contract", "pos": "noun", "definition": "an agreement to work for a limited period", "example": "She started on a short-term contract and stayed five years.", "collocations": ["sign a short-term contract", "renew a contract"], "translation": "contrato temporal" },
-        { "term": "get ahead", "pos": "phrasal verb", "definition": "become more successful than others", "example": "Networking helped her get ahead quickly.", "collocations": ["get ahead in your career", "hard work to get ahead"], "translation": "progresar" },
-        { "term": "burn out", "pos": "phrasal verb", "definition": "become exhausted and unable to work from too much stress", "example": "He burnt out after two years of twelve-hour days.", "collocations": ["risk burning out", "burn out quickly"], "translation": "sufrir agotamiento" }
+        {
+          "term": "career path",
+          "pos": "noun",
+          "definition": "the series of jobs a person does over their working life",
+          "example": "Teaching was not the career path she expected.",
+          "collocations": [
+            "choose a career path",
+            "change career path"
+          ],
+          "translation": "trayectoria profesional",
+          "audioRef": "module-2/career-path.mp3"
+        },
+        {
+          "term": "apply for",
+          "pos": "phrasal verb",
+          "definition": "formally ask for a job, course or permission",
+          "example": "I applied for three roles last week.",
+          "collocations": [
+            "apply for a job",
+            "apply for funding"
+          ],
+          "translation": "solicitar",
+          "audioRef": "module-2/apply-for.mp3"
+        },
+        {
+          "term": "take on",
+          "pos": "phrasal verb",
+          "definition": "accept responsibility or employ someone",
+          "example": "She took on more responsibility without a pay rise.",
+          "collocations": [
+            "take on a role",
+            "take on staff"
+          ],
+          "translation": "asumir, contratar",
+          "audioRef": "module-2/take-on.mp3"
+        },
+        {
+          "term": "workload",
+          "pos": "noun",
+          "definition": "the amount of work a person has to do",
+          "example": "My workload doubles in September.",
+          "collocations": [
+            "a heavy workload",
+            "manage your workload"
+          ],
+          "translation": "carga de trabajo",
+          "audioRef": "module-2/workload.mp3"
+        },
+        {
+          "term": "deadline",
+          "pos": "noun",
+          "definition": "the latest time by which something must be finished",
+          "example": "We missed the deadline by two days.",
+          "collocations": [
+            "meet a deadline",
+            "a tight deadline"
+          ],
+          "translation": "fecha límite",
+          "audioRef": "module-2/deadline.mp3"
+        },
+        {
+          "term": "qualification",
+          "pos": "noun",
+          "definition": "an exam pass or official skill that allows you to do something",
+          "example": "The role requires a teaching qualification.",
+          "collocations": [
+            "gain a qualification",
+            "formal qualifications"
+          ],
+          "translation": "titulación",
+          "audioRef": "module-2/qualification.mp3"
+        },
+        {
+          "term": "promotion",
+          "pos": "noun",
+          "definition": "a move to a more important position at work",
+          "example": "He got a promotion after eighteen months.",
+          "collocations": [
+            "get a promotion",
+            "be offered a promotion"
+          ],
+          "translation": "ascenso",
+          "audioRef": "module-2/promotion.mp3"
+        },
+        {
+          "term": "job satisfaction",
+          "pos": "noun",
+          "definition": "the feeling that your work is worthwhile",
+          "example": "Job satisfaction matters more to me than salary.",
+          "collocations": [
+            "high job satisfaction",
+            "a sense of job satisfaction"
+          ],
+          "translation": "satisfacción laboral",
+          "audioRef": "module-2/job-satisfaction.mp3"
+        },
+        {
+          "term": "retrain",
+          "pos": "verb",
+          "definition": "learn new skills in order to change career",
+          "example": "He retrained as a nurse at forty.",
+          "collocations": [
+            "retrain as a teacher",
+            "retrain mid-career"
+          ],
+          "translation": "reciclarse profesionalmente",
+          "audioRef": "module-2/retrain.mp3"
+        },
+        {
+          "term": "short-term contract",
+          "pos": "noun",
+          "definition": "an agreement to work for a limited period",
+          "example": "She started on a short-term contract and stayed five years.",
+          "collocations": [
+            "sign a short-term contract",
+            "renew a contract"
+          ],
+          "translation": "contrato temporal",
+          "audioRef": "module-2/short-term-contract.mp3"
+        },
+        {
+          "term": "get ahead",
+          "pos": "phrasal verb",
+          "definition": "become more successful than others",
+          "example": "Networking helped her get ahead quickly.",
+          "collocations": [
+            "get ahead in your career",
+            "hard work to get ahead"
+          ],
+          "translation": "progresar",
+          "audioRef": "module-2/get-ahead.mp3"
+        },
+        {
+          "term": "burn out",
+          "pos": "phrasal verb",
+          "definition": "become exhausted and unable to work from too much stress",
+          "example": "He burnt out after two years of twelve-hour days.",
+          "collocations": [
+            "risk burning out",
+            "burn out quickly"
+          ],
+          "translation": "sufrir agotamiento",
+          "audioRef": "module-2/burn-out.mp3"
+        }
       ],
       "inputs": [
         {
           "kind": "listening",
-          "lesson": 10,
+          "lesson": 2,
           "title": "A careers podcast: two routes",
           "source": "Studio original — panel clip",
           "accent": "British and Canadian",
           "seconds": 100,
           "body": "HOST: So, Priya, you left banking at thirty-two. PRIYA: I did, and everyone thought I had lost my mind. I had a good salary, but I was going to burn out, I could feel it. The plan was to take six months off and then retrain as a data analyst. HOST: And it worked? PRIYA: Mostly. The studying was harder than the job had been, but I get far more job satisfaction now. If I were starting again, I would save more money first, though.",
           "questions": [
-            { "prompt": "How old was Priya when she left banking?", "options": ["Twenty-two", "Thirty-two", "Forty"], "answer": "Thirty-two" },
-            { "prompt": "What did she find hardest?", "options": ["Studying", "Her old salary", "Finding a job"], "answer": "Studying" },
-            { "prompt": "What would she change if she started again?", "options": ["She would stay in banking", "She would save more money first", "She would study for longer"], "answer": "She would save more money first" }
-          ]
+            {
+              "prompt": "How old was Priya when she left banking?",
+              "options": [
+                "Twenty-two",
+                "Thirty-two",
+                "Forty"
+              ],
+              "answer": "Thirty-two"
+            },
+            {
+              "prompt": "What did she find hardest?",
+              "options": [
+                "Studying",
+                "Her old salary",
+                "Finding a job"
+              ],
+              "answer": "Studying"
+            },
+            {
+              "prompt": "What would she change if she started again?",
+              "options": [
+                "She would stay in banking",
+                "She would save more money first",
+                "She would study for longer"
+              ],
+              "answer": "She would save more money first"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "HOST",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "PRIYA",
+              "accent": "en-CA",
+              "label": "Canadian"
+            }
+          ],
+          "audioRef": "module-2/a-careers-podcast-two-routes.mp3",
+          "audioStatus": "actor_pending"
         },
         {
           "kind": "reading",
-          "lesson": 15,
+          "lesson": 7,
           "title": "Is a degree still worth it?",
           "source": "Studio original",
           "body": "For decades the advice was simple: go to university, get a degree, get ahead. That advice still holds for many careers, especially medicine and law, but it is no longer automatic. Employers increasingly ask what a candidate can do rather than where they studied. Short-term contracts, portfolio careers and mid-career retraining have made the single, linear career path much rarer. None of this means a degree is wasted. It means the return depends on the subject, the country and, above all, what the student does with the three years beyond attending lectures.",
           "questions": [
-            { "prompt": "What is the article's main point?", "options": ["A degree is no longer automatically worth it", "Degrees are worthless", "Everyone should study medicine"], "answer": "A degree is no longer automatically worth it" },
-            { "prompt": "What do employers increasingly value?", "options": ["Where you studied", "What you can do", "How long you studied"], "answer": "What you can do" },
-            { "prompt": "Which factor does the writer highlight above all?", "options": ["The country", "The subject", "What the student does beyond lectures"], "answer": "What the student does beyond lectures" }
-          ]
+            {
+              "prompt": "What is the article's main point?",
+              "options": [
+                "A degree is no longer automatically worth it",
+                "Degrees are worthless",
+                "Everyone should study medicine"
+              ],
+              "answer": "A degree is no longer automatically worth it"
+            },
+            {
+              "prompt": "What do employers increasingly value?",
+              "options": [
+                "Where you studied",
+                "What you can do",
+                "How long you studied"
+              ],
+              "answer": "What you can do"
+            },
+            {
+              "prompt": "Which factor does the writer highlight above all?",
+              "options": [
+                "The country",
+                "The subject",
+                "What the student does beyond lectures"
+              ],
+              "answer": "What the student does beyond lectures"
+            }
+          ],
+          "audioRef": "module-2/is-a-degree-still-worth-it.mp3",
+          "audioStatus": "tts"
         }
       ],
       "speaking": [
@@ -225,27 +854,61 @@
           "title": "Compare two career paths",
           "prompt": "Compare two career paths you know well. Which would you choose, and why? Speak for two minutes.",
           "seconds": 120,
-          "phrases": ["On the one hand...", "What appeals to me is...", "If I had to choose..."],
-          "linkers": ["whereas", "on balance", "for that reason"],
-          "terms": ["career path", "job satisfaction", "workload"]
+          "phrases": [
+            "On the one hand...",
+            "What appeals to me is...",
+            "If I had to choose..."
+          ],
+          "linkers": [
+            "whereas",
+            "on balance",
+            "for that reason"
+          ],
+          "terms": [
+            "career path",
+            "job satisfaction",
+            "workload"
+          ]
         },
         {
           "kind": "role_play",
           "title": "Role-play: the job interview",
           "prompt": "You are interviewing for a role you are slightly under-qualified for. Answer three questions about your plans, your weaknesses and why you want the job. Two minutes.",
           "seconds": 120,
-          "phrases": ["I'm going to...", "One thing I'm working on is...", "What attracts me most is..."],
-          "linkers": ["because", "although", "in particular"],
-          "terms": ["short-term contract", "qualification", "take on"]
+          "phrases": [
+            "I'm going to...",
+            "One thing I'm working on is...",
+            "What attracts me most is..."
+          ],
+          "linkers": [
+            "because",
+            "although",
+            "in particular"
+          ],
+          "terms": [
+            "short-term contract",
+            "qualification",
+            "take on"
+          ]
         },
         {
           "kind": "shadowing",
           "title": "Shadowing: future forms in fast speech",
           "prompt": "Shadow the clip twice, paying attention to how going to is reduced to gonna and how will merges with the subject.",
           "seconds": 60,
-          "phrases": ["I'm going to apply / as soon as I finish the course.", "It'll probably take / about six months."],
-          "linkers": ["as soon as", "before", "by then"],
-          "terms": ["going to", "will"]
+          "phrases": [
+            "I'm going to apply / as soon as I finish the course.",
+            "It'll probably take / about six months."
+          ],
+          "linkers": [
+            "as soon as",
+            "before",
+            "by then"
+          ],
+          "terms": [
+            "going to",
+            "will"
+          ]
         }
       ],
       "writing": {
@@ -263,15 +926,97 @@
         }
       },
       "lessons": [
-        { "title": "Future forms: plans, predictions, arrangements", "objective": "Choose between going to, will and the present continuous according to meaning, not habit.", "canDo": "I can talk about my plans, arrangements and predictions using the right future form.", "skill": "grammar", "input": "listening", "outputTitle": "Next twelve months", "output": "Record 60 seconds on your plans for the next year: three arrangements and two predictions.", "targetSeconds": 60 },
-        { "title": "Listening: a careers podcast", "objective": "Extract dates, reasons and hypothetical regrets from a two-speaker interview.", "canDo": "I can follow an interview about a career change and note the reasons behind the decision.", "skill": "listening", "input": "listening", "outputTitle": "Note-taking", "output": "Take notes under three headings — decision, difficulty, advice — then summarise in three sentences.", "wordRange": [50, 80] },
-        { "title": "Vocabulary: careers and the workplace", "objective": "Use twelve workplace collocations accurately in speech and writing.", "canDo": "I can describe a job, its pressures and its rewards using precise workplace vocabulary.", "skill": "vocabulary", "input": "reading", "outputTitle": "Describe your job or course", "output": "Record 60 seconds describing your job or course with six of the new expressions.", "targetSeconds": 60 },
-        { "title": "Speaking: comparing two career paths", "objective": "Compare options fairly and reach a justified conclusion in two minutes.", "canDo": "I can compare two options, weigh them up and justify a choice with linking language.", "skill": "speaking", "input": "listening", "outputTitle": "Two-minute comparison", "output": "Use the prompt card: compare, weigh up, decide.", "targetSeconds": 120 },
-        { "title": "First conditional: realistic futures", "objective": "Build first-conditional sentences for realistic possibilities and consequences.", "canDo": "I can talk about realistic future possibilities and their consequences.", "skill": "grammar", "input": "reading", "outputTitle": "If... then", "output": "Record six first-conditional sentences about your studies or work.", "targetSeconds": 60 },
-        { "title": "Second conditional: imagined options", "objective": "Use the second conditional for imaginary situations and diplomatic advice.", "canDo": "I can discuss imagined situations and give diplomatic advice with the second conditional.", "skill": "grammar", "input": "listening", "outputTitle": "If I could change one thing", "output": "Speak for 60 seconds: if you could change one thing about your working life, what would it be?", "targetSeconds": 60 },
-        { "title": "Reading: is a degree still worth it?", "objective": "Identify the writer's argument, a concession and the key supporting factor.", "canDo": "I can read an argumentative article and separate the main claim from the concession.", "skill": "reading", "input": "reading", "outputTitle": "Argument map", "output": "Write the main claim, one concession and your own view in five sentences.", "wordRange": [70, 100] },
-        { "title": "Writing: opinion paragraph", "objective": "State and support a position in 150 words with a clear structure.", "canDo": "I can write a 150-word opinion paragraph with a clear position and two supported reasons.", "skill": "writing", "input": "reading", "outputTitle": "Opinion paragraph", "output": "Draft, then edit for sentence variety and one conditional.", "wordRange": [140, 160] }
-      ]
+        {
+          "title": "Future forms: plans, predictions, arrangements",
+          "objective": "Choose between going to, will and the present continuous according to meaning, not habit.",
+          "canDo": "I can talk about my plans, arrangements and predictions using the right future form.",
+          "skill": "grammar",
+          "input": "listening",
+          "outputTitle": "Next twelve months",
+          "output": "Record 60 seconds on your plans for the next year: three arrangements and two predictions.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Listening: a careers podcast",
+          "objective": "Extract dates, reasons and hypothetical regrets from a two-speaker interview.",
+          "canDo": "I can follow an interview about a career change and note the reasons behind the decision.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Note-taking",
+          "output": "Take notes under three headings — decision, difficulty, advice — then summarise in three sentences.",
+          "wordRange": [
+            50,
+            80
+          ]
+        },
+        {
+          "title": "Vocabulary: careers and the workplace",
+          "objective": "Use twelve workplace collocations accurately in speech and writing.",
+          "canDo": "I can describe a job, its pressures and its rewards using precise workplace vocabulary.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Describe your job or course",
+          "output": "Record 60 seconds describing your job or course with six of the new expressions.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Speaking: comparing two career paths",
+          "objective": "Compare options fairly and reach a justified conclusion in two minutes.",
+          "canDo": "I can compare two options, weigh them up and justify a choice with linking language.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Two-minute comparison",
+          "output": "Use the prompt card: compare, weigh up, decide.",
+          "targetSeconds": 120
+        },
+        {
+          "title": "First conditional: realistic futures",
+          "objective": "Build first-conditional sentences for realistic possibilities and consequences.",
+          "canDo": "I can talk about realistic future possibilities and their consequences.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "If... then",
+          "output": "Record six first-conditional sentences about your studies or work.",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Second conditional: imagined options",
+          "objective": "Use the second conditional for imaginary situations and diplomatic advice.",
+          "canDo": "I can discuss imagined situations and give diplomatic advice with the second conditional.",
+          "skill": "grammar",
+          "input": "listening",
+          "outputTitle": "If I could change one thing",
+          "output": "Speak for 60 seconds: if you could change one thing about your working life, what would it be?",
+          "targetSeconds": 60
+        },
+        {
+          "title": "Reading: is a degree still worth it?",
+          "objective": "Identify the writer's argument, a concession and the key supporting factor.",
+          "canDo": "I can read an argumentative article and separate the main claim from the concession.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Argument map",
+          "output": "Write the main claim, one concession and your own view in five sentences.",
+          "wordRange": [
+            70,
+            100
+          ]
+        },
+        {
+          "title": "Writing: opinion paragraph",
+          "objective": "State and support a position in 150 words with a clear structure.",
+          "canDo": "I can write a 150-word opinion paragraph with a clear position and two supported reasons.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Opinion paragraph",
+          "output": "Draft, then edit for sentence variety and one conditional.",
+          "wordRange": [
+            140,
+            160
+          ]
+        }
+      ],
+      "releaseStage": "live"
     }
   ]
 }

@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 /**
- * Generate British / multi-accent audio files and WebVTT captions for curriculum
- * `content_inputs` and `vocab_items`, upload to Supabase Storage (`course-audio` bucket)
- * or S3/CDN, and persist canonical URLs to Postgres.
- *
- * Keeps large audio out of Git/Vercel bundles as modules 2-8 scale!
- *
- * Environment variables:
- *   OPENAI_API_KEY          - Required for TTS synthesis (gpt-4o-mini-tts)
- *   AUDIO_S3_BUCKET         - Optional S3 bucket (uses @aws-sdk/client-s3)
- *   AUDIO_PUBLIC_BASE_URL   - Optional CDN/S3 public base URL
- *   NEXT_PUBLIC_SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY - Supabase Storage + DB update
+ * Audio pipeline for Fluency Studio (Modules 1-8):
+ *   1. Vocabulary items -> OpenAI TTS (`--vocab-only`, British English) uploaded to
+ *      Supabase Storage (`course-audio` bucket) or S3/CDN.
+ *   2. Listening tracks -> Export clean actor recording scripts (`--export-scripts`)
+ *      first so real speakers / voice actors record multi-accent tracks last, then
+ *      upload actor-recorded MP3s + WebVTT captions (`--upload-dir <dir>`).
  *
  * Usage:
- *   node scripts/generate-course-audio.mjs --module 2 --dry-run
- *   node scripts/generate-course-audio.mjs --all
+ *   node scripts/generate-course-audio.mjs --export-scripts
+ *   node scripts/generate-course-audio.mjs --module 2 --vocab-only
+ *   node scripts/generate-course-audio.mjs --module 2 --upload-dir ./recordings
+ *   node scripts/generate-course-audio.mjs --all --dry-run
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
@@ -25,8 +22,12 @@ import { createClient } from '@supabase/supabase-js';
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const runAll = args.includes('--all');
+const vocabOnly = args.includes('--vocab-only');
+const exportScripts = args.includes('--export-scripts');
 const moduleIdx = args.indexOf('--module');
 const targetModule = moduleIdx !== -1 ? Number(args[moduleIdx + 1]) : 1;
+const uploadIdx = args.indexOf('--upload-dir');
+const uploadDir = uploadIdx !== -1 ? args[uploadIdx + 1] : null;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -132,6 +133,53 @@ async function uploadBuffer(key, buffer, contentType, supabase) {
   return `/audio/${key}`;
 }
 
+async function exportRecordingCueSheets() {
+  const contentDir = path.join(process.cwd(), 'supabase-b1-b2/content/curriculum');
+  const files = (await readdir(contentDir))
+    .filter((f) => /^modules-\d{2}-\d{2}\.json$/.test(f))
+    .sort();
+
+  const lines = [
+    '# Voice Actor Recording Scripts (Modules 1–8)',
+    '',
+    'Record multi-accent listening tracks using human speakers after script review.',
+    'Save each finished file to `<recordings-dir>/<audioRef>` and upload with:',
+    '`node scripts/generate-course-audio.mjs --module <N> --upload-dir <recordings-dir>`',
+    '',
+  ];
+
+  for (const file of files) {
+    const doc = JSON.parse(await readFile(path.join(contentDir, file), 'utf8'));
+    for (const mod of doc.modules) {
+      for (const inp of mod.inputs.filter((i) => i.kind === 'listening')) {
+        lines.push(`## Module ${mod.number}: ${inp.title}`);
+        lines.push(`- **Target file:** \`${inp.audioRef}\``);
+        lines.push(`- **Status:** \`${inp.audioStatus || 'actor_pending'}\``);
+        lines.push(`- **Duration target:** ~${inp.seconds || 90}s`);
+        lines.push(
+          `- **Speakers:** ${(inp.speaker_accents || []).map((s) => `${s.speaker} (${s.label} · ${s.accent})`).join(', ')}`,
+        );
+        lines.push('');
+        lines.push('```text');
+        lines.push(inp.body);
+        lines.push('```');
+        lines.push('');
+      }
+    }
+  }
+
+  process.stdout.write(lines.join('\n'));
+}
+
+async function fileExists(p) {
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function processModule(supabase, moduleNum) {
   const { data: mod } = await supabase
     .from('modules')
@@ -153,45 +201,68 @@ async function processModule(supabase, moduleNum) {
     : { data: [] };
 
   console.log(`Module ${moduleNum} (${mod.title}): ${inputs?.length ?? 0} inputs, ${vocabItems?.length ?? 0} vocab items.`);
-  if (dryRun || !openaiKey) return;
+  if (dryRun) return;
 
-  for (const inp of inputs ?? []) {
-    if (inp.audio_url && /^https?:\/\//i.test(inp.audio_url)) continue;
+  if (!vocabOnly) {
+    for (const inp of inputs ?? []) {
+      const baseKey = `module-${moduleNum}/${slugify(inp.title)}`;
 
-    // Synthesize multi-speaker segments with distinct accents when speaker_accents are present
-    const accents = Array.isArray(inp.speaker_accents) ? inp.speaker_accents : [];
-    let audioBuffer;
-    if (accents.length > 1) {
-      const segments = inp.body.split(/(?=\b[A-Z][A-Z0-9 ]{1,18}:)/g).map((s) => s.trim()).filter(Boolean);
-      const partBuffers = [];
-      for (let i = 0; i < segments.length; i++) {
-        const cleanLine = segments[i].replace(/^[A-Z][A-Z0-9 ]{1,18}:\s*/, '');
-        const accentLabel = accents[i % accents.length]?.label || inp.accent || 'British';
-        partBuffers.push(await synthesizeMp3(cleanLine, accentLabel));
+      // Prefer human-recorded actor tracks from --upload-dir when provided
+      if (uploadDir) {
+        const candidatePath = path.join(uploadDir, `${baseKey}.mp3`);
+        if (await fileExists(candidatePath)) {
+          const audioBuffer = await readFile(candidatePath);
+          const url = await uploadBuffer(`${baseKey}.mp3`, audioBuffer, 'audio/mpeg', supabase);
+          await uploadBuffer(`${baseKey}.vtt`, buildVtt(inp.body, inp.duration_seconds), 'text/vtt; charset=utf-8', supabase);
+          await supabase.from('content_inputs').update({ audio_url: url }).eq('id', inp.id);
+          console.log(`Uploaded human-recorded input + VTT: ${baseKey}.mp3 -> ${url}`);
+          continue;
+        }
       }
-      audioBuffer = Buffer.concat(partBuffers);
-    } else {
-      audioBuffer = await synthesizeMp3(inp.body, inp.accent ?? 'British');
-    }
 
-    const baseKey = `module-${moduleNum}/${slugify(inp.title)}`;
-    const url = await uploadBuffer(`${baseKey}.mp3`, audioBuffer, 'audio/mpeg', supabase);
-    await uploadBuffer(`${baseKey}.vtt`, buildVtt(inp.body, inp.duration_seconds), 'text/vtt; charset=utf-8', supabase);
-    await supabase.from('content_inputs').update({ audio_url: url }).eq('id', inp.id);
-    console.log(`Uploaded input + VTT: ${baseKey}.mp3 -> ${url}`);
+      if (!openaiKey) continue;
+      if (inp.audio_url && /^https?:\/\//i.test(inp.audio_url)) continue;
+
+      const accents = Array.isArray(inp.speaker_accents) ? inp.speaker_accents : [];
+      let audioBuffer;
+      if (accents.length > 1) {
+        const segments = inp.body.split(/(?=\b[A-Z][A-Z0-9 ]{1,18}:)/g).map((s) => s.trim()).filter(Boolean);
+        const partBuffers = [];
+        for (let i = 0; i < segments.length; i++) {
+          const cleanLine = segments[i].replace(/^[A-Z][A-Z0-9 ]{1,18}:\s*/, '');
+          const accentLabel = accents[i % accents.length]?.label || inp.accent || 'British';
+          partBuffers.push(await synthesizeMp3(cleanLine, accentLabel));
+        }
+        audioBuffer = Buffer.concat(partBuffers);
+      } else {
+        audioBuffer = await synthesizeMp3(inp.body, inp.accent ?? 'British');
+      }
+
+      const url = await uploadBuffer(`${baseKey}.mp3`, audioBuffer, 'audio/mpeg', supabase);
+      await uploadBuffer(`${baseKey}.vtt`, buildVtt(inp.body, inp.duration_seconds), 'text/vtt; charset=utf-8', supabase);
+      await supabase.from('content_inputs').update({ audio_url: url }).eq('id', inp.id);
+      console.log(`Uploaded TTS input + VTT: ${baseKey}.mp3 -> ${url}`);
+    }
   }
 
-  for (const item of vocabItems ?? []) {
-    if (item.audio_url && /^https?:\/\//i.test(item.audio_url)) continue;
-    const mp3 = await synthesizeMp3(`${item.term}. ${item.example}`, 'British');
-    const key = `module-${moduleNum}/${slugify(item.term)}.mp3`;
-    const url = await uploadBuffer(key, mp3, 'audio/mpeg', supabase);
-    await supabase.from('vocab_items').update({ audio_url: url }).eq('id', item.id);
-    console.log(`Uploaded vocab: ${key} -> ${url}`);
+  if (openaiKey) {
+    for (const item of vocabItems ?? []) {
+      if (item.audio_url && /^https?:\/\//i.test(item.audio_url)) continue;
+      const mp3 = await synthesizeMp3(`${item.term}. ${item.example}`, 'British');
+      const key = `module-${moduleNum}/${slugify(item.term)}.mp3`;
+      const url = await uploadBuffer(key, mp3, 'audio/mpeg', supabase);
+      await supabase.from('vocab_items').update({ audio_url: url }).eq('id', item.id);
+      console.log(`Uploaded vocab: ${key} -> ${url}`);
+    }
   }
 }
 
 async function main() {
+  if (exportScripts) {
+    await exportRecordingCueSheets();
+    return;
+  }
+
   if (!supabaseUrl || !serviceKey) {
     console.log('Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to sync audio assets with Postgres.');
     process.exit(0);

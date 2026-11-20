@@ -1,0 +1,258 @@
+{
+  "course_slug": "english-b1-b2",
+  "modules": [
+    {
+      "number": 2,
+      "title": "REPLACE: Module Title",
+      "summary": "REPLACE: One-sentence CEFR B1 -> B2 module summary explaining communicative goals.",
+      "hours": 8,
+      "releaseStage": "beta",
+      "vocabularyTopic": "REPLACE: Topic cluster (collocations, phrasal verbs, functional phrases)",
+      "grammar": [
+        {
+          "key": "replace-grammar-key-1",
+          "name": "REPLACE: Grammar Area 1",
+          "explanation": "REPLACE: Concise British-English explanation of form and meaning contrast.",
+          "keyPoints": [
+            "REPLACE: Core rule 1 with natural example.",
+            "REPLACE: Core rule 2 with common B1 learner pitfall."
+          ],
+          "example": "REPLACE: One natural B1 -> B2 model sentence.",
+          "items": [
+            {
+              "prompt": "REPLACE: Context gap-fill ___ sentence 1.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option A",
+              "explanation": "REPLACE: Why Option A fits the meaning/register.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "REPLACE: Contrast question 2.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option B",
+              "explanation": "REPLACE: Why Option B is correct.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "REPLACE: Nuance / B2 stretch question 3.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option C",
+              "explanation": "REPLACE: Why Option C is correct.",
+              "difficulty": 3
+            }
+          ]
+        },
+        {
+          "key": "replace-grammar-key-2",
+          "name": "REPLACE: Grammar Area 2",
+          "explanation": "REPLACE: Concise British-English explanation of second grammar area.",
+          "keyPoints": [
+            "REPLACE: Core rule 1.",
+            "REPLACE: Core rule 2."
+          ],
+          "example": "REPLACE: One natural B1 -> B2 model sentence.",
+          "items": [
+            {
+              "prompt": "REPLACE: Context gap-fill ___ sentence 1.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option A",
+              "explanation": "REPLACE: Why Option A is correct.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "REPLACE: Contrast question 2.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option B",
+              "explanation": "REPLACE: Why Option B is correct.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "REPLACE: Nuance / B2 stretch question 3.",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option C",
+              "explanation": "REPLACE: Why Option C is correct.",
+              "difficulty": 3
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "replace collocation 1",
+          "pos": "phrase",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-1.mp3"
+        },
+        {
+          "term": "replace collocation 2",
+          "pos": "noun",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-2.mp3"
+        },
+        {
+          "term": "replace collocation 3",
+          "pos": "verb",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-3.mp3"
+        },
+        {
+          "term": "replace collocation 4",
+          "pos": "phrasal verb",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-4.mp3"
+        },
+        {
+          "term": "replace collocation 5",
+          "pos": "adjective",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-5.mp3"
+        },
+        {
+          "term": "replace collocation 6",
+          "pos": "phrase",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-6.mp3"
+        },
+        {
+          "term": "replace collocation 7",
+          "pos": "noun",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-7.mp3"
+        },
+        {
+          "term": "replace collocation 8",
+          "pos": "phrase",
+          "definition": "REPLACE: Clear B1-accessible definition.",
+          "example": "REPLACE: Natural British-English example sentence.",
+          "collocations": ["natural collocation 1", "natural collocation 2"],
+          "translation": "REPLACE: Spanish gloss",
+          "audioRef": "module-2/replace-collocation-8.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 2,
+          "title": "REPLACE: Listening Input Title",
+          "source": "Studio original — mixed accents",
+          "accent": "British and Irish",
+          "speaker_accents": [
+            { "speaker": "HOST", "accent": "en-GB", "label": "British" },
+            { "speaker": "GUEST", "accent": "en-IE", "label": "Irish" }
+          ],
+          "seconds": 90,
+          "audioRef": "module-2/replace-listening-input-title.mp3",
+          "audioStatus": "actor_pending",
+          "body": "HOST: Welcome back to the programme. GUEST: Thanks for having me; today we are looking at how habits shape long-term fluency.",
+          "questions": [
+            {
+              "prompt": "REPLACE: Detail comprehension question?",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option A"
+            },
+            {
+              "prompt": "REPLACE: Attitude or inference question?",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option B"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 6,
+          "title": "REPLACE: Reading Input Title",
+          "source": "Studio original",
+          "audioRef": "module-2/replace-reading-input-title.mp3",
+          "audioStatus": "tts",
+          "body": "REPLACE: 120–400 word natural British-English reading article calibrated for B1 -> B2 comprehension and inference questions.",
+          "questions": [
+            {
+              "prompt": "REPLACE: Main idea question?",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option A"
+            },
+            {
+              "prompt": "REPLACE: Writer implication question?",
+              "options": ["Option A", "Option B", "Option C"],
+              "answer": "Option C"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "REPLACE: Structured Monologue",
+          "prompt": "REPLACE: Speak for 90 seconds on...",
+          "seconds": 90,
+          "phrases": ["In my experience...", "What makes the difference is..."],
+          "linkers": ["however", "consequently"],
+          "terms": ["replace collocation 1", "replace collocation 2"]
+        },
+        {
+          "kind": "role_play",
+          "title": "REPLACE: Interactive Role-Play",
+          "prompt": "REPLACE: Two-minute dialogue scenario...",
+          "seconds": 120,
+          "phrases": ["Would you mind explaining...?", "That is a fair point."],
+          "linkers": ["on balance", "to be honest"],
+          "terms": ["replace collocation 3", "replace collocation 4"]
+        },
+        {
+          "kind": "shadowing",
+          "title": "REPLACE: Shadowing Rhythm",
+          "prompt": "Repeat the model lines copying stress on content words and linking.",
+          "seconds": 60,
+          "phrases": ["On balance / the evidence suggests / a gradual shift."],
+          "linkers": ["although", "whereas"],
+          "terms": ["replace collocation 5"]
+        }
+      ],
+      "writing": {
+        "title": "REPLACE: Module Writing Task",
+        "prompt": "REPLACE: Genre, audience, and word target (120–200 words) tying into module checkpoint.",
+        "format": "opinion paragraph",
+        "wordMin": 120,
+        "wordMax": 180,
+        "outline": {
+          "analyze": "Purpose, audience, and register.",
+          "plan": "Opening position -> two reasons -> concession -> conclusion.",
+          "draft": "Use both target grammar structures and three module collocations.",
+          "improve": "Replace vague verbs/adjectives with exact collocations.",
+          "review": "Check word count, linkers, and British spelling."
+        }
+      },
+      "lessons": [
+        { "title": "REPLACE: Lesson 1 (Grammar 1)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "grammar", "input": "reading", "outputTitle": "Output 1", "output": "Record 60 seconds practising Grammar 1.", "targetSeconds": 60 },
+        { "title": "REPLACE: Lesson 2 (Listening)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "listening", "input": "listening", "outputTitle": "Output 2", "output": "Summarise the speaker's main point in 60 seconds.", "targetSeconds": 60 },
+        { "title": "REPLACE: Lesson 3 (Vocabulary)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "vocabulary", "input": "reading", "outputTitle": "Output 3", "output": "Use five collocations in a 60-second recording.", "targetSeconds": 60 },
+        { "title": "REPLACE: Lesson 4 (Speaking)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "speaking", "input": "listening", "outputTitle": "Output 4", "output": "90-second structured talk.", "targetSeconds": 90 },
+        { "title": "REPLACE: Lesson 5 (Grammar 2)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "grammar", "input": "listening", "outputTitle": "Output 5", "output": "Apply Grammar 2 in a 90-second story or comparison.", "targetSeconds": 90 },
+        { "title": "REPLACE: Lesson 6 (Reading)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "reading", "input": "reading", "outputTitle": "Output 6", "output": "Write a 60–90 word summary and response.", "wordRange": [60, 90] },
+        { "title": "REPLACE: Lesson 7 (Writing)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "writing", "input": "reading", "outputTitle": "Output 7", "output": "Draft and revise the module writing task.", "wordRange": [120, 180] },
+        { "title": "REPLACE: Lesson 8 (Review / Checkpoint)", "objective": "REPLACE: Clear learning objective.", "canDo": "I can ... (REPLACE)", "skill": "review", "input": "listening", "outputTitle": "Output 8", "output": "Consolidate module grammar and checkpoint readiness.", "targetSeconds": 120 }
+      ]
+    }
+  ]
+}
