@@ -48,7 +48,7 @@ export default function DeleteDataButton() {
       ) : (
         <div className="rounded-xl border border-rose-300 bg-rose-50/70 p-3.5 text-xs">
           <p className="font-semibold text-rose-950">
-            This permanently erases your lessons, SRS decks, AI feedback logs, error cards, and voice recordings. Type{' '}
+            This permanently erases your lessons, SRS decks, AI feedback logs, error cards, and voice recordings (your login account &amp; Stripe billing remain active unless cancelled separately). Type{' '}
             <code className="rounded bg-white px-1 py-0.5 font-mono">DELETE</code> to confirm:
           </p>
           <div className="mt-2 flex flex-wrap gap-2">

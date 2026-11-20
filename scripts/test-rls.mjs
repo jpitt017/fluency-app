@@ -99,7 +99,16 @@ async function run() {
       throw new Error('RLS BREACH: User A modified User B learner_errors!');
     }
 
-    console.log('PASS: Postgres RLS isolation verified for learner_errors (cross-read, spoof-insert, and cross-update blocked).');
+    // 4. Schema drift check: verify delete_my_learning_data() covers every user_id table
+    const { data: coverage, error: covErr } = await admin.rpc('verify_delete_my_learning_data_coverage');
+    if (covErr) throw new Error(`Coverage check failed: ${covErr.message}`);
+    if (!coverage?.covered) {
+      throw new Error(
+        `SCHEMA DRIFT: delete_my_learning_data() is missing user_id tables: ${JSON.stringify(coverage?.missing_tables)}`,
+      );
+    }
+
+    console.log('PASS: Postgres RLS isolation & delete_my_learning_data() schema coverage verified.');
   } finally {
     await admin.auth.admin.deleteUser(userA.user.id);
     await admin.auth.admin.deleteUser(userB.user.id);

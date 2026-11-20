@@ -14,13 +14,13 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
 
     await page.goto('/privacy');
     await expect(page.getByText(/Delete my learning data/i)).toBeVisible();
+    await expect(page.getByText(/OpenAI/i)).toBeVisible();
 
     await page.goto('/review');
     await expect(page.getByText(/Sign in|Review|Mistake/i).first()).toBeVisible();
   });
 
   test('placement check + stubbed diagnostic writing sample completes deterministically', async ({ page }) => {
-    // Intercept writing feedback so placement works fast and deterministically in CI
     await page.route('**/api/writing/correct', async (route) => {
       await route.fulfill({
         status: 200,
@@ -40,7 +40,6 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.goto('/onboarding/placement');
     await expect(page.getByText(/Question 1 of/i)).toBeVisible();
 
-    // Step through every placement item (24 in Supabase, or fallback count if offline)
     for (let i = 0; i < 30; i++) {
       const writingHeading = page.getByText(/Optional 1-Paragraph Diagnostic Writing Sample/i);
       if (await writingHeading.isVisible().catch(() => false)) {
@@ -63,10 +62,42 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Writing 82\/100/i)).toBeVisible();
   });
 
-  test('authenticated learner completes lesson -> writing -> feedback -> review loop', async ({ page }) => {
+  test('authenticated learner completes lesson -> writing -> stubbed feedback -> review -> rewrite check', async ({
+    page,
+  }) => {
     const email = process.env.E2E_USER_EMAIL;
     const password = process.env.E2E_USER_PASSWORD;
     test.skip(!email || !password, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run authenticated E2E flow');
+
+    if (process.env.E2E_STUB_LLM !== 'false') {
+      await page.route('**/api/writing/correct', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            submissionId: null,
+            score: 74,
+            feedback: 'Good effort! Watch article and preposition collocations.',
+            corrected: 'Moving to Edinburgh was a turning point in my career.',
+            notes: ['Use "a turning point" and "responsible for".'],
+            corrections: [
+              {
+                original: 'Moving to Edinburgh was turning point in my career.',
+                corrected_sentence: 'Moving to Edinburgh was a turning point in my career.',
+                alternative: 'Moving to Edinburgh was a turning point in my career.',
+                error_category: 'article',
+                explanation: 'Use "a" before the singular countable noun "turning point".',
+                reason: 'Use "a" before the singular countable noun "turning point".',
+                severity: 'moderate',
+              },
+            ],
+            errorPatterns: ['article'],
+            rubric: { task_response: 4, organisation: 3.5, grammar_accuracy: 3.5, lexical_range: 4, style: 3.5 },
+            newBadges: [],
+          }),
+        });
+      });
+    }
 
     await page.goto('/login');
     await page.getByLabel(/Email/i).fill(email);
@@ -77,13 +108,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.goto('/curriculum/lessons/1');
     const draftArea = page.getByPlaceholder(/Draft your paragraph/i);
     await expect(draftArea).toBeVisible();
-    await draftArea.fill(
-      'Moving to Edinburgh was turning point in my career. I was responsible of coordinating the design team, and I have started my role in 2023.',
-    );
+    await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 
-    const evalBtn = page.getByRole('button', { name: /Evaluate writing/i });
-    await evalBtn.click();
-    await expect(page.getByText(/\/ 100/)).toBeVisible({ timeout: 25_000 });
+    await page.getByRole('button', { name: /Evaluate writing/i }).click();
+    await expect(page.getByText(/74 \/ 100|\/ 100/)).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
     await expect(page.getByText(/FSRS Mistake Repair|No error review cards due/i)).toBeVisible();

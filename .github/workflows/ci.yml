@@ -5,8 +5,27 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      prompts: ${{ steps.filter.outputs.prompts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            prompts:
+              - 'lib/b1b2/feedback-schema.ts'
+              - 'lib/b1b2/prompt-guard.ts'
+              - 'src/app/api/**'
+              - 'scripts/eval-prompts.mjs'
+
   build-and-offline-evals:
     runs-on: ubuntu-latest
     steps:
@@ -44,10 +63,16 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || '' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || '' }}
+          E2E_STUB_LLM: 'true'
 
   live-prompt-evals:
+    needs: changes
     runs-on: ubuntu-latest
-    if: ${{ secrets.GROQ_API_KEY != '' }}
+    if: >-
+      (github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch' ||
+       needs.changes.outputs.prompts == 'true') &&
+      secrets.GROQ_API_KEY != ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,7 +80,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Run 60-case live Groq prompt accuracy & safety gate
+      - name: Run 62-case live Groq prompt accuracy & safety gate
         run: node scripts/eval-prompts.mjs --live
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -70,7 +95,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Verify Postgres RLS isolation
+      - name: Verify Postgres RLS isolation & deletion coverage
         run: node scripts/test-rls.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

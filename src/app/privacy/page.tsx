@@ -25,27 +25,39 @@ export default function PrivacyPage() {
           </div>
 
           <div>
-            <h2 className="text-base font-semibold text-stone-900">3. Third-Party Service Providers</h2>
-            <ul className="mt-1.5 list-disc space-y-1 pl-5">
+            <h2 className="text-base font-semibold text-stone-900">3. Sub-Processors &amp; Third-Party Services</h2>
+            <p className="mt-1.5 text-xs text-stone-600">
+              Learner text, speech audio, authentication, and billing metadata are processed solely to deliver the service by:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
               <li><strong>Supabase:</strong> Database hosting, private storage buckets, and user authentication.</li>
-              <li><strong>Groq:</strong> Speech-to-text (Whisper) and language model feedback processing.</li>
-              <li><strong>Stripe:</strong> Subscription payment processing.</li>
+              <li><strong>Groq:</strong> Speech-to-text transcription (Whisper) and language model feedback.</li>
+              <li><strong>OpenAI:</strong> Pre-generated curriculum audio synthesis (TTS, no learner PII).</li>
+              <li><strong>Stripe:</strong> Payment processing, customer records, and subscription billing.</li>
+              <li><strong>Vercel:</strong> Application hosting, edge routing, and scheduled retention jobs.</li>
+              <li><strong>AWS (S3 / CloudFront):</strong> Optional static course audio CDN delivery when configured.</li>
             </ul>
           </div>
 
           <div>
-            <h2 className="text-base font-semibold text-stone-900">4. Retention &amp; Security</h2>
+            <h2 className="text-base font-semibold text-stone-900">4. Retention Schedule &amp; Security</h2>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">
-              <li>Voice recordings and AI request telemetry logs are retained for up to 12 months while your account is active, unless deleted earlier by you.</li>
-              <li>Anonymized evaluation cache entries expire automatically after 90 days.</li>
-              <li>All user records are protected by HTTPS/TLS in transit and Postgres Row-Level Security (RLS) at rest.</li>
+              <li>
+                <strong>Automated 12-month purge:</strong> A scheduled daily retention job (<code className="text-xs">/api/cron/retention</code>) permanently deletes voice recordings in Supabase Storage, AI request telemetry logs, and usage events older than 12 months.
+              </li>
+              <li>
+                <strong>90-day cache TTL:</strong> Anonymized AI evaluation cache entries expire automatically after 90 days.
+              </li>
+              <li>
+                <strong>Security controls:</strong> All traffic uses HTTPS/TLS in transit, private storage buckets, and Postgres Row-Level Security (RLS) at rest.
+              </li>
             </ul>
           </div>
 
           <div className="rounded-xl border border-stone-200 bg-stone-50 p-5">
             <h2 className="text-base font-semibold text-stone-900">5. Your EU / GDPR Rights &amp; Data Deletion</h2>
             <p className="mt-1.5 text-xs leading-5 text-stone-600">
-              You may permanently erase all of your stored lessons, vocabulary/error FSRS cards, AI request logs, writing drafts, and voice recordings in Supabase Storage at any time below.
+              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary/error FSRS cards, learner error logs, writing drafts, speaking transcripts, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
             </p>
             <div className="mt-4">
               <DeleteDataButton />

@@ -7,7 +7,8 @@ export type AiEndpoint =
   | '/api/writing/correct'
   | '/api/checkpoints/evaluate'
   | '/api/checkpoints/writing'
-  | '/api/lessons/generate';
+  | '/api/lessons/generate'
+  | '/api/review/check-rewrite';
 
 export interface AiGuardResult {
   allowed: boolean;
