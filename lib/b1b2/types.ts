@@ -430,6 +430,9 @@ export interface DashboardSkillTelemetry {
   recurringErrors: RecurringErrorTag[];
   errorsPer100Words: number | null;
   errorsPer100WordsDelta: number | null;
+  hasEnoughWordData: boolean;
+  hasEnoughTrendData: boolean;
+  minWordsRequired: number;
   totalWordsEvaluated: number;
   dueErrorCards: number;
   masteredErrorCards: number;

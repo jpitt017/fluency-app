@@ -9,7 +9,14 @@ export function sanitizeLearnerText(
 ): { text: string; truncated: boolean } {
   const cleaned = String(raw ?? '')
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ')
-    .replace(/<\/?learner_submission>/gi, '')
+    // Normalize fullwidth angle brackets so homoglyph tag breakouts cannot bypass stripping
+    .replace(/[＜〈]/g, '<')
+    .replace(/[＞〉]/g, '>')
+    // Strip any variant of <learner_submission> / </learner_submission> / <system> / <prompt>
+    .replace(/<\s*\/?\s*(?:learner_submission|system|assistant|user|prompt|instruction)[^>]*>/gi, ' ')
+    // Neutralize remaining raw angle brackets to prevent XML delimiter injection
+    .replace(/[<>]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
   if (cleaned.length <= maxChars) {

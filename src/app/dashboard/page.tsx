@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { WeeklyPaceSelector, WeeklyReportCard } from '@/components/b1b2/DashboardControls';
+import DeleteDataButton from '@/components/b1b2/DeleteDataButton';
 import { formatBandLabel, loadDashboard, loadObservabilitySummary, loadOutline } from '@/lib/b1b2/data';
 import type { SkillArea } from '@/lib/b1b2/types';
 
@@ -284,12 +285,16 @@ export default async function DashboardPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {telemetry.errorsPer100Words !== null && (
+                {telemetry.hasEnoughWordData && telemetry.errorsPer100Words !== null ? (
                   <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-800">
                     {telemetry.errorsPer100Words} / 100w
-                    {telemetry.errorsPer100WordsDelta !== null
+                    {telemetry.hasEnoughTrendData && telemetry.errorsPer100WordsDelta !== null
                       ? ` (${telemetry.errorsPer100WordsDelta <= 0 ? telemetry.errorsPer100WordsDelta : `+${telemetry.errorsPer100WordsDelta}`})`
                       : ''}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-600">
+                    Not enough data yet ({telemetry.totalWordsEvaluated}/{telemetry.minWordsRequired} words)
                   </span>
                 )}
                 <Link href="/review" className="text-xs font-semibold text-indigo-700 hover:underline">
@@ -309,20 +314,29 @@ export default async function DashboardPage() {
                     <div className="min-w-0">
                       <span className="block truncate font-semibold text-stone-800">{err.label}</span>
                       <span className="text-[11px] text-stone-500">
-                        {err.per100Words} / 100 words
-                        {err.per100WordsPrev !== null ? ` (prev ${err.per100WordsPrev})` : ''}
+                        {telemetry.hasEnoughWordData
+                          ? `${err.per100Words} / 100 words${
+                              telemetry.hasEnoughTrendData && err.per100WordsPrev !== null
+                                ? ` (prev ${err.per100WordsPrev})`
+                                : ''
+                            }`
+                          : `${err.count}× logged (collecting 200w baseline)`}
                       </span>
                     </div>
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ring-1 ${
-                        err.trend === 'improving'
+                        telemetry.hasEnoughTrendData && err.trend === 'improving'
                           ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
-                          : err.trend === 'worsening'
+                          : telemetry.hasEnoughTrendData && err.trend === 'worsening'
                             ? 'bg-rose-50 text-rose-800 ring-rose-200'
                             : 'bg-white text-amber-800 ring-amber-200'
                       }`}
                     >
-                      {err.trend === 'improving' ? '↓ improving' : err.trend === 'worsening' ? '↑ watch' : `${err.count}×`}
+                      {telemetry.hasEnoughTrendData && err.trend === 'improving'
+                        ? '↓ improving'
+                        : telemetry.hasEnoughTrendData && err.trend === 'worsening'
+                          ? '↑ watch'
+                          : `${err.count}×`}
                     </span>
                   </Link>
                 ))}
@@ -331,7 +345,7 @@ export default async function DashboardPage() {
               <p className="mt-4 rounded-xl border border-stone-100 bg-stone-50/80 p-3.5 text-xs leading-5 text-stone-600">
                 {telemetry.missedPracticeCount > 0
                   ? `You have ${telemetry.missedPracticeCount} missed practice items ready for active recall review.`
-                  : 'Complete lessons and AI speaking/writing tasks to track your errors per 100 words over time.'}
+                  : 'Complete lessons and AI speaking/writing tasks to track your errors per 100 words once 200+ words are evaluated.'}
               </p>
             )}
           </section>
@@ -519,6 +533,21 @@ export default async function DashboardPage() {
               </div>
             </section>
           )}
+
+          <section className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-lg font-semibold text-stone-900">Data &amp; Privacy Controls</h2>
+              <Link href="/privacy" className="text-xs font-semibold text-indigo-700 hover:underline">
+                Privacy policy →
+              </Link>
+            </div>
+            <p className="mt-1 text-xs text-stone-500">
+              Delete all stored lessons, SRS cards, AI logs, and voice recordings at any time.
+            </p>
+            <div className="mt-3">
+              <DeleteDataButton />
+            </div>
+          </section>
         </div>
       </div>
     </main>

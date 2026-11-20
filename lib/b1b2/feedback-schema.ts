@@ -466,12 +466,19 @@ export async function persistLearnerErrors(
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
 
-  const [{ count: createdToday }, { data: existingOpen }] = await Promise.all([
+  const [{ count: createdToday }, { count: queuedFuture }, { data: existingOpen }] = await Promise.all([
     supabase
       .from('error_review_cards')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', params.userId)
-      .gte('created_at', startOfUtcDay.toISOString()),
+      .gte('created_at', startOfUtcDay.toISOString())
+      .lt('due_at', new Date(startOfUtcDay.getTime() + 24 * 60 * 60 * 1000).toISOString()),
+    supabase
+      .from('error_review_cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', params.userId)
+      .eq('mastered', false)
+      .gte('due_at', new Date(startOfUtcDay.getTime() + 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('error_review_cards')
       .select('id, category, prompt_sentence, normalized_key, occurrence_count')
@@ -482,6 +489,7 @@ export async function persistLearnerErrors(
   ]);
 
   let remainingDailySlots = Math.max(0, DAILY_NEW_ERROR_CARD_CAP - (createdToday ?? 0));
+  let overflowQueuedCount = queuedFuture ?? 0;
   const openCards = (existingOpen ?? []) as {
     id: string;
     category: string;
@@ -532,7 +540,18 @@ export async function persistLearnerErrors(
       continue;
     }
 
-    if (remainingDailySlots <= 0) continue;
+    // Overflow beyond the 5-card daily cap is queued onto future days (5/day) rather than dropped
+    let dueAtIso: string;
+    if (remainingDailySlots > 0) {
+      remainingDailySlots--;
+      dueAtIso = new Date().toISOString();
+    } else {
+      const overflowIdx = overflowQueuedCount++;
+      const futureDays = 1 + Math.floor(overflowIdx / DAILY_NEW_ERROR_CARD_CAP);
+      const futureDate = new Date(startOfUtcDay.getTime() + futureDays * 24 * 60 * 60 * 1000);
+      futureDate.setUTCHours(8, 0, 0, 0);
+      dueAtIso = futureDate.toISOString();
+    }
 
     const cardFormat = contextSentence ? 'cloze' : 'fix_sentence';
     const { data: created, error: cardErr } = await supabase
@@ -548,7 +567,7 @@ export async function persistLearnerErrors(
           card_format: cardFormat,
           normalized_key: normKey,
           explanation: row.explanation,
-          due_at: new Date().toISOString(),
+          due_at: dueAtIso,
         },
         { onConflict: 'user_id,category,normalized_key' },
       )
@@ -556,7 +575,6 @@ export async function persistLearnerErrors(
       .maybeSingle();
 
     if (!cardErr && created) {
-      remainingDailySlots--;
       openCards.push(created);
     }
   }

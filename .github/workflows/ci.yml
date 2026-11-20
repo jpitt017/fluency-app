@@ -1,4 +1,4 @@
-name: CI — Quality, Prompt Evals & RLS
+name: CI — Quality, Prompt Evals, E2E & RLS
 
 on:
   pull_request:
@@ -23,6 +23,28 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
 
+  playwright-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+      - name: Run Playwright core-loop E2E tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || '' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || '' }}
+
   live-prompt-evals:
     runs-on: ubuntu-latest
     if: ${{ secrets.GROQ_API_KEY != '' }}
@@ -33,7 +55,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Run 54-case live Groq prompt evals
+      - name: Run 60-case live Groq prompt accuracy & safety gate
         run: node scripts/eval-prompts.mjs --live
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

@@ -129,6 +129,9 @@ export async function loadDashboard(): Promise<{
     recurringErrors: [],
     errorsPer100Words: null,
     errorsPer100WordsDelta: null,
+    hasEnoughWordData: false,
+    hasEnoughTrendData: false,
+    minWordsRequired: 200,
     totalWordsEvaluated: 0,
     dueErrorCards: 0,
     masteredErrorCards: 0,
@@ -307,18 +310,25 @@ export async function loadDashboard(): Promise<{
     }
   }
 
+  const MIN_WORDS_FOR_RATE = 200;
+  const hasEnoughWordData = totalWords >= MIN_WORDS_FOR_RATE;
+  const hasEnoughTrendData =
+    currentWeekWords >= MIN_WORDS_FOR_RATE && prevWeekWords >= MIN_WORDS_FOR_RATE;
+
   const safeWordsTotal = totalWords > 0 ? totalWords : 100;
   const currentDensityDenom = currentWeekWords > 0 ? currentWeekWords : safeWordsTotal;
 
   const errorsPer100Words =
-    totalWords > 0 && normalizedErrors.length > 0
+    hasEnoughWordData && normalizedErrors.length > 0
       ? Number(((normalizedErrors.length / totalWords) * 100).toFixed(1))
       : null;
 
-  const currentRate =
-    currentWeekWords > 0 ? Number(((totalErrorsCurrentWeek / currentWeekWords) * 100).toFixed(1)) : null;
-  const prevRate =
-    prevWeekWords > 0 ? Number(((totalErrorsPrevWeek / prevWeekWords) * 100).toFixed(1)) : null;
+  const currentRate = hasEnoughTrendData
+    ? Number(((totalErrorsCurrentWeek / currentWeekWords) * 100).toFixed(1))
+    : null;
+  const prevRate = hasEnoughTrendData
+    ? Number(((totalErrorsPrevWeek / prevWeekWords) * 100).toFixed(1))
+    : null;
   const errorsPer100WordsDelta =
     currentRate !== null && prevRate !== null ? Number((currentRate - prevRate).toFixed(1)) : null;
 
@@ -329,10 +339,11 @@ export async function loadDashboard(): Promise<{
       const wkCount = weeklyCounts.get(tag) ?? 0;
       const prevWkCount = prevWeeklyCounts.get(tag) ?? 0;
       const per100 = Number((((currentWeekWords > 0 ? wkCount : count) / currentDensityDenom) * 100).toFixed(1));
-      const per100Prev =
-        prevWeekWords > 0 ? Number(((prevWkCount / prevWeekWords) * 100).toFixed(1)) : null;
+      const per100Prev = hasEnoughTrendData
+        ? Number(((prevWkCount / prevWeekWords) * 100).toFixed(1))
+        : null;
       const trend: RecurringErrorTag['trend'] =
-        per100Prev === null
+        !hasEnoughTrendData || per100Prev === null
           ? 'stable'
           : per100 < per100Prev - 0.1
             ? 'improving'
@@ -372,6 +383,9 @@ export async function loadDashboard(): Promise<{
       recurringErrors,
       errorsPer100Words,
       errorsPer100WordsDelta,
+      hasEnoughWordData,
+      hasEnoughTrendData,
+      minWordsRequired: MIN_WORDS_FOR_RATE,
       totalWordsEvaluated: totalWords,
       dueErrorCards: dueErrorCardsRes.count ?? 0,
       masteredErrorCards: masteredErrorCardsRes.count ?? 0,
