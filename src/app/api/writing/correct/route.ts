@@ -20,47 +20,41 @@ export async function POST(req: NextRequest) {
 
   try {
     groq = getGroqClient();
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Groq API is not configured on the server' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Groq API is not configured on the server' },
+      { status: 500 },
     );
   }
 
   try {
     const body = (await req.json().catch(() => ({}))) as WritingCorrectBody;
     const text = (body.text || '').trim();
-    const prompt = body.prompt || 'General B1 British English writing task';
+    const prompt = body.prompt || 'General B1 → B2 English writing task';
     const targetKeywords = Array.isArray(body.targetKeywords) ? body.targetKeywords : [];
 
     if (!text) {
-      return NextResponse.json(
-        { error: 'Please provide text to evaluate.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Please provide text to evaluate.' }, { status: 400 });
     }
 
     if (text.length > 3000) {
-      return NextResponse.json(
-        { error: 'Text exceeds the 3,000-character limit.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Text exceeds the 3,000-character limit.' }, { status: 400 });
     }
 
-    const systemPrompt = `You are a Cambridge-certified British English (CEFR B1) examiner.
-Evaluate the student's response using authentic British English spelling, grammar, and idiomatic phrasing (e.g., colour, favourite, flat, queue, brilliant, Cheers).
+    const systemPrompt = `You are a CEFR B1 → B2 English writing examiner.
+Evaluate the learner's writing for task response, organisation, grammar accuracy, vocabulary range, and style.
 Return strictly valid JSON with no markdown fences using this exact schema:
 {
-  "corrected": "string (natural B1/B2 British English rewrite preserving the student's intended meaning)",
+  "corrected": "string (natural, polished B2-ready rewrite preserving the learner's intended meaning)",
   "feedback": "string (encouraging 2-3 sentence summary of strengths and key areas to improve)",
-  "notes": ["string (specific grammar, spelling, or British vocabulary correction)"],
+  "notes": ["string (specific grammar, collocation, linker, or style correction with one alternative phrasing)"],
   "score": 80
 }`;
 
     const userPrompt = `Task Prompt: ${prompt}
-Target Keywords: ${targetKeywords.length > 0 ? targetKeywords.join(', ') : 'None specified'}
+Target Vocabulary: ${targetKeywords.length > 0 ? targetKeywords.join(', ') : 'None specified'}
 
-Student Response:
+Learner Response:
 """
 ${text}
 """`;
@@ -87,13 +81,13 @@ ${text}
     }
 
     try {
-      const parsed = JSON.parse(rawContent);
+      const parsed = JSON.parse(rawContent) as Record<string, unknown>;
       return NextResponse.json({
         corrected: typeof parsed.corrected === 'string' ? parsed.corrected : text,
         feedback:
           typeof parsed.feedback === 'string'
             ? parsed.feedback
-            : 'Good effort! Review the suggested British English phrasing above.',
+            : 'Good effort! Review the suggested B2 phrasing above.',
         notes: Array.isArray(parsed.notes) ? parsed.notes : [],
         score: typeof parsed.score === 'number' ? parsed.score : 75,
       });
@@ -105,10 +99,10 @@ ${text}
         score: 75,
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Failed to evaluate writing' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Failed to evaluate writing' },
+      { status: 500 },
     );
   }
 }

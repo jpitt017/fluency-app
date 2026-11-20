@@ -7,8 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit",
     "db:b1b2:build-seed": "node supabase-b1-b2/scripts/build-seed-sql.mjs"
   },
   "dependencies": {

@@ -7,9 +7,7 @@ function getStripeClient(): Stripe {
   if (!apiKey) {
     throw new Error('STRIPE_SECRET_KEY is not configured');
   }
-  return new Stripe(apiKey, {
-    apiVersion: '2025-02-24.acacia' as any,
-  });
+  return new Stripe(apiKey);
 }
 
 function getSupabaseAdmin() {
@@ -26,6 +24,25 @@ function getSupabaseAdmin() {
   });
 }
 
+interface SubscriptionLike {
+  id: string;
+  status: string;
+  current_period_end?: number | null;
+  items?: {
+    data?: Array<{
+      current_period_end?: number | null;
+    }>;
+  };
+}
+
+function extractPeriodEnd(subscription: SubscriptionLike): string | null {
+  const epoch =
+    subscription.current_period_end ??
+    subscription.items?.data?.[0]?.current_period_end ??
+    null;
+  return typeof epoch === 'number' ? new Date(epoch * 1000).toISOString() : null;
+}
+
 export async function POST(req: NextRequest) {
   let stripe: Stripe;
   let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
@@ -33,10 +50,10 @@ export async function POST(req: NextRequest) {
   try {
     stripe = getStripeClient();
     supabaseAdmin = getSupabaseAdmin();
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Server configuration error' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Server configuration error' },
+      { status: 500 },
     );
   }
 
@@ -47,7 +64,7 @@ export async function POST(req: NextRequest) {
   if (!signature || !webhookSecret) {
     return NextResponse.json(
       { error: 'Missing Stripe signature or webhook secret' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -55,14 +72,13 @@ export async function POST(req: NextRequest) {
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${err.message}` },
-      { status: 400 }
+      { error: `Webhook signature verification failed: ${err instanceof Error ? err.message : 'Invalid signature'}` },
+      { status: 400 },
     );
   }
 
-  // Idempotency check
   const { data: existingEvent } = await supabaseAdmin
     .from('stripe_events')
     .select('id')
@@ -80,7 +96,7 @@ export async function POST(req: NextRequest) {
   if (insertError) {
     return NextResponse.json(
       { error: `Failed to record webhook event: ${insertError.message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -96,12 +112,10 @@ export async function POST(req: NextRequest) {
 
         if (userId && subscriptionId) {
           const subscription = (await stripe.subscriptions.retrieve(
-            subscriptionId
-          )) as any;
+            subscriptionId,
+          )) as unknown as SubscriptionLike;
 
-          const periodEnd = subscription.current_period_end
-            ? new Date(subscription.current_period_end * 1000).toISOString()
-            : null;
+          const periodEnd = extractPeriodEnd(subscription);
 
           await supabaseAdmin
             .from('profiles')
@@ -121,10 +135,8 @@ export async function POST(req: NextRequest) {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as any;
-        const periodEnd = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : null;
+        const subscription = event.data.object as unknown as SubscriptionLike;
+        const periodEnd = extractPeriodEnd(subscription);
 
         await supabaseAdmin
           .from('profiles')
@@ -141,10 +153,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: `Webhook handler failed: ${err.message}` },
-      { status: 500 }
+      { error: `Webhook handler failed: ${err instanceof Error ? err.message : 'Unexpected error'}` },
+      { status: 500 },
     );
   }
 }

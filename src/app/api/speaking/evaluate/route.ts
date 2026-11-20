@@ -9,17 +9,17 @@ function getGroqClient(): Groq {
   return new Groq({ apiKey });
 }
 
-const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB limit
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   let groq: Groq;
 
   try {
     groq = getGroqClient();
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Groq API is not configured on the server' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Groq API is not configured on the server' },
+      { status: 500 },
     );
   }
 
@@ -36,17 +36,11 @@ export async function POST(req: NextRequest) {
       promptContext = String(formData.get('prompt') || '');
 
       if (!audioFile) {
-        return NextResponse.json(
-          { error: 'No audio file provided.' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'No audio file provided.' }, { status: 400 });
       }
 
       if (audioFile.size > MAX_AUDIO_BYTES) {
-        return NextResponse.json(
-          { error: 'Audio file exceeds the 10 MB limit.' },
-          { status: 413 }
-        );
+        return NextResponse.json({ error: 'Audio file exceeds the 10 MB limit.' }, { status: 413 });
       }
 
       const transcription = await groq.audio.transcriptions.create({
@@ -58,7 +52,7 @@ export async function POST(req: NextRequest) {
 
       transcript = (transcription.text || '').trim();
     } else {
-      const body = await req.json().catch(() => ({}));
+      const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       transcript = String(body.transcript || '').trim();
       targetPhrase = String(body.targetPhrase || '');
       promptContext = String(body.prompt || '');
@@ -67,23 +61,23 @@ export async function POST(req: NextRequest) {
     if (!transcript) {
       return NextResponse.json(
         { error: 'Could not detect any speech in the recording. Please try speaking closer to the microphone.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const systemPrompt = `You are a Cambridge CEFR B1 British English speaking examiner.
-Evaluate the student's spoken transcript for fluency, grammar, and natural British English phrasing.
+    const systemPrompt = `You are a CEFR B1 → B2 English speaking examiner.
+Evaluate the student's spoken transcript for fluency, vocabulary range, grammar accuracy, and coherence.
 Return strictly valid JSON with no markdown fences:
 {
   "transcript": "string",
-  "naturalBritishVersion": "string",
-  "feedback": "string (2-3 encouraging sentences)",
+  "improvedResponse": "string (natural B2-ready version preserving the speaker's ideas)",
+  "feedback": "string (2-3 encouraging, specific sentences)",
   "tips": ["string"],
   "score": 82
 }`;
 
-    const userPrompt = `Context/Prompt: ${promptContext || 'General B1 speaking practice'}
-Target Phrase: ${targetPhrase || 'None'}
+    const userPrompt = `Context/Prompt: ${promptContext || 'General B1 → B2 speaking practice'}
+Target Language: ${targetPhrase || 'None'}
 Transcribed Speech: "${transcript}"`;
 
     const evaluation = await groq.chat.completions.create({
@@ -101,25 +95,29 @@ Transcribed Speech: "${transcript}"`;
     if (!rawEval) {
       return NextResponse.json({
         transcript,
-        naturalBritishVersion: transcript,
-        feedback: 'Clear speech detected! Keep practising natural British rhythm and stress.',
+        improvedResponse: transcript,
+        feedback: 'Clear speech detected! Keep linking ideas with natural B2 transitions.',
         tips: [],
         score: 75,
       });
     }
 
-    const parsed = JSON.parse(rawEval);
+    const parsed = JSON.parse(rawEval) as Record<string, unknown>;
     return NextResponse.json({
       transcript,
-      naturalBritishVersion: parsed.naturalBritishVersion || transcript,
-      feedback: parsed.feedback || 'Well done on completing the speaking exercise.',
+      improvedResponse:
+        typeof parsed.improvedResponse === 'string' ? parsed.improvedResponse : transcript,
+      feedback:
+        typeof parsed.feedback === 'string'
+          ? parsed.feedback
+          : 'Well done on completing the speaking exercise.',
       tips: Array.isArray(parsed.tips) ? parsed.tips : [],
       score: typeof parsed.score === 'number' ? parsed.score : 78,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Failed to evaluate speaking submission' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Failed to evaluate speaking submission' },
+      { status: 500 },
     );
   }
 }

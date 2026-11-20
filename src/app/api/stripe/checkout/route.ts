@@ -8,9 +8,7 @@ function getStripeClient(): Stripe {
   if (!apiKey) {
     throw new Error('STRIPE_SECRET_KEY is not configured');
   }
-  return new Stripe(apiKey, {
-    apiVersion: '2025-02-24.acacia' as any,
-  });
+  return new Stripe(apiKey);
 }
 
 export async function POST(req: NextRequest) {
@@ -18,10 +16,10 @@ export async function POST(req: NextRequest) {
 
   try {
     stripe = getStripeClient();
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Stripe is not configured on the server' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Stripe is not configured on the server' },
+      { status: 500 },
     );
   }
 
@@ -39,14 +37,14 @@ export async function POST(req: NextRequest) {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
+                cookieStore.set(name, value, options),
               );
             } catch {
               // Ignored when called from a context that cannot mutate cookies
             }
           },
         },
-      }
+      },
     );
 
     const {
@@ -57,17 +55,17 @@ export async function POST(req: NextRequest) {
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized. Please log in to subscribe.' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as { priceId?: string };
     const priceId = body.priceId || process.env.STRIPE_PRICE_ID;
 
     if (!priceId) {
       return NextResponse.json(
         { error: 'Stripe Price ID is not configured.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,10 +92,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Failed to create checkout session' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Failed to create checkout session' },
+      { status: 500 },
     );
   }
 }

@@ -1,20 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
-
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) {
-    throw new Error('Supabase admin environment variables are not configured');
-  }
-  return createClient(url, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-}
 
 function getGroqClient(): Groq {
   const apiKey = process.env.GROQ_API_KEY;
@@ -25,41 +10,35 @@ function getGroqClient(): Groq {
 }
 
 interface GenerateLessonBody {
-  moduleId?: string;
   sessionNumber?: number;
   topic?: string;
   grammarFocus?: string;
   vocabularyTheme?: string;
-  saveToDb?: boolean;
 }
 
 export async function POST(req: NextRequest) {
-  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   let groq: Groq;
 
   try {
-    supabaseAdmin = getSupabaseAdmin();
     groq = getGroqClient();
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Server configuration error' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Server configuration error' },
+      { status: 500 },
     );
   }
 
   try {
     const body = (await req.json().catch(() => ({}))) as GenerateLessonBody;
     const {
-      moduleId,
       sessionNumber = 1,
-      topic = 'Everyday British English Communication',
+      topic = 'Everyday B1 → B2 Communication',
       grammarFocus = 'Present Perfect vs. Past Simple',
-      vocabularyTheme = 'Workplace & Daily Life in the UK',
-      saveToDb = false,
+      vocabularyTheme = 'Work, Routines & Change',
     } = body;
 
-    const systemPrompt = `You are a Cambridge-certified British English (CEFR B1) curriculum designer.
-Generate a structured, engaging B1 British English lesson using natural UK spelling (e.g., colour, organise, programme, flat, underground, queue).
+    const systemPrompt = `You are a CEFR B1 → B2 curriculum designer.
+Generate a structured, practical B1 → B2 English study unit matching the 5-block daily flow.
 Return strictly valid JSON with no markdown fences and the following schema:
 {
   "title": "string",
@@ -86,7 +65,7 @@ Return strictly valid JSON with no markdown fences and the following schema:
   "targetDrillPhrase": "string"
 }`;
 
-    const userPrompt = `Create B1 British English Session ${sessionNumber}:
+    const userPrompt = `Create B1 → B2 English Lesson ${sessionNumber}:
 - Topic: ${topic}
 - Grammar Focus: ${grammarFocus}
 - Vocabulary Theme: ${vocabularyTheme}`;
@@ -104,44 +83,15 @@ Return strictly valid JSON with no markdown fences and the following schema:
 
     const rawContent = completion.choices[0]?.message?.content;
     if (!rawContent) {
-      return NextResponse.json(
-        { error: 'Empty response from AI lesson generator' },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: 'Empty response from AI lesson generator' }, { status: 502 });
     }
 
-    const lessonContent = JSON.parse(rawContent);
-
-    if (saveToDb && moduleId) {
-      const { data: savedSession, error: dbError } = await supabaseAdmin
-        .from('sessions')
-        .insert({
-          module_id: moduleId,
-          session_number: sessionNumber,
-          title: lessonContent.title || topic,
-          content: lessonContent,
-        })
-        .select()
-        .single();
-
-      if (dbError) {
-        return NextResponse.json(
-          {
-            error: `Generated lesson but failed to save: ${dbError.message}`,
-            lesson: lessonContent,
-          },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({ session: savedSession, lesson: lessonContent });
-    }
-
+    const lessonContent = JSON.parse(rawContent) as Record<string, unknown>;
     return NextResponse.json({ lesson: lessonContent });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || 'Failed to generate lesson' },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Failed to generate lesson' },
+      { status: 500 },
     );
   }
 }

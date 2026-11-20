@@ -229,3 +229,63 @@ export interface CurriculumOutline {
   due_cards: number;
   checkpoints: OutlineCheckpoint[];
 }
+
+export type LearnerBand =
+  | 'B1_low'
+  | 'B1_mid'
+  | 'B1_high'
+  | 'B1_plus'
+  | 'B2_entry'
+  | 'B2_developing'
+  | 'B2_solid';
+
+export interface DashboardPayload {
+  profile: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    learner_band: LearnerBand;
+    target_band: LearnerBand;
+    xp_total: number;
+    streak_days: number;
+    longest_streak: number;
+    daily_word_goal: number;
+    onboarding_completed: boolean;
+    subscription_status?: string | null;
+  } | null;
+  xp_total: number;
+  learner_band: LearnerBand;
+  streak_days: number;
+  skills: Record<string, { score: number; lessons: number }>;
+  due_cards: number;
+  lessons_completed: number;
+  next_lesson: {
+    id: string;
+    lesson_number: number;
+    title: string;
+    can_do: string;
+    module_title: string;
+  } | null;
+  badges: {
+    code: string;
+    title: string;
+    earned_at: string;
+  }[];
+}
+
+export interface XpEventRow {
+  id: string;
+  source: string;
+  points: number;
+  note: string | null;
+  created_at: string;
+}
+
+export interface HeaderSummary {
+  signedIn: boolean;
+  xpTotal: number;
+  streakDays: number;
+  band: LearnerBand;
+  lessonsCompleted: number;
+}
+
