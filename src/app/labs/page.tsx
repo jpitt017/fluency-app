@@ -3,8 +3,12 @@ import WritingLab from '@/components/labs/WritingLab';
 import SpeakingLab from '@/components/labs/SpeakingLab';
 import ConversationalSpeakingLab from '@/components/labs/ConversationalSpeakingLab';
 import type { LessonLabContext } from '@/components/labs/LessonLabContext';
+import { getViewer } from '@/lib/b1b2/data';
 
-export default function LabsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function LabsPage() {
+  const viewer = await getViewer();
   const freeContext: LessonLabContext = {
     prompt:
       'Practise B1 → B2 English fluency. Organise your ideas with clear linkers (whereas, consequently, nevertheless), precise collocations, and confident pacing.',
@@ -36,6 +40,20 @@ export default function LabsPage() {
           </Link>
         </div>
       </header>
+
+      {!viewer.signedIn && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 px-5 py-4 text-sm text-indigo-950">
+          <p>
+            <strong>Sign in required for AI feedback:</strong> You can draft and record below, then sign in to run Groq Whisper transcription and B1 → B2 rubric scoring.
+          </p>
+          <Link
+            href="/login?next=/labs"
+            className="shrink-0 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800"
+          >
+            Sign in to unlock AI Labs →
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">

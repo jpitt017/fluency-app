@@ -139,14 +139,16 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
             <h2 className="mt-1 text-base font-bold text-stone-900">5-Block Flow</h2>
             <ol className="mt-3 space-y-2">
               {orderedBlocks.map((block, index) => (
-                <li
-                  key={block.id}
-                  className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50 px-3 py-2 text-xs"
-                >
-                  <span className="font-semibold text-stone-800">
-                    {index + 1}. {BLOCK_LABEL[block.block_kind] ?? block.block_kind}
-                  </span>
-                  <span className="text-stone-500">~{block.minutes} min</span>
+                <li key={block.id}>
+                  <a
+                    href={`#block-${block.block_kind}`}
+                    className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50 px-3 py-2 text-xs transition hover:border-indigo-300 hover:bg-indigo-50/40"
+                  >
+                    <span className="font-semibold text-stone-800">
+                      {index + 1}. {BLOCK_LABEL[block.block_kind] ?? block.block_kind}
+                    </span>
+                    <span className="text-stone-500">~{block.minutes} min</span>
+                  </a>
                 </li>
               ))}
             </ol>

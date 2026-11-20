@@ -289,18 +289,24 @@ export default async function DashboardPage() {
               </p>
             )}
 
-            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-stone-100 pt-4">
+            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-stone-100 pt-4">
               <Link
                 href="/labs"
                 className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-center text-xs font-semibold text-stone-800 hover:bg-stone-100"
               >
-                Speaking & Writing Labs
+                AI Labs
+              </Link>
+              <Link
+                href="/portfolio"
+                className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-center text-xs font-semibold text-stone-800 hover:bg-stone-100"
+              >
+                Portfolio
               </Link>
               <Link
                 href="/onboarding/placement"
                 className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-center text-xs font-semibold text-stone-800 hover:bg-stone-100"
               >
-                Placement Check
+                Placement
               </Link>
             </div>
           </section>
