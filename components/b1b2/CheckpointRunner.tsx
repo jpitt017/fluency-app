@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ListeningInputCard from '@/components/b1b2/ListeningInputCard';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
 import { createClient } from '@/utils/supabase/client';
@@ -27,11 +27,20 @@ export default function CheckpointRunner({
 
   const [quizScore, setQuizScore] = useState({ correct: 0, total: checkpoint.practiceItems.length });
   const [speakingTranscript, setSpeakingTranscript] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+
   const [speakingResult, setSpeakingResult] = useState<{
     attemptId?: string;
     mastery: number;
     passed: boolean;
     summary: string;
+    transcript?: string;
   } | null>(null);
 
   const [writingDraft, setWritingDraft] = useState('');
@@ -57,34 +66,89 @@ export default function CheckpointRunner({
   const secs = secondsLeft % 60;
   const moduleNumber = checkpoint.module?.module_number ?? 2;
 
+  async function startRecording() {
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((type) =>
+        MediaRecorder.isTypeSupported(type),
+      );
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecordingSeconds(0);
+      setRecording(true);
+      timerRef.current = window.setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    } catch {
+      setError('Microphone permission is unavailable here — enter a 20+ word spoken response transcript below.');
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }
+
   async function evaluateSpeaking() {
-    if (!speakingTranscript.trim()) return;
+    if (!speakingTranscript.trim() && !audioBlob) return;
     setBusy('speaking');
     setError('');
     try {
-      const res = await fetch('/api/checkpoints/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          moduleNumber,
-          objectiveId: checkpoint.code,
-          transcript: speakingTranscript.trim(),
-          durationSeconds: checkpoint.speakingTask?.target_seconds ?? 120,
-        }),
-      });
+      let res: Response;
+      if (audioBlob) {
+        const form = new FormData();
+        form.set('audio', audioBlob, `checkpoint-${checkpoint.code}.webm`);
+        form.set('moduleNumber', String(moduleNumber));
+        form.set('objectiveId', checkpoint.code);
+        form.set('durationSeconds', String(recordingSeconds || checkpoint.speakingTask?.target_seconds || 120));
+        if (speakingTranscript.trim()) {
+          form.set('transcript', speakingTranscript.trim());
+        }
+        res = await fetch('/api/checkpoints/evaluate', { method: 'POST', body: form });
+      } else {
+        res = await fetch('/api/checkpoints/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            moduleNumber,
+            objectiveId: checkpoint.code,
+            transcript: speakingTranscript.trim(),
+            durationSeconds: checkpoint.speakingTask?.target_seconds ?? 120,
+          }),
+        });
+      }
       const data = (await res.json()) as {
         attempt?: { id?: string };
         mastery?: number;
         passed?: boolean;
+        transcript?: string;
         rubric?: { summary?: string };
         error?: string;
       };
       if (!res.ok) throw new Error(data.error ?? 'Speaking assessment failed.');
+      if (!speakingTranscript.trim() && data.transcript) {
+        setSpeakingTranscript(data.transcript);
+      }
       setSpeakingResult({
         attemptId: data.attempt?.id,
         mastery: Number(data.mastery ?? 0),
         passed: Boolean(data.passed),
         summary: data.rubric?.summary ?? 'Speaking attempt scored.',
+        transcript: data.transcript,
       });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Speaking assessment failed.');
@@ -264,22 +328,48 @@ export default function CheckpointRunner({
           <h2 className="mt-2 font-serif text-xl font-bold text-stone-900">{checkpoint.speakingTask.title}</h2>
           <p className="mt-2 text-sm text-stone-700">{checkpoint.speakingTask.prompt}</p>
           <p className="mt-1 text-xs text-stone-500">
-            Target length: ~{checkpoint.speakingTask.target_seconds}s · Minimum 20 words in transcript
+            Target length: ~{checkpoint.speakingTask.target_seconds}s · Record with your mic or enter 20+ words
           </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {!recording ? (
+              <button
+                type="button"
+                disabled={!signedIn}
+                onClick={startRecording}
+                className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50 disabled:opacity-50"
+              >
+                {audioBlob ? 'Re-record mic' : 'Record mic'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+              >
+                Stop ({recordingSeconds}s)
+              </button>
+            )}
+            {audioUrl && <audio controls src={audioUrl} className="h-8 max-w-full" />}
+          </div>
 
           <textarea
             rows={4}
             value={speakingTranscript}
             onChange={(e) => setSpeakingTranscript(e.target.value)}
-            placeholder="Write or paste your spoken response transcript (20+ words)…"
+            placeholder="Record with your mic above or paste/write your spoken response transcript (20+ words)…"
             className="mt-3 w-full rounded-xl border border-stone-300 bg-stone-50/50 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
           />
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-stone-500">{wordCount(speakingTranscript)} words</span>
+            <span className="text-xs text-stone-500">
+              {audioBlob && !speakingTranscript.trim()
+                ? `Audio recorded (${recordingSeconds}s)`
+                : `${wordCount(speakingTranscript)} words`}
+            </span>
             <button
               type="button"
-              disabled={!signedIn || busy === 'speaking' || wordCount(speakingTranscript) < 20}
+              disabled={!signedIn || busy === 'speaking' || (!audioBlob && wordCount(speakingTranscript) < 20)}
               onClick={evaluateSpeaking}
               className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800 disabled:bg-stone-300"
             >

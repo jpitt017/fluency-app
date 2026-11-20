@@ -10,37 +10,39 @@ function wordCount(text: string): number {
 }
 
 interface SpeakingEvalResult {
-  overallScore: number;
-  cefrEstimate: string;
-  criteria: {
-    taskAchievement: number;
-    coherenceCohesion: number;
-    lexicalResource: number;
-    grammarAccuracy: number;
-    pronunciationFluency: number;
-  };
-  summary: string;
+  attemptId?: string | null;
+  transcript: string;
+  improvedResponse: string;
+  feedback: string;
   strengths: string[];
-  corrections: { original: string; improved: string; reason: string }[];
-  b2Upgrade: string;
-  xpGranted?: number;
+  improvements: string[];
+  tips?: string[];
+  rubric: {
+    fluency: number;
+    lexical_range: number;
+    grammar_accuracy: number;
+    coherence: number;
+    pronunciation: number;
+  };
+  score: number;
+  newBadges?: string[];
 }
 
 interface WritingEvalResult {
-  overallScore: number;
-  cefrEstimate: string;
-  criteria: {
-    taskAchievement: number;
-    coherenceCohesion: number;
-    lexicalResource: number;
-    grammarAccuracy: number;
-    registerTone: number;
+  submissionId?: string | null;
+  corrected: string;
+  feedback: string;
+  notes: string[];
+  corrections: { original: string; alternative: string; reason: string }[];
+  rubric: {
+    task_response: number;
+    organisation: number;
+    grammar_accuracy: number;
+    lexical_range: number;
+    style: number;
   };
-  summary: string;
-  strengths: string[];
-  corrections: { original: string; corrected: string; reason: string }[];
-  upgradedParagraph: string;
-  xpGranted?: number;
+  score: number;
+  newBadges?: string[];
 }
 
 export default function OutputStudio({
@@ -80,7 +82,10 @@ export default function OutputStudio({
     setError('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((type) =>
+        MediaRecorder.isTypeSupported(type),
+      );
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
@@ -122,7 +127,7 @@ export default function OutputStudio({
     setSpeakingResult(null);
 
     try {
-      let audioPath: string | null = null;
+      let audioPath = '';
       if (audioBlob) {
         const {
           data: { user },
@@ -138,29 +143,46 @@ export default function OutputStudio({
         }
       }
 
-      const textToEvaluate =
-        transcript.trim() ||
-        `[Audio recording submitted (${Math.max(seconds, 1)}s) for task: ${speaking.prompt}]`;
+      const targetPhrase = [
+        ...(speaking.target_terms ?? []),
+        ...(speaking.target_linkers ?? []),
+      ].join(', ');
 
-      const res = await fetch('/api/speaking/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcript: textToEvaluate,
-          prompt: speaking.prompt,
-          targetWords: speaking.target_terms ?? [],
-          lessonId,
-          speakingTaskId: speaking.id,
-          durationSeconds: seconds || speaking.target_seconds,
-          audioPath,
-          wordCount: wordCount(textToEvaluate),
-          persist: true,
-        }),
-      });
+      let res: Response;
+      if (audioBlob && !transcript.trim()) {
+        const form = new FormData();
+        form.set('audio', audioBlob, `lesson-${lessonNumber}.webm`);
+        form.set('prompt', speaking.prompt);
+        form.set('targetPhrase', targetPhrase);
+        form.set('taskId', speaking.id);
+        form.set('lessonId', lessonId);
+        form.set('durationSeconds', String(seconds || speaking.target_seconds));
+        form.set('mimeType', audioBlob.type || 'audio/webm');
+        if (audioPath) form.set('audioPath', audioPath);
+        res = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
+      } else {
+        res = await fetch('/api/speaking/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transcript: transcript.trim(),
+            prompt: speaking.prompt,
+            targetPhrase,
+            taskId: speaking.id,
+            lessonId,
+            durationSeconds: seconds || speaking.target_seconds,
+            audioPath: audioPath || undefined,
+            mimeType: audioBlob?.type || undefined,
+          }),
+        });
+      }
 
       const data = (await res.json()) as SpeakingEvalResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not evaluate speaking response.');
 
+      if (!transcript.trim() && data.transcript) {
+        setTranscript(data.transcript);
+      }
       setSpeakingResult(data);
       onSubmitted();
     } catch (caught) {
@@ -185,13 +207,11 @@ export default function OutputStudio({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          draft: draft.trim(),
+          text: draft.trim(),
           prompt: writing.prompt,
-          targetWords: speaking?.target_terms ?? [],
+          targetKeywords: speaking?.target_terms ?? [],
           lessonId,
-          writingTaskId: writing.id,
-          wordCount: wordCount(draft),
-          persist: true,
+          taskId: writing.id,
         }),
       });
 
@@ -277,83 +297,94 @@ export default function OutputStudio({
           </div>
 
           <label className="mt-3 block text-xs font-semibold text-stone-600">
-            Spoken transcript (type or edit what you said for rubric scoring)
+            Spoken transcript (optional when mic recording is attached — Whisper transcribes automatically)
             <textarea
               rows={3}
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
-              placeholder="Write or transcribe your spoken answer here…"
+              placeholder="Record with your mic above or type your spoken answer here…"
               className="mt-1.5 w-full rounded-xl border border-stone-300 bg-stone-50/50 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
             />
           </label>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-stone-500">{wordCount(transcript)} words in transcript</span>
+            <span className="text-xs text-stone-500">
+              {audioBlob && !transcript.trim() ? `Audio recorded (${seconds}s)` : `${wordCount(transcript)} words in transcript`}
+            </span>
             <button
               type="button"
               disabled={busy === 'speaking' || (!transcript.trim() && !audioBlob)}
               onClick={evaluateSpeaking}
               className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
             >
-              {busy === 'speaking' ? 'Evaluating rubric…' : 'Evaluate speaking'}
+              {busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate speaking'}
             </button>
           </div>
 
           {speakingResult && (
             <div className="mt-4 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-lg bg-indigo-700 px-2.5 py-1 text-xs font-bold text-white">
-                    {speakingResult.overallScore} / 100
+                    {speakingResult.score} / 100
                   </span>
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-indigo-800 ring-1 ring-indigo-200">
-                    CEFR {speakingResult.cefrEstimate}
+                    {speakingResult.score >= 80 ? 'B2 Ready' : speakingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
-                  {speakingResult.xpGranted ? (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                      +{speakingResult.xpGranted} XP
+                  {speakingResult.newBadges?.map((b) => (
+                    <span key={b} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+                      Badge unlocked: {b}
                     </span>
-                  ) : null}
+                  ))}
                 </div>
                 <span className="text-xs font-semibold text-emerald-800">Saved &amp; evaluated</span>
               </div>
 
-              <p className="text-sm text-stone-800">{speakingResult.summary}</p>
+              <p className="text-sm text-stone-800">{speakingResult.feedback}</p>
 
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {[
-                  ['Task', speakingResult.criteria.taskAchievement],
-                  ['Coherence', speakingResult.criteria.coherenceCohesion],
-                  ['Lexis', speakingResult.criteria.lexicalResource],
-                  ['Grammar', speakingResult.criteria.grammarAccuracy],
-                  ['Fluency', speakingResult.criteria.pronunciationFluency],
-                ].map(([label, val]) => (
-                  <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
-                    <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
-                    <p className="text-sm font-bold text-stone-900">{val}/20</p>
-                  </div>
-                ))}
-              </div>
-
-              {speakingResult.corrections?.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">Targeted upgrades</p>
-                  {speakingResult.corrections.map((c, idx) => (
-                    <div key={idx} className="rounded-lg bg-white p-2.5 text-xs text-stone-700 ring-1 ring-stone-200">
-                      <p>
-                        <span className="line-through text-rose-700">{c.original}</span> →{' '}
-                        <span className="font-semibold text-emerald-800">{c.improved}</span>
-                      </p>
-                      <p className="mt-0.5 text-stone-500">{c.reason}</p>
+              {speakingResult.rubric && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {[
+                    ['Fluency', speakingResult.rubric.fluency],
+                    ['Lexis', speakingResult.rubric.lexical_range],
+                    ['Grammar', speakingResult.rubric.grammar_accuracy],
+                    ['Coherence', speakingResult.rubric.coherence],
+                    ['Pronunc.', speakingResult.rubric.pronunciation],
+                  ].map(([label, val]) => (
+                    <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
+                      <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
+                      <p className="text-sm font-bold text-stone-900">{val}/5</p>
                     </div>
                   ))}
                 </div>
               )}
 
-              {speakingResult.b2Upgrade && (
+              {speakingResult.strengths?.length > 0 && (
+                <div className="rounded-lg bg-white p-3 text-xs text-stone-700 ring-1 ring-stone-200">
+                  <p className="font-bold uppercase tracking-wide text-emerald-800">Strengths</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    {speakingResult.strengths.map((s, idx) => (
+                      <li key={idx}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {speakingResult.improvements?.length > 0 && (
+                <div className="rounded-lg bg-white p-3 text-xs text-stone-700 ring-1 ring-stone-200">
+                  <p className="font-bold uppercase tracking-wide text-stone-600">Targeted upgrades</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    {speakingResult.improvements.map((imp, idx) => (
+                      <li key={idx}>{imp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {speakingResult.improvedResponse && (
                 <div className="rounded-lg border-l-4 border-indigo-400 bg-white p-3 text-xs leading-5 text-stone-700">
                   <strong className="block text-indigo-900">B2 model upgrade</strong>
-                  {speakingResult.b2Upgrade}
+                  {speakingResult.improvedResponse}
                 </div>
               )}
             </div>
@@ -408,38 +439,40 @@ export default function OutputStudio({
           {writingResult && (
             <div className="mt-4 space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-lg bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white">
-                    {writingResult.overallScore} / 100
+                    {writingResult.score} / 100
                   </span>
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
-                    CEFR {writingResult.cefrEstimate}
+                    {writingResult.score >= 80 ? 'B2 Ready' : writingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
-                  {writingResult.xpGranted ? (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                      +{writingResult.xpGranted} XP
+                  {writingResult.newBadges?.map((b) => (
+                    <span key={b} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+                      Badge unlocked: {b}
                     </span>
-                  ) : null}
+                  ))}
                 </div>
                 <span className="text-xs font-semibold text-emerald-800">Saved &amp; evaluated</span>
               </div>
 
-              <p className="text-sm text-stone-800">{writingResult.summary}</p>
+              <p className="text-sm text-stone-800">{writingResult.feedback}</p>
 
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {[
-                  ['Task', writingResult.criteria.taskAchievement],
-                  ['Coherence', writingResult.criteria.coherenceCohesion],
-                  ['Lexis', writingResult.criteria.lexicalResource],
-                  ['Grammar', writingResult.criteria.grammarAccuracy],
-                  ['Register', writingResult.criteria.registerTone],
-                ].map(([label, val]) => (
-                  <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
-                    <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
-                    <p className="text-sm font-bold text-stone-900">{val}/20</p>
-                  </div>
-                ))}
-              </div>
+              {writingResult.rubric && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {[
+                    ['Task', writingResult.rubric.task_response],
+                    ['Organisation', writingResult.rubric.organisation],
+                    ['Grammar', writingResult.rubric.grammar_accuracy],
+                    ['Lexis', writingResult.rubric.lexical_range],
+                    ['Style', writingResult.rubric.style],
+                  ].map(([label, val]) => (
+                    <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
+                      <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
+                      <p className="text-sm font-bold text-stone-900">{val}/5</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {writingResult.corrections?.length > 0 && (
                 <div className="space-y-1.5">
@@ -448,7 +481,7 @@ export default function OutputStudio({
                     <div key={idx} className="rounded-lg bg-white p-2.5 text-xs text-stone-700 ring-1 ring-stone-200">
                       <p>
                         <span className="line-through text-rose-700">{c.original}</span> →{' '}
-                        <span className="font-semibold text-emerald-800">{c.corrected}</span>
+                        <span className="font-semibold text-emerald-800">{c.alternative}</span>
                       </p>
                       <p className="mt-0.5 text-stone-500">{c.reason}</p>
                     </div>
@@ -456,10 +489,18 @@ export default function OutputStudio({
                 </div>
               )}
 
-              {writingResult.upgradedParagraph && (
+              {writingResult.notes?.length > 0 && (
+                <ul className="list-disc space-y-1 pl-4 text-xs text-stone-700">
+                  {writingResult.notes.map((n, idx) => (
+                    <li key={idx}>{n}</li>
+                  ))}
+                </ul>
+              )}
+
+              {writingResult.corrected && (
                 <div className="rounded-lg border-l-4 border-emerald-500 bg-white p-3 text-xs leading-5 text-stone-700">
                   <strong className="block text-emerald-900">B2 model rewrite</strong>
-                  {writingResult.upgradedParagraph}
+                  {writingResult.corrected}
                 </div>
               )}
             </div>

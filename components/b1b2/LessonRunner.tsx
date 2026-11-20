@@ -29,7 +29,10 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
   const router = useRouter();
   const { lesson, module, blocks, items, progress } = payload;
 
-  const [practiceScore, setPracticeScore] = useState({ correct: 0, total: items.length });
+  const [practiceScore, setPracticeScore] = useState({
+    correct: progress?.practice_correct ?? 0,
+    total: progress?.practice_total || items.length,
+  });
   const [outputSubmitted, setOutputSubmitted] = useState(Boolean(progress?.output_submitted));
   const [rubricChecked, setRubricChecked] = useState<Record<string, boolean>>({});
   const [completed, setCompleted] = useState(progress?.status === 'completed');
@@ -69,7 +72,12 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
       {orderedBlocks.map((block, index) => {
         const meta = BLOCK_META[block.block_kind] ?? { label: block.block_kind, accent: 'bg-stone-100 text-stone-700' };
         return (
-          <section key={block.id} aria-label={`${meta.label} block`} className="rounded-2xl border border-stone-200 bg-white p-5">
+          <section
+            key={block.id}
+            id={`block-${block.block_kind}`}
+            aria-label={`${meta.label} block`}
+            className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-5"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-xs font-bold text-white">

@@ -151,3 +151,37 @@ export async function POST(request: NextRequest) {
     progress: saved,
   });
 }
+
+export async function PATCH(request: NextRequest) {
+  const supabase = await createServerSupabase();
+  if (!supabase) return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return NextResponse.json({ error: 'Sign in to save preferences' }, { status: 401 });
+
+  let body: ProgressBody;
+  try {
+    body = (await request.json()) as ProgressBody;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const target = Number(body.targetHoursPerWeek);
+  if (!Number.isFinite(target) || target < 1 || target > 40) {
+    return NextResponse.json({ error: 'targetHoursPerWeek must be between 1 and 40' }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from('curriculum_preferences')
+    .upsert(
+      { user_id: user.id, target_hours_per_week: target, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' },
+    );
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  return NextResponse.json({ ok: true, targetHoursPerWeek: target });
+}
