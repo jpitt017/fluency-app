@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { ArrowRight, BookOpen, CheckCircle2 } from 'lucide-react';
 import type { CurriculumOutline, OutlineModule, SkillArea } from '@/lib/b1b2/types';
 
 const SKILLS: SkillArea[] = ['grammar', 'vocabulary', 'listening', 'reading', 'speaking', 'writing'];
@@ -101,23 +102,27 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
                 {course?.daily_minutes_min ?? 20}–{course?.daily_minutes_max ?? 45} min/day
               </span>
             </div>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900">
+            <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
               {course?.title ?? 'English B1 → B2: Independent User'}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
-              {course?.subtitle ?? 'Eight themed modules of eight lessons, built around five daily blocks.'}
+              {course?.subtitle ?? 'Eight themed modules of eight lessons each, built around five daily blocks.'}
             </p>
           </div>
 
           <Link
             href={nextLesson ? `/curriculum/lessons/${nextLesson.number}` : '/curriculum/lessons/1'}
-            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800"
           >
-            {nextLesson
-              ? completedCount
-                ? `Continue · Lesson ${nextLesson.number}: ${nextLesson.title}`
-                : 'Start Lesson 1 · Module 1 →'
-              : 'Review final assessment'}
+            <BookOpen className="h-4 w-4" />
+            <span>
+              {nextLesson
+                ? completedCount
+                  ? `Continue · Lesson ${nextLesson.number}: ${nextLesson.title}`
+                  : 'Start Lesson 1 · Module 1'
+                : 'Review final assessment'}
+            </span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </header>
@@ -289,23 +294,31 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
           {visibleModules.map((module) => {
             const isExpanded = expanded.includes(module.number);
             const { done, active } = moduleStats(module);
+            const modPct = Math.round((done / 8) * 100);
             return (
               <article
                 id={`module-${module.number}`}
                 key={module.id}
-                className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-4 shadow-xs sm:p-5"
+                className="scroll-mt-24 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-2xs transition hover:border-stone-300 sm:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-sm font-bold text-indigo-700">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 font-serif text-base font-bold text-indigo-700 ring-1 ring-indigo-100">
                       {String(module.number).padStart(2, '0')}
                     </span>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-stone-900">{module.title}</h3>
-                      <p className="mt-0.5 text-xs text-stone-500">
-                        Lessons {module.lesson_start}–{module.lesson_end} · {module.hours} hours · {done}/8 complete
+                      <h3 className="text-base font-bold text-stone-900">{module.title}</h3>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                        <span>Lessons {module.lesson_start}–{module.lesson_end} · {module.hours} hours</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-indigo-700">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>{done}/8 complete</span>
+                        </span>
                       </p>
-                      <p className="mt-1 text-xs text-stone-600">{module.summary}</p>
+                      <p className="mt-1 text-xs leading-5 text-stone-600">{module.summary}</p>
+                      <div className="mt-2 h-1.5 w-40 max-w-full overflow-hidden rounded-full bg-stone-100">
+                        <div className="h-full rounded-full bg-indigo-600" style={{ width: `${modPct}%` }} />
+                      </div>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

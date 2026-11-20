@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { CheckSquare, Flame, Headphones, Mic, Target } from 'lucide-react';
 import ListeningInputCard from '@/components/b1b2/ListeningInputCard';
 import OutputStudio from '@/components/b1b2/OutputStudio';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
@@ -17,12 +18,12 @@ import type {
   WarmUpContent,
 } from '@/lib/b1b2/types';
 
-const BLOCK_META: Record<BlockKind, { label: string; accent: string }> = {
-  warm_up: { label: 'Warm-up', accent: 'bg-amber-100 text-amber-900' },
-  input: { label: 'Input', accent: 'bg-sky-100 text-sky-900' },
-  practice: { label: 'Practice', accent: 'bg-indigo-100 text-indigo-900' },
-  output: { label: 'Output', accent: 'bg-rose-100 text-rose-900' },
-  feedback: { label: 'Feedback', accent: 'bg-emerald-100 text-emerald-900' },
+const BLOCK_META: Record<BlockKind, { label: string; accent: string; icon: typeof Flame }> = {
+  warm_up: { label: 'Warm-up', accent: 'bg-amber-100 text-amber-900', icon: Flame },
+  input: { label: 'Input', accent: 'bg-sky-100 text-sky-900', icon: Headphones },
+  practice: { label: 'Practice', accent: 'bg-indigo-100 text-indigo-900', icon: CheckSquare },
+  output: { label: 'Output', accent: 'bg-rose-100 text-rose-900', icon: Mic },
+  feedback: { label: 'Feedback', accent: 'bg-emerald-100 text-emerald-900', icon: Target },
 };
 
 export default function LessonRunner({ payload, signedIn }: { payload: LessonPayload; signedIn: boolean }) {
@@ -70,25 +71,33 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
   return (
     <div className="space-y-5">
       {orderedBlocks.map((block, index) => {
-        const meta = BLOCK_META[block.block_kind] ?? { label: block.block_kind, accent: 'bg-stone-100 text-stone-700' };
+        const meta = BLOCK_META[block.block_kind] ?? {
+          label: block.block_kind,
+          accent: 'bg-stone-100 text-stone-700',
+          icon: Target,
+        };
+        const BlockIcon = meta.icon;
         return (
           <section
             key={block.id}
             id={`block-${block.block_kind}`}
             aria-label={`${meta.label} block`}
-            className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-5"
+            className="scroll-mt-24 rounded-2xl border border-stone-200/90 bg-white p-5 shadow-2xs sm:p-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-xs font-bold text-white">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900 text-xs font-bold text-white">
                   {index + 1}
                 </span>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${meta.accent}`}>
-                  {meta.label}
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${meta.accent}`}>
+                  <BlockIcon className="h-3.5 w-3.5" />
+                  <span>{meta.label}</span>
                 </span>
-                <h2 className="text-base font-bold text-stone-900">{block.title}</h2>
+                <h2 className="font-serif text-lg font-semibold text-stone-900">{block.title}</h2>
               </div>
-              <span className="text-xs font-semibold text-stone-500">~{block.minutes} min</span>
+              <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-500">
+                ~{block.minutes} min
+              </span>
             </div>
 
             <div className="mt-4">
