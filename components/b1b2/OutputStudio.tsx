@@ -478,10 +478,12 @@ export default function OutputStudio({
                             {c.corrected_sentence || c.alternative}
                           </span>
                         </p>
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center gap-1">
                           {c.error_category && (
                             <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
-                              {c.error_category.replace(/_/g, ' ')}
+                              {c.error_category === 'other' && c.other_label
+                                ? `other: ${c.other_label}`
+                                : c.error_category.replace(/_/g, ' ')}
                             </span>
                           )}
                           {c.severity && (

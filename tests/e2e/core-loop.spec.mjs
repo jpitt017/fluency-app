@@ -17,12 +17,12 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Model replays:/i)).toBeVisible();
 
     await page.goto('/privacy');
-    await expect(page.getByText(/Delete my learning data/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Delete my learning data/i })).toBeVisible();
     await expect(page.getByText(/OpenAI/i)).toBeVisible();
     await expect(page.getByText(/Automated 12-month purge/i)).toBeVisible();
 
     await page.goto('/review');
-    await expect(page.getByText(/Sign in|Review|Mistake/i).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Sign in to practise|Mistake & Pattern Drill/i })).toBeVisible();
 
     if (hasRealSupabase) {
       await page.goto('/curriculum/lessons/1');
