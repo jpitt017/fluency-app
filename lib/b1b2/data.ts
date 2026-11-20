@@ -1,5 +1,27 @@
 import { createServerSupabase } from '@/utils/supabase/server';
-import type { CurriculumOutline, LessonPayload } from './types';
+import type {
+  CurriculumOutline,
+  DashboardPayload,
+  HeaderSummary,
+  LearnerBand,
+  LessonPayload,
+  XpEventRow,
+} from './types';
+
+export const BAND_LABELS: Record<LearnerBand, string> = {
+  B1_low: 'B1 Low',
+  B1_mid: 'B1 Mid',
+  B1_high: 'B1 High',
+  B1_plus: 'B1+',
+  B2_entry: 'B2 Entry',
+  B2_developing: 'B2 Developing',
+  B2_solid: 'B2 Solid',
+};
+
+export function formatBandLabel(band?: string | null): string {
+  if (!band) return 'B1 Low';
+  return BAND_LABELS[band as LearnerBand] ?? band.replace(/_/g, ' ');
+}
 
 export async function loadLesson(lessonNumber: number): Promise<LessonPayload | null> {
   if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) return null;
@@ -38,4 +60,84 @@ export async function getViewer() {
   } = await supabase.auth.getUser();
 
   return { user, signedIn: Boolean(user) };
+}
+
+export async function loadDashboard(): Promise<{
+  signedIn: boolean;
+  dashboard: DashboardPayload | null;
+  recentXp: XpEventRow[];
+  weeklyGoalHours: number;
+  subscriptionStatus: string | null;
+}> {
+  const supabase = await createServerSupabase();
+  if (!supabase) {
+    return { signedIn: false, dashboard: null, recentXp: [], weeklyGoalHours: 8, subscriptionStatus: null };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { signedIn: false, dashboard: null, recentXp: [], weeklyGoalHours: 8, subscriptionStatus: null };
+  }
+
+  const [dashRes, xpRes, prefRes, subRes] = await Promise.all([
+    supabase.rpc('get_learner_dashboard'),
+    supabase
+      .from('xp_events')
+      .select('id, source, points, note, created_at')
+      .order('created_at', { ascending: false })
+      .limit(6),
+    supabase.from('curriculum_preferences').select('target_hours_per_week').maybeSingle(),
+    supabase.from('profiles').select('subscription_status').eq('id', user.id).maybeSingle(),
+  ]);
+
+  if (dashRes.error) {
+    console.error('get_learner_dashboard failed:', dashRes.error.message);
+  }
+
+  return {
+    signedIn: true,
+    dashboard: (dashRes.data as DashboardPayload | null) ?? null,
+    recentXp: (xpRes.data as XpEventRow[] | null) ?? [],
+    weeklyGoalHours: Number(prefRes.data?.target_hours_per_week ?? 8),
+    subscriptionStatus: subRes.data?.subscription_status ?? null,
+  };
+}
+
+export async function loadHeaderSummary(): Promise<HeaderSummary> {
+  try {
+    const supabase = await createServerSupabase();
+    if (!supabase) {
+      return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+    }
+
+    const [profileRes, completedRes] = await Promise.all([
+      supabase.from('profiles').select('xp_total, streak_days, learner_band').eq('id', user.id).maybeSingle(),
+      supabase
+        .from('lesson_progress')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'completed'),
+    ]);
+
+    return {
+      signedIn: true,
+      xpTotal: profileRes.data?.xp_total ?? 0,
+      streakDays: profileRes.data?.streak_days ?? 0,
+      band: (profileRes.data?.learner_band as LearnerBand | undefined) ?? 'B1_low',
+      lessonsCompleted: completedRes.count ?? 0,
+    };
+  } catch {
+    return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+  }
 }
