@@ -1,0 +1,9 @@
+{
+  "name": "Fluency Studio · English B1 → B2",
+  "short_name": "Fluency Studio",
+  "description": "64-hour guided English B1 to B2 course with spaced repetition, listening practice, and AI speaking & writing coaching.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#faf9f6",
+  "theme_color": "#4338ca"
+}

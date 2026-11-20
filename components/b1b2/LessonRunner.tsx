@@ -109,6 +109,8 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
                   onScoreChange={(correct, total) => setPracticeScore({ correct, total })}
                   signedIn={signedIn}
                   lessonNumber={lesson.lesson_number}
+                  lessonId={lesson.id}
+                  grammarPoint={lesson.grammar_point}
                 />
               )}
 
@@ -211,12 +213,16 @@ function PracticeSection({
   onScoreChange,
   signedIn,
   lessonNumber,
+  lessonId,
+  grammarPoint,
 }: {
   content: PracticeContent;
   items: LessonPayload['items'];
   onScoreChange: (correct: number, total: number) => void;
   signedIn: boolean;
   lessonNumber: number;
+  lessonId: string;
+  grammarPoint: string | null;
 }) {
   return (
     <div>
@@ -230,6 +236,9 @@ function PracticeSection({
 
       {items.length ? (
         <PracticeQuiz
+          lessonId={lessonId}
+          signedIn={signedIn}
+          grammarPoint={grammarPoint}
           items={items.map((item) => ({
             id: item.id,
             prompt: item.prompt,

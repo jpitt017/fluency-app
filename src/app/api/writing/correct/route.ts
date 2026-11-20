@@ -16,6 +16,8 @@ interface WritingCorrectBody {
   targetKeywords?: string[];
   taskId?: string;
   lessonId?: string;
+  revisedFrom?: string;
+  variety?: 'British' | 'American' | 'International';
 }
 
 function clampFive(val: unknown, fallback = 3.6): number {
@@ -43,6 +45,8 @@ export async function POST(req: NextRequest) {
     const targetKeywords = Array.isArray(body.targetKeywords) ? body.targetKeywords : [];
     const taskId = typeof body.taskId === 'string' ? body.taskId.trim() : '';
     const lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
+    const revisedFrom = typeof body.revisedFrom === 'string' ? body.revisedFrom.trim() : '';
+    const variety = body.variety ?? 'International';
 
     if (!text) {
       return NextResponse.json({ error: 'Please provide text to evaluate.' }, { status: 400 });
@@ -54,12 +58,14 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are a CEFR B1 → B2 English writing examiner.
 Evaluate the learner's writing on the 5-criterion B1 → B2 writing rubric (each 0 to 5, allowing .5 increments).
+Preferred English variety for spelling/register notes: ${variety} English.
 Return strictly valid JSON with no markdown fences using this exact schema:
 {
   "corrected": "string (natural, polished B2-ready rewrite preserving the learner's intended meaning)",
   "feedback": "string (encouraging 2-3 sentence summary of strengths and key areas to improve)",
   "notes": ["string (specific grammar, collocation, linker, or style correction with one alternative phrasing)"],
-  "corrections": [{"original": "string", "alternative": "string", "reason": "string"}],
+  "corrections": [{"original": "string", "alternative": "string", "reason": "string (plain-English explanation of what was wrong and why)", "rule": "string (short pattern name e.g. 'Present perfect vs past simple' or 'Make vs do collocation')"}],
+  "errorPatterns": ["articles" | "prepositions" | "tense_aspect" | "collocations" | "connectors" | "word_order"],
   "rubric": {
     "task_response": 4.0,
     "organisation": 3.8,
@@ -124,6 +130,9 @@ ${text}
       ? parsed.notes.filter((n): n is string => typeof n === 'string').slice(0, 8)
       : [];
     const corrections = Array.isArray(parsed.corrections) ? parsed.corrections.slice(0, 10) : [];
+    const errorPatterns = Array.isArray(parsed.errorPatterns)
+      ? parsed.errorPatterns.filter((t): t is string => typeof t === 'string').slice(0, 5)
+      : [];
 
     let submissionId: string | null = null;
     let newBadges: string[] = [];
@@ -142,6 +151,7 @@ ${text}
               user_id: user.id,
               task_id: taskId,
               lesson_id: lessonId || null,
+              revised_from: revisedFrom || null,
               body: text,
               word_count: wordCount,
               task_response: rubric.task_response,
@@ -154,6 +164,8 @@ ${text}
                 summary: feedback,
                 corrected,
                 notes,
+                errorPatterns,
+                variety,
                 rubric,
               },
               corrections,
@@ -181,6 +193,7 @@ ${text}
       feedback,
       notes,
       corrections,
+      errorPatterns,
       rubric,
       score,
       newBadges,

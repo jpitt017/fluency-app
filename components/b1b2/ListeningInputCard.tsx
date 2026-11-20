@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
+import {
+  loadEnglishVoices,
+  parseAccentLanguages,
+  pickVoiceForLang,
+  type AccentPreference,
+} from '@/lib/b1b2/speech';
 import type { ContentInput } from '@/lib/b1b2/types';
 
 const emptySubscribe = () => () => {};
@@ -14,7 +20,10 @@ function useSpeechSupported() {
 }
 
 function splitDialogueSegments(body: string): { speaker: string | null; text: string }[] {
-  const parts = body.split(/(?=\b[A-Z][A-Z0-9 ]{1,18}:)/g).map((s) => s.trim()).filter(Boolean);
+  const parts = body
+    .split(/(?=\b[A-Z][A-Z0-9 ]{1,18}:)/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
   if (parts.length <= 1) return [{ speaker: null, text: body }];
   return parts.map((segment) => {
     const match = segment.match(/^([A-Z][A-Z0-9 ]{1,18}):\s*(.+)$/);
@@ -27,12 +36,14 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
   const isListening = input.kind === 'listening';
   const [showTranscript, setShowTranscript] = useState(!isListening);
   const [playing, setPlaying] = useState(false);
-  const [rate, setRate] = useState<0.85 | 1>(1);
+  const [rate, setRate] = useState<0.85 | 1 | 1.1>(1);
+  const [accentPref, setAccentPref] = useState<AccentPreference>('auto');
   const [activeSegment, setActiveSegment] = useState<number | null>(null);
   const speechSupported = useSpeechSupported();
   const cancelledRef = useRef(false);
 
   const segments = useMemo(() => splitDialogueSegments(input.body), [input.body]);
+  const accentLangs = useMemo(() => parseAccentLanguages(input.accent), [input.accent]);
 
   useEffect(() => {
     return () => {
@@ -52,7 +63,7 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
     setActiveSegment(null);
   }
 
-  function playAudio(selectedRate = rate) {
+  async function playAudio(selectedRate = rate, selectedAccent = accentPref) {
     if (!speechSupported || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       return;
     }
@@ -61,30 +72,36 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
     cancelledRef.current = false;
     synth.cancel();
 
-    const voices = synth.getVoices().filter((v) => v.lang.toLowerCase().startsWith('en'));
-    const speakerPitches = [1.0, 0.92, 1.08, 0.96];
+    const voices = await loadEnglishVoices();
+    if (cancelledRef.current) return;
+
+    const speakerPitches = [1.0, 0.93, 1.07, 0.97];
     const speakerOrder: string[] = [];
 
     setPlaying(true);
 
     segments.forEach((seg, idx) => {
       const utterance = new SpeechSynthesisUtterance(seg.text);
-      utterance.lang = 'en-GB';
       utterance.rate = selectedRate;
 
+      let sIdx = 0;
       if (seg.speaker) {
-        let sIdx = speakerOrder.indexOf(seg.speaker);
+        sIdx = speakerOrder.indexOf(seg.speaker);
         if (sIdx === -1) {
           speakerOrder.push(seg.speaker);
           sIdx = speakerOrder.length - 1;
         }
         utterance.pitch = speakerPitches[sIdx % speakerPitches.length];
-        if (voices.length > 0) {
-          utterance.voice = voices[sIdx % voices.length];
-        }
-      } else if (voices.length > 0) {
-        utterance.voice = voices[0];
       }
+
+      const targetLang =
+        selectedAccent === 'auto'
+          ? accentLangs[sIdx % accentLangs.length]
+          : selectedAccent;
+      utterance.lang = targetLang;
+
+      const voice = pickVoiceForLang(voices, targetLang, sIdx);
+      if (voice) utterance.voice = voice;
 
       utterance.onstart = () => {
         if (!cancelledRef.current) setActiveSegment(idx);
@@ -116,20 +133,36 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
             {input.kind}
           </span>
           <span className="font-semibold text-stone-900">{input.title}</span>
-          {input.accent && <span className="text-stone-500">· {input.accent} accent</span>}
+          {input.accent && (
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
+              {input.accent}
+            </span>
+          )}
           {input.duration_seconds ? <span className="text-stone-500">· {input.duration_seconds}s</span> : null}
           {input.word_count ? <span className="text-stone-500">· {input.word_count} words</span> : null}
         </div>
 
-        {isListening && (
-          <button
-            type="button"
-            onClick={() => setShowTranscript((prev) => !prev)}
-            className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100"
-          >
-            {showTranscript ? 'Hide transcript' : 'Reveal transcript'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!isListening && (
+            <button
+              type="button"
+              onClick={() => (playing ? stopAudio() : playAudio(rate, accentPref))}
+              disabled={!speechSupported}
+              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100 disabled:opacity-40"
+            >
+              {playing ? 'Stop audio' : 'Listen aloud'}
+            </button>
+          )}
+          {isListening && (
+            <button
+              type="button"
+              onClick={() => setShowTranscript((prev) => !prev)}
+              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100"
+            >
+              {showTranscript ? 'Hide transcript' : 'Reveal transcript'}
+            </button>
+          )}
+        </div>
       </div>
 
       {isListening && (
@@ -138,7 +171,7 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
             {!playing ? (
               <button
                 type="button"
-                onClick={() => playAudio(rate)}
+                onClick={() => playAudio(rate, accentPref)}
                 disabled={!speechSupported}
                 className="rounded-lg bg-indigo-700 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
               >
@@ -154,27 +187,53 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
               </button>
             )}
 
-            <div role="group" aria-label="Playback speed" className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold">
-              <button
-                type="button"
-                onClick={() => {
-                  setRate(0.85);
-                  if (playing) playAudio(0.85);
-                }}
-                className={`rounded-md px-2 py-1 ${rate === 0.85 ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
-              >
-                0.85×
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRate(1);
-                  if (playing) playAudio(1);
-                }}
-                className={`rounded-md px-2 py-1 ${rate === 1 ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
-              >
-                1.0×
-              </button>
+            <div
+              role="group"
+              aria-label="Playback speed"
+              className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold"
+            >
+              {([0.85, 1, 1.1] as const).map((speed) => (
+                <button
+                  key={speed}
+                  type="button"
+                  onClick={() => {
+                    setRate(speed);
+                    if (playing) void playAudio(speed, accentPref);
+                  }}
+                  className={`rounded-md px-2 py-1 ${rate === speed ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
+                >
+                  {speed === 1 ? '1.0×' : `${speed}×`}
+                </button>
+              ))}
+            </div>
+
+            <div
+              role="group"
+              aria-label="English variety"
+              className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold"
+            >
+              {(
+                [
+                  ['auto', 'Mix'],
+                  ['en-GB', 'UK'],
+                  ['en-US', 'US'],
+                  ['en-AU', 'AU'],
+                ] as const
+              ).map(([code, label]) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => {
+                    setAccentPref(code);
+                    if (playing) void playAudio(rate, code);
+                  }}
+                  className={`rounded-md px-2 py-1 ${
+                    accentPref === code ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -182,7 +241,7 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
             {!speechSupported
               ? 'Browser speech playback unavailable — reveal transcript below.'
               : playing && activeSegment !== null
-                ? `Playing segment ${activeSegment + 1} of ${segments.length}${segments[activeSegment]?.speaker ? ` (${segments[activeSegment].speaker})` : ''}…`
+                ? `Segment ${activeSegment + 1}/${segments.length}${segments[activeSegment]?.speaker ? ` (${segments[activeSegment].speaker})` : ''}…`
                 : showTranscript
                   ? 'Listening mode · Transcript visible'
                   : 'Listening mode · Transcript hidden'}
@@ -203,7 +262,9 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
                       : 'text-stone-800'
                   }`}
                 >
-                  {seg.speaker && <strong className="mr-1.5 text-xs uppercase tracking-wide text-indigo-700">{seg.speaker}:</strong>}
+                  {seg.speaker && (
+                    <strong className="mr-1.5 text-xs uppercase tracking-wide text-indigo-700">{seg.speaker}:</strong>
+                  )}
                   {seg.text}
                 </p>
               ))}
@@ -215,7 +276,7 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
         </div>
       ) : (
         <p className="mt-3 rounded-lg border border-dashed border-stone-300 bg-white/70 px-3.5 py-2.5 text-xs text-stone-600">
-          Listen first and answer the comprehension questions below before revealing the transcript.
+          Listen first (at natural speed or 0.85×) and answer the comprehension questions before revealing the transcript.
         </p>
       )}
 

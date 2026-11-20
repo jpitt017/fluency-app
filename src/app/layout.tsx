@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AppHeader from '@/components/b1b2/AppHeader';
+import OfflineBanner from '@/components/b1b2/OfflineBanner';
 import { loadHeaderSummary } from '@/lib/b1b2/data';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Fluency Studio · English B1 → B2: Independent User',
   description:
     '64-hour guided English B1 to B2 course across 8 modules, spaced-repetition vocabulary, and AI speaking & writing studios.',
+  manifest: '/manifest.webmanifest',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#faf9f6] text-stone-900 antialiased">
+        <OfflineBanner />
         <AppHeader summary={summary} />
         <div className="min-h-[calc(100vh-118px)]">{children}</div>
         <footer className="border-t border-stone-200 bg-white/60 py-6">
