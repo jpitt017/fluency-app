@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Eye, EyeOff, Play, Square, Volume2 } from 'lucide-react';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
 import {
   loadEnglishVoices,
@@ -148,18 +149,20 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
               type="button"
               onClick={() => (playing ? stopAudio() : playAudio(rate, accentPref))}
               disabled={!speechSupported}
-              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100 disabled:opacity-40"
             >
-              {playing ? 'Stop audio' : 'Listen aloud'}
+              {playing ? <Square className="h-3 w-3" /> : <Volume2 className="h-3.5 w-3.5 text-indigo-700" />}
+              <span>{playing ? 'Stop audio' : 'Listen aloud'}</span>
             </button>
           )}
           {isListening && (
             <button
               type="button"
               onClick={() => setShowTranscript((prev) => !prev)}
-              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 transition hover:bg-stone-100"
             >
-              {showTranscript ? 'Hide transcript' : 'Reveal transcript'}
+              {showTranscript ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              <span>{showTranscript ? 'Hide transcript' : 'Reveal transcript'}</span>
             </button>
           )}
         </div>
@@ -173,17 +176,19 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
                 type="button"
                 onClick={() => playAudio(rate, accentPref)}
                 disabled={!speechSupported}
-                className="rounded-lg bg-indigo-700 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-700 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
               >
-                Play audio
+                <Play className="h-3 w-3 fill-current" />
+                <span>Play audio</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={stopAudio}
-                className="rounded-lg bg-stone-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-stone-800"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-stone-800"
               >
-                Stop audio
+                <Square className="h-3 w-3 fill-current" />
+                <span>Stop audio</span>
               </button>
             )}
 

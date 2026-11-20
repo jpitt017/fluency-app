@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { Mic, RotateCcw, Sparkles, Square, Volume2 } from 'lucide-react';
 import { speakPhrase } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 import type { SpeakingTask, WritingTask } from '@/lib/b1b2/types';
@@ -328,17 +329,19 @@ export default function OutputStudio({
               <button
                 type="button"
                 onClick={startRecording}
-                className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50"
               >
-                {audioBlob ? 'Re-record mic' : 'Record mic'}
+                <Mic className="h-3.5 w-3.5 text-rose-700" />
+                <span>{audioBlob ? 'Re-record mic' : 'Record mic'}</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={stopRecording}
-                className="rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+                className="inline-flex animate-pulse items-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
               >
-                Stop ({seconds}s)
+                <Square className="h-3 w-3 fill-current" />
+                <span>Stop ({seconds}s)</span>
               </button>
             )}
             {audioUrl && <audio controls src={audioUrl} className="h-8 max-w-full" />}
@@ -363,9 +366,10 @@ export default function OutputStudio({
               type="button"
               disabled={busy === 'speaking' || (!transcript.trim() && !audioBlob)}
               onClick={evaluateSpeaking}
-              className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
             >
-              {busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate speaking'}
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate speaking'}</span>
             </button>
           </div>
 
@@ -397,9 +401,10 @@ export default function OutputStudio({
                 <button
                   type="button"
                   onClick={retrySpeaking}
-                  className="rounded-lg border border-indigo-300 bg-white px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-indigo-300 bg-white px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-50"
                 >
-                  Retry &amp; improve score
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Retry &amp; improve score</span>
                 </button>
               </div>
 
@@ -439,9 +444,10 @@ export default function OutputStudio({
                       <button
                         type="button"
                         onClick={() => void speakPhrase(note.target, 'en-GB', 0.85)}
-                        className="shrink-0 rounded-md border border-stone-200 bg-stone-50 px-2 py-1 text-[11px] font-semibold text-stone-700 hover:bg-stone-100"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-stone-200 bg-stone-50 px-2 py-1 text-[11px] font-semibold text-stone-700 hover:bg-stone-100"
                       >
-                        Hear model
+                        <Volume2 className="h-3 w-3 text-indigo-700" />
+                        <span>Hear model</span>
                       </button>
                     </div>
                   ))}
