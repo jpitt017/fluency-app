@@ -69,33 +69,49 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     if: >-
-      (github.event_name == 'schedule' ||
-       github.event_name == 'workflow_dispatch' ||
-       needs.changes.outputs.prompts == 'true') &&
-      secrets.GROQ_API_KEY != ''
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      needs.changes.outputs.prompts == 'true'
     steps:
+      - name: Check GROQ_API_KEY availability
+        id: check
+        env:
+          GROQ_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: echo "available=$([ -n "$GROQ_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: steps.check.outputs.available == 'true'
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.available == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: steps.check.outputs.available == 'true'
       - name: Run 62-case live Groq prompt accuracy & safety gate
+        if: steps.check.outputs.available == 'true'
         run: node scripts/eval-prompts.mjs --live
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
   rls-isolation:
     runs-on: ubuntu-latest
-    if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
     steps:
+      - name: Check SUPABASE_SERVICE_ROLE_KEY availability
+        id: check
+        env:
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: echo "available=$([ -n "$SERVICE_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: steps.check.outputs.available == 'true'
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.available == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: steps.check.outputs.available == 'true'
       - name: Verify Postgres RLS isolation & deletion coverage
+        if: steps.check.outputs.available == 'true'
         run: node scripts/test-rls.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
