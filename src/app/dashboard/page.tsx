@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { WeeklyPaceSelector, WeeklyReportCard } from '@/components/b1b2/DashboardControls';
 import { formatBandLabel, loadDashboard, loadOutline } from '@/lib/b1b2/data';
 import type { SkillArea } from '@/lib/b1b2/types';
 
@@ -14,7 +15,7 @@ const SKILLS: { key: SkillArea; label: string; targetHours: number }[] = [
 ];
 
 export default async function DashboardPage() {
-  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, subscriptionStatus }, outline] = await Promise.all([
+  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, weeklyReport, subscriptionStatus }, outline] = await Promise.all([
     loadDashboard(),
     loadOutline(),
   ]);
@@ -141,14 +142,22 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Vocabulary SRS</p>
+        <Link
+          href="/vocabulary"
+          className="block rounded-2xl border border-stone-200 bg-white p-5 transition hover:border-indigo-300"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Vocabulary SRS</p>
+            <span className="text-xs font-semibold text-indigo-700">Open decks →</span>
+          </div>
           <p className="mt-2 text-3xl font-bold text-stone-900">{dueCards}</p>
           <p className="mt-2 text-xs text-stone-500">
-            {dueCards > 0 ? 'Cards due in your next Warm-up block' : 'All caught up on today’s cards'}
+            {dueCards > 0 ? 'Cards due in your spaced-repetition queue' : 'All caught up · browse 8 topic decks'}
           </p>
-        </div>
+        </Link>
       </section>
+
+      <WeeklyPaceSelector currentHours={weeklyGoalHours} />
 
       {/* Main 2-Column Editorial Grid */}
       <div className="grid gap-6 lg:grid-cols-12">
@@ -219,18 +228,24 @@ export default async function DashboardPage() {
           </section>
         </div>
 
-        {/* Right: Checkpoints + Badges + Quick Actions */}
+        {/* Right: Checkpoints + Weekly Report + Badges + Quick Actions */}
         <div className="space-y-6 lg:col-span-5">
+          <WeeklyReportCard report={weeklyReport} />
+
           <section className="rounded-2xl border border-stone-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-stone-900">Assessment Checkpoints</h2>
-            <p className="mt-0.5 text-xs text-stone-500">Four milestone evaluations across Modules 2, 4, 6 & 8.</p>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-bold text-stone-900">Assessment Checkpoints</h2>
+              <Link href="/checkpoints" className="text-xs font-semibold text-indigo-700 hover:underline">
+                View all →
+              </Link>
+            </div>
+            <p className="mt-0.5 text-xs text-stone-500">Four milestone evaluations across Modules 2, 4, 6 &amp; 8.</p>
             <div className="mt-4 space-y-2.5">
               {checkpoints.map((cp) => {
-                const targetLesson = cp.module ? cp.module * 8 : 16;
                 return (
                   <Link
                     key={cp.code}
-                    href={`/curriculum/lessons/${targetLesson}`}
+                    href={`/checkpoints/${cp.code}`}
                     className="flex items-start justify-between gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3.5 transition hover:border-indigo-300"
                   >
                     <div>
@@ -244,7 +259,7 @@ export default async function DashboardPage() {
                           : 'bg-white text-stone-600 ring-1 ring-stone-200'
                       }`}
                     >
-                      {cp.status === 'completed' ? 'Passed' : 'Upcoming'}
+                      {cp.status === 'completed' ? 'Passed' : 'Start →'}
                     </span>
                   </Link>
                 );

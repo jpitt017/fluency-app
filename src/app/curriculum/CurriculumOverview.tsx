@@ -36,14 +36,6 @@ function statusLabel(status: string) {
   return 'Not started';
 }
 
-function checkpointLesson(timing: string) {
-  const match = timing.match(/module\s*(\d+)/i);
-  if (!match) return null;
-  const moduleNumber = Number(match[1]);
-  if (!Number.isFinite(moduleNumber) || moduleNumber < 1 || moduleNumber > 8) return null;
-  return moduleNumber * 8;
-}
-
 export default function CurriculumOverview({ outline, signedIn }: { outline: CurriculumOutline; signedIn: boolean }) {
   const { course, modules, checkpoints, due_cards: dueCards } = outline;
   const [filter, setFilter] = useState<'all' | SkillArea>('all');
@@ -204,12 +196,20 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
       </div>
 
       <section aria-label="Checkpoints" className="mb-8 rounded-2xl border border-stone-200 bg-white p-5">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-stone-600">Assessment checkpoints</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-stone-600">Assessment checkpoints</h2>
+          <Link href="/checkpoints" className="text-xs font-semibold text-indigo-700 hover:underline">
+            View all checkpoints →
+          </Link>
+        </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {checkpoints.map((checkpoint) => {
-            const target = checkpointLesson(checkpoint.timing);
-            const body = (
-              <>
+            return (
+              <Link
+                key={checkpoint.code}
+                href={`/checkpoints/${checkpoint.code}`}
+                className="rounded-xl border border-stone-200 bg-stone-50 p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-indigo-700">{checkpoint.timing}</span>
                   <span
@@ -217,25 +217,12 @@ export default function CurriculumOverview({ outline, signedIn }: { outline: Cur
                       checkpoint.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'
                     }`}
                   >
-                    {checkpoint.status === 'completed' ? 'Passed' : 'Pending'}
+                    {checkpoint.status === 'completed' ? 'Passed' : 'Take exam'}
                   </span>
                 </div>
                 <p className="mt-1.5 text-xs font-bold text-stone-900">{checkpoint.title}</p>
                 <p className="mt-1 text-[11px] leading-4 text-stone-600">{checkpoint.description}</p>
-              </>
-            );
-            return target ? (
-              <Link
-                key={checkpoint.code}
-                href={`/curriculum/lessons/${target}`}
-                className="rounded-xl border border-stone-200 bg-stone-50 p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
-              >
-                {body}
               </Link>
-            ) : (
-              <div key={checkpoint.code} className="rounded-xl border border-stone-200 bg-stone-50 p-3">
-                {body}
-              </div>
             );
           })}
         </div>

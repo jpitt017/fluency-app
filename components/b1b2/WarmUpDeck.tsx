@@ -17,17 +17,12 @@ interface DueCard {
 }
 
 const GRADES = [
-  { grade: 'again', label: 'Again', hint: 'Forgot it' },
-  { grade: 'hard', label: 'Hard', hint: 'Slow recall' },
-  { grade: 'good', label: 'Good', hint: 'Recalled' },
-  { grade: 'easy', label: 'Easy', hint: 'Automatic' },
+  { grade: 'again', label: 'Again', hint: 'Reset (1d)' },
+  { grade: 'hard', label: 'Hard', hint: 'Shorten' },
+  { grade: 'good', label: 'Good', hint: 'Advance' },
+  { grade: 'easy', label: 'Easy', hint: 'Jump +2' },
 ] as const;
 
-/**
- * Warm-up block: top up the learner's SRS deck from the lesson's vocabulary,
- * then walk the cards that are due. Scheduling lives in `review_vocab_card`,
- * so the UI never does interval maths.
- */
 export default function WarmUpDeck({
   lessonNumber,
   signedIn,
@@ -87,13 +82,13 @@ export default function WarmUpDeck({
 
   if (!signedIn) {
     return (
-      <div className="rounded-xl bg-slate-50 p-4">
-        <p className="text-sm text-slate-700">
+      <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <p className="text-sm text-stone-700">
           {cardCount} cards from this lesson&apos;s deck are waiting in your spaced-repetition queue.
         </p>
         <Link
           href={`/login?next=/curriculum/lessons/${lessonNumber}`}
-          className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="mt-3 inline-block rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800"
         >
           Sign in to review
         </Link>
@@ -103,15 +98,15 @@ export default function WarmUpDeck({
 
   if (cards === null) {
     return (
-      <div className="rounded-xl bg-slate-50 p-4">
-        <p className="text-sm text-slate-700">
-          {cardCount} new cards · review at {reviewLadderDays.join(', ')} days.
+      <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <p className="text-sm text-stone-700">
+          {cardCount} cards · review ladder at {reviewLadderDays.join(', ')} days.
         </p>
         <button
           type="button"
           onClick={start}
           disabled={busy}
-          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-slate-300"
+          className="mt-3 rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:bg-stone-300"
         >
           {busy ? 'Loading queue…' : 'Start 3-minute warm-up'}
         </button>
@@ -121,12 +116,16 @@ export default function WarmUpDeck({
   }
 
   if (!cards.length) {
-    return <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">Nothing due right now — your deck is up to date.</p>;
+    return (
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        Nothing due right now — your deck is up to date.
+      </p>
+    );
   }
 
   if (index >= cards.length) {
     return (
-      <div className="rounded-xl bg-emerald-50 p-4">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
         <p className="text-sm font-semibold text-emerald-900">Warm-up complete — {reviewed} cards reviewed.</p>
         <button type="button" onClick={start} className="mt-2 text-xs font-semibold text-emerald-800 underline">
           Check the queue again
@@ -138,29 +137,31 @@ export default function WarmUpDeck({
   const card = cards[index];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="flex items-center justify-between text-xs text-slate-500">
+    <div className="rounded-xl border border-stone-200 bg-white p-4">
+      <div className="flex items-center justify-between text-xs text-stone-500">
         <span>
           Card {index + 1} / {cards.length}
         </span>
         <span>Step {card.ladder_step} of the ladder</span>
       </div>
-      <p className="mt-3 text-xl font-bold text-slate-900">{card.term}</p>
-      <p className="text-xs text-slate-500">
+      <p className="mt-3 text-xl font-bold text-stone-900">{card.term}</p>
+      <p className="text-xs text-stone-500">
         {card.part_of_speech ?? 'entry'} {card.ipa ? `· ${card.ipa}` : ''}
       </p>
       {revealed ? (
-        <div className="mt-3 space-y-1 text-sm text-slate-700">
+        <div className="mt-3 space-y-1.5 rounded-lg bg-stone-50 p-3 text-sm text-stone-700">
           {card.definition && <p>{card.definition}</p>}
-          {card.example && <p className="italic text-slate-600">{card.example}</p>}
-          {card.collocations?.length ? <p className="text-xs text-slate-500">Collocations: {card.collocations.join(' · ')}</p> : null}
-          {card.translation_es && <p className="text-xs text-slate-500">ES: {card.translation_es}</p>}
+          {card.example && <p className="italic text-stone-600">{card.example}</p>}
+          {card.collocations?.length ? (
+            <p className="text-xs text-stone-500">Collocations: {card.collocations.join(' · ')}</p>
+          ) : null}
+          {card.translation_es && <p className="text-xs text-stone-500">ES: {card.translation_es}</p>}
         </div>
       ) : (
         <button
           type="button"
           onClick={() => setRevealed(true)}
-          className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="mt-3 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
         >
           Show meaning
         </button>
@@ -173,10 +174,10 @@ export default function WarmUpDeck({
               type="button"
               disabled={busy}
               onClick={() => grade(option.grade)}
-              className="rounded-lg border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-50"
+              className="rounded-xl border border-stone-200 bg-white px-2 py-2 text-xs font-semibold text-stone-700 transition hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-50"
             >
               {option.label}
-              <span className="mt-0.5 block text-[10px] font-normal text-slate-500">{option.hint}</span>
+              <span className="mt-0.5 block text-[10px] font-normal text-stone-500">{option.hint}</span>
             </button>
           ))}
         </div>

@@ -200,11 +200,15 @@ export default async function Home() {
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {checkpoints.map((cp) => (
-              <div key={cp.code} className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <Link
+                key={cp.code}
+                href={`/checkpoints/${cp.code}`}
+                className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+              >
                 <span className="text-xs font-semibold text-indigo-700">{cp.timing}</span>
                 <p className="mt-1 text-sm font-bold text-stone-900">{cp.title}</p>
                 <p className="mt-1 text-xs leading-5 text-stone-600">{cp.description}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
