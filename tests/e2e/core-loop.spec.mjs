@@ -24,7 +24,23 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.goto('/review');
     await expect(page.getByRole('heading', { name: /Sign in to practise|Mistake & Pattern Drill/i })).toBeVisible();
 
+    await page.goto('/clinic');
+    await expect(page.getByRole('heading', { name: /Grammar Clinic/i })).toBeVisible();
+    await expect(page.getByText(/6 B1 Baseline Clinics/i)).toBeVisible();
+
+    await page.goto('/teacher');
+    await expect(page.getByRole('heading', { name: /Sign in with a teacher account|Teacher Review/i })).toBeVisible();
+
+    const genRes = await page.request.post('/api/lessons/generate', { data: {} });
+    expect(genRes.status()).toBe(410);
+
     if (hasRealSupabase) {
+      await page.goto('/curriculum');
+      await expect(page.getByText(/16 weeks · 112 daily sessions/i)).toBeVisible();
+
+      await page.goto('/curriculum/lessons/112');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
       await page.goto('/curriculum/lessons/1');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     }

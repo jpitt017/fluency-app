@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
     inputChars = writing.length;
     const wordCount = writing ? writing.split(/\s+/).filter(Boolean).length : 0;
 
-    if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 8) {
+    if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 16) {
       statusCode = 400;
-      return NextResponse.json({ error: 'Select a valid module (1–8).' }, { status: 400, headers: guard.headers });
+      return NextResponse.json({ error: 'Select a valid week/module (1–16).' }, { status: 400, headers: guard.headers });
     }
     if (wordCount < 30 || wordCount > 1500) {
       statusCode = 400;

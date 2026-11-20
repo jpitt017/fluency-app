@@ -395,7 +395,7 @@ export default function VocabReviewStudio({
 
       <section>
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="font-serif text-xl font-bold text-stone-900">Topic Decks (Modules 1–8)</h2>
+          <h2 className="font-serif text-xl font-bold text-stone-900">Topic Decks (Weeks 1–16)</h2>
           <span className="text-xs text-stone-500">Inspect collocations, audio, and examples or drill due cards</span>
         </div>
 
@@ -408,7 +408,7 @@ export default function VocabReviewStudio({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-                      {deck.module_number ? `Module ${deck.module_number}` : deck.topic}
+                      {deck.module_number ? `Week ${deck.module_number}` : deck.topic}
                     </span>
                     <h3 className="mt-0.5 text-base font-bold text-stone-900">{deck.title}</h3>
                     {deck.description && <p className="mt-1 text-xs leading-5 text-stone-600">{deck.description}</p>}

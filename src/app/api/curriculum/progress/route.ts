@@ -99,13 +99,13 @@ export async function POST(request: NextRequest) {
   }
 
   const lessonNumber = Number(body.lessonNumber);
-  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) {
-    return NextResponse.json({ error: 'lessonNumber must be between 1 and 64' }, { status: 400 });
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 112) {
+    return NextResponse.json({ error: 'lessonNumber must be between 1 and 112' }, { status: 400 });
   }
 
   const { data: lesson, error: lessonError } = await supabase
     .from('lessons')
-    .select('id, lesson_number')
+    .select('id, lesson_number, output_required')
     .eq('lesson_number', lessonNumber)
     .maybeSingle();
 

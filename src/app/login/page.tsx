@@ -203,8 +203,8 @@ function LoginForm() {
           {isUpdatePassword
             ? 'Choose a new password (at least 6 characters) for your account'
             : isSignUp
-              ? 'Start your 64-hour B1 → B2 study workspace'
-              : 'Sign in to continue your lessons, SRS reviews, and AI labs'}
+              ? 'Start your 16-week B1 → B2 study workspace'
+              : 'Sign in to continue your sessions, SRS reviews, and AI labs'}
         </p>
       </div>
 

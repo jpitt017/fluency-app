@@ -1,0 +1,2003 @@
+{
+  "course_slug": "english-b1-b2",
+  "modules": [
+    {
+      "number": 1,
+      "phase": "Month 1: Strengthen B1 foundations",
+      "title": "Personal experiences and change",
+      "summary": "Narrate past events clearly, separate finished past from life experience, and describe habits that changed over time.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Personality, upbringing and life changes",
+      "lightGrammar": "used to / would; present perfect continuous",
+      "grammar": [
+        {
+          "key": "narrative-tenses",
+          "name": "Narrative tenses",
+          "explanation": "When you tell a story, past continuous sets the scene, past simple moves the action forward, and past perfect explains what had already happened.",
+          "keyPoints": [
+            "Past continuous frames the background: I was walking home when I saw the message.",
+            "Past perfect marks the earlier of two past events: the film had already started.",
+            "Keep one main timeline; use past perfect only when the order matters."
+          ],
+          "example": "I had been waiting for hours when the bus finally arrived, so I walked the last two kilometres.",
+          "items": [
+            {
+              "prompt": "When I arrived, the film ___.",
+              "options": [
+                "already started",
+                "had already started",
+                "was already starting"
+              ],
+              "answer": "had already started",
+              "explanation": "Past perfect shows the film started before you arrived.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "I ___ home when I saw the message.",
+              "options": [
+                "walked",
+                "was walking",
+                "had walked"
+              ],
+              "answer": "was walking",
+              "explanation": "Past continuous sets the background action interrupted by a shorter event.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "We ___ for hours before the bus finally came.",
+              "options": [
+                "waited",
+                "had been waiting",
+                "were waiting"
+              ],
+              "answer": "had been waiting",
+              "explanation": "Past perfect continuous emphasises duration before a later past moment.",
+              "difficulty": 3
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "used-to-present-perfect-continuous",
+          "role": "light",
+          "name": "used to / would; present perfect continuous",
+          "explanation": "Use used to (or would for repeated past actions) for past habits that have stopped, and present perfect continuous for an activity that started in the past and is still continuing or just stopped with visible results.",
+          "keyPoints": [
+            "Used to works for both past states (I used to live in Leeds) and repeated actions.",
+            "Would is only for repeated past actions, never stative verbs like live, be, or know.",
+            "Present perfect continuous highlights duration up to now: I have been commuting by bike for six months."
+          ],
+          "example": "I used to drive to work every day, but I have been cycling since April and feel much fitter.",
+          "items": [
+            {
+              "prompt": "Before moving to Bristol, I ___ live in a tiny flat near the harbour.",
+              "options": [
+                "would",
+                "used to",
+                "have been"
+              ],
+              "answer": "used to",
+              "explanation": "\"Live\" is a state, so use \"used to\" rather than \"would\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "She ___ English for three years and still takes two classes a week.",
+              "options": [
+                "used to study",
+                "has been studying",
+                "studied"
+              ],
+              "answer": "has been studying",
+              "explanation": "Present perfect continuous connects an ongoing activity from the past into the present.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Every summer, our family ___ walk along the coastal path before breakfast.",
+              "options": [
+                "would",
+                "has been",
+                "was used"
+              ],
+              "answer": "would",
+              "explanation": "\"Would\" describes repeated past actions in a nostalgic narrative.",
+              "difficulty": 2
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "outgoing",
+          "pos": "adjective",
+          "definition": "sociable and happy to meet new people",
+          "example": "She is more outgoing now than she was at school.",
+          "collocations": [
+            "an outgoing personality",
+            "naturally outgoing"
+          ],
+          "wordFamily": [
+            "outgoing"
+          ],
+          "translation": "extrovertido",
+          "band": "B1",
+          "audioRef": "module-1/outgoing.mp3"
+        },
+        {
+          "term": "reserved",
+          "pos": "adjective",
+          "definition": "quiet and slow to show feelings or opinions",
+          "example": "He seems reserved until you get to know him.",
+          "collocations": [
+            "a reserved manner",
+            "quiet and reserved"
+          ],
+          "wordFamily": [
+            "reserved"
+          ],
+          "translation": "reservado",
+          "band": "B1",
+          "audioRef": "module-1/reserved.mp3"
+        },
+        {
+          "term": "get on with",
+          "pos": "phrasal verb",
+          "definition": "have a good, friendly relationship with someone",
+          "example": "I get on with my flatmates really well.",
+          "collocations": [
+            "get on well with",
+            "easy to get on with"
+          ],
+          "wordFamily": [
+            "get on with"
+          ],
+          "translation": "llevarse bien con",
+          "band": "B1",
+          "audioRef": "module-1/get-on-with.mp3"
+        },
+        {
+          "term": "set in your ways",
+          "pos": "phrase",
+          "definition": "fixed in your habits and unwilling to change them",
+          "example": "My grandfather is kind, but he is set in his ways.",
+          "collocations": [
+            "become set in your ways",
+            "rather set in his ways"
+          ],
+          "wordFamily": [
+            "set in your ways"
+          ],
+          "translation": "ser de costumbres fijas",
+          "band": "B1",
+          "audioRef": "module-1/set-in-your-ways.mp3"
+        },
+        {
+          "term": "turning point",
+          "pos": "noun",
+          "definition": "the moment at which something changes decisively",
+          "example": "Moving abroad was the turning point in my career.",
+          "collocations": [
+            "a major turning point",
+            "reach a turning point"
+          ],
+          "wordFamily": [
+            "turning point"
+          ],
+          "translation": "punto de inflexión",
+          "band": "B1",
+          "audioRef": "module-1/turning-point.mp3"
+        },
+        {
+          "term": "settle down",
+          "pos": "phrasal verb",
+          "definition": "start a calm, stable life in one place",
+          "example": "They settled down in Valencia after years of travelling.",
+          "collocations": [
+            "settle down somewhere",
+            "settle down with someone"
+          ],
+          "wordFamily": [
+            "settle down"
+          ],
+          "translation": "establecerse",
+          "band": "B1",
+          "audioRef": "module-1/settle-down.mp3"
+        },
+        {
+          "term": "look back on",
+          "pos": "phrasal verb",
+          "definition": "think about something that happened in the past",
+          "example": "I look back on that year with real affection.",
+          "collocations": [
+            "look back on the past",
+            "look back fondly"
+          ],
+          "wordFamily": [
+            "look back on"
+          ],
+          "translation": "recordar con nostalgia",
+          "band": "B1",
+          "audioRef": "module-1/look-back-on.mp3"
+        },
+        {
+          "term": "bring up",
+          "pos": "phrasal verb",
+          "definition": "care for and raise a child",
+          "example": "She was brought up by her grandparents in Galicia.",
+          "collocations": [
+            "bring up children",
+            "be brought up abroad"
+          ],
+          "wordFamily": [
+            "bring up"
+          ],
+          "translation": "criar",
+          "band": "B1",
+          "audioRef": "module-1/bring-up.mp3"
+        },
+        {
+          "term": "come round to",
+          "pos": "phrasal verb",
+          "definition": "gradually accept an idea or opinion",
+          "example": "My parents came round to the idea after a few months.",
+          "collocations": [
+            "come round to the idea",
+            "slowly come round"
+          ],
+          "wordFamily": [
+            "come round to"
+          ],
+          "translation": "acabar aceptando",
+          "band": "B1",
+          "audioRef": "module-1/come-round-to.mp3"
+        },
+        {
+          "term": "get used to",
+          "pos": "phrase",
+          "definition": "become familiar with something new",
+          "example": "It took me a year to get used to the climate.",
+          "collocations": [
+            "get used to the weather",
+            "slowly get used to"
+          ],
+          "wordFamily": [
+            "get used to"
+          ],
+          "translation": "acostumbrarse a",
+          "band": "B1",
+          "audioRef": "module-1/get-used-to.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Three people, three changes",
+          "source": "Studio original — mixed accents",
+          "accent": "British & Australian English",
+          "speaker_accents": [
+            {
+              "speaker": "LAURA",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "DIEGO",
+              "accent": "en-IE",
+              "label": "Irish"
+            },
+            {
+              "speaker": "MARI",
+              "accent": "en-US",
+              "label": "American"
+            }
+          ],
+          "seconds": 120,
+          "audioRef": "module-1/three-people-three-changes.mp3",
+          "audioStatus": "bundled",
+          "body": "LAURA: I had been teaching for six years when I finally booked a one-way ticket. I was terrified, but it turned out to be the best decision I have ever made. DIEGO: My parents came round to the idea eventually. At first they thought I was throwing away a good job, and to be honest, so did I. MARI: I only really settled down at thirty-five. Before that I was moving every eighteen months, and I had never owned furniture that I actually chose myself. Later in the programme, all three guests reflected on how difficult the very first month felt. Priya admitted she had nearly packed her bags after two weeks of grey skies, yet staying through that winter gave her a steady confidence she still relies on today. Dan noted that switching from long-haul flights to local rail journeys saved him time as well as money, while Rosa realised that teaching neighbours in person kept her grounded whenever work grew hectic.",
+          "questions": [
+            {
+              "prompt": "How long had Laura been teaching before she booked the ticket?",
+              "options": [
+                "Three years",
+                "Six years",
+                "Eighteen months"
+              ],
+              "answer": "Six years"
+            },
+            {
+              "prompt": "How do Diego's parents feel now?",
+              "options": [
+                "They still oppose the decision",
+                "They have slowly accepted it",
+                "They never found out"
+              ],
+              "answer": "They have slowly accepted it"
+            },
+            {
+              "prompt": "What does Mari say about her earlier life?",
+              "options": [
+                "She moved very often",
+                "She never had a job",
+                "She bought furniture every year"
+              ],
+              "answer": "She moved very often"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "The year everything changed",
+          "source": "Studio original",
+          "audioRef": "module-1/the-year-everything-changed.mp3",
+          "audioStatus": "bundled",
+          "body": "Most people can name the year their life changed. For Ana it was 2020, when the restaurant she managed closed for good. She had spent a decade building a career she loved, and suddenly it had gone. What she remembers now is not the loss but the noise of it: one week she was planning a menu, the next she was queuing for a job she had never imagined doing. Two years later she runs a small cooking school, and she says she would not go back. The turning point, she insists, was not the closure itself but the first morning she stopped waiting for things to return to normal. At first, the slower pace felt uncomfortable because she had spent five years measuring every evening in completed tasks. Gradually, however, she noticed that walking to the corner shop without checking her phone made her far more observant. She started speaking to the baker, trading recipes with an elderly neighbour, and reading novels she had kept on her shelf for years. By December, the move no longer felt like an interruption to her career; instead, it had become the turning point that showed her what kind of daily rhythm she genuinely wanted to keep.",
+          "questions": [
+            {
+              "prompt": "What did Ana lose in 2020?",
+              "options": [
+                "A cooking school",
+                "The restaurant she managed",
+                "A house"
+              ],
+              "answer": "The restaurant she managed"
+            },
+            {
+              "prompt": "What does she remember most clearly?",
+              "options": [
+                "The suddenness of the change",
+                "The money she earned",
+                "The people she hired"
+              ],
+              "answer": "The suddenness of the change"
+            },
+            {
+              "prompt": "What does Ana identify as her real turning point?",
+              "options": [
+                "Losing her job",
+                "Opening the school",
+                "Accepting that normal had gone"
+              ],
+              "answer": "Accepting that normal had gone"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "A turning point in your life (60–90s)",
+          "prompt": "Talk for 60 to 90 seconds about a change or turning point in your life. Explain what you used to do, what happened, and what you have been doing differently since.",
+          "seconds": 75,
+          "phrases": [
+            "What stands out is...",
+            "At the time I felt...",
+            "Looking back, I would say..."
+          ],
+          "linkers": [
+            "because",
+            "although",
+            "in the end"
+          ],
+          "terms": [
+            "turning point",
+            "settle down",
+            "get used to"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Informal email: news and changes",
+        "prompt": "Write an informal email to a friend you have not contacted for a year. Tell them about one change in your life, ask two questions, and suggest meeting. 120–150 words.",
+        "format": "informal email",
+        "wordMin": 120,
+        "wordMax": 150,
+        "outline": {
+          "analyze": "Purpose: share news and re-connect. Audience: a friend. Register: informal but correct.",
+          "plan": "Greeting → one clear change → two questions → suggestion → sign-off.",
+          "draft": "Use present perfect for news, past simple for finished details, and at least two phrasal verbs.",
+          "improve": "Replace 'very good' and 'nice' with precise adjectives; add one linker per paragraph.",
+          "review": "Check the word count, the greeting and closing, and that both questions are clear."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Personal experiences and change",
+          "objective": "Learn 8–10 core B1→B2 expressions for personal experiences and change, focusing on collocations and word families.",
+          "canDo": "I can use core personal experiences and change collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new personal experiences and change collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about personal experiences and change.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Narrative tenses & present perfect vs past simple",
+          "objective": "Master Narrative tenses & present perfect vs past simple + used to / would; present perfect continuous through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Narrative tenses & present perfect vs past simple accurately when discussing personal experiences and change.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Narrative tenses & present perfect vs past simple",
+          "output": "Produce 3 original sentences demonstrating Narrative tenses & present perfect vs past simple and used to / would; present perfect continuous.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Three people, three changes",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on personal experiences and change.",
+          "canDo": "I can follow a 2-minute discussion about personal experiences and change and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: The year everything changed",
+          "objective": "Read a B1→B2 text on personal experiences and change, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on personal experiences and change.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 75,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Personal experiences and change",
+          "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 75 seconds on personal experiences and change using Narrative tenses & present perfect vs past simple.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (75s)",
+          "output": "Speak for 60–90 seconds about a personal turning point using narrative tenses and used to.",
+          "targetSeconds": 75,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Informal email: news and changes",
+          "objective": "Plan, draft, and revise a 120–150 word text on personal experiences and change.",
+          "canDo": "I can write a well-structured 120–150 word response incorporating Narrative tenses & present perfect vs past simple.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Informal email: news and changes",
+          "output": "Write an informal email to a friend you have not contacted for a year. Tell them about one change in your life, ask two questions, and suggest meeting. 120–150 words.",
+          "targetSeconds": 75,
+          "wordRange": [
+            120,
+            150
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 1 cards & error log",
+          "objective": "Consolidate Week 1 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "phase": "Month 1: Strengthen B1 foundations",
+      "title": "Plans, goals and ambitions",
+      "summary": "Distinguish arrangements, fixed intentions, and spontaneous decisions, and review zero, first, and second conditionals.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Goals, training and career decisions",
+      "lightGrammar": "Conditionals 0–2 (review)",
+      "grammar": [
+        {
+          "key": "future-forms",
+          "name": "Future forms: plans, predictions, arrangements",
+          "explanation": "Choose the future form by meaning: going to for intentions, will for predictions and spontaneous decisions, present continuous for fixed arrangements.",
+          "keyPoints": [
+            "Fixed arrangement: I'm meeting my manager at nine tomorrow.",
+            "Intention: I'm going to apply for the internal role.",
+            "Prediction or offer: It will probably take two years. I'll send it now."
+          ],
+          "example": "I'm meeting the recruiter on Thursday, and I'm going to take the online course before then; it will make the interview easier.",
+          "items": [
+            {
+              "prompt": "I ___ the recruiter at nine tomorrow — it is already in my calendar.",
+              "options": [
+                "will meet",
+                "am meeting",
+                "meet"
+              ],
+              "answer": "am meeting",
+              "explanation": "A fixed arrangement takes the present continuous.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence expresses an intention?",
+              "options": [
+                "I'm going to retrain next year.",
+                "I'll retrain, I promise.",
+                "I retrain next year."
+              ],
+              "answer": "I'm going to retrain next year.",
+              "explanation": "'Going to' expresses a plan or intention rather than a promise.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "The job ___ harder than it looks.",
+              "options": [
+                "is being",
+                "will be",
+                "is going"
+              ],
+              "answer": "will be",
+              "explanation": "Predictions about the future use will + infinitive.",
+              "difficulty": 1
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "conditionals-1-2",
+          "name": "Conditionals 0–2 (review)",
+          "explanation": "First conditional covers realistic future possibilities; second conditional covers imagined or unlikely present situations and polite proposals.",
+          "keyPoints": [
+            "First: If I finish the course, I will ask for a promotion.",
+            "Second: If I had more time, I would study design.",
+            "Use were with I/he/she in formal second conditionals: If I were you..."
+          ],
+          "example": "If I pass the exam in June, I'll apply for the master's; if I had the money now, I'd already be enrolled.",
+          "items": [
+            {
+              "prompt": "If I ___ the exam in June, I will apply for the master's.",
+              "options": [
+                "pass",
+                "passed",
+                "will pass"
+              ],
+              "answer": "pass",
+              "explanation": "The first conditional uses the present simple in the if-clause.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "If I had more time, I ___ a second language.",
+              "options": [
+                "will learn",
+                "would learn",
+                "learn"
+              ],
+              "answer": "would learn",
+              "explanation": "Imagined present situations take would + infinitive.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence is the most diplomatic way to give advice?",
+              "options": [
+                "If I am you, I apply.",
+                "If I were you, I would negotiate the salary.",
+                "If I was you, I will negotiate."
+              ],
+              "answer": "If I were you, I would negotiate the salary.",
+              "explanation": "'If I were you, I would...' is the standard diplomatic formula.",
+              "difficulty": 2
+            }
+          ],
+          "role": "light"
+        }
+      ],
+      "vocab": [
+        {
+          "term": "career path",
+          "pos": "noun",
+          "definition": "the series of jobs a person does over their working life",
+          "example": "Teaching was not the career path she expected.",
+          "collocations": [
+            "choose a career path",
+            "change career path"
+          ],
+          "wordFamily": [
+            "career path"
+          ],
+          "translation": "trayectoria profesional",
+          "band": "B1",
+          "audioRef": "week-2/career-path.mp3"
+        },
+        {
+          "term": "apply for",
+          "pos": "phrasal verb",
+          "definition": "formally ask for a job, course or permission",
+          "example": "I applied for three roles last week.",
+          "collocations": [
+            "apply for a job",
+            "apply for funding"
+          ],
+          "wordFamily": [
+            "apply for"
+          ],
+          "translation": "solicitar",
+          "band": "B1",
+          "audioRef": "week-2/apply-for.mp3"
+        },
+        {
+          "term": "take on",
+          "pos": "phrasal verb",
+          "definition": "accept responsibility or employ someone",
+          "example": "She took on more responsibility without a pay rise.",
+          "collocations": [
+            "take on a role",
+            "take on staff"
+          ],
+          "wordFamily": [
+            "take on"
+          ],
+          "translation": "asumir, contratar",
+          "band": "B1",
+          "audioRef": "week-2/take-on.mp3"
+        },
+        {
+          "term": "workload",
+          "pos": "noun",
+          "definition": "the amount of work a person has to do",
+          "example": "My workload doubles in September.",
+          "collocations": [
+            "a heavy workload",
+            "manage your workload"
+          ],
+          "wordFamily": [
+            "workload"
+          ],
+          "translation": "carga de trabajo",
+          "band": "B1",
+          "audioRef": "week-2/workload.mp3"
+        },
+        {
+          "term": "deadline",
+          "pos": "noun",
+          "definition": "the latest time by which something must be finished",
+          "example": "We missed the deadline by two days.",
+          "collocations": [
+            "meet a deadline",
+            "a tight deadline"
+          ],
+          "wordFamily": [
+            "deadline"
+          ],
+          "translation": "fecha límite",
+          "band": "B1",
+          "audioRef": "week-2/deadline.mp3"
+        },
+        {
+          "term": "qualification",
+          "pos": "noun",
+          "definition": "an exam pass or official skill that allows you to do something",
+          "example": "The role requires a teaching qualification.",
+          "collocations": [
+            "gain a qualification",
+            "formal qualifications"
+          ],
+          "wordFamily": [
+            "qualification"
+          ],
+          "translation": "titulación",
+          "band": "B1",
+          "audioRef": "week-2/qualification.mp3"
+        },
+        {
+          "term": "promotion",
+          "pos": "noun",
+          "definition": "a move to a more important position at work",
+          "example": "He got a promotion after eighteen months.",
+          "collocations": [
+            "get a promotion",
+            "be offered a promotion"
+          ],
+          "wordFamily": [
+            "promotion"
+          ],
+          "translation": "ascenso",
+          "band": "B1",
+          "audioRef": "week-2/promotion.mp3"
+        },
+        {
+          "term": "job satisfaction",
+          "pos": "noun",
+          "definition": "the feeling that your work is worthwhile",
+          "example": "Job satisfaction matters more to me than salary.",
+          "collocations": [
+            "high job satisfaction",
+            "a sense of job satisfaction"
+          ],
+          "wordFamily": [
+            "job satisfaction"
+          ],
+          "translation": "satisfacción laboral",
+          "band": "B1",
+          "audioRef": "week-2/job-satisfaction.mp3"
+        },
+        {
+          "term": "retrain",
+          "pos": "verb",
+          "definition": "learn new skills in order to change career",
+          "example": "He retrained as a nurse at forty.",
+          "collocations": [
+            "retrain as a teacher",
+            "retrain mid-career"
+          ],
+          "wordFamily": [
+            "retrain"
+          ],
+          "translation": "reciclarse profesionalmente",
+          "band": "B1",
+          "audioRef": "week-2/retrain.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Two planners, two routes",
+          "source": "Fluency Studio Podcast",
+          "accent": "British & Canadian English",
+          "speaker_accents": [
+            {
+              "speaker": "Host",
+              "accent": "en-GB",
+              "label": "British English"
+            },
+            {
+              "speaker": "Guest",
+              "accent": "en-CA",
+              "label": "Canadian English"
+            }
+          ],
+          "seconds": 120,
+          "audioRef": "week-2/two-planners-two-routes.mp3",
+          "audioStatus": "tts",
+          "body": "Host: Welcome back to Next Step. Today we are comparing two very different ways people plan the next twelve months. Tessa trained in graphic design at night while keeping her daytime office role, whereas Owen saved for a year and took a six-month break to retrain. Tessa, did having a fixed schedule help? Tessa: Definitely. I booked my evening studio sessions every Tuesday before work even started, so I knew I was going to finish my portfolio by June. If I had waited for spare energy at weekends, nothing would have happened. Host: And Owen, what convinced you to leave your job temporarily? Owen: Honestly, my workload was exhausting. If you work fifty hours a week, you rarely have headspace for creative study. I told myself that if I saved enough to cover rent, I would take the leap in October. I am starting an internship next Monday, and looking back, setting one clear deadline made every smaller choice much easier.",
+          "questions": [
+            {
+              "prompt": "How did Tessa make sure she finished her portfolio by June?",
+              "options": [
+                "She resigned from her office job immediately",
+                "She booked regular Tuesday evening studio sessions in advance",
+                "She waited for free weekends to study"
+              ],
+              "answer": "She booked regular Tuesday evening studio sessions in advance"
+            },
+            {
+              "prompt": "Why did Owen decide to take a six-month break?",
+              "options": [
+                "His heavy workload left too little headspace for study",
+                "His company closed his department",
+                "He wanted to move to another country permanently"
+              ],
+              "answer": "His heavy workload left too little headspace for study"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Why small milestones beat vague resolutions",
+          "source": "Fluency Studio Feature",
+          "audioRef": "week-2/small-milestones.mp3",
+          "audioStatus": "tts",
+          "body": "Every January, millions of people announce ambitious plans to learn a language, change careers, or run a half-marathon. Yet by March, most of those promises quietly fade. Research on adult learning suggests the problem is rarely a lack of motivation; more often, the goal itself is too abstract to guide Tuesday evening decisions. Saying \"I am going to improve my English\" leaves too much room for hesitation, whereas committing to a fifteen-minute daily routine removes guesswork. When learners define concrete checkpoints—such as recording a ninety-second summary every Friday—progress becomes visible. Equally important is planning for realistic obstacles. If a busy week interrupts your usual timetable, having a backup slot protects momentum rather than triggering guilt. Goals succeed when they fit ordinary life, not only ideal weeks. For example, a trainee accountant studying part-time might block out Tuesday and Thursday mornings at seven-thirty before clients start calling. If an urgent audit disrupts Thursday, she already knows Sunday afternoon serves as her catch-up slot. Over sixteen weeks, those steady, realistic habits compound far more reliably than an exhausting burst of weekend cramming that ends before spring.",
+          "questions": [
+            {
+              "prompt": "According to the article, why do many resolutions fail by March?",
+              "options": [
+                "Learners lack any motivation from the beginning",
+                "Goals are often too vague to guide daily choices",
+                "Fifteen-minute sessions are too short to matter"
+              ],
+              "answer": "Goals are often too vague to guide daily choices"
+            },
+            {
+              "prompt": "What helps protect momentum during a busy week?",
+              "options": [
+                "Waiting until next month to restart",
+                "Doubling the target on Sunday",
+                "Having a practical backup slot in your schedule"
+              ],
+              "answer": "Having a practical backup slot in your schedule"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Your six-month goal (60–90s)",
+          "prompt": "Speak for 60 to 90 seconds about a skill or personal goal you plan to reach over the next six months. Explain what you have already arranged, what you intend to do, and what would change if your schedule got busier.",
+          "seconds": 75,
+          "phrases": [
+            "I am planning to…",
+            "I have already arranged…",
+            "If my schedule gets busy, I will…"
+          ],
+          "linkers": [
+            "first of all",
+            "provided that",
+            "otherwise"
+          ],
+          "terms": [
+            "career path",
+            "deadline",
+            "retrain",
+            "workload"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Personal action plan: next six months",
+        "prompt": "Write 120–150 words outlining one realistic goal for the next six months, the steps you have already arranged, and how you will handle obstacles using future forms and conditionals.",
+        "format": "structured short plan",
+        "wordMin": 120,
+        "wordMax": 150,
+        "outline": {
+          "analyze": "Purpose: argue a position. Audience: an educated general reader. Format: one paragraph or two short ones.",
+          "plan": "Position in the first sentence → reason one with an example → reason two → concession → restated position.",
+          "draft": "Use one first or second conditional and two future forms.",
+          "improve": "Vary sentence openings; replace 'a lot of' with a precise quantifier.",
+          "review": "Check the position is visible in the first and last sentences."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Plans, goals and ambitions",
+          "objective": "Learn 8–10 core B1→B2 expressions for plans, goals and ambitions, focusing on collocations and word families.",
+          "canDo": "I can use core plans, goals and ambitions collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new plans, goals and ambitions collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about plans, goals and ambitions.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Future forms",
+          "objective": "Master Future forms + Conditionals 0–2 (review) through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Future forms accurately when discussing plans, goals and ambitions.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Future forms",
+          "output": "Produce 3 original sentences demonstrating Future forms and Conditionals 0–2 (review).",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Two planners, two routes",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on plans, goals and ambitions.",
+          "canDo": "I can follow a 2-minute discussion about plans, goals and ambitions and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Why small milestones beat vague resolutions",
+          "objective": "Read a B1→B2 text on plans, goals and ambitions, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on plans, goals and ambitions.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 75,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Plans, goals and ambitions",
+          "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 75 seconds on plans, goals and ambitions using Future forms.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (75s)",
+          "output": "Speak for 60–90s about a six-month goal using future forms and conditionals.",
+          "targetSeconds": 75,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Personal action plan: next six months",
+          "objective": "Plan, draft, and revise a 120–150 word text on plans, goals and ambitions.",
+          "canDo": "I can write a well-structured 120–150 word response incorporating Future forms.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Personal action plan: next six months",
+          "output": "Write 120–150 words describing your six-month plan and realistic backup steps.",
+          "targetSeconds": 75,
+          "wordRange": [
+            120,
+            150
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 2 cards & error log",
+          "objective": "Consolidate Week 2 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "phase": "Month 1: Strengthen B1 foundations",
+      "title": "Daily life and social interaction",
+      "summary": "Express obligation, advice, ability, and polite permission naturally, and keep conversations flowing with clear questions and linkers.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Everyday etiquette, neighbours and social plans",
+      "lightGrammar": "Question forms; basic linkers",
+      "grammar": [
+        {
+          "key": "modals-obligation-advice-ability-permission",
+          "role": "main",
+          "name": "Modals of obligation, advice, ability, permission",
+          "explanation": "Choose between must / have to (strong obligation), should / ought to (advice), can / be able to (ability), and may / could (polite permission) according to social register.",
+          "keyPoints": [
+            "Mustn’t expresses prohibition, whereas don’t have to means something is unnecessary.",
+            "Use could you / would you mind + -ing for polite everyday requests.",
+            "Use managed to or was able to (not could) for succeeding on one specific past occasion."
+          ],
+          "example": "You don’t have to bring food to the flatwarming, though you ought to let Sam know if you are running late.",
+          "items": [
+            {
+              "prompt": "Entry to the community library is free, so visitors ___ pay a membership fee.",
+              "options": [
+                "mustn’t",
+                "don’t have to",
+                "shouldn’t to"
+              ],
+              "answer": "don’t have to",
+              "explanation": "Lack of necessity takes \"don’t have to\", whereas \"mustn’t\" means forbidden.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Even though the train was delayed, Nadia ___ arrive before the meeting began.",
+              "options": [
+                "could",
+                "was able to",
+                "ought to"
+              ],
+              "answer": "was able to",
+              "explanation": "Single-occasion past achievement uses \"was able to\" or \"managed to\", not \"could\".",
+              "difficulty": 2
+            },
+            {
+              "prompt": "___ I borrow your umbrella until tomorrow morning?",
+              "options": [
+                "Must",
+                "Could",
+                "Shouldn’t"
+              ],
+              "answer": "Could",
+              "explanation": "\"Could I...\" is a natural, polite way to ask permission.",
+              "difficulty": 1
+            }
+          ]
+        },
+        {
+          "key": "question-forms-basic-linkers",
+          "role": "light",
+          "name": "Question forms; basic linkers",
+          "explanation": "Build accurate subject questions, indirect questions (Could you tell me where…?), and smooth everyday linkers (although, because, so, however).",
+          "keyPoints": [
+            "Indirect questions keep statement word order: Do you know what time the café closes?",
+            "Subject questions need no auxiliary do/does: Who organised the street dinner?",
+            "Avoid using \"although\" and \"but\" in the same sentence."
+          ],
+          "example": "Could you tell me who lives upstairs? I need to ask them to move their parcel, although there is no rush.",
+          "items": [
+            {
+              "prompt": "Could you tell me what time ___?",
+              "options": [
+                "does the post office close",
+                "the post office closes",
+                "closes the post office"
+              ],
+              "answer": "the post office closes",
+              "explanation": "Indirect questions keep subject + verb order without \"does\".",
+              "difficulty": 2
+            },
+            {
+              "prompt": "___ left this umbrella by the front door?",
+              "options": [
+                "Who did",
+                "Who",
+                "Whom did"
+              ],
+              "answer": "Who",
+              "explanation": "When \"who\" is the subject, do not insert \"did\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The hall was noisy; ___, everyone heard the announcements clearly.",
+              "options": [
+                "because",
+                "however",
+                "so"
+              ],
+              "answer": "however",
+              "explanation": "\"However\" introduces contrast between two clauses.",
+              "difficulty": 1
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "keep in touch",
+          "pos": "verb phrase",
+          "definition": "stay in contact with someone by speaking or writing regularly",
+          "example": "Even after changing jobs, we still keep in touch over coffee once a month.",
+          "collocations": [
+            "keep in touch with",
+            "try to keep in touch"
+          ],
+          "wordFamily": [
+            "touch",
+            "in touch"
+          ],
+          "translation": "mantener el contacto",
+          "band": "B1",
+          "audioRef": "week-3/keep-in-touch.mp3"
+        },
+        {
+          "term": "pop round",
+          "pos": "phrasal verb",
+          "definition": "visit someone nearby for a short, informal time",
+          "example": "Feel free to pop round later if you need a spare charger.",
+          "collocations": [
+            "pop round for tea",
+            "pop round quickly"
+          ],
+          "wordFamily": [
+            "pop",
+            "pop in"
+          ],
+          "translation": "pasarse un momento",
+          "band": "B1",
+          "audioRef": "week-3/pop-round.mp3"
+        },
+        {
+          "term": "let someone down",
+          "pos": "phrasal verb",
+          "definition": "disappoint someone by failing to do what you promised",
+          "example": "I hate letting friends down, so I only promise what I know I can deliver.",
+          "collocations": [
+            "let a friend down",
+            "never let someone down"
+          ],
+          "wordFamily": [
+            "letdown"
+          ],
+          "translation": "decepcionar a alguien",
+          "band": "B1",
+          "audioRef": "week-3/let-someone-down.mp3"
+        },
+        {
+          "term": "considerate",
+          "pos": "adjective",
+          "definition": "careful not to inconvenience or hurt other people",
+          "example": "Our new neighbours are really considerate about keeping noise low after ten.",
+          "collocations": [
+            "considerate behaviour",
+            "deeply considerate"
+          ],
+          "wordFamily": [
+            "consider",
+            "consideration",
+            "considerately"
+          ],
+          "translation": "considerado",
+          "band": "B2",
+          "audioRef": "week-3/considerate.mp3"
+        },
+        {
+          "term": "arrange",
+          "pos": "verb",
+          "definition": "organise or agree on a time and plan for something",
+          "example": "Shall we arrange to meet outside the station at half past six?",
+          "collocations": [
+            "arrange a meeting",
+            "arrange to catch up"
+          ],
+          "wordFamily": [
+            "arrangement",
+            "arranged"
+          ],
+          "translation": "quedar / organizar",
+          "band": "B1",
+          "audioRef": "week-3/arrange.mp3"
+        },
+        {
+          "term": "small talk",
+          "pos": "noun",
+          "definition": "polite, light conversation about everyday topics with people you do not know well",
+          "example": "Asking about someone’s weekend is an easy way to start small talk.",
+          "collocations": [
+            "make small talk",
+            "awkward small talk"
+          ],
+          "wordFamily": [
+            "talk"
+          ],
+          "translation": "charla informal",
+          "band": "B1",
+          "audioRef": "week-3/small-talk.mp3"
+        },
+        {
+          "term": "put off",
+          "pos": "phrasal verb",
+          "definition": "delay or move an event or task to a later time",
+          "example": "We had to put off the picnic until Sunday because of heavy rain.",
+          "collocations": [
+            "put off a decision",
+            "put off until later"
+          ],
+          "wordFamily": [
+            "put off"
+          ],
+          "translation": "posponer",
+          "band": "B1",
+          "audioRef": "week-3/put-off.mp3"
+        },
+        {
+          "term": "get along with",
+          "pos": "phrasal verb",
+          "definition": "have a friendly relationship with someone",
+          "example": "It helps when flatmates get along with each other on everyday chores.",
+          "collocations": [
+            "get along well with",
+            "get along easily"
+          ],
+          "wordFamily": [
+            "get along"
+          ],
+          "translation": "llevarse bien con",
+          "band": "B1",
+          "audioRef": "week-3/get-along-with.mp3"
+        },
+        {
+          "term": "favour",
+          "pos": "noun",
+          "definition": "a helpful act you do for someone out of kindness",
+          "example": "Could I ask a quick favour while you are out at the shops?",
+          "collocations": [
+            "do someone a favour",
+            "ask a favour"
+          ],
+          "wordFamily": [
+            "favourable",
+            "favourably"
+          ],
+          "translation": "favor",
+          "band": "B1",
+          "audioRef": "week-3/favour.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Flatshare rules without the drama",
+          "source": "Fluency Studio Everyday Dialogue",
+          "accent": "British & Irish English",
+          "speaker_accents": [
+            {
+              "speaker": "Liam",
+              "accent": "en-IE",
+              "label": "Irish English"
+            },
+            {
+              "speaker": "Chloe",
+              "accent": "en-GB",
+              "label": "British English"
+            }
+          ],
+          "seconds": 120,
+          "audioRef": "week-3/flatshare-rules.mp3",
+          "audioStatus": "tts",
+          "body": "Liam: Hey Chloe, could we have a quick word about the kitchen rota before everyone heads out? Chloe: Of course. Is everything alright? Liam: Yeah, mostly great, though we ought to agree on a simple rule for late-night washing-up. Nobody has to clean every pan straight after dinner if they are exhausted, so long as it is cleared before nine the next morning. Chloe: That sounds fair. Also, could you remind Sam that guests shouldn’t leave bikes in the narrow hallway? Last Tuesday I could barely open the front door with my shopping. Liam: Good point—I will mention it gently tonight. Do you know if everyone is free on Sunday afternoon to catch up over tea? Having a relaxed chat once a month stops small annoyances turning into big arguments.",
+          "questions": [
+            {
+              "prompt": "What does Liam suggest about washing-up after dinner?",
+              "options": [
+                "Everyone must wash pans immediately at night",
+                "Dirty dishes should be cleared by nine the next morning",
+                "Only weekend guests should use the kitchen"
+              ],
+              "answer": "Dirty dishes should be cleared by nine the next morning"
+            },
+            {
+              "prompt": "Why did Chloe struggle to open the front door on Tuesday?",
+              "options": [
+                "The lock was broken",
+                "Bikes had been left in the narrow hallway",
+                "Parcels blocked the stairs"
+              ],
+              "answer": "Bikes had been left in the narrow hallway"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "The unwritten rules of good conversation",
+          "source": "Fluency Studio Lifestyle Essay",
+          "audioRef": "week-3/good-conversation.mp3",
+          "audioStatus": "tts",
+          "body": "Many intermediate learners assume that good conversation in English depends on knowing rare idioms or speaking very quickly. In practice, people remember how easy you were to talk to, not how complicated your grammar sounded. One simple habit makes an immediate difference: asking open follow-up questions instead of firing rapid yes-or-no queries. For instance, asking \"What made you choose that neighbourhood?\" invites a story, whereas \"Do you like your area?\" often ends in a single word. Polite modal phrases also soften everyday requests. Saying \"Would you mind lowering the volume a little?\" keeps goodwill intact in shared offices or flats, whereas direct imperatives can sound unintentionally abrupt. Finally, small talk is rarely wasted effort. A two-minute chat about a local café or weekend plans signals warmth and builds trust before any serious discussion begins. Equally helpful is noticing turn-taking cues in lively groups. Pauses, brief summaries like \"So you mean…\", and friendly eye contact make quieter speakers feel welcome to contribute. When someone shares a different viewpoint, acknowledging what makes sense in their comment before adding your own keeps the atmosphere constructive rather than defensive—turns everyday small talk into genuine connection.",
+          "questions": [
+            {
+              "prompt": "Why does the text recommend open follow-up questions?",
+              "options": [
+                "They test the listener’s vocabulary",
+                "They invite stories rather than one-word answers",
+                "They make conversations shorter"
+              ],
+              "answer": "They invite stories rather than one-word answers"
+            },
+            {
+              "prompt": "How do polite modal phrases help in shared spaces?",
+              "options": [
+                "They soften requests and protect goodwill",
+                "They replace the need to listen",
+                "They avoid discussing rules altogether"
+              ],
+              "answer": "They soften requests and protect goodwill"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "role_play",
+          "title": "Polite request & social catch-up (60–90s)",
+          "prompt": "Speak for 60 to 90 seconds: leave a voice message for a neighbour or colleague politely asking a favour, explaining what they do not need to worry about, and suggesting a time to catch up.",
+          "seconds": 75,
+          "phrases": [
+            "Would you mind…?",
+            "You don’t have to…",
+            "Could you let me know…?"
+          ],
+          "linkers": [
+            "because",
+            "although",
+            "so"
+          ],
+          "terms": [
+            "favour",
+            "considerate",
+            "arrange",
+            "keep in touch"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Friendly message: arranging a social plan & favour",
+        "prompt": "Write a 120–150 word message to a friend or neighbour politely asking a favour, explaining house or event rules using modals, and arranging a time to meet.",
+        "format": "informal message",
+        "wordMin": 120,
+        "wordMax": 150,
+        "outline": {
+          "analyze": "Note who you are writing to and keep the tone warm yet polite.",
+          "plan": "Greeting -> polite request -> what is/isn’t necessary -> arranged time.",
+          "draft": "Include at least two modals of obligation/permission and one indirect question.",
+          "improve": "Check that polite requests use could/would rather than bare imperatives.",
+          "review": "Check word count (120–150 words) and linkers (although, because, so)."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Daily life and social interaction",
+          "objective": "Learn 8–10 core B1→B2 expressions for daily life and social interaction, focusing on collocations and word families.",
+          "canDo": "I can use core daily life and social interaction collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new daily life and social interaction collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about daily life and social interaction.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Modals of obligation, advice, ability, permission",
+          "objective": "Master Modals of obligation, advice, ability, permission + Question forms; basic linkers through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Modals of obligation, advice, ability, permission accurately when discussing daily life and social interaction.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Modals of obligation, advice, ability, permission",
+          "output": "Produce 3 original sentences demonstrating Modals of obligation, advice, ability, permission and Question forms; basic linkers.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Flatshare rules without the drama",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on daily life and social interaction.",
+          "canDo": "I can follow a 2-minute discussion about daily life and social interaction and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 75,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: The unwritten rules of good conversation",
+          "objective": "Read a B1→B2 text on daily life and social interaction, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on daily life and social interaction.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 75,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Daily life and social interaction",
+          "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 75 seconds on daily life and social interaction using Modals of obligation, advice, ability, permission.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (75s)",
+          "output": "Record a 60–90s polite voice message asking a favour and arranging to meet.",
+          "targetSeconds": 75,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Friendly message: arranging a social plan & favour",
+          "objective": "Plan, draft, and revise a 120–150 word text on daily life and social interaction.",
+          "canDo": "I can write a well-structured 120–150 word response incorporating Modals of obligation, advice, ability, permission.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Friendly message: arranging a social plan & favour",
+          "output": "Write 120–150 words arranging a social catch-up and making a polite request.",
+          "targetSeconds": 75,
+          "wordRange": [
+            120,
+            150
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 3 cards & error log",
+          "objective": "Consolidate Week 3 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "phase": "Month 1: Strengthen B1 foundations",
+      "title": "Travel and cultural experiences",
+      "summary": "Describe heritage sites and travel logistics with the passive voice, and add vivid detail using relative clauses and comparatives.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Responsible travel, heritage and culture shock",
+      "lightGrammar": "Relative clauses; comparatives and superlatives",
+      "grammar": [
+        {
+          "key": "passive-voice",
+          "name": "Passive voice in present and past",
+          "explanation": "Use the passive when the action matters more than the doer, or when the doer is obvious, unknown or already understood.",
+          "keyPoints": [
+            "Present passive: The old town is visited by two million people a year.",
+            "Past passive: The temple was built in the eleventh century.",
+            "Keep the agent with by only when it adds information."
+          ],
+          "example": "The festival is celebrated every spring, and the square was decorated by local families for generations.",
+          "items": [
+            {
+              "prompt": "The temple ___ in the eleventh century.",
+              "options": [
+                "built",
+                "was built",
+                "is building"
+              ],
+              "answer": "was built",
+              "explanation": "A finished past action with an unknown or unimportant agent takes the past passive.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Choose the best sentence for a travel guide.",
+              "options": [
+                "Two million people visit the old town every year.",
+                "The old town is visited by two million people every year.",
+                "The old town visits two million people every year."
+              ],
+              "answer": "The old town is visited by two million people every year.",
+              "explanation": "Guides foreground the place, so the passive keeps the old town as the topic.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "When can 'by + agent' be dropped?",
+              "options": [
+                "Never",
+                "When the agent is unknown, obvious or unimportant",
+                "Only in the past tense"
+              ],
+              "answer": "When the agent is unknown, obvious or unimportant",
+              "explanation": "The agent is optional; include it only if it carries new information.",
+              "difficulty": 1
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "relative-clauses",
+          "name": "Relative clauses; comparatives and superlatives",
+          "explanation": "Defining clauses identify which person or place you mean and take no commas; non-defining clauses add extra information and always take commas.",
+          "keyPoints": [
+            "Defining: The village that we visited is now a tourist trap.",
+            "Non-defining: Lisbon, which I visited last year, is crowded in August.",
+            "Never use that in a non-defining clause, and never drop the relative pronoun after a comma."
+          ],
+          "example": "The guide, who grew up in the old quarter, showed us a market that no tourist ever finds.",
+          "items": [
+            {
+              "prompt": "Lisbon, ___ I visited last year, is crowded in August.",
+              "options": [
+                "that",
+                "which",
+                "where"
+              ],
+              "answer": "which",
+              "explanation": "Non-defining clauses about a thing take which, never that.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence needs commas?",
+              "options": [
+                "The guide who grew up here knows every street.",
+                "My brother who lives in Berlin is visiting.",
+                "Both, depending on meaning"
+              ],
+              "answer": "Both, depending on meaning",
+              "explanation": "Commas change meaning: with them the clause is extra information; without them it identifies the person.",
+              "difficulty": 3
+            },
+            {
+              "prompt": "The town ___ we stayed had no tourists at all.",
+              "options": [
+                "which",
+                "where",
+                "who"
+              ],
+              "answer": "where",
+              "explanation": "Where replaces a place adverbial: we stayed in the town.",
+              "difficulty": 2
+            }
+          ],
+          "role": "light"
+        }
+      ],
+      "vocab": [
+        {
+          "term": "get around",
+          "pos": "phrasal verb",
+          "definition": "travel from place to place",
+          "example": "It is easy to get around the city by tram.",
+          "collocations": [
+            "get around easily"
+          ],
+          "wordFamily": [
+            "get around"
+          ],
+          "translation": "moverse por",
+          "band": "B1",
+          "audioRef": "week-4/get-around.mp3"
+        },
+        {
+          "term": "off the beaten track",
+          "pos": "phrase",
+          "definition": "away from the popular tourist routes",
+          "example": "The village is off the beaten track but worth the trip.",
+          "collocations": [
+            "far off the beaten track"
+          ],
+          "wordFamily": [
+            "off the beaten track"
+          ],
+          "translation": "fuera de los circuitos turísticos",
+          "band": "B1",
+          "audioRef": "week-4/off-the-beaten-track.mp3"
+        },
+        {
+          "term": "customs",
+          "pos": "noun",
+          "definition": "traditional ways of behaving in a society",
+          "example": "Removing your shoes indoors is a local custom.",
+          "collocations": [
+            "local customs",
+            "respect local customs"
+          ],
+          "wordFamily": [
+            "customs"
+          ],
+          "translation": "costumbres",
+          "band": "B1",
+          "audioRef": "week-4/customs.mp3"
+        },
+        {
+          "term": "landmark",
+          "pos": "noun",
+          "definition": "an easily recognised building or place",
+          "example": "The cathedral is the city's best-known landmark.",
+          "collocations": [
+            "a famous landmark"
+          ],
+          "wordFamily": [
+            "landmark"
+          ],
+          "translation": "punto de referencia",
+          "band": "B1",
+          "audioRef": "week-4/landmark.mp3"
+        },
+        {
+          "term": "culture shock",
+          "pos": "noun",
+          "definition": "the disorientation of living in an unfamiliar culture",
+          "example": "She had real culture shock in her first month.",
+          "collocations": [
+            "experience culture shock"
+          ],
+          "wordFamily": [
+            "culture shock"
+          ],
+          "translation": "choque cultural",
+          "band": "B1",
+          "audioRef": "week-4/culture-shock.mp3"
+        },
+        {
+          "term": "blend in",
+          "pos": "phrasal verb",
+          "definition": "look and behave like the people around you",
+          "example": "Learning a few words helps you blend in.",
+          "collocations": [
+            "blend in with locals"
+          ],
+          "wordFamily": [
+            "blend in"
+          ],
+          "translation": "integrarse",
+          "band": "B1",
+          "audioRef": "week-4/blend-in.mp3"
+        },
+        {
+          "term": "tourist trap",
+          "pos": "noun",
+          "definition": "an expensive place that exists mainly for tourists",
+          "example": "The restaurant by the station is a tourist trap.",
+          "collocations": [
+            "avoid the tourist traps"
+          ],
+          "wordFamily": [
+            "tourist trap"
+          ],
+          "translation": "trampa para turistas",
+          "band": "B1",
+          "audioRef": "week-4/tourist-trap.mp3"
+        },
+        {
+          "term": "cultural heritage",
+          "pos": "noun",
+          "definition": "the traditions and monuments a society inherits",
+          "example": "The old quarter is protected as cultural heritage.",
+          "collocations": [
+            "preserve cultural heritage"
+          ],
+          "wordFamily": [
+            "cultural heritage"
+          ],
+          "translation": "patrimonio cultural",
+          "band": "B1",
+          "audioRef": "week-4/cultural-heritage.mp3"
+        },
+        {
+          "term": "overcrowding",
+          "pos": "noun",
+          "definition": "too many people in one place",
+          "example": "Overcrowding has pushed rents up in the centre.",
+          "collocations": [
+            "tackle overcrowding"
+          ],
+          "wordFamily": [
+            "overcrowding"
+          ],
+          "translation": "masificación",
+          "band": "B1",
+          "audioRef": "week-4/overcrowding.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Travel podcast: the case for slow travel",
+          "source": "Studio original — travel podcast",
+          "accent": "Australian",
+          "seconds": 120,
+          "body": "People often ask me how many countries I have been to, and I have started saying that I have no idea, because the number tells you nothing. I spent three weeks in one town in Portugal last spring. I learned the baker's name. I was invited to a birthday party. That would never have happened if I had been moving every two days. Slow travel is not about seeing less; it is about being seen, and remembered, as a guest rather than a customer. Later in the episode, Elena compared two coastal towns she visited last autumn. In the first resort, dozens of identical souvenir shops had been built along the seafront, making the harbour far noisier than it used to be. In the second village, local guesthouses were run by families who cooked regional dishes and limited coach groups to small numbers. Staying four nights in one place, she argued, felt far more rewarding than rushing through four cities in four days.",
+          "questions": [
+            {
+              "prompt": "Why does the speaker reject the country count?",
+              "options": [
+                "It says nothing about the experience",
+                "She has forgotten the number",
+                "It is too difficult to count"
+              ],
+              "answer": "It says nothing about the experience"
+            },
+            {
+              "prompt": "What did she do last spring?",
+              "options": [
+                "Visited ten countries",
+                "Stayed three weeks in one town",
+                "Moved every two days"
+              ],
+              "answer": "Stayed three weeks in one town"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "PRESENTER",
+              "accent": "en-AU",
+              "label": "Australian"
+            }
+          ],
+          "audioRef": "module-3/travel-podcast-the-case-for-slow-travel.mp3",
+          "audioStatus": "actor_pending"
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "When tourism becomes too much",
+          "source": "Studio original",
+          "body": "Venice is not alone. From Barcelona to Kyoto, cities that were built for residents are now shaped by visitors. Short-let flats have pushed rents up, and the bakery that survived for sixty years has been replaced by a shop selling souvenirs made elsewhere. Some cities have responded with visitor taxes, caps on cruise ships or bans on new short-term lets. None of these measures is popular with everyone. Yet the question behind them is simple: is a city a place to live, or a place to be seen? Most residents would answer both, and they would add that the balance has tipped. Residents in several historic centres say the real challenge is balancing hospitality with everyday life. When bakeries and hardware stores are replaced by short-term rentals, neighbourhoods lose the people who keep traditions alive. Yet solutions are possible when cities act early. Timed entry tickets, quieter pedestrian zones, and clear guidance on local customs help visitors feel welcome while protecting fragile streets. Travel works best when guests treat a destination as someone else’s home rather than a backdrop for photos.",
+          "questions": [
+            {
+              "prompt": "What is the article mainly about?",
+              "options": [
+                "The effects of mass tourism on cities",
+                "The best time to visit Venice",
+                "How to book cheap accommodation"
+              ],
+              "answer": "The effects of mass tourism on cities"
+            },
+            {
+              "prompt": "Which measure is mentioned?",
+              "options": [
+                "Caps on cruise ships",
+                "Free entry to museums",
+                "Closing all bakeries"
+              ],
+              "answer": "Caps on cruise ships"
+            }
+          ],
+          "audioRef": "module-3/when-tourism-becomes-too-much.mp3",
+          "audioStatus": "tts"
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "A memorable place & responsible travel (60–90s)",
+          "prompt": "Some travellers say you should always follow local customs; others say visitors pay for tolerance. Give your view with two examples. Two minutes.",
+          "seconds": 90,
+          "phrases": [
+            "It depends on...",
+            "Where I draw the line is...",
+            "A good example is..."
+          ],
+          "linkers": [
+            "whereas",
+            "however",
+            "in my experience"
+          ],
+          "terms": [
+            "customs",
+            "respectful",
+            "cultural heritage"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Descriptive article: a place worth protecting",
+        "prompt": "Write a 160–180-word descriptive article about a place you know that is changing because of tourism. Describe it, explain what is changing, and suggest one measure.",
+        "format": "descriptive article",
+        "wordMin": 120,
+        "wordMax": 150,
+        "outline": {
+          "analyze": "Purpose: inform and persuade. Audience: curious travellers. Register: semi-formal.",
+          "plan": "Vivid opening → what makes the place special → the pressure → one suggestion → closing line.",
+          "draft": "Use at least three passives and one non-defining relative clause.",
+          "improve": "Replace general adjectives with concrete details; add a concession.",
+          "review": "Check that every passive has a clear reason for being passive."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Travel and cultural experiences",
+          "objective": "Learn 8–10 core B1→B2 expressions for travel and cultural experiences, focusing on collocations and word families.",
+          "canDo": "I can use core travel and cultural experiences collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new travel and cultural experiences collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about travel and cultural experiences.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Passive voice",
+          "objective": "Master Passive voice + Relative clauses; comparatives and superlatives through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Passive voice accurately when discussing travel and cultural experiences.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Passive voice",
+          "output": "Produce 3 original sentences demonstrating Passive voice and Relative clauses; comparatives and superlatives.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Travel podcast: the case for slow travel",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on travel and cultural experiences.",
+          "canDo": "I can follow a 2-minute discussion about travel and cultural experiences and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: When tourism becomes too much",
+          "objective": "Read a B1→B2 text on travel and cultural experiences, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on travel and cultural experiences.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Travel and cultural experiences",
+          "objective": "Complete the required 90-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 90 seconds on travel and cultural experiences using Passive voice.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (90s)",
+          "output": "Speak for 60–90s about a cultural place worth protecting using passive forms and relative clauses.",
+          "targetSeconds": 90,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Descriptive article: a place worth protecting",
+          "objective": "Plan, draft, and revise a 120–150 word text on travel and cultural experiences.",
+          "canDo": "I can write a well-structured 120–150 word response incorporating Passive voice.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Descriptive article: a place worth protecting",
+          "output": "Write a 160–180-word descriptive article about a place you know that is changing because of tourism. Describe it, explain what is changing, and suggest one measure.",
+          "targetSeconds": 90,
+          "wordRange": [
+            120,
+            150
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 4 cards & error log",
+          "objective": "Consolidate Week 4 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    }
+  ]
+}

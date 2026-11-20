@@ -10,30 +10,47 @@ function placementRecommendation(score: number, total: number, writingScore: num
   const quizPct = total > 0 ? (score / total) * 100 : 0;
   const combinedPct = writingScore !== null ? quizPct * 0.65 + writingScore * 0.35 : quizPct;
 
-  if (combinedPct >= 75) {
+  if (combinedPct < 35) {
     return {
-      band: 'B1+ / B2 Entry',
-      startLesson: 33,
-      startLabel: 'Start Module 5 · Lesson 33 (Environment & Society)',
+      belowB1: true,
+      band: 'Pre-B1 Foundation Recommended',
+      startLesson: 1,
+      startLabel: 'Open Grammar Clinic (B1 Basics) →',
+      startHref: '/clinic',
       summary:
-        'Strong control of B1 tenses, passives, and conditionals. Jump straight into Modules 5–8 to sharpen mixed conditionals, formal essays, inversion, and hedging.',
+        'This 16-week programme starts at B1 and prepares learners for B2. Your diagnostic suggests locking in core A2/B1 basics (present simple/continuous, articles, quantifiers, prepositions, subject–verb agreement, and verb forms) in the Grammar Clinic before beginning Week 1.',
     };
   }
-  if (combinedPct >= 48) {
+  if (combinedPct >= 80) {
     return {
-      band: 'B1 Mid–High',
-      startLesson: 17,
-      startLabel: 'Start Module 3 · Lesson 17 (Travel & Culture)',
+      belowB1: false,
+      band: 'B1+ / B2 Entry',
+      startLesson: 57,
+      startLabel: 'Start Week 9 · Session 57 (Health & wellbeing)',
+      startHref: '/curriculum/lessons/57',
       summary:
-        'Solid intermediate foundation. Starting at Module 3 builds passives, relative clauses, deduction, and reported speech on your way to B2.',
+        'Strong control of B1–B1+ tenses, passives, deduction, and conditionals. Jump into Month 3 (Weeks 9–16) to sharpen causatives, participle clauses, inversion, hedging, and formal persuasion.',
+    };
+  }
+  if (combinedPct >= 60) {
+    return {
+      belowB1: false,
+      band: 'B1 High',
+      startLesson: 29,
+      startLabel: 'Start Week 5 · Session 29 (Technology & digital life)',
+      startHref: '/curriculum/lessons/29',
+      summary:
+        'Solid B1 foundation. Starting at Week 5 (Month 2) develops deduction, reported speech, gerunds/infinitives, reporting verbs, and third/mixed conditionals on your way to B2.',
     };
   }
   return {
+    belowB1: false,
     band: 'B1 Foundation',
     startLesson: 1,
-    startLabel: 'Start Module 1 · Lesson 1 (Everyday Fluency)',
+    startLabel: 'Start Week 1 · Session 1 (Personal experiences & change)',
+    startHref: '/curriculum/lessons/1',
     summary:
-      'Begin at Module 1 to lock in present perfect vs. past simple, narrative tenses, and core daily collocations before accelerating.',
+      'Begin at Week 1 to lock in narrative tenses, present perfect vs. past simple, future forms, modals, and passive voice across the 16-week pathway.',
   };
 }
 
@@ -243,12 +260,22 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
 
         {stage === 'done' && (
           <div className="space-y-5">
-            <div className="space-y-2 rounded-xl border border-indigo-200 bg-indigo-50/70 p-5">
+            <div
+              className={`space-y-2 rounded-xl border p-5 ${
+                recommendation.belowB1
+                  ? 'border-amber-200 bg-amber-50/70'
+                  : 'border-indigo-200 bg-indigo-50/70'
+              }`}
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wider ${
+                    recommendation.belowB1 ? 'text-amber-800' : 'text-indigo-700'
+                  }`}
+                >
                   Suggested Band: {recommendation.band}
                 </span>
-                <span className="text-sm font-bold text-indigo-900">
+                <span className="text-sm font-bold text-stone-900">
                   Quiz {score}/{questions.length}
                   {writingScore !== null ? ` · Writing ${writingScore}/100` : ''}
                 </span>
@@ -262,17 +289,17 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
             <div className="flex flex-col gap-2.5 sm:flex-row">
               <button
                 type="button"
-                onClick={() => router.push(`/curriculum/lessons/${recommendation.startLesson}`)}
+                onClick={() => router.push(recommendation.startHref)}
                 disabled={loading}
                 className="flex-1 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:opacity-60"
               >
-                {recommendation.startLabel} →
+                {recommendation.startLabel}
               </button>
               <Link
                 href="/curriculum"
                 className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-center text-sm font-semibold text-stone-700 hover:bg-stone-100"
               >
-                Browse all 64 lessons
+                Browse all 112 sessions
               </Link>
             </div>
           </div>

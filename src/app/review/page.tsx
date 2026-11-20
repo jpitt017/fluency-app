@@ -50,12 +50,20 @@ export default async function AdaptiveReviewPage() {
             Corrections from your speaking and writing sessions plus missed lesson items are scheduled by FSRS right before forgetting.
           </p>
         </div>
-        <Link
-          href="/dashboard"
-          className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-        >
-          Back to dashboard
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/clinic"
+            className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-800 hover:bg-indigo-100"
+          >
+            Grammar Clinic →
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+          >
+            Back to dashboard
+          </Link>
+        </div>
       </div>
 
       {telemetry.recurringErrors.length > 0 && (
