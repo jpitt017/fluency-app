@@ -87,8 +87,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are a CEFR B1 → B2 English speaking examiner.
+    const systemPrompt = `You are a CEFR B1 → B2 English speaking examiner and pronunciation coach.
 Evaluate the student's spoken transcript on the 5-criterion B1 → B2 speaking rubric (each 0 to 5, allowing .5 increments).
+Also identify specific pronunciation, word-stress, connected-speech, or rhythm watch-outs based on the words/phrases the speaker actually used (e.g. final -ed/-s clusters, /θ/ vs /t/, schwa reduction, word stress on multi-syllable words, intonation in clauses), and tag recurring error patterns.
 Return strictly valid JSON with no markdown fences:
 {
   "transcript": "string",
@@ -96,6 +97,10 @@ Return strictly valid JSON with no markdown fences:
   "feedback": "string (2-3 encouraging, specific sentences)",
   "strengths": ["string (1-2 concrete strengths)"],
   "improvements": ["string (1-2 specific phrasing or grammar upgrades with one alternative phrasing each)"],
+  "pronunciationNotes": [
+    { "target": "string (specific word or phrase from transcript)", "issue": "string (exact sound, stress, or linking challenge)", "tip": "string (practical articulatory or rhythm fix)" }
+  ],
+  "errorPatterns": ["articles" | "prepositions" | "tense_aspect" | "collocations" | "connectors" | "word_order" | "pronunciation_stress"],
   "tips": ["string"],
   "rubric": {
     "fluency": 3.8,
@@ -163,6 +168,20 @@ Transcribed Speech: "${transcript}"`;
     const tips = Array.isArray(parsed.tips)
       ? parsed.tips.filter((s): s is string => typeof s === 'string').slice(0, 4)
       : improvements;
+    const pronunciationNotes = Array.isArray(parsed.pronunciationNotes)
+      ? parsed.pronunciationNotes
+          .filter(
+            (item): item is { target: string; issue: string; tip: string } =>
+              Boolean(item) &&
+              typeof item === 'object' &&
+              typeof (item as Record<string, unknown>).target === 'string' &&
+              typeof (item as Record<string, unknown>).tip === 'string',
+          )
+          .slice(0, 4)
+      : [];
+    const errorPatterns = Array.isArray(parsed.errorPatterns)
+      ? parsed.errorPatterns.filter((t): t is string => typeof t === 'string').slice(0, 5)
+      : [];
 
     let savedAttemptId: string | null = null;
     let newBadges: string[] = [];
@@ -196,6 +215,8 @@ Transcribed Speech: "${transcript}"`;
                 summary: feedback,
                 improvedResponse,
                 tips,
+                pronunciationNotes,
+                errorPatterns,
                 rubric,
               },
               strengths,
@@ -225,6 +246,8 @@ Transcribed Speech: "${transcript}"`;
       feedback,
       strengths,
       improvements,
+      pronunciationNotes,
+      errorPatterns,
       tips,
       rubric,
       score,

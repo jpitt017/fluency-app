@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/curriculum', label: 'Curriculum' },
   { href: '/vocabulary', label: 'Vocabulary' },
+  { href: '/review', label: 'Review' },
   { href: '/checkpoints', label: 'Checkpoints' },
   { href: '/labs', label: 'Labs' },
   { href: '/pricing', label: 'Pricing' },

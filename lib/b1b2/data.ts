@@ -4,11 +4,14 @@ import type {
   ContentInput,
   CurriculumOutline,
   DashboardPayload,
+  DashboardSkillTelemetry,
   HeaderSummary,
   LearnerBand,
   LessonPayload,
+  MissedPracticeItem,
   OutlineCheckpoint,
   PracticeItem,
+  RecurringErrorTag,
   SkillArea,
   SpeakingTask,
   VocabDeckSummary,
@@ -16,6 +19,16 @@ import type {
   WritingTask,
   XpEventRow,
 } from './types';
+
+const ERROR_TAG_LABELS: Record<string, string> = {
+  articles: 'Articles (a / an / the)',
+  prepositions: 'Prepositions & dependent prepositions',
+  tense_aspect: 'Tense & aspect choices',
+  collocations: 'Natural collocations',
+  connectors: 'Discourse linkers & concession',
+  word_order: 'Word order & inversion',
+  pronunciation_stress: 'Word stress & connected speech',
+};
 
 export const BAND_LABELS: Record<LearnerBand, string> = {
   B1_low: 'B1 Low',
@@ -98,7 +111,22 @@ export async function loadDashboard(): Promise<{
   weeklyGoalHours: number;
   weeklyReport: WeeklyReportRow | null;
   subscriptionStatus: string | null;
+  telemetry: DashboardSkillTelemetry;
 }> {
+  const emptyTelemetry: DashboardSkillTelemetry = {
+    activeVocabMastered: 0,
+    activeVocabTotal: 0,
+    speakingCount: 0,
+    speakingLatest: null,
+    speakingDelta: null,
+    writingCount: 0,
+    writingLatest: null,
+    writingDelta: null,
+    recurringErrors: [],
+    missedPracticeCount: 0,
+    placementRecommendation: null,
+  };
+
   const supabase = await createServerSupabase();
   if (!supabase) {
     return {
@@ -108,6 +136,7 @@ export async function loadDashboard(): Promise<{
       weeklyGoalHours: 8,
       weeklyReport: null,
       subscriptionStatus: null,
+      telemetry: emptyTelemetry,
     };
   }
 
@@ -123,10 +152,22 @@ export async function loadDashboard(): Promise<{
       weeklyGoalHours: 8,
       weeklyReport: null,
       subscriptionStatus: null,
+      telemetry: emptyTelemetry,
     };
   }
 
-  const [dashRes, xpRes, prefRes, subRes, reportRes] = await Promise.all([
+  const [
+    dashRes,
+    xpRes,
+    prefRes,
+    subRes,
+    reportRes,
+    vocabMasteredRes,
+    vocabTotalRes,
+    speakingRes,
+    writingRes,
+    missedRes,
+  ] = await Promise.all([
     supabase.rpc('get_learner_dashboard'),
     supabase
       .from('xp_events')
@@ -134,7 +175,7 @@ export async function loadDashboard(): Promise<{
       .order('created_at', { ascending: false })
       .limit(6),
     supabase.from('curriculum_preferences').select('target_hours_per_week').maybeSingle(),
-    supabase.from('profiles').select('subscription_status').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('subscription_status, placement_result').eq('id', user.id).maybeSingle(),
     supabase
       .from('weekly_reports')
       .select('id, week_start, study_minutes, words_learned, recordings, writing_tasks, weakest_skill, payload')
@@ -142,11 +183,70 @@ export async function loadDashboard(): Promise<{
       .order('week_start', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('vocab_cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('ladder_step', 3),
+    supabase
+      .from('vocab_cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase
+      .from('speaking_attempts')
+      .select('overall, feedback')
+      .eq('user_id', user.id)
+      .eq('status', 'evaluated')
+      .order('created_at', { ascending: false })
+      .limit(12),
+    supabase
+      .from('writing_submissions')
+      .select('overall, feedback')
+      .eq('user_id', user.id)
+      .eq('status', 'evaluated')
+      .order('created_at', { ascending: false })
+      .limit(12),
+    supabase
+      .from('practice_attempts')
+      .select('item_id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_correct', false),
   ]);
 
   if (dashRes.error) {
     console.error('get_learner_dashboard failed:', dashRes.error.message);
   }
+
+  const speakingRows = (speakingRes.data ?? []) as { overall: number | null; feedback: { errorPatterns?: string[] } | null }[];
+  const writingRows = (writingRes.data ?? []) as { overall: number | null; feedback: { errorPatterns?: string[] } | null }[];
+
+  const speakingLatest = typeof speakingRows[0]?.overall === 'number' ? Math.round(speakingRows[0].overall) : null;
+  const speakingPrev = typeof speakingRows[1]?.overall === 'number' ? Math.round(speakingRows[1].overall) : null;
+  const writingLatest = typeof writingRows[0]?.overall === 'number' ? Math.round(writingRows[0].overall) : null;
+  const writingPrev = typeof writingRows[1]?.overall === 'number' ? Math.round(writingRows[1].overall) : null;
+
+  const tagCounts = new Map<string, number>();
+  for (const row of [...speakingRows, ...writingRows]) {
+    const tags = row.feedback?.errorPatterns;
+    if (Array.isArray(tags)) {
+      for (const tag of tags) {
+        if (typeof tag === 'string') {
+          tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const recurringErrors: RecurringErrorTag[] = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([tag, count]) => ({
+      tag,
+      label: ERROR_TAG_LABELS[tag] ?? tag.replace(/_/g, ' '),
+      count,
+    }));
+
+  const placementRaw = subRes.data?.placement_result as { band?: string; recommended_lesson?: number } | null | undefined;
 
   return {
     signedIn: true,
@@ -155,6 +255,19 @@ export async function loadDashboard(): Promise<{
     weeklyGoalHours: Number(prefRes.data?.target_hours_per_week ?? 8),
     weeklyReport: (reportRes.data as WeeklyReportRow | null) ?? null,
     subscriptionStatus: subRes.data?.subscription_status ?? null,
+    telemetry: {
+      activeVocabMastered: vocabMasteredRes.count ?? 0,
+      activeVocabTotal: vocabTotalRes.count ?? 0,
+      speakingCount: speakingRows.length,
+      speakingLatest,
+      speakingDelta: speakingLatest !== null && speakingPrev !== null ? speakingLatest - speakingPrev : null,
+      writingCount: writingRows.length,
+      writingLatest,
+      writingDelta: writingLatest !== null && writingPrev !== null ? writingLatest - writingPrev : null,
+      recurringErrors,
+      missedPracticeCount: missedRes.count ?? 0,
+      placementRecommendation: placementRaw ?? null,
+    },
   };
 }
 
@@ -373,4 +486,62 @@ export async function loadCheckpointDetail(code: string): Promise<{
       latestAttempt: attemptRes.data ?? null,
     },
   };
+}
+
+export async function loadMissedPracticeItems(): Promise<{
+  signedIn: boolean;
+  items: MissedPracticeItem[];
+}> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return { signedIn: false, items: [] };
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { signedIn: false, items: [] };
+
+  const { data: attempts } = await supabase
+    .from('practice_attempts')
+    .select(
+      'item_id, lesson_id, practice_items!inner(id, prompt, options, answer, explanation), lessons(lesson_number)',
+    )
+    .eq('user_id', user.id)
+    .eq('is_correct', false)
+    .order('attempted_at', { ascending: false })
+    .limit(40);
+
+  const seen = new Set<string>();
+  const items: MissedPracticeItem[] = [];
+
+  for (const row of attempts ?? []) {
+    if (seen.has(row.item_id)) continue;
+    seen.add(row.item_id);
+
+    const pi = (Array.isArray(row.practice_items) ? row.practice_items[0] : row.practice_items) as {
+      id: string;
+      prompt: string;
+      options: string[] | null;
+      answer: string;
+      explanation: string | null;
+    } | null;
+
+    const lessonRel = (Array.isArray(row.lessons) ? row.lessons[0] : row.lessons) as {
+      lesson_number?: number;
+    } | null;
+
+    if (!pi) continue;
+    items.push({
+      id: pi.id,
+      lesson_id: row.lesson_id,
+      lesson_number: lessonRel?.lesson_number ?? null,
+      prompt: pi.prompt,
+      options: pi.options,
+      answer: pi.answer,
+      explanation: pi.explanation,
+    });
+    if (items.length >= 15) break;
+  }
+
+  return { signedIn: true, items };
 }

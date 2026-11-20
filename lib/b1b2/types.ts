@@ -351,4 +351,37 @@ export interface CheckpointDetail {
   } | null;
 }
 
+export interface RecurringErrorTag {
+  tag: string;
+  label: string;
+  count: number;
+}
+
+export interface DashboardSkillTelemetry {
+  activeVocabMastered: number;
+  activeVocabTotal: number;
+  speakingCount: number;
+  speakingLatest: number | null;
+  speakingDelta: number | null;
+  writingCount: number;
+  writingLatest: number | null;
+  writingDelta: number | null;
+  recurringErrors: RecurringErrorTag[];
+  missedPracticeCount: number;
+  placementRecommendation: {
+    band?: string;
+    recommended_lesson?: number;
+  } | null;
+}
+
+export interface MissedPracticeItem {
+  id: string;
+  lesson_id: string;
+  lesson_number: number | null;
+  prompt: string;
+  options: string[] | null;
+  answer: string;
+  explanation: string | null;
+}
+
 

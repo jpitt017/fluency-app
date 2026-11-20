@@ -2,11 +2,18 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { speakPhrase } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 import type { SpeakingTask, WritingTask } from '@/lib/b1b2/types';
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+interface PronunciationNote {
+  target: string;
+  issue: string;
+  tip: string;
 }
 
 interface SpeakingEvalResult {
@@ -16,6 +23,7 @@ interface SpeakingEvalResult {
   feedback: string;
   strengths: string[];
   improvements: string[];
+  pronunciationNotes?: PronunciationNote[];
   tips?: string[];
   rubric: {
     fluency: number;
@@ -33,7 +41,7 @@ interface WritingEvalResult {
   corrected: string;
   feedback: string;
   notes: string[];
-  corrections: { original: string; alternative: string; reason: string }[];
+  corrections: { original: string; alternative: string; reason: string; rule?: string }[];
   rubric: {
     task_response: number;
     organisation: number;
@@ -67,14 +75,22 @@ export default function OutputStudio({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const [draft, setDraft] = useState('');
+  const [variety, setVariety] = useState<'British' | 'American' | 'International'>('International');
   const [busy, setBusy] = useState<'speaking' | 'writing' | null>(null);
+
   const [speakingResult, setSpeakingResult] = useState<SpeakingEvalResult | null>(null);
+  const [prevSpeakingScore, setPrevSpeakingScore] = useState<number | null>(null);
+
   const [writingResult, setWritingResult] = useState<WritingEvalResult | null>(null);
+  const [prevWritingScore, setPrevWritingScore] = useState<number | null>(null);
+  const [revisedFromId, setRevisedFromId] = useState<string | null>(null);
+
   const [error, setError] = useState('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const draftTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const supabase = createClient();
 
@@ -120,6 +136,10 @@ export default function OutputStudio({
     if (!transcript.trim() && !audioBlob) {
       setError('Record audio or write your spoken response transcript before evaluating.');
       return;
+    }
+
+    if (speakingResult) {
+      setPrevSpeakingScore(speakingResult.score);
     }
 
     setBusy('speaking');
@@ -192,10 +212,22 @@ export default function OutputStudio({
     }
   }
 
+  function retrySpeaking() {
+    if (speakingResult) setPrevSpeakingScore(speakingResult.score);
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setSeconds(0);
+    setTranscript('');
+  }
+
   async function evaluateWriting() {
     if (!writing || !draft.trim()) {
       setError('Write a response before requesting rubric feedback.');
       return;
+    }
+
+    if (writingResult) {
+      setPrevWritingScore(writingResult.score);
     }
 
     setBusy('writing');
@@ -212,6 +244,8 @@ export default function OutputStudio({
           targetKeywords: speaking?.target_terms ?? [],
           lessonId,
           taskId: writing.id,
+          revisedFrom: revisedFromId || undefined,
+          variety,
         }),
       });
 
@@ -219,12 +253,21 @@ export default function OutputStudio({
       if (!res.ok) throw new Error(data.error ?? 'Could not evaluate writing draft.');
 
       setWritingResult(data);
+      if (data.submissionId) setRevisedFromId(data.submissionId);
       onSubmitted();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not evaluate writing draft.');
     } finally {
       setBusy(null);
     }
+  }
+
+  function reviseWriting() {
+    if (writingResult) {
+      setPrevWritingScore(writingResult.score);
+      if (writingResult.submissionId) setRevisedFromId(writingResult.submissionId);
+    }
+    draftTextareaRef.current?.focus();
   }
 
   if (!signedIn) {
@@ -240,6 +283,11 @@ export default function OutputStudio({
       </div>
     );
   }
+
+  const speakingDelta =
+    speakingResult && prevSpeakingScore !== null ? speakingResult.score - prevSpeakingScore : null;
+  const writingDelta =
+    writingResult && prevWritingScore !== null ? writingResult.score - prevWritingScore : null;
 
   return (
     <div className="space-y-6">
@@ -328,6 +376,15 @@ export default function OutputStudio({
                   <span className="rounded-lg bg-indigo-700 px-2.5 py-1 text-xs font-bold text-white">
                     {speakingResult.score} / 100
                   </span>
+                  {speakingDelta !== null && (
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        speakingDelta >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {speakingDelta >= 0 ? `+${speakingDelta}` : speakingDelta} vs previous attempt
+                    </span>
+                  )}
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-indigo-800 ring-1 ring-indigo-200">
                     {speakingResult.score >= 80 ? 'B2 Ready' : speakingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
@@ -337,7 +394,13 @@ export default function OutputStudio({
                     </span>
                   ))}
                 </div>
-                <span className="text-xs font-semibold text-emerald-800">Saved &amp; evaluated</span>
+                <button
+                  type="button"
+                  onClick={retrySpeaking}
+                  className="rounded-lg border border-indigo-300 bg-white px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-50"
+                >
+                  Retry &amp; improve score
+                </button>
               </div>
 
               <p className="text-sm text-stone-800">{speakingResult.feedback}</p>
@@ -354,6 +417,32 @@ export default function OutputStudio({
                     <div key={String(label)} className="rounded-lg bg-white p-2 text-center ring-1 ring-stone-200">
                       <p className="text-[11px] font-semibold uppercase text-stone-500">{label}</p>
                       <p className="text-sm font-bold text-stone-900">{val}/5</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {speakingResult.pronunciationNotes && speakingResult.pronunciationNotes.length > 0 && (
+                <div className="space-y-1.5 rounded-lg bg-white p-3 text-xs text-stone-700 ring-1 ring-stone-200">
+                  <p className="font-bold uppercase tracking-wide text-indigo-800">
+                    Pronunciation, sound &amp; stress diagnostics
+                  </p>
+                  {speakingResult.pronunciationNotes.map((note, idx) => (
+                    <div key={idx} className="flex flex-wrap items-start justify-between gap-2 border-t border-stone-100 pt-2 first:border-t-0 first:pt-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-stone-900">
+                          &ldquo;{note.target}&rdquo;{' '}
+                          <span className="font-normal text-stone-500">— {note.issue}</span>
+                        </p>
+                        <p className="mt-0.5 text-stone-600">{note.tip}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void speakPhrase(note.target, 'en-GB', 0.85)}
+                        className="shrink-0 rounded-md border border-stone-200 bg-stone-50 px-2 py-1 text-[11px] font-semibold text-stone-700 hover:bg-stone-100"
+                      >
+                        Hear model
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -383,8 +472,17 @@ export default function OutputStudio({
 
               {speakingResult.improvedResponse && (
                 <div className="rounded-lg border-l-4 border-indigo-400 bg-white p-3 text-xs leading-5 text-stone-700">
-                  <strong className="block text-indigo-900">B2 model upgrade</strong>
-                  {speakingResult.improvedResponse}
+                  <div className="flex items-center justify-between gap-2">
+                    <strong className="text-indigo-900">B2 model upgrade</strong>
+                    <button
+                      type="button"
+                      onClick={() => void speakPhrase(speakingResult.improvedResponse, 'en-GB', 0.95)}
+                      className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100"
+                    >
+                      Listen to model
+                    </button>
+                  </div>
+                  <p className="mt-1">{speakingResult.improvedResponse}</p>
                 </div>
               )}
             </div>
@@ -394,9 +492,23 @@ export default function OutputStudio({
 
       {writing && (
         <div className="rounded-xl border border-stone-200 bg-white p-4">
-          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
-            Writing · {writing.format}
-          </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
+              Writing · {writing.format}
+            </span>
+            <div role="group" aria-label="English variety for writing feedback" className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold">
+              {(['International', 'British', 'American'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVariety(v)}
+                  className={`rounded-md px-2 py-0.5 ${variety === v ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
           <h3 className="mt-1.5 text-sm font-bold text-stone-900">{writing.title}</h3>
           <p className="mt-2 text-sm text-stone-700">{writing.prompt}</p>
           <p className="mt-1 text-xs text-stone-500">
@@ -417,6 +529,7 @@ export default function OutputStudio({
           )}
 
           <textarea
+            ref={draftTextareaRef}
             rows={5}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -425,14 +538,16 @@ export default function OutputStudio({
           />
 
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-stone-500">{wordCount(draft)} words</span>
+            <span className="text-xs text-stone-500">
+              {wordCount(draft)} words {revisedFromId ? '· Revising previous draft' : ''}
+            </span>
             <button
               type="button"
               disabled={busy === 'writing' || !draft.trim()}
               onClick={evaluateWriting}
               className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
             >
-              {busy === 'writing' ? 'Evaluating rubric…' : 'Evaluate writing'}
+              {busy === 'writing' ? 'Evaluating rubric…' : revisedFromId ? 'Re-evaluate revision' : 'Evaluate writing'}
             </button>
           </div>
 
@@ -443,6 +558,15 @@ export default function OutputStudio({
                   <span className="rounded-lg bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white">
                     {writingResult.score} / 100
                   </span>
+                  {writingDelta !== null && (
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        writingDelta >= 0 ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
+                      }`}
+                    >
+                      {writingDelta >= 0 ? `+${writingDelta}` : writingDelta} vs previous draft
+                    </span>
+                  )}
                   <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
                     {writingResult.score >= 80 ? 'B2 Ready' : writingResult.score >= 65 ? 'B1+ Developing' : 'B1 Building'}
                   </span>
@@ -452,7 +576,13 @@ export default function OutputStudio({
                     </span>
                   ))}
                 </div>
-                <span className="text-xs font-semibold text-emerald-800">Saved &amp; evaluated</span>
+                <button
+                  type="button"
+                  onClick={reviseWriting}
+                  className="rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  Revise &amp; resubmit
+                </button>
               </div>
 
               <p className="text-sm text-stone-800">{writingResult.feedback}</p>
@@ -476,14 +606,21 @@ export default function OutputStudio({
 
               {writingResult.corrections?.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">Line-by-line edits</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-600">Line-by-line edits &amp; patterns</p>
                   {writingResult.corrections.map((c, idx) => (
                     <div key={idx} className="rounded-lg bg-white p-2.5 text-xs text-stone-700 ring-1 ring-stone-200">
-                      <p>
-                        <span className="line-through text-rose-700">{c.original}</span> →{' '}
-                        <span className="font-semibold text-emerald-800">{c.alternative}</span>
-                      </p>
-                      <p className="mt-0.5 text-stone-500">{c.reason}</p>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p>
+                          <span className="line-through text-rose-700">{c.original}</span> →{' '}
+                          <span className="font-semibold text-emerald-800">{c.alternative}</span>
+                        </p>
+                        {c.rule && (
+                          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
+                            {c.rule}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-stone-500">{c.reason}</p>
                     </div>
                   ))}
                 </div>
