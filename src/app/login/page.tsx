@@ -168,12 +168,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
-      <div className="mb-6 text-center">
-        <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
+    <div className="mx-auto w-full max-w-md rounded-2xl border border-stone-200/90 bg-white p-8 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)]">
+      <div className="mb-7 text-center">
+        <span className="inline-flex items-center rounded-full border border-indigo-200/80 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-indigo-700">
           English B1 → B2 · Fluency Studio
         </span>
-        <h1 className="mt-1.5 text-2xl font-bold text-stone-900">
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-stone-900">
           {isSignUp ? 'Create your account' : 'Welcome back'}
         </h1>
         <p className="mt-1.5 text-sm text-stone-600">
@@ -223,8 +223,8 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleAuth} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-600">
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
             Email address
           </label>
           <input
@@ -240,10 +240,22 @@ function LoginForm() {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-600">
-            Password
-          </label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
+              Password
+            </label>
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                disabled={pendingAction !== null}
+                className="cursor-pointer text-xs font-medium text-indigo-700 hover:underline disabled:text-stone-400"
+              >
+                {pendingAction === 'reset' ? 'Sending reset link…' : 'Forgot password?'}
+              </button>
+            )}
+          </div>
           <div className="relative">
             <input
               id="password"
@@ -295,27 +307,17 @@ function LoginForm() {
         )}
       </form>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-stone-100 pt-5 text-center">
+      <p className="mt-6 border-t border-stone-100 pt-5 text-center text-xs text-stone-600">
+        {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
         <button
           type="button"
           onClick={toggleAuthMode}
           disabled={pendingAction !== null}
-          className="cursor-pointer text-xs font-semibold text-indigo-700 hover:underline disabled:text-stone-400"
+          className="cursor-pointer font-semibold text-indigo-700 underline-offset-2 hover:underline disabled:text-stone-400"
         >
-          {isSignUp ? 'Already have an account? Switch to login' : "Don't have an account? Sign up"}
+          {isSignUp ? 'Switch to login' : 'Sign up'}
         </button>
-
-        {!isSignUp && (
-          <button
-            type="button"
-            onClick={handlePasswordReset}
-            disabled={pendingAction !== null}
-            className="cursor-pointer text-xs font-semibold text-stone-600 hover:text-stone-900 hover:underline disabled:text-stone-400"
-          >
-            {pendingAction === 'reset' ? 'Sending reset link…' : 'Forgot password?'}
-          </button>
-        )}
-      </div>
+      </p>
     </div>
   );
 }
@@ -323,7 +325,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <main className="flex min-h-[calc(100vh-140px)] items-center justify-center px-4 py-10">
-      <Suspense fallback={<div className="h-80 w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8" />}>
+      <Suspense fallback={<div className="mx-auto h-80 w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8" />}>
         <LoginForm />
       </Suspense>
     </main>
