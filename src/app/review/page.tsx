@@ -1,12 +1,14 @@
 import Link from 'next/link';
+import ErrorReviewStudio from '@/components/b1b2/ErrorReviewStudio';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
-import { loadDashboard, loadMissedPracticeItems } from '@/lib/b1b2/data';
+import { loadDashboard, loadErrorReviewCards, loadMissedPracticeItems } from '@/lib/b1b2/data';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdaptiveReviewPage() {
-  const [{ signedIn, items }, { telemetry }] = await Promise.all([
+  const [{ signedIn, items }, { cards: errorCards }, { telemetry }] = await Promise.all([
     loadMissedPracticeItems(),
+    loadErrorReviewCards(),
     loadDashboard(),
   ]);
 
@@ -42,10 +44,10 @@ export default async function AdaptiveReviewPage() {
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-10 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Personalised Review</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Personalised FSRS Review</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">Mistake &amp; Pattern Drill</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
-            Items you missed in previous lessons resurface here in active-recall mode until you master the underlying pattern.
+            Corrections from your speaking and writing sessions plus missed lesson items are scheduled by FSRS right before forgetting.
           </p>
         </div>
         <Link
@@ -59,7 +61,7 @@ export default async function AdaptiveReviewPage() {
       {telemetry.recurringErrors.length > 0 && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-amber-900">
-            Recurring patterns flagged in your speaking &amp; writing
+            Recurring patterns tracked in your error ledger
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {telemetry.recurringErrors.map((err) => (
@@ -67,12 +69,17 @@ export default async function AdaptiveReviewPage() {
                 key={err.tag}
                 className="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-semibold text-stone-800"
               >
-                {err.label} <span className="text-amber-800">({err.count}×)</span>
+                {err.label}{' '}
+                <span className="text-amber-800">
+                  ({err.count}× total{err.weeklyCount ? ` · ${err.weeklyCount}× this week` : ''})
+                </span>
               </span>
             ))}
           </div>
         </section>
       )}
+
+      <ErrorReviewStudio initialCards={errorCards} />
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
         {items.length > 0 ? (

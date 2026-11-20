@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { speakPhrase } from '@/lib/b1b2/speech';
+import { previewFsrsIntervals, type ReviewGrade } from '@/lib/b1b2/fsrs';
+import { playAudioOrSpeak } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
 
 interface DueCard {
@@ -14,15 +15,25 @@ interface DueCard {
   example: string | null;
   collocations: string[] | null;
   translation_es: string | null;
+  audio_url?: string | null;
   ladder_step: number;
+  due_at?: string | null;
+  interval_days?: number | null;
+  stability?: number | null;
+  difficulty?: number | null;
+  fsrs_state?: number | null;
+  learning_steps?: number | null;
+  reps?: number | null;
+  lapses?: number | null;
+  last_review_at?: string | null;
 }
 
-const GRADES = [
-  { grade: 'again', label: 'Again', hint: 'Reset (1d)' },
-  { grade: 'hard', label: 'Hard', hint: 'Shorten' },
-  { grade: 'good', label: 'Good', hint: 'Advance' },
-  { grade: 'easy', label: 'Easy', hint: 'Jump +2' },
-] as const;
+const GRADES: { grade: ReviewGrade; label: string }[] = [
+  { grade: 'again', label: 'Again' },
+  { grade: 'hard', label: 'Hard' },
+  { grade: 'good', label: 'Good' },
+  { grade: 'easy', label: 'Easy' },
+];
 
 function maskExample(example: string, term: string): string | null {
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -35,12 +46,11 @@ export default function WarmUpDeck({
   lessonNumber,
   signedIn,
   cardCount,
-  reviewLadderDays,
 }: {
   lessonNumber: number;
   signedIn: boolean;
   cardCount: number;
-  reviewLadderDays: number[];
+  reviewLadderDays?: number[];
 }) {
   const [cards, setCards] = useState<DueCard[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -73,15 +83,21 @@ export default function WarmUpDeck({
     }
   }
 
-  async function grade(value: (typeof GRADES)[number]['grade']) {
+  async function grade(value: ReviewGrade) {
     if (!cards || !cards[index]) return;
     setBusy(true);
     try {
-      const { error: reviewError } = await supabase.rpc('review_vocab_card', {
-        p_card_id: cards[index].card_id,
-        p_grade: value,
+      const res = await fetch('/api/srs/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: cards[index].card_id,
+          cardType: 'vocab',
+          grade: value,
+        }),
       });
-      if (reviewError) throw reviewError;
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not save that review.');
       setReviewed((count) => count + 1);
       setIndex((current) => current + 1);
       setRevealed(false);
@@ -97,7 +113,7 @@ export default function WarmUpDeck({
     return (
       <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
         <p className="text-sm text-stone-700">
-          {cardCount} cards from this lesson&apos;s deck are waiting in your spaced-repetition queue.
+          {cardCount} cards from this lesson&apos;s deck are waiting in your FSRS spaced-repetition queue.
         </p>
         <Link
           href={`/login?next=/curriculum/lessons/${lessonNumber}`}
@@ -113,7 +129,7 @@ export default function WarmUpDeck({
     return (
       <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
         <p className="text-sm text-stone-700">
-          {cardCount} collocations &amp; phrases · spaced intervals at {reviewLadderDays.join(', ')} days.
+          {cardCount} collocations &amp; phrases · adaptive FSRS intervals scheduled from your recall memory curve.
         </p>
         <button
           type="button"
@@ -148,6 +164,7 @@ export default function WarmUpDeck({
   }
 
   const card = cards[index];
+  const intervalHints = previewFsrsIntervals(card);
   const maskedSentence = card.example ? maskExample(card.example, card.term) : null;
   const showCloze = contextMode && Boolean(maskedSentence);
   const guessMatched =
@@ -157,7 +174,7 @@ export default function WarmUpDeck({
     <div className="rounded-xl border border-stone-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
         <span>
-          Card {index + 1} / {cards.length} · Step {card.ladder_step}
+          Card {index + 1} / {cards.length} · Reps {card.reps ?? 0}
         </span>
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold">
@@ -229,10 +246,10 @@ export default function WarmUpDeck({
             </div>
             <button
               type="button"
-              onClick={() => void speakPhrase(card.example || card.term, accent, 0.95)}
+              onClick={() => void playAudioOrSpeak(card.audio_url, card.example || card.term, accent, 0.95)}
               className="rounded-lg border border-stone-300 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             >
-              Pronounce ({accent === 'en-GB' ? 'UK' : 'US'})
+              {card.audio_url ? 'Play studio audio' : `Pronounce (${accent === 'en-GB' ? 'UK' : 'US'})`}
             </button>
           </div>
 
@@ -274,7 +291,9 @@ export default function WarmUpDeck({
               className="rounded-xl border border-stone-200 bg-white px-2 py-2 text-xs font-semibold text-stone-700 transition hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-50"
             >
               {option.label}
-              <span className="mt-0.5 block text-[10px] font-normal text-stone-500">{option.hint}</span>
+              <span className="mt-0.5 block text-[10px] font-normal text-stone-500">
+                {intervalHints[option.grade]}
+              </span>
             </button>
           ))}
         </div>

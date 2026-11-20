@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
+import {
+  buildWritingSystemPrompt,
+  persistLearnerErrors,
+  validateWritingFeedback,
+  type WritingFeedback,
+} from '@/lib/b1b2/feedback-schema';
+import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
+
+const MODEL_ID = 'openai/gpt-oss-20b';
 
 function getGroqClient(): Groq {
   const apiKey = process.env.GROQ_API_KEY;
@@ -18,12 +27,6 @@ interface WritingCorrectBody {
   lessonId?: string;
   revisedFrom?: string;
   variety?: 'British' | 'American' | 'International';
-}
-
-function clampFive(val: unknown, fallback = 3.6): number {
-  const num = Number(val);
-  if (!Number.isFinite(num)) return fallback;
-  return Number(Math.max(0, Math.min(5, num)).toFixed(1));
 }
 
 export async function POST(req: NextRequest) {
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
     const taskId = typeof body.taskId === 'string' ? body.taskId.trim() : '';
     const lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
     const revisedFrom = typeof body.revisedFrom === 'string' ? body.revisedFrom.trim() : '';
-    const variety = body.variety ?? 'International';
+    const variety = body.variety ?? 'British';
 
     if (!text) {
       return NextResponse.json({ error: 'Please provide text to evaluate.' }, { status: 400 });
@@ -56,27 +59,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Text exceeds the 3,000-character limit.' }, { status: 400 });
     }
 
-    const systemPrompt = `You are a CEFR B1 → B2 English writing examiner.
-Evaluate the learner's writing on the 5-criterion B1 → B2 writing rubric (each 0 to 5, allowing .5 increments).
-Preferred English variety for spelling/register notes: ${variety} English.
-Return strictly valid JSON with no markdown fences using this exact schema:
-{
-  "corrected": "string (natural, polished B2-ready rewrite preserving the learner's intended meaning)",
-  "feedback": "string (encouraging 2-3 sentence summary of strengths and key areas to improve)",
-  "notes": ["string (specific grammar, collocation, linker, or style correction with one alternative phrasing)"],
-  "corrections": [{"original": "string", "alternative": "string", "reason": "string (plain-English explanation of what was wrong and why)", "rule": "string (short pattern name e.g. 'Present perfect vs past simple' or 'Make vs do collocation')"}],
-  "errorPatterns": ["articles" | "prepositions" | "tense_aspect" | "collocations" | "connectors" | "word_order"],
-  "rubric": {
-    "task_response": 4.0,
-    "organisation": 3.8,
-    "grammar_accuracy": 3.5,
-    "lexical_range": 3.7,
-    "style": 3.8
-  },
-  "score": 78
-}`;
+    const supabase = await createServerSupabase();
+    const cacheKey = buildEvalCacheKey({
+      endpoint: '/api/writing/correct',
+      model: MODEL_ID,
+      prompt: `${prompt}|${targetKeywords.join(',')}`,
+      input: text,
+      variety,
+    });
 
-    const userPrompt = `Task Prompt: ${prompt}
+    let validated: WritingFeedback | null = null;
+    let cacheHit = false;
+
+    const cachedRaw = await readEvalCache<Record<string, unknown>>(supabase, cacheKey);
+    if (cachedRaw) {
+      try {
+        validated = validateWritingFeedback(cachedRaw, text);
+        cacheHit = true;
+      } catch {
+        validated = null;
+      }
+    }
+
+    if (!validated) {
+      const systemPrompt = buildWritingSystemPrompt(variety);
+      const userPrompt = `Task Prompt: ${prompt}
 Target Vocabulary: ${targetKeywords.length > 0 ? targetKeywords.join(', ') : 'None specified'}
 
 Learner Response:
@@ -84,66 +91,50 @@ Learner Response:
 ${text}
 """`;
 
-    const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.4,
-      max_tokens: 1000,
-      response_format: { type: 'json_object' },
-    });
+      const completion = await groq.chat.completions.create({
+        model: MODEL_ID,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 1100,
+        response_format: { type: 'json_object' },
+      });
 
-    const rawContent = completion.choices[0]?.message?.content;
-    const parsed = rawContent ? (JSON.parse(rawContent) as Record<string, unknown>) : {};
-    const rawRubric = (parsed.rubric && typeof parsed.rubric === 'object'
-      ? parsed.rubric
-      : {}) as Record<string, unknown>;
+      const rawContent = completion.choices[0]?.message?.content;
+      const parsed = rawContent ? (JSON.parse(rawContent) as unknown) : {};
+      validated = validateWritingFeedback(parsed, text);
 
-    const rubric = {
-      task_response: clampFive(rawRubric.task_response, 3.8),
-      organisation: clampFive(rawRubric.organisation, 3.7),
-      grammar_accuracy: clampFive(rawRubric.grammar_accuracy, 3.5),
-      lexical_range: clampFive(rawRubric.lexical_range, 3.6),
-      style: clampFive(rawRubric.style, 3.7),
-    };
+      await writeEvalCache(supabase, {
+        cacheKey,
+        endpoint: '/api/writing/correct',
+        model: MODEL_ID,
+        response: validated,
+      });
+    }
 
-    const avgFive =
-      (rubric.task_response +
-        rubric.organisation +
-        rubric.grammar_accuracy +
-        rubric.lexical_range +
-        rubric.style) /
-      5;
-    const score =
-      typeof parsed.score === 'number'
-        ? Math.max(0, Math.min(100, Math.round(parsed.score)))
-        : Math.round((avgFive / 5) * 100);
-
-    const corrected = typeof parsed.corrected === 'string' ? parsed.corrected : text;
-    const feedback =
-      typeof parsed.feedback === 'string'
-        ? parsed.feedback
-        : 'Good effort! Review the suggested B2 phrasing above.';
-    const notes = Array.isArray(parsed.notes)
-      ? parsed.notes.filter((n): n is string => typeof n === 'string').slice(0, 8)
-      : [];
-    const corrections = Array.isArray(parsed.corrections) ? parsed.corrections.slice(0, 10) : [];
-    const errorPatterns = Array.isArray(parsed.errorPatterns)
-      ? parsed.errorPatterns.filter((t): t is string => typeof t === 'string').slice(0, 5)
-      : [];
+    const uiCorrections = validated.corrections.map((c) => ({
+      original: c.original,
+      corrected_sentence: c.corrected_sentence,
+      alternative: c.corrected_sentence,
+      error_category: c.error_category,
+      explanation: c.explanation,
+      reason: c.explanation,
+      severity: c.severity,
+      rule: c.rule,
+    }));
 
     let submissionId: string | null = null;
     let newBadges: string[] = [];
 
-    if (taskId) {
-      const supabase = await createServerSupabase();
-      if (supabase) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
+    if (supabase) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        if (taskId) {
           const wordCount = text.split(/\s+/).filter(Boolean).length;
           const { data: inserted, error: insertError } = await supabase
             .from('writing_submissions')
@@ -154,23 +145,23 @@ ${text}
               revised_from: revisedFrom || null,
               body: text,
               word_count: wordCount,
-              task_response: rubric.task_response,
-              organisation: rubric.organisation,
-              grammar_accuracy: rubric.grammar_accuracy,
-              lexical_range: rubric.lexical_range,
-              style: rubric.style,
-              overall: score,
+              task_response: validated.rubric.task_response,
+              organisation: validated.rubric.organisation,
+              grammar_accuracy: validated.rubric.grammar_accuracy,
+              lexical_range: validated.rubric.lexical_range,
+              style: validated.rubric.style,
+              overall: validated.score,
               feedback: {
-                summary: feedback,
-                corrected,
-                notes,
-                errorPatterns,
+                summary: validated.feedback,
+                corrected: validated.corrected,
+                notes: validated.notes,
+                errorPatterns: validated.errorPatterns,
                 variety,
-                rubric,
+                rubric: validated.rubric,
               },
-              corrections,
+              corrections: uiCorrections,
               status: 'evaluated',
-              ai_model: 'openai/gpt-oss-20b',
+              ai_model: MODEL_ID,
               evaluated_at: new Date().toISOString(),
             })
             .select('id')
@@ -184,19 +175,28 @@ ${text}
             }
           }
         }
+
+        await persistLearnerErrors(supabase, {
+          userId: user.id,
+          sourceType: 'writing',
+          sourceId: submissionId,
+          lessonId: lessonId || null,
+          corrections: validated.corrections,
+        });
       }
     }
 
     return NextResponse.json({
       submissionId,
-      corrected,
-      feedback,
-      notes,
-      corrections,
-      errorPatterns,
-      rubric,
-      score,
+      corrected: validated.corrected,
+      feedback: validated.feedback,
+      notes: validated.notes,
+      corrections: uiCorrections,
+      errorPatterns: validated.errorPatterns,
+      rubric: validated.rubric,
+      score: validated.score,
       newBadges,
+      cached: cacheHit,
     });
   } catch (err: unknown) {
     return NextResponse.json(

@@ -81,3 +81,40 @@ export async function speakPhrase(text: string, lang: 'en-GB' | 'en-US' | 'en-AU
   if (voice) utterance.voice = voice;
   synth.speak(utterance);
 }
+
+let activeAudioElement: HTMLAudioElement | null = null;
+
+export function stopActiveAudio() {
+  if (activeAudioElement) {
+    activeAudioElement.pause();
+    activeAudioElement.currentTime = 0;
+    activeAudioElement = null;
+  }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+export async function playAudioOrSpeak(
+  audioUrl: string | null | undefined,
+  fallbackText: string,
+  lang: 'en-GB' | 'en-US' | 'en-AU' = 'en-GB',
+  rate = 0.95,
+): Promise<'audio' | 'tts'> {
+  stopActiveAudio();
+
+  if (audioUrl && typeof window !== 'undefined') {
+    try {
+      const audio = new Audio(audioUrl);
+      audio.playbackRate = rate;
+      activeAudioElement = audio;
+      await audio.play();
+      return 'audio';
+    } catch {
+      activeAudioElement = null;
+    }
+  }
+
+  await speakPhrase(fallbackText, lang, rate);
+  return 'tts';
+}

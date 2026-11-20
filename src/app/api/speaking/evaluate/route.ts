@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
+import {
+  buildSpeakingSystemPrompt,
+  persistLearnerErrors,
+  validateSpeakingFeedback,
+  type SpeakingFeedback,
+} from '@/lib/b1b2/feedback-schema';
+import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
+
+const MODEL_ID = 'openai/gpt-oss-20b';
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 function getGroqClient(): Groq {
   const apiKey = process.env.GROQ_API_KEY;
@@ -8,14 +18,6 @@ function getGroqClient(): Groq {
     throw new Error('GROQ_API_KEY is not configured');
   }
   return new Groq({ apiKey });
-}
-
-const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
-
-function clampFive(val: unknown, fallback = 3.5): number {
-  const num = Number(val);
-  if (!Number.isFinite(num)) return fallback;
-  return Number(Math.max(0, Math.min(5, num)).toFixed(1));
 }
 
 export async function POST(req: NextRequest) {
@@ -87,112 +89,77 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are a CEFR B1 → B2 English speaking examiner and pronunciation coach.
-Evaluate the student's spoken transcript on the 5-criterion B1 → B2 speaking rubric (each 0 to 5, allowing .5 increments).
-Also identify specific pronunciation, word-stress, connected-speech, or rhythm watch-outs based on the words/phrases the speaker actually used (e.g. final -ed/-s clusters, /θ/ vs /t/, schwa reduction, word stress on multi-syllable words, intonation in clauses), and tag recurring error patterns.
-Return strictly valid JSON with no markdown fences:
-{
-  "transcript": "string",
-  "improvedResponse": "string (natural B2-ready version preserving the speaker's ideas)",
-  "feedback": "string (2-3 encouraging, specific sentences)",
-  "strengths": ["string (1-2 concrete strengths)"],
-  "improvements": ["string (1-2 specific phrasing or grammar upgrades with one alternative phrasing each)"],
-  "pronunciationNotes": [
-    { "target": "string (specific word or phrase from transcript)", "issue": "string (exact sound, stress, or linking challenge)", "tip": "string (practical articulatory or rhythm fix)" }
-  ],
-  "errorPatterns": ["articles" | "prepositions" | "tense_aspect" | "collocations" | "connectors" | "word_order" | "pronunciation_stress"],
-  "tips": ["string"],
-  "rubric": {
-    "fluency": 3.8,
-    "lexical_range": 3.7,
-    "grammar_accuracy": 3.6,
-    "coherence": 4.0,
-    "pronunciation": 3.8
-  },
-  "score": 78
-}`;
+    const supabase = await createServerSupabase();
+    const cacheKey = buildEvalCacheKey({
+      endpoint: '/api/speaking/evaluate',
+      model: MODEL_ID,
+      prompt: `${promptContext}|${targetPhrase}`,
+      input: transcript,
+      variety: 'British',
+    });
 
-    const userPrompt = `Context/Prompt: ${promptContext || 'General B1 → B2 speaking practice'}
+    let validated: SpeakingFeedback | null = null;
+    let cacheHit = false;
+
+    const cachedRaw = await readEvalCache<Record<string, unknown>>(supabase, cacheKey);
+    if (cachedRaw) {
+      try {
+        validated = validateSpeakingFeedback(cachedRaw, transcript);
+        cacheHit = true;
+      } catch {
+        validated = null;
+      }
+    }
+
+    if (!validated) {
+      const systemPrompt = buildSpeakingSystemPrompt();
+      const userPrompt = `Context/Prompt: ${promptContext || 'General B1 → B2 speaking practice'}
 Target Language: ${targetPhrase || 'None'}
 Transcribed Speech: "${transcript}"`;
 
-    const evaluation = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.4,
-      max_tokens: 900,
-      response_format: { type: 'json_object' },
-    });
+      const evaluation = await groq.chat.completions.create({
+        model: MODEL_ID,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 950,
+        response_format: { type: 'json_object' },
+      });
 
-    const rawEval = evaluation.choices[0]?.message?.content;
-    const parsed = rawEval ? (JSON.parse(rawEval) as Record<string, unknown>) : {};
-    const rawRubric = (parsed.rubric && typeof parsed.rubric === 'object'
-      ? parsed.rubric
-      : {}) as Record<string, unknown>;
+      const rawEval = evaluation.choices[0]?.message?.content;
+      const parsed = rawEval ? (JSON.parse(rawEval) as unknown) : {};
+      validated = validateSpeakingFeedback(parsed, transcript);
 
-    const rubric = {
-      fluency: clampFive(rawRubric.fluency, 3.8),
-      lexical_range: clampFive(rawRubric.lexical_range, 3.6),
-      grammar_accuracy: clampFive(rawRubric.grammar_accuracy, 3.6),
-      coherence: clampFive(rawRubric.coherence, 3.8),
-      pronunciation: clampFive(rawRubric.pronunciation, 3.8),
-    };
+      await writeEvalCache(supabase, {
+        cacheKey,
+        endpoint: '/api/speaking/evaluate',
+        model: MODEL_ID,
+        response: validated,
+      });
+    }
 
-    const avgFive =
-      (rubric.fluency +
-        rubric.lexical_range +
-        rubric.grammar_accuracy +
-        rubric.coherence +
-        rubric.pronunciation) /
-      5;
-    const score =
-      typeof parsed.score === 'number'
-        ? Math.max(0, Math.min(100, Math.round(parsed.score)))
-        : Math.round((avgFive / 5) * 100);
-
-    const improvedResponse =
-      typeof parsed.improvedResponse === 'string' ? parsed.improvedResponse : transcript;
-    const feedback =
-      typeof parsed.feedback === 'string'
-        ? parsed.feedback
-        : 'Clear speech detected! Keep linking ideas with natural B2 transitions.';
-    const strengths = Array.isArray(parsed.strengths)
-      ? parsed.strengths.filter((s): s is string => typeof s === 'string').slice(0, 4)
-      : [];
-    const improvements = Array.isArray(parsed.improvements)
-      ? parsed.improvements.filter((s): s is string => typeof s === 'string').slice(0, 4)
-      : [];
-    const tips = Array.isArray(parsed.tips)
-      ? parsed.tips.filter((s): s is string => typeof s === 'string').slice(0, 4)
-      : improvements;
-    const pronunciationNotes = Array.isArray(parsed.pronunciationNotes)
-      ? parsed.pronunciationNotes
-          .filter(
-            (item): item is { target: string; issue: string; tip: string } =>
-              Boolean(item) &&
-              typeof item === 'object' &&
-              typeof (item as Record<string, unknown>).target === 'string' &&
-              typeof (item as Record<string, unknown>).tip === 'string',
-          )
-          .slice(0, 4)
-      : [];
-    const errorPatterns = Array.isArray(parsed.errorPatterns)
-      ? parsed.errorPatterns.filter((t): t is string => typeof t === 'string').slice(0, 5)
-      : [];
+    const uiCorrections = validated.corrections.map((c) => ({
+      original: c.original,
+      corrected_sentence: c.corrected_sentence,
+      alternative: c.corrected_sentence,
+      error_category: c.error_category,
+      explanation: c.explanation,
+      severity: c.severity,
+      rule: c.rule,
+    }));
 
     let savedAttemptId: string | null = null;
     let newBadges: string[] = [];
 
-    if (taskId) {
-      const supabase = await createServerSupabase();
-      if (supabase) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
+    if (supabase) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        if (taskId) {
           const wordCount = transcript.split(/\s+/).filter(Boolean).length;
           const { data: inserted, error: insertError } = await supabase
             .from('speaking_attempts')
@@ -205,24 +172,26 @@ Transcribed Speech: "${transcript}"`;
               duration_seconds: durationSeconds || null,
               transcript,
               word_count: wordCount,
-              fluency: rubric.fluency,
-              lexical_range: rubric.lexical_range,
-              grammar_accuracy: rubric.grammar_accuracy,
-              coherence: rubric.coherence,
-              pronunciation: rubric.pronunciation,
-              overall: score,
+              fluency: validated.rubric.task_achievement,
+              lexical_range: validated.rubric.lexical_range,
+              grammar_accuracy: validated.rubric.grammar_accuracy,
+              coherence: validated.rubric.coherence,
+              pronunciation: null,
+              overall: validated.score,
               feedback: {
-                summary: feedback,
-                improvedResponse,
-                tips,
-                pronunciationNotes,
-                errorPatterns,
-                rubric,
+                summary: validated.feedback,
+                improvedResponse: validated.improvedResponse,
+                tips: validated.tips,
+                corrections: uiCorrections,
+                errorPatterns: validated.errorPatterns,
+                rubric: validated.rubric,
+                pronunciationNote:
+                  'Transcript feedback evaluates content, grammar, vocabulary, and coherence. Use the Shadowing Lab to compare your pronunciation directly with native audio.',
               },
-              strengths,
-              improvements,
+              strengths: validated.strengths,
+              improvements: validated.improvements,
               status: 'evaluated',
-              ai_model: 'openai/gpt-oss-20b',
+              ai_model: MODEL_ID,
               evaluated_at: new Date().toISOString(),
             })
             .select('id')
@@ -236,22 +205,33 @@ Transcribed Speech: "${transcript}"`;
             }
           }
         }
+
+        await persistLearnerErrors(supabase, {
+          userId: user.id,
+          sourceType: 'speaking',
+          sourceId: savedAttemptId,
+          lessonId: lessonId || null,
+          corrections: validated.corrections,
+        });
       }
     }
 
     return NextResponse.json({
       attemptId: savedAttemptId,
       transcript,
-      improvedResponse,
-      feedback,
-      strengths,
-      improvements,
-      pronunciationNotes,
-      errorPatterns,
-      tips,
-      rubric,
-      score,
+      improvedResponse: validated.improvedResponse,
+      feedback: validated.feedback,
+      strengths: validated.strengths,
+      improvements: validated.improvements,
+      corrections: uiCorrections,
+      errorPatterns: validated.errorPatterns,
+      tips: validated.tips,
+      rubric: validated.rubric,
+      score: validated.score,
+      transcriptionNote:
+        'Evaluated from your spoken transcript (content, grammar, vocabulary & coherence). Use the Listen-and-Compare Shadowing Lab below to practise pronunciation.',
       newBadges,
+      cached: cacheHit,
     });
   } catch (err: unknown) {
     return NextResponse.json(

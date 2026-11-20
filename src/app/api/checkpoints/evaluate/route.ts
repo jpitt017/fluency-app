@@ -184,7 +184,7 @@ Return JSON with numeric 0-100 fields taskAchievement, grammarControl, lexicalRa
         lexical_range: scale5(scores[2]),
         grammar_accuracy: scale5(scores[1]),
         coherence: scale5(scores[0]),
-        pronunciation: scale5(structureHitRate),
+        pronunciation: null,
         overall: mastery,
         feedback: { ...rubric, reviewDeck, objectiveId },
         improvements: reviewDeck,

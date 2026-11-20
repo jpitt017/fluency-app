@@ -57,14 +57,35 @@ export async function proxy(request: NextRequest) {
 
     if (!data.allowed) {
       const retryAfter = Math.max(1, Number(data.retry_after_seconds) || 60);
+      const isPro = data.tier === 'pro';
       return NextResponse.json(
-        { error: data.reason === 'daily_limit' ? 'Your daily AI practice allowance has been reached. Please try again later.' : 'You are practising too quickly. Please wait before trying again.', retryAfterSeconds: retryAfter },
-        { status: 429, headers: { 'Retry-After': String(retryAfter), 'X-AI-Usage-Remaining-Minute': '0' } },
+        {
+          error:
+            data.reason === 'daily_limit'
+              ? isPro
+                ? 'Your Pro daily AI practice allowance has been reached. Please try again later.'
+                : 'Your free daily AI allowance (30 units/day) has been reached. Upgrade to Pro for 180 units/day or try again tomorrow.'
+              : 'You are practising too quickly. Please wait a few seconds before trying again.',
+          retryAfterSeconds: retryAfter,
+          tier: data.tier ?? 'free',
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+            'X-AI-Usage-Remaining-Minute': '0',
+            'X-AI-Usage-Tier': String(data.tier ?? 'free'),
+          },
+        },
       );
     }
 
     response.headers.set('X-AI-Usage-Remaining-Minute', String(data.minute_remaining ?? 0));
     response.headers.set('X-AI-Usage-Remaining-Day', String(data.daily_units_remaining ?? 0));
+    if (data.tier) response.headers.set('X-AI-Usage-Tier', String(data.tier));
+    if (data.daily_unit_limit !== undefined) {
+      response.headers.set('X-AI-Daily-Limit', String(data.daily_unit_limit));
+    }
   }
 
   return response;

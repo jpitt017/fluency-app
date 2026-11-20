@@ -120,6 +120,7 @@ export interface ContentInput {
   title: string;
   source_label: string;
   accent: string | null;
+  audio_url?: string | null;
   body: string;
   duration_seconds: number | null;
   word_count: number | null;
@@ -306,6 +307,7 @@ export interface VocabDeckSummary {
     example: string;
     collocations: string[];
     translation_es: string | null;
+    audio_url?: string | null;
     band: string;
   }[];
 }
@@ -355,6 +357,33 @@ export interface RecurringErrorTag {
   tag: string;
   label: string;
   count: number;
+  weeklyCount?: number;
+}
+
+export interface ErrorReviewCardRow {
+  id: string;
+  category: string;
+  prompt_sentence: string;
+  corrected_sentence: string;
+  explanation: string;
+  due_at: string;
+  interval_days: number;
+  stability: number;
+  difficulty: number;
+  fsrs_state: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  last_review_at: string | null;
+}
+
+export interface PlacementQuestionRow {
+  id: string;
+  sort_order: number;
+  area: string;
+  question: string;
+  options: string[];
+  answer_index: number;
 }
 
 export interface DashboardSkillTelemetry {
@@ -367,6 +396,7 @@ export interface DashboardSkillTelemetry {
   writingLatest: number | null;
   writingDelta: number | null;
   recurringErrors: RecurringErrorTag[];
+  dueErrorCards: number;
   missedPracticeCount: number;
   placementRecommendation: {
     band?: string;

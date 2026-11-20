@@ -1,15 +1,18 @@
 import { createServerSupabase } from '@/utils/supabase/server';
+import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import type {
   CheckpointDetail,
   ContentInput,
   CurriculumOutline,
   DashboardPayload,
   DashboardSkillTelemetry,
+  ErrorReviewCardRow,
   HeaderSummary,
   LearnerBand,
   LessonPayload,
   MissedPracticeItem,
   OutlineCheckpoint,
+  PlacementQuestionRow,
   PracticeItem,
   RecurringErrorTag,
   SkillArea,
@@ -21,12 +24,12 @@ import type {
 } from './types';
 
 const ERROR_TAG_LABELS: Record<string, string> = {
+  ...ERROR_CATEGORY_LABELS,
   articles: 'Articles (a / an / the)',
   prepositions: 'Prepositions & dependent prepositions',
   tense_aspect: 'Tense & aspect choices',
   collocations: 'Natural collocations',
   connectors: 'Discourse linkers & concession',
-  word_order: 'Word order & inversion',
   pronunciation_stress: 'Word stress & connected speech',
 };
 
@@ -123,6 +126,7 @@ export async function loadDashboard(): Promise<{
     writingLatest: null,
     writingDelta: null,
     recurringErrors: [],
+    dueErrorCards: 0,
     missedPracticeCount: 0,
     placementRecommendation: null,
   };
@@ -156,6 +160,9 @@ export async function loadDashboard(): Promise<{
     };
   }
 
+  const nowIso = new Date().toISOString();
+  const sevenDaysAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
   const [
     dashRes,
     xpRes,
@@ -167,6 +174,8 @@ export async function loadDashboard(): Promise<{
     speakingRes,
     writingRes,
     missedRes,
+    learnerErrorsRes,
+    dueErrorCardsRes,
   ] = await Promise.all([
     supabase.rpc('get_learner_dashboard'),
     supabase
@@ -211,6 +220,18 @@ export async function loadDashboard(): Promise<{
       .select('item_id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('is_correct', false),
+    supabase
+      .from('learner_errors')
+      .select('category, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase
+      .from('error_review_cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('suspended', false)
+      .lte('due_at', nowIso),
   ]);
 
   if (dashRes.error) {
@@ -226,12 +247,24 @@ export async function loadDashboard(): Promise<{
   const writingPrev = typeof writingRows[1]?.overall === 'number' ? Math.round(writingRows[1].overall) : null;
 
   const tagCounts = new Map<string, number>();
-  for (const row of [...speakingRows, ...writingRows]) {
-    const tags = row.feedback?.errorPatterns;
-    if (Array.isArray(tags)) {
-      for (const tag of tags) {
-        if (typeof tag === 'string') {
-          tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  const weeklyCounts = new Map<string, number>();
+
+  const normalizedErrors = (learnerErrorsRes.data ?? []) as { category: string; created_at: string }[];
+  if (normalizedErrors.length > 0) {
+    for (const row of normalizedErrors) {
+      tagCounts.set(row.category, (tagCounts.get(row.category) ?? 0) + 1);
+      if (row.created_at >= sevenDaysAgoIso) {
+        weeklyCounts.set(row.category, (weeklyCounts.get(row.category) ?? 0) + 1);
+      }
+    }
+  } else {
+    for (const row of [...speakingRows, ...writingRows]) {
+      const tags = row.feedback?.errorPatterns;
+      if (Array.isArray(tags)) {
+        for (const tag of tags) {
+          if (typeof tag === 'string') {
+            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+          }
         }
       }
     }
@@ -239,11 +272,12 @@ export async function loadDashboard(): Promise<{
 
   const recurringErrors: RecurringErrorTag[] = Array.from(tagCounts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
+    .slice(0, 6)
     .map(([tag, count]) => ({
       tag,
       label: ERROR_TAG_LABELS[tag] ?? tag.replace(/_/g, ' '),
       count,
+      weeklyCount: weeklyCounts.get(tag) ?? 0,
     }));
 
   const placementRaw = subRes.data?.placement_result as { band?: string; recommended_lesson?: number } | null | undefined;
@@ -265,6 +299,7 @@ export async function loadDashboard(): Promise<{
       writingLatest,
       writingDelta: writingLatest !== null && writingPrev !== null ? writingLatest - writingPrev : null,
       recurringErrors,
+      dueErrorCards: dueErrorCardsRes.count ?? 0,
       missedPracticeCount: missedRes.count ?? 0,
       placementRecommendation: placementRaw ?? null,
     },
@@ -329,7 +364,7 @@ export async function loadVocabDecks(): Promise<{
       .order('slug'),
     supabase
       .from('vocab_items')
-      .select('id, deck_id, term, part_of_speech, ipa, definition, example, collocations, translation_es, band')
+      .select('id, deck_id, term, part_of_speech, ipa, definition, example, collocations, translation_es, audio_url, band')
       .order('term'),
   ]);
 
@@ -345,6 +380,7 @@ export async function loadVocabDecks(): Promise<{
       example: row.example,
       collocations: row.collocations ?? [],
       translation_es: row.translation_es,
+      audio_url: row.audio_url ?? null,
       band: row.band,
     });
     itemsByDeck.set(row.deck_id, list);
@@ -420,7 +456,7 @@ export async function loadCheckpointDetail(code: string): Promise<{
     modId
       ? supabase
           .from('content_inputs')
-          .select('id, kind, title, source_label, accent, body, duration_seconds, word_count, questions')
+          .select('id, kind, title, source_label, accent, audio_url, body, duration_seconds, word_count, questions')
           .eq('module_id', modId)
       : Promise.resolve({ data: [] }),
     modId
@@ -544,4 +580,52 @@ export async function loadMissedPracticeItems(): Promise<{
   }
 
   return { signedIn: true, items };
+}
+
+export async function loadErrorReviewCards(): Promise<{
+  signedIn: boolean;
+  cards: ErrorReviewCardRow[];
+}> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return { signedIn: false, cards: [] };
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { signedIn: false, cards: [] };
+
+  const { data } = await supabase
+    .from('error_review_cards')
+    .select(
+      'id, category, prompt_sentence, corrected_sentence, explanation, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at',
+    )
+    .eq('user_id', user.id)
+    .eq('suspended', false)
+    .lte('due_at', new Date().toISOString())
+    .order('due_at', { ascending: true })
+    .limit(20);
+
+  return {
+    signedIn: true,
+    cards: (data as ErrorReviewCardRow[] | null) ?? [],
+  };
+}
+
+export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('placement_questions')
+    .select('id, sort_order, area, question, options, answer_index')
+    .eq('active', true)
+    .order('sort_order', { ascending: true });
+  if (error || !data) return [];
+  return data.map((row) => ({
+    id: String(row.id),
+    sort_order: Number(row.sort_order),
+    area: String(row.area),
+    question: String(row.question),
+    options: Array.isArray(row.options) ? row.options.map(String) : [],
+    answer_index: Number(row.answer_index),
+  }));
 }
