@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 const AI_PROTECTED_PATHS = new Set([
   '/api/speaking/chat',
@@ -14,9 +14,11 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const pathname = request.nextUrl.pathname.replace(/\/$/, '');
+  const isAiProtected = AI_PROTECTED_PATHS.has(pathname);
 
   // Fail closed on protected AI API routes when auth is not configured.
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder.supabase.co')) {
     if (request.nextUrl.pathname.startsWith('/api/')) {
       return NextResponse.json(
         { error: 'Authentication and usage controls are not configured.' },
@@ -26,6 +28,20 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
+  const hasAuthCookie = request.cookies.getAll().some((c) => c.name.startsWith('sb-'));
+  // Signed-out page requests need no token refresh; protected AI endpoints always verify.
+  if (!isAiProtected && !hasAuthCookie) {
+    return response;
+  }
+
+  const isHttps =
+    request.nextUrl.protocol === 'https:' || request.headers.get('x-forwarded-proto') === 'https';
+  const isIframe =
+    request.headers.get('sec-fetch-dest') === 'iframe' ||
+    request.headers.get('sec-fetch-site') === 'cross-site';
+  const iframeCookiePatch: Partial<CookieOptions> =
+    isHttps && isIframe ? { sameSite: 'none', secure: true, partitioned: true } : {};
+
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
@@ -34,19 +50,24 @@ export async function proxy(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, { ...options, ...iframeCookiePatch }),
+        );
       },
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const pathname = request.nextUrl.pathname.replace(/\/$/, '');
+  let user = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch {
+    user = null;
+  }
 
   // Auth gate at the edge; atomic quota enforcement (with per-request audio/text
   // unit weighting) runs inside each API route via enforceAiUsage().
-  if (AI_PROTECTED_PATHS.has(pathname) && !user) {
+  if (isAiProtected && !user) {
     return NextResponse.json({ error: 'Sign in to use AI learning features.' }, { status: 401 });
   }
 
@@ -55,9 +76,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/speaking/:path*',
-    '/api/writing/:path*',
-    '/api/checkpoints/:path*',
-    '/api/lessons/generate',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|audio/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|vtt|ico)$).*)',
   ],
 };
