@@ -6,18 +6,27 @@ import { createClient } from '@/utils/supabase/client';
 import type { WeeklyReportRow } from '@/lib/b1b2/types';
 
 const PACE_OPTIONS = [
-  { hours: 3, label: '3h / wk', hint: 'Steady · ~20 wks' },
-  { hours: 5, label: '5h / wk', hint: 'Balanced · ~12 wks' },
-  { hours: 8, label: '8h / wk', hint: 'Standard · 8 wks' },
-  { hours: 10, label: '10h / wk', hint: 'Focused · ~6 wks' },
-  { hours: 12, label: '12h / wk', hint: 'Intensive · ~5 wks' },
+  { hours: 3, label: '3h / wk', hint: '~21 wks total' },
+  { hours: 5, label: '5h / wk', hint: '~13 wks total' },
+  { hours: 8, label: '8h / wk', hint: '8 wks total' },
+  { hours: 10, label: '10h / wk', hint: '~6.5 wks total' },
+  { hours: 12, label: '12h / wk', hint: '~5.5 wks total' },
 ] as const;
 
-export function WeeklyPaceSelector({ currentHours }: { currentHours: number }) {
+export function WeeklyPaceSelector({
+  currentHours,
+  remainingLessons = 64,
+}: {
+  currentHours: number;
+  remainingLessons?: number;
+}) {
   const router = useRouter();
   const [hours, setHours] = useState(currentHours);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
+
+  const weeksRemaining = Math.max(0, remainingLessons / Math.max(1, hours));
+  const dailyMinutes = Math.round((hours * 60) / 7);
 
   async function selectHours(nextHours: number) {
     setHours(nextHours);
@@ -33,7 +42,7 @@ export function WeeklyPaceSelector({ currentHours }: { currentHours: number }) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? 'Could not save study pace.');
       }
-      setStatus(`Saved (${nextHours}h/week)`);
+      setStatus(`Saved (${nextHours}h/wk)`);
       router.refresh();
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : 'Save failed');
@@ -43,11 +52,20 @@ export function WeeklyPaceSelector({ currentHours }: { currentHours: number }) {
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5">
+    <section className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Study Pace</p>
-          <p className="mt-0.5 text-sm font-semibold text-stone-900">Weekly target ({hours} hrs/week)</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Study Pace</p>
+          <h2 className="mt-0.5 font-serif text-lg font-semibold text-stone-900">
+            {hours} hrs / week
+            {remainingLessons > 0 ? (
+              <span className="ml-2 font-sans text-xs font-medium text-stone-500">
+                · ~{dailyMinutes} min/day · ~{weeksRemaining.toFixed(1)} wks left
+              </span>
+            ) : (
+              <span className="ml-2 font-sans text-xs font-semibold text-emerald-700">· Course complete</span>
+            )}
+          </h2>
         </div>
         {status && <span className="text-xs font-semibold text-emerald-700">{status}</span>}
       </div>
@@ -61,9 +79,9 @@ export function WeeklyPaceSelector({ currentHours }: { currentHours: number }) {
               type="button"
               disabled={saving}
               onClick={() => selectHours(opt.hours)}
-              className={`rounded-xl border px-3 py-2 text-left transition ${
+              className={`rounded-xl border px-2.5 py-2 text-left transition ${
                 active
-                  ? 'border-indigo-700 bg-indigo-50 text-indigo-950'
+                  ? 'border-indigo-700 bg-indigo-50 text-indigo-950 ring-1 ring-indigo-200'
                   : 'border-stone-200 bg-white text-stone-700 hover:border-indigo-300'
               }`}
             >
@@ -73,7 +91,7 @@ export function WeeklyPaceSelector({ currentHours }: { currentHours: number }) {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -98,11 +116,11 @@ export function WeeklyReportCard({ report }: { report: WeeklyReportRow | null })
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-6">
+    <section className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Weekly Report</p>
-          <h2 className="mt-1 font-serif text-lg font-bold text-stone-900">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Weekly Report</p>
+          <h2 className="mt-0.5 font-serif text-lg font-semibold text-stone-900">
             {report ? `Week of ${report.week_start}` : 'This Week in Review'}
           </h2>
         </div>
@@ -112,7 +130,7 @@ export function WeeklyReportCard({ report }: { report: WeeklyReportRow | null })
           onClick={refreshReport}
           className="rounded-xl border border-stone-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
         >
-          {busy ? 'Generating…' : report ? 'Refresh report' : 'Generate report'}
+          {busy ? 'Generating…' : report ? 'Refresh' : 'Generate'}
         </button>
       </div>
 
@@ -120,35 +138,36 @@ export function WeeklyReportCard({ report }: { report: WeeklyReportRow | null })
 
       {report ? (
         <div className="mt-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             <div className="rounded-xl bg-stone-50 p-3">
-              <p className="text-[11px] font-semibold uppercase text-stone-500">Study time</p>
-              <p className="mt-1 text-lg font-bold text-stone-900">{report.study_minutes}m</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Study time</p>
+              <p className="mt-1 font-mono text-base font-bold text-stone-900">{report.study_minutes}m</p>
             </div>
             <div className="rounded-xl bg-stone-50 p-3">
-              <p className="text-[11px] font-semibold uppercase text-stone-500">Words reviewed</p>
-              <p className="mt-1 text-lg font-bold text-stone-900">{report.words_learned}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Vocab</p>
+              <p className="mt-1 font-mono text-base font-bold text-stone-900">{report.words_learned}</p>
             </div>
             <div className="rounded-xl bg-stone-50 p-3">
-              <p className="text-[11px] font-semibold uppercase text-stone-500">Recordings</p>
-              <p className="mt-1 text-lg font-bold text-stone-900">{report.recordings}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Recordings</p>
+              <p className="mt-1 font-mono text-base font-bold text-stone-900">{report.recordings}</p>
             </div>
             <div className="rounded-xl bg-stone-50 p-3">
-              <p className="text-[11px] font-semibold uppercase text-stone-500">Writing drafts</p>
-              <p className="mt-1 text-lg font-bold text-stone-900">{report.writing_tasks}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Writing</p>
+              <p className="mt-1 font-mono text-base font-bold text-stone-900">{report.writing_tasks}</p>
             </div>
           </div>
           {report.weakest_skill && (
-            <p className="text-xs text-stone-600">
-              Recommended focus area: <strong className="capitalize text-stone-900">{report.weakest_skill}</strong>
+            <p className="rounded-lg bg-indigo-50/70 px-3 py-2 text-xs text-indigo-950">
+              Recommended focus this week:{' '}
+              <strong className="capitalize">{report.weakest_skill}</strong>
             </p>
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-stone-600">
+        <p className="mt-3 text-xs leading-5 text-stone-600">
           Generate a snapshot of your study minutes, vocabulary retention, speaking recordings, and weakest skill for this week.
         </p>
       )}
-    </div>
+    </section>
   );
 }
