@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { WeeklyPaceSelector, WeeklyReportCard } from '@/components/b1b2/DashboardControls';
-import { formatBandLabel, loadDashboard, loadOutline } from '@/lib/b1b2/data';
+import { formatBandLabel, loadDashboard, loadObservabilitySummary, loadOutline } from '@/lib/b1b2/data';
 import type { SkillArea } from '@/lib/b1b2/types';
 
 export const dynamic = 'force-dynamic';
@@ -27,8 +27,8 @@ const SKILLS: { key: SkillArea; label: string; targetHours: number; icon: typeof
 ];
 
 export default async function DashboardPage() {
-  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, weeklyReport, subscriptionStatus, telemetry }, outline] =
-    await Promise.all([loadDashboard(), loadOutline()]);
+  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, weeklyReport, subscriptionStatus, telemetry }, outline, obs] =
+    await Promise.all([loadDashboard(), loadOutline(), loadObservabilitySummary(7)]);
 
   if (!signedIn) {
     return (
@@ -277,15 +277,25 @@ export default async function DashboardPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="font-serif text-xl font-semibold text-stone-900">
-                  Adaptive Focus &amp; Mistake Tracking
+                  Adaptive Focus &amp; Error Density
                 </h2>
                 <p className="mt-0.5 text-xs text-stone-500">
-                  Patterns detected across your practice quizzes, speaking transcripts, and writing drafts.
+                  Normalized per 100 words written or spoken · {telemetry.masteredErrorCards} repair cards mastered
                 </p>
               </div>
-              <Link href="/review" className="text-xs font-semibold text-indigo-700 hover:underline">
-                Drill missed items →
-              </Link>
+              <div className="flex items-center gap-2">
+                {telemetry.errorsPer100Words !== null && (
+                  <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-800">
+                    {telemetry.errorsPer100Words} / 100w
+                    {telemetry.errorsPer100WordsDelta !== null
+                      ? ` (${telemetry.errorsPer100WordsDelta <= 0 ? telemetry.errorsPer100WordsDelta : `+${telemetry.errorsPer100WordsDelta}`})`
+                      : ''}
+                  </span>
+                )}
+                <Link href="/review" className="text-xs font-semibold text-indigo-700 hover:underline">
+                  Drill missed items →
+                </Link>
+              </div>
             </div>
 
             {telemetry.recurringErrors.length > 0 ? (
@@ -294,11 +304,25 @@ export default async function DashboardPage() {
                   <Link
                     key={err.tag}
                     href="/review"
-                    className="flex items-center justify-between rounded-xl border border-amber-200/80 bg-amber-50/40 px-3.5 py-2.5 text-xs transition hover:border-amber-300"
+                    className="flex items-center justify-between gap-2 rounded-xl border border-amber-200/80 bg-amber-50/40 px-3.5 py-2.5 text-xs transition hover:border-amber-300"
                   >
-                    <span className="font-semibold text-stone-800">{err.label}</span>
-                    <span className="rounded-full bg-white px-2 py-0.5 font-bold text-amber-800 ring-1 ring-amber-200">
-                      {err.weeklyCount ? `${err.weeklyCount}× wk · ` : ''}{err.count}×
+                    <div className="min-w-0">
+                      <span className="block truncate font-semibold text-stone-800">{err.label}</span>
+                      <span className="text-[11px] text-stone-500">
+                        {err.per100Words} / 100 words
+                        {err.per100WordsPrev !== null ? ` (prev ${err.per100WordsPrev})` : ''}
+                      </span>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ring-1 ${
+                        err.trend === 'improving'
+                          ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
+                          : err.trend === 'worsening'
+                            ? 'bg-rose-50 text-rose-800 ring-rose-200'
+                            : 'bg-white text-amber-800 ring-amber-200'
+                      }`}
+                    >
+                      {err.trend === 'improving' ? '↓ improving' : err.trend === 'worsening' ? '↑ watch' : `${err.count}×`}
                     </span>
                   </Link>
                 ))}
@@ -307,7 +331,7 @@ export default async function DashboardPage() {
               <p className="mt-4 rounded-xl border border-stone-100 bg-stone-50/80 p-3.5 text-xs leading-5 text-stone-600">
                 {telemetry.missedPracticeCount > 0
                   ? `You have ${telemetry.missedPracticeCount} missed practice items ready for active recall review.`
-                  : 'Complete lessons and AI speaking/writing tasks to surface your personal grammar and pronunciation focus areas.'}
+                  : 'Complete lessons and AI speaking/writing tasks to track your errors per 100 words over time.'}
               </p>
             )}
           </section>
@@ -466,6 +490,35 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </section>
+
+          {obs && obs.total_requests > 0 && (
+            <section className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold text-stone-900">AI Usage Telemetry (7d)</h2>
+                <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-600">
+                  {obs.total_requests} calls
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2.5 text-xs sm:grid-cols-4">
+                <div className="rounded-xl bg-stone-50 p-2.5">
+                  <p className="text-[10px] font-bold uppercase text-stone-500">Cache hit</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-700">{obs.cache_hit_rate}%</p>
+                </div>
+                <div className="rounded-xl bg-stone-50 p-2.5">
+                  <p className="text-[10px] font-bold uppercase text-stone-500">Avg latency</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-stone-900">{obs.avg_latency_ms}ms</p>
+                </div>
+                <div className="rounded-xl bg-stone-50 p-2.5">
+                  <p className="text-[10px] font-bold uppercase text-stone-500">Failures</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-stone-900">{obs.failure_count}</p>
+                </div>
+                <div className="rounded-xl bg-stone-50 p-2.5">
+                  <p className="text-[10px] font-bold uppercase text-stone-500">Est. cost</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-indigo-700">${obs.total_cost_usd.toFixed(4)}</p>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </main>

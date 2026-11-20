@@ -6,17 +6,20 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { PlacementQuestionRow } from '@/lib/b1b2/types';
 
-function placementRecommendation(score: number) {
-  if (score >= 5) {
+function placementRecommendation(score: number, total: number, writingScore: number | null) {
+  const quizPct = total > 0 ? (score / total) * 100 : 0;
+  const combinedPct = writingScore !== null ? quizPct * 0.65 + writingScore * 0.35 : quizPct;
+
+  if (combinedPct >= 75) {
     return {
       band: 'B1+ / B2 Entry',
       startLesson: 33,
       startLabel: 'Start Module 5 · Lesson 33 (Environment & Society)',
       summary:
-        'Strong control of B1 tenses and conditionals. Jump straight into Modules 5–8 to sharpen mixed conditionals, formal essays, inversion, and hedging.',
+        'Strong control of B1 tenses, passives, and conditionals. Jump straight into Modules 5–8 to sharpen mixed conditionals, formal essays, inversion, and hedging.',
     };
   }
-  if (score >= 3) {
+  if (combinedPct >= 48) {
     return {
       band: 'B1 Mid–High',
       startLesson: 17,
@@ -38,7 +41,10 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [stage, setStage] = useState<'quiz' | 'writing' | 'done'>('quiz');
+  const [writingSample, setWritingSample] = useState('');
+  const [writingScore, setWritingScore] = useState<number | null>(null);
+  const [writingFeedback, setWritingFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -60,9 +66,8 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     );
   }
 
-  async function handleNext() {
+  function handleNextQuestion() {
     if (selectedOption === null) return;
-
     const isCorrect = selectedOption === questions[currentIndex].answer_index;
     const newScore = isCorrect ? score + 1 : score;
     setScore(newScore);
@@ -70,13 +75,43 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
 
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(currentIndex + 1);
-      return;
+    } else {
+      setStage('writing');
+    }
+  }
+
+  async function finishPlacement(skipWriting = false) {
+    setLoading(true);
+    let evaluatedScore: number | null = null;
+    let feedbackText = '';
+
+    const sample = writingSample.trim();
+    if (!skipWriting && sample.split(/\s+/).filter(Boolean).length >= 15) {
+      try {
+        const res = await fetch('/api/writing/correct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: sample,
+            prompt:
+              'Diagnostic placement sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
+            variety: 'British',
+          }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { score?: number; feedback?: string };
+          if (typeof data.score === 'number') evaluatedScore = data.score;
+          if (typeof data.feedback === 'string') feedbackText = data.feedback;
+        }
+      } catch {
+        /* Fallback to quiz-only placement if unauthenticated or offline */
+      }
     }
 
-    setIsCompleted(true);
-    setLoading(true);
-    const rec = placementRecommendation(newScore);
+    setWritingScore(evaluatedScore);
+    setWritingFeedback(feedbackText);
 
+    const rec = placementRecommendation(score, questions.length, evaluatedScore);
     try {
       if (supabase) {
         const {
@@ -88,8 +123,9 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
             .update({
               onboarding_completed: true,
               placement_result: {
-                score: newScore,
+                score,
                 total: questions.length,
+                writing_score: evaluatedScore,
                 band: rec.band,
                 recommended_lesson: rec.startLesson,
                 completed_at: new Date().toISOString(),
@@ -102,19 +138,20 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
       console.error('Failed to save placement result:', err);
     } finally {
       setLoading(false);
+      setStage('done');
     }
   }
 
-  const recommendation = placementRecommendation(score);
+  const recommendation = placementRecommendation(score, questions.length, writingScore);
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-140px)] max-w-2xl items-center justify-center px-4 py-10 sm:px-6">
       <div className="w-full space-y-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-            English B1 → B2 · Placement Check
+            English B1 → B2 · {questions.length}-Item Diagnostic + Writing Check
           </span>
-          {!isCompleted ? (
+          {stage === 'quiz' ? (
             <div className="mt-2 flex items-center justify-between gap-2">
               <h1 className="text-xl font-bold text-stone-900">
                 Question {currentIndex + 1} of {questions.length}
@@ -123,12 +160,16 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
                 {questions[currentIndex].area}
               </span>
             </div>
+          ) : stage === 'writing' ? (
+            <h1 className="mt-2 text-xl font-bold text-stone-900">
+              Optional 1-Paragraph Diagnostic Writing Sample
+            </h1>
           ) : (
             <h1 className="mt-2 text-2xl font-bold text-stone-900">Placement Check Complete</h1>
           )}
         </div>
 
-        {!isCompleted ? (
+        {stage === 'quiz' && (
           <div className="space-y-5">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
               <div
@@ -158,25 +199,64 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
 
             <button
               type="button"
-              onClick={handleNext}
+              onClick={handleNextQuestion}
               disabled={selectedOption === null}
               className="w-full rounded-xl bg-indigo-700 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:opacity-50"
             >
-              {currentIndex + 1 === questions.length ? 'Finish & View Recommendation' : 'Next Question'}
+              {currentIndex + 1 === questions.length ? 'Continue to Writing Sample →' : 'Next Question'}
             </button>
           </div>
-        ) : (
+        )}
+
+        {stage === 'writing' && (
+          <div className="space-y-4">
+            <p className="text-sm leading-6 text-stone-700">
+              Grammar score: <strong>{score} / {questions.length}</strong>. Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
+            </p>
+            <textarea
+              rows={4}
+              value={writingSample}
+              onChange={(e) => setWritingSample(e.target.value)}
+              placeholder="Write a short paragraph here, or skip to use your 24-item quiz score…"
+              className="w-full rounded-xl border border-stone-300 bg-stone-50/60 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
+            />
+            <div className="flex flex-col gap-2.5 sm:flex-row">
+              <button
+                type="button"
+                disabled={loading || writingSample.trim().split(/\s+/).filter(Boolean).length < 15}
+                onClick={() => void finishPlacement(false)}
+                className="flex-1 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
+              >
+                {loading ? 'Evaluating diagnostic…' : 'Evaluate Sample & Recommend Level'}
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void finishPlacement(true)}
+                className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+              >
+                Skip sample
+              </button>
+            </div>
+          </div>
+        )}
+
+        {stage === 'done' && (
           <div className="space-y-5">
             <div className="space-y-2 rounded-xl border border-indigo-200 bg-indigo-50/70 p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
                   Suggested Band: {recommendation.band}
                 </span>
                 <span className="text-sm font-bold text-indigo-900">
-                  {score} / {questions.length}
+                  Quiz {score}/{questions.length}
+                  {writingScore !== null ? ` · Writing ${writingScore}/100` : ''}
                 </span>
               </div>
               <p className="text-sm leading-6 text-stone-700">{recommendation.summary}</p>
+              {writingFeedback && (
+                <p className="rounded-lg bg-white/80 p-2.5 text-xs text-stone-700">{writingFeedback}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-2.5 sm:flex-row">

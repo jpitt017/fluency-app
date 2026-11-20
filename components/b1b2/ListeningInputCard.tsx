@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Eye, EyeOff, Play, Square, Volume2 } from 'lucide-react';
+import { Captions, Eye, EyeOff, Play, Square, Volume2 } from 'lucide-react';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
+import { buildTranscriptVttDataUrl, resolveAudioUrl } from '@/lib/b1b2/audio';
 import {
   loadEnglishVoices,
   parseAccentLanguages,
@@ -35,8 +36,16 @@ function splitDialogueSegments(body: string): { speaker: string | null; text: st
 
 export default function ListeningInputCard({ input }: { input: ContentInput }) {
   const isListening = input.kind === 'listening';
-  const hasStudioAudio = Boolean(input.audio_url);
+  const resolvedAudioUrl = useMemo(() => resolveAudioUrl(input.audio_url), [input.audio_url]);
+  const hasStudioAudio = Boolean(resolvedAudioUrl);
+  const vttUrl = useMemo(
+    () => buildTranscriptVttDataUrl(input.body, input.duration_seconds),
+    [input.body, input.duration_seconds],
+  );
+  const speakerAccents = Array.isArray(input.speaker_accents) ? input.speaker_accents : [];
+
   const [showTranscript, setShowTranscript] = useState(!isListening);
+  const [showCaptions, setShowCaptions] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState<0.85 | 1 | 1.1>(1);
   const [accentPref, setAccentPref] = useState<AccentPreference>('auto');
@@ -159,9 +168,17 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
               {input.accent}
             </span>
           )}
+          {speakerAccents.map((sa, idx) => (
+            <span
+              key={`${sa.speaker}-${idx}`}
+              className="rounded-full bg-white px-2 py-0.5 font-medium text-stone-700 ring-1 ring-stone-200"
+            >
+              {sa.speaker}: {sa.label}
+            </span>
+          ))}
           {hasStudioAudio && (
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
-              Studio audio
+              Multi-speaker audio · VTT captions
             </span>
           )}
           {input.duration_seconds ? <span className="text-stone-500">· {input.duration_seconds}s</span> : null}
@@ -193,34 +210,52 @@ export default function ListeningInputCard({ input }: { input: ContentInput }) {
         </div>
       </div>
 
-      {hasStudioAudio && (
+      {hasStudioAudio && resolvedAudioUrl && (
         <div className="mt-3 rounded-xl border border-stone-200 bg-white p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <audio
               ref={audioRef}
               controls
               preload="metadata"
-              src={input.audio_url ?? undefined}
+              src={resolvedAudioUrl}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onEnded={() => setPlaying(false)}
               className="h-9 min-w-[220px] flex-1"
-            />
-            <div
-              role="group"
-              aria-label="Playback speed"
-              className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold"
             >
-              {([0.85, 1, 1.1] as const).map((speed) => (
-                <button
-                  key={speed}
-                  type="button"
-                  onClick={() => updateAudioRate(speed)}
-                  className={`rounded-md px-2 py-1 ${rate === speed ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
-                >
-                  {speed === 1 ? '1.0×' : `${speed}×`}
-                </button>
-              ))}
+              {showCaptions && (
+                <track kind="captions" src={vttUrl} srcLang="en" label="English captions" default />
+              )}
+            </audio>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCaptions((prev) => !prev)}
+                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-semibold ${
+                  showCaptions
+                    ? 'border-indigo-300 bg-indigo-50 text-indigo-800'
+                    : 'border-stone-200 bg-stone-50 text-stone-600'
+                }`}
+              >
+                <Captions className="h-3.5 w-3.5" />
+                <span>CC</span>
+              </button>
+              <div
+                role="group"
+                aria-label="Playback speed"
+                className="inline-flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 text-[11px] font-semibold"
+              >
+                {([0.85, 1, 1.1] as const).map((speed) => (
+                  <button
+                    key={speed}
+                    type="button"
+                    onClick={() => updateAudioRate(speed)}
+                    className={`rounded-md px-2 py-1 ${rate === speed ? 'bg-white text-indigo-700 shadow-2xs' : 'text-stone-600'}`}
+                  >
+                    {speed === 1 ? '1.0×' : `${speed}×`}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -1,55 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 import Groq from 'groq-sdk';
+import { createServerSupabase } from '@/utils/supabase/server';
+import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import {
   buildWritingSystemPrompt,
   persistLearnerErrors,
   validateWritingFeedback,
 } from '@/lib/b1b2/feedback-schema';
 import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
+import { logAiRequest } from '@/lib/b1b2/observability';
+import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
+const ENDPOINT = '/api/checkpoints/writing';
 const MODEL_ID = 'openai/gpt-oss-20b';
-
-async function getClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase is not configured.');
-  const cookieStore = await cookies();
-  return createServerClient(url, key, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (items) => {
-        try {
-          items.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
-        } catch {
-          /* Read-only request context */
-        }
-      },
-    },
-  });
-}
+const MAX_CHECKPOINT_CHARS = 9000;
 
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  const supabase = await createServerSupabase();
+  let statusCode = 200;
+  let cacheHit = false;
+  let inputChars = 0;
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let errorMessage: string | null = null;
+
   try {
-    const supabase = await getClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const guard = await enforceAiUsage(supabase, ENDPOINT, 3);
+    if (!guard.allowed && guard.response) {
+      statusCode = guard.response.status;
+      return guard.response;
+    }
+    if (!supabase || !guard.userId) {
+      statusCode = 401;
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await request.json().catch(() => null);
     const moduleNumber = Number(body?.moduleNumber);
-    const objectiveId = typeof body?.objectiveId === 'string' ? body.objectiveId : '';
-    const writing = typeof body?.writing === 'string' ? body.writing.trim() : '';
-    const wordCount = writing ? writing.split(/\s+/).length : 0;
+    const objectiveId = sanitizeLearnerText(body?.objectiveId, 120).text;
+    const { text: writing } = sanitizeLearnerText(body?.writing, MAX_CHECKPOINT_CHARS);
+    inputChars = writing.length;
+    const wordCount = writing ? writing.split(/\s+/).filter(Boolean).length : 0;
 
     if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 8) {
-      return NextResponse.json({ error: 'Select a valid module (1–8).' }, { status: 400 });
+      statusCode = 400;
+      return NextResponse.json({ error: 'Select a valid module (1–8).' }, { status: 400, headers: guard.headers });
     }
     if (wordCount < 30 || wordCount > 1500) {
-      return NextResponse.json({ error: 'Your response must be between 30 and 1,500 words.' }, { status: 400 });
+      statusCode = 400;
+      return NextResponse.json(
+        { error: 'Your response must be between 30 and 1,500 words.' },
+        { status: 400, headers: guard.headers },
+      );
     }
 
     const { data: mod } = await supabase
@@ -58,7 +61,10 @@ export async function POST(request: NextRequest) {
       .eq('module_number', moduleNumber)
       .maybeSingle();
 
-    if (!mod) return NextResponse.json({ error: 'Module not found.' }, { status: 404 });
+    if (!mod) {
+      statusCode = 404;
+      return NextResponse.json({ error: 'Module not found.' }, { status: 404, headers: guard.headers });
+    }
 
     const { data: writingTask } = await supabase
       .from('writing_tasks')
@@ -67,16 +73,28 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    if (!writingTask) return NextResponse.json({ error: 'Writing task not found for this module.' }, { status: 404 });
+    if (!writingTask) {
+      statusCode = 404;
+      return NextResponse.json(
+        { error: 'Writing task not found for this module.' },
+        { status: 404, headers: guard.headers },
+      );
+    }
 
     const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: 'Writing assessor is not configured.' }, { status: 503 });
+    if (!apiKey) {
+      statusCode = 503;
+      return NextResponse.json(
+        { error: 'Writing assessor is not configured.' },
+        { status: 503, headers: guard.headers },
+      );
+    }
 
     const grammarFocus = Array.isArray(mod.grammar_focus) ? mod.grammar_focus : [];
     const promptContext = `Module ${moduleNumber} (${mod.title}) · ${objectiveId || writingTask.title} | ${writingTask.prompt} | Target grammar: ${grammarFocus.join(', ')}`;
 
     const cacheKey = buildEvalCacheKey({
-      endpoint: '/api/checkpoints/writing',
+      endpoint: ENDPOINT,
       model: MODEL_ID,
       prompt: promptContext,
       input: writing,
@@ -84,7 +102,6 @@ export async function POST(request: NextRequest) {
     });
 
     let validated = await readEvalCache<ReturnType<typeof validateWritingFeedback>>(supabase, cacheKey);
-    let cacheHit = false;
     if (validated) {
       try {
         validated = validateWritingFeedback(validated, writing);
@@ -102,7 +119,7 @@ export async function POST(request: NextRequest) {
           { role: 'system', content: buildWritingSystemPrompt('British') },
           {
             role: 'user',
-            content: `${promptContext}\n\nLearner writing:\n"""\n${writing}\n"""`,
+            content: `${promptContext}\n\n${wrapLearnerSubmission(writing)}`,
           },
         ],
         temperature: 0.3,
@@ -110,13 +127,16 @@ export async function POST(request: NextRequest) {
         response_format: { type: 'json_object' },
       });
 
+      promptTokens = completion.usage?.prompt_tokens ?? 0;
+      completionTokens = completion.usage?.completion_tokens ?? 0;
+
       const raw = completion.choices[0]?.message?.content;
       const parsed = raw ? (JSON.parse(raw) as unknown) : {};
       validated = validateWritingFeedback(parsed, writing);
 
       await writeEvalCache(supabase, {
         cacheKey,
-        endpoint: '/api/checkpoints/writing',
+        endpoint: ENDPOINT,
         model: MODEL_ID,
         response: validated,
       });
@@ -136,6 +156,7 @@ export async function POST(request: NextRequest) {
       corrected_sentence: c.corrected_sentence,
       suggestion: c.corrected_sentence,
       error_category: c.error_category,
+      other_label: c.other_label,
       explanation: c.explanation,
       severity: c.severity,
     }));
@@ -152,7 +173,7 @@ export async function POST(request: NextRequest) {
     const { data: submission, error: insertError } = await supabase
       .from('writing_submissions')
       .insert({
-        user_id: user.id,
+        user_id: guard.userId,
         task_id: writingTask.id,
         body: writing,
         word_count: wordCount,
@@ -174,9 +195,11 @@ export async function POST(request: NextRequest) {
     if (insertError) throw insertError;
 
     await persistLearnerErrors(supabase, {
-      userId: user.id,
+      userId: guard.userId,
       sourceType: 'checkpoint_writing',
       sourceId: submission.id,
+      sourceText: writing,
+      sourceWordCount: wordCount,
       corrections: validated.corrections,
     });
 
@@ -188,7 +211,7 @@ export async function POST(request: NextRequest) {
 
     if (checkpoint) {
       await supabase.from('checkpoint_attempts').insert({
-        user_id: user.id,
+        user_id: guard.userId,
         checkpoint_id: checkpoint.id,
         status: 'evaluated',
         writing_submission_id: submission.id,
@@ -198,19 +221,33 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      attempt: submission,
-      passed,
-      score,
-      wordCount,
-      rubric: fullFeedback,
-      cached: cacheHit,
-    });
-  } catch (error) {
-    console.error('Writing checkpoint evaluation failed:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Writing evaluation failed.' },
-      { status: 500 },
+      {
+        attempt: submission,
+        passed,
+        score,
+        wordCount,
+        rubric: fullFeedback,
+        cached: cacheHit,
+      },
+      { headers: guard.headers },
     );
+  } catch (error) {
+    statusCode = 500;
+    errorMessage = error instanceof Error ? error.message : 'Writing evaluation failed.';
+    console.error('Writing checkpoint evaluation failed:', error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  } finally {
+    await logAiRequest(supabase, {
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      statusCode,
+      latencyMs: Date.now() - startedAt,
+      cacheHit,
+      inputChars,
+      promptTokens,
+      completionTokens,
+      errorMessage,
+    });
   }
 }

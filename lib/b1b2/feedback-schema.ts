@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeSentenceForCompare } from './diff';
+import { UNTRUSTED_DATA_SYSTEM_RULE } from './prompt-guard';
 
 export const ERROR_CATEGORIES = [
   'article',
@@ -8,6 +10,13 @@ export const ERROR_CATEGORIES = [
   'collocation',
   'word_order',
   'connector',
+  'subject_verb',
+  'countable_uncountable',
+  'modal_verb',
+  'spelling',
+  'punctuation',
+  'word_choice',
+  'other',
 ] as const;
 
 export type ErrorCategory = (typeof ERROR_CATEGORIES)[number];
@@ -22,6 +31,13 @@ export const ERROR_CATEGORY_LABELS: Record<ErrorCategory, string> = {
   collocation: 'Natural collocations',
   word_order: 'Word order & syntax',
   connector: 'Discourse connectors & linkers',
+  subject_verb: 'Subject–verb agreement',
+  countable_uncountable: 'Countable & uncountable nouns',
+  modal_verb: 'Modal verbs & deduction',
+  spelling: 'Spelling',
+  punctuation: 'Punctuation',
+  word_choice: 'Word choice & register',
+  other: 'Other language patterns',
 };
 
 const CATEGORY_ALIASES: Record<string, ErrorCategory> = {
@@ -39,12 +55,27 @@ const CATEGORY_ALIASES: Record<string, ErrorCategory> = {
   connectors: 'connector',
   linker: 'connector',
   linkers: 'connector',
+  subject_verb: 'subject_verb',
+  subject_verb_agreement: 'subject_verb',
+  agreement: 'subject_verb',
+  countable_uncountable: 'countable_uncountable',
+  uncountable: 'countable_uncountable',
+  countable: 'countable_uncountable',
+  modal_verb: 'modal_verb',
+  modal_verbs: 'modal_verb',
+  modals: 'modal_verb',
+  spelling: 'spelling',
+  punctuation: 'punctuation',
+  word_choice: 'word_choice',
+  lexical_choice: 'word_choice',
+  vocabulary: 'word_choice',
+  other: 'other',
 };
 
 export function coerceErrorCategory(value: unknown): ErrorCategory {
-  if (typeof value !== 'string') return 'collocation';
+  if (typeof value !== 'string') return 'other';
   const key = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
-  return CATEGORY_ALIASES[key] ?? 'collocation';
+  return CATEGORY_ALIASES[key] ?? 'other';
 }
 
 export function coerceSeverity(value: unknown): ErrorSeverity {
@@ -64,6 +95,7 @@ export const CorrectionItemSchema = z.object({
   original: z.string().trim().min(1).max(300),
   corrected_sentence: z.string().trim().min(1).max(400),
   error_category: z.enum(ERROR_CATEGORIES),
+  other_label: z.string().trim().max(80).optional(),
   explanation: z.string().trim().min(1).max(500),
   severity: z.enum(ERROR_SEVERITIES),
   rule: z.string().trim().max(120).optional(),
@@ -76,7 +108,7 @@ export const WritingFeedbackSchema = z.object({
   feedback: z.string().trim().min(1),
   notes: z.array(z.string().trim().min(1)).max(8),
   corrections: z.array(CorrectionItemSchema).max(10),
-  errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(6),
+  errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(8),
   rubric: z.object({
     task_response: z.number().min(0).max(5),
     organisation: z.number().min(0).max(5),
@@ -95,7 +127,7 @@ export const SpeakingFeedbackSchema = z.object({
   strengths: z.array(z.string().trim().min(1)).max(4),
   improvements: z.array(z.string().trim().min(1)).max(4),
   corrections: z.array(CorrectionItemSchema).max(10),
-  errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(6),
+  errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(8),
   tips: z.array(z.string().trim().min(1)).max(4),
   rubric: z.object({
     task_achievement: z.number().min(0).max(5),
@@ -108,20 +140,27 @@ export const SpeakingFeedbackSchema = z.object({
 
 export type SpeakingFeedback = z.infer<typeof SpeakingFeedbackSchema>;
 
+const CATEGORY_LIST_PROMPT = ERROR_CATEGORIES.map((c) => `"${c}"`).join(' | ');
+
 export function buildWritingSystemPrompt(variety: 'British' | 'American' | 'International' = 'British'): string {
   return `You are a CEFR B1 → B2 English writing examiner.
 Evaluate the learner's writing on the 5-criterion B1 → B2 rubric (0 to 5, allowing .5 increments).
-IMPORTANT RULES FOR FEEDBACK LANGUAGE:
-- Write every "explanation" and "feedback" in clear, simple CEFR B1 English so an intermediate learner understands immediately (avoid dense linguistics jargon).
+
+${UNTRUSTED_DATA_SYSTEM_RULE}
+
+FEEDBACK & TAXONOMY RULES:
+- Write every "explanation" and "feedback" in clear, simple CEFR B1 English so an intermediate learner understands immediately.
 - Use British English spelling throughout explanations and feedback (e.g. "colour", "practise" as a verb, "organised", "centre", "programme", "analyse").
 - Preferred English variety for the learner's rewritten text: ${variety} English.
+- If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Do NOT invent mistakes in clean sentences.
 - Every item in "corrections" MUST include:
-  - "original": the exact incorrect phrase or sentence from the learner
-  - "corrected_sentence": the natural, accurate B2-ready corrected version
-  - "error_category": strictly one of "article" | "preposition" | "tense" | "collocation" | "word_order" | "connector"
+  - "original": the full clause or sentence containing the error (not an isolated 1-word fragment)
+  - "corrected_sentence": the natural, accurate B2-ready corrected clause or sentence
+  - "error_category": strictly one of ${CATEGORY_LIST_PROMPT}
+  - "other_label": ONLY when error_category is "other", provide a short descriptive label (e.g. "relative pronoun omission")
   - "explanation": concise B1-level British English explanation of why the fix is needed
   - "severity": strictly one of "minor" | "moderate" | "major"
-  - "rule": short pattern name (e.g. "Present perfect vs past simple")
+  - "rule": short pattern name (e.g. "Subject-verb agreement with collective nouns")
 
 Return strictly valid JSON with no markdown fences matching this schema:
 {
@@ -132,13 +171,14 @@ Return strictly valid JSON with no markdown fences matching this schema:
     {
       "original": "string",
       "corrected_sentence": "string",
-      "error_category": "article" | "preposition" | "tense" | "collocation" | "word_order" | "connector",
+      "error_category": ${CATEGORY_LIST_PROMPT},
+      "other_label": "string (optional, only if error_category is other)",
       "explanation": "string (B1 British English)",
       "severity": "minor" | "moderate" | "major",
       "rule": "string"
     }
   ],
-  "errorPatterns": ["article" | "preposition" | "tense" | "collocation" | "word_order" | "connector"],
+  "errorPatterns": [${CATEGORY_LIST_PROMPT}],
   "rubric": {
     "task_response": 4.0,
     "organisation": 3.8,
@@ -152,11 +192,15 @@ Return strictly valid JSON with no markdown fences matching this schema:
 
 export function buildSpeakingSystemPrompt(): string {
   return `You are a CEFR B1 → B2 English speaking examiner.
+
+${UNTRUSTED_DATA_SYSTEM_RULE}
+
 CRITICAL TRANSCRIPTION RULE:
 - You are reading an automatic Whisper speech-to-text transcript, NOT listening to raw audio. Whisper automatically fixes mispronounced words into normal spelling.
 - Therefore, DO NOT guess or score pronunciation, accent, or phoneme accuracy from the transcript.
 - Score ONLY what is reliably observable in the transcript: task_achievement, grammar_accuracy, lexical_range, and coherence (each 0 to 5, allowing .5 increments).
 - Write all explanations and feedback in clear, encouraging CEFR B1 British English (using British spelling such as "practise", "organised", "centre").
+- If there are no grammatical or lexical errors, return "corrections": [] and "errorPatterns": [].
 
 Return strictly valid JSON with no markdown fences:
 {
@@ -166,15 +210,16 @@ Return strictly valid JSON with no markdown fences:
   "improvements": ["string (1-3 specific phrasing or grammar upgrades)"],
   "corrections": [
     {
-      "original": "string",
+      "original": "string (full phrase or sentence)",
       "corrected_sentence": "string",
-      "error_category": "article" | "preposition" | "tense" | "collocation" | "word_order" | "connector",
+      "error_category": ${CATEGORY_LIST_PROMPT},
+      "other_label": "string (optional, only if error_category is other)",
       "explanation": "string (B1 British English)",
       "severity": "minor" | "moderate" | "major",
       "rule": "string"
     }
   ],
-  "errorPatterns": ["article" | "preposition" | "tense" | "collocation" | "word_order" | "connector"],
+  "errorPatterns": [${CATEGORY_LIST_PROMPT}],
   "tips": ["string"],
   "rubric": {
     "task_achievement": 3.8,
@@ -209,10 +254,22 @@ function normalizeCorrectionArray(raw: unknown): CorrectionItem[] {
           : '';
     if (!original || !correctedSentence || !explanation) continue;
 
+    // Ignore no-op "corrections" where original === corrected
+    if (normalizeSentenceForCompare(original) === normalizeSentenceForCompare(correctedSentence)) {
+      continue;
+    }
+
+    const category = coerceErrorCategory(obj.error_category ?? obj.category ?? obj.rule);
+    const otherLabel =
+      category === 'other' && typeof obj.other_label === 'string' && obj.other_label.trim()
+        ? obj.other_label.trim().slice(0, 80)
+        : undefined;
+
     const candidate = {
       original: original.slice(0, 300),
       corrected_sentence: correctedSentence.slice(0, 400),
-      error_category: coerceErrorCategory(obj.error_category ?? obj.category ?? obj.rule),
+      error_category: category,
+      other_label: otherLabel,
       explanation: explanation.slice(0, 500),
       severity: coerceSeverity(obj.severity),
       rule: typeof obj.rule === 'string' && obj.rule.trim() ? obj.rule.trim().slice(0, 120) : undefined,
@@ -269,7 +326,7 @@ export function validateWritingFeedback(rawJson: unknown, fallbackText: string):
       ? obj.notes.filter((n): n is string => typeof n === 'string' && n.trim().length > 0).map((n) => n.trim()).slice(0, 8)
       : [],
     corrections,
-    errorPatterns: Array.from(patternSet).slice(0, 6),
+    errorPatterns: Array.from(patternSet).slice(0, 8),
     rubric,
     score: Math.max(0, Math.min(100, rawScore)),
   };
@@ -322,7 +379,7 @@ export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: s
       : [],
     improvements,
     corrections,
-    errorPatterns: Array.from(patternSet).slice(0, 6),
+    errorPatterns: Array.from(patternSet).slice(0, 8),
     tips: Array.isArray(obj.tips)
       ? obj.tips.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim()).slice(0, 4)
       : improvements,
@@ -333,6 +390,40 @@ export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: s
   return SpeakingFeedbackSchema.parse(candidate);
 }
 
+function tokenJaccardSimilarity(a: string, b: string): number {
+  const setA = new Set(normalizeSentenceForCompare(a).split(' ').filter(Boolean));
+  const setB = new Set(normalizeSentenceForCompare(b).split(' ').filter(Boolean));
+  if (!setA.size || !setB.size) return 0;
+  let intersection = 0;
+  for (const w of setA) {
+    if (setB.has(w)) intersection++;
+  }
+  return intersection / (setA.size + setB.size - intersection);
+}
+
+function findContainingSentence(fullText: string | undefined, fragment: string): string | null {
+  if (!fullText) return null;
+  const sentences = fullText
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const needle = normalizeSentenceForCompare(fragment);
+  for (const s of sentences) {
+    if (normalizeSentenceForCompare(s).includes(needle)) {
+      return s.slice(0, 300);
+    }
+  }
+  return null;
+}
+
+const DAILY_NEW_ERROR_CARD_CAP = 5;
+
+const SEVERITY_PRIORITY: Record<ErrorSeverity, number> = {
+  major: 3,
+  moderate: 2,
+  minor: 1,
+};
+
 export async function persistLearnerErrors(
   supabase: SupabaseClient,
   params: {
@@ -340,6 +431,8 @@ export async function persistLearnerErrors(
     sourceType: 'writing' | 'speaking' | 'checkpoint_writing' | 'checkpoint_speaking';
     sourceId?: string | null;
     lessonId?: string | null;
+    sourceText?: string;
+    sourceWordCount?: number;
     corrections: CorrectionItem[];
   },
 ): Promise<void> {
@@ -351,39 +444,120 @@ export async function persistLearnerErrors(
     source_id: params.sourceId || null,
     lesson_id: params.lessonId || null,
     category: c.error_category,
+    other_label: c.error_category === 'other' ? (c.other_label ?? c.rule ?? null) : null,
     original: c.original,
     corrected: c.corrected_sentence,
     explanation: c.explanation,
     severity: c.severity,
+    source_word_count: params.sourceWordCount ?? null,
   }));
 
   const { data: insertedErrors, error: errInsert } = await supabase
     .from('learner_errors')
     .insert(errorRows)
-    .select('id, category, original, corrected, explanation');
+    .select('id, category, original, corrected, explanation, severity');
 
   if (errInsert) {
     console.error('Failed to persist learner_errors:', errInsert.message);
     return;
   }
 
-  const cardRows = (insertedErrors ?? []).map((row) => ({
-    user_id: params.userId,
-    learner_error_id: row.id,
-    category: row.category,
-    prompt_sentence: row.original,
-    corrected_sentence: row.corrected,
-    explanation: row.explanation,
-    due_at: new Date().toISOString(),
-  }));
+  // Build quality-checked, deduplicated, daily-capped error review cards
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
 
-  if (cardRows.length > 0) {
-    const { error: cardErr } = await supabase
+  const [{ count: createdToday }, { data: existingOpen }] = await Promise.all([
+    supabase
       .from('error_review_cards')
-      .upsert(cardRows, { onConflict: 'user_id,category,prompt_sentence' });
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', params.userId)
+      .gte('created_at', startOfUtcDay.toISOString()),
+    supabase
+      .from('error_review_cards')
+      .select('id, category, prompt_sentence, normalized_key, occurrence_count')
+      .eq('user_id', params.userId)
+      .eq('mastered', false)
+      .order('created_at', { ascending: false })
+      .limit(60),
+  ]);
 
-    if (cardErr) {
-      console.error('Failed to upsert error_review_cards:', cardErr.message);
+  let remainingDailySlots = Math.max(0, DAILY_NEW_ERROR_CARD_CAP - (createdToday ?? 0));
+  const openCards = (existingOpen ?? []) as {
+    id: string;
+    category: string;
+    prompt_sentence: string;
+    normalized_key: string | null;
+    occurrence_count: number | null;
+  }[];
+
+  const sortedErrors = [...(insertedErrors ?? [])].sort((a, b) => {
+    const sa = SEVERITY_PRIORITY[coerceSeverity(a.severity)];
+    const sb = SEVERITY_PRIORITY[coerceSeverity(b.severity)];
+    return sb - sa;
+  });
+
+  for (const row of sortedErrors) {
+    const contextSentence = findContainingSentence(params.sourceText, row.original);
+    const promptSentence =
+      row.original.split(/\s+/).length >= 3
+        ? row.original
+        : contextSentence ?? row.original;
+
+    // Skip vague single-word cards that have no sentence context
+    if (promptSentence.split(/\s+/).length < 3) continue;
+
+    const correctedSentence =
+      contextSentence && row.original.split(/\s+/).length < 3
+        ? contextSentence.replace(row.original, row.corrected)
+        : row.corrected;
+
+    const normKey = normalizeSentenceForCompare(promptSentence);
+    if (!normKey) continue;
+
+    // Near-identical deduplication against existing open cards in same category
+    const duplicate = openCards.find(
+      (c) =>
+        c.category === row.category &&
+        (c.normalized_key === normKey || tokenJaccardSimilarity(c.prompt_sentence, promptSentence) >= 0.85),
+    );
+
+    if (duplicate) {
+      await supabase
+        .from('error_review_cards')
+        .update({
+          occurrence_count: (duplicate.occurrence_count ?? 1) + 1,
+          due_at: new Date().toISOString(),
+        })
+        .eq('id', duplicate.id);
+      continue;
+    }
+
+    if (remainingDailySlots <= 0) continue;
+
+    const cardFormat = contextSentence ? 'cloze' : 'fix_sentence';
+    const { data: created, error: cardErr } = await supabase
+      .from('error_review_cards')
+      .upsert(
+        {
+          user_id: params.userId,
+          learner_error_id: row.id,
+          category: row.category,
+          prompt_sentence: promptSentence,
+          corrected_sentence: correctedSentence,
+          context_sentence: contextSentence,
+          card_format: cardFormat,
+          normalized_key: normKey,
+          explanation: row.explanation,
+          due_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,category,normalized_key' },
+      )
+      .select('id, category, prompt_sentence, normalized_key, occurrence_count')
+      .maybeSingle();
+
+    if (!cardErr && created) {
+      remainingDailySlots--;
+      openCards.push(created);
     }
   }
 }
