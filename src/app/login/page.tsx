@@ -152,7 +152,6 @@ function LoginForm() {
         }
 
         // Full document navigation ensures Server Components and AppHeader read fresh auth cookies immediately.
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.assign(safeNext);
       }
     } catch (err: unknown) {
@@ -191,7 +190,6 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => {
-                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
                 window.location.assign(safeNext);
               }}
               className="rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white hover:bg-emerald-800"
