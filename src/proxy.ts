@@ -7,7 +7,6 @@ const AI_PROTECTED_PATHS = new Set([
   '/api/writing/correct',
   '/api/checkpoints/evaluate',
   '/api/checkpoints/writing',
-  '/api/lessons/generate',
 ]);
 
 export async function proxy(request: NextRequest) {
@@ -30,7 +29,7 @@ export async function proxy(request: NextRequest) {
 
   // Fail closed on protected AI API routes when auth is not configured.
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder.supabase.co')) {
-    if (request.nextUrl.pathname.startsWith('/api/')) {
+    if (request.nextUrl.pathname.startsWith('/api/') && pathname !== '/api/lessons/generate') {
       return NextResponse.json(
         { error: 'Authentication and usage controls are not configured.' },
         { status: 503 },

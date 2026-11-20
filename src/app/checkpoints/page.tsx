@@ -14,7 +14,7 @@ export default async function CheckpointsPage() {
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Milestone Assessments</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">B1 → B2 Checkpoints</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
-            Four timed milestone exams after Modules 2, 4, 6, and 8 combining input comprehension, grammar/lexis diagnostics, speaking, and writing.
+            Four timed milestone exams at the end of Weeks 4, 8, 12, and 16 combining input comprehension, grammar/lexis diagnostics, speaking, and writing—confirmed by your teacher.
           </p>
         </div>
         <Link
@@ -42,7 +42,7 @@ export default async function CheckpointsPage() {
                   </span>
                 </div>
                 <h2 className="mt-3 font-serif text-xl font-bold text-stone-900">{cp.title}</h2>
-                {cp.module && <p className="mt-1 text-xs font-medium text-stone-500">Module {cp.module} Milestone</p>}
+                {cp.module && <p className="mt-1 text-xs font-medium text-stone-500">Week {cp.module} Milestone</p>}
                 <p className="mt-2 text-sm leading-6 text-stone-600">{cp.description}</p>
               </div>
 

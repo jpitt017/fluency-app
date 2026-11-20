@@ -8,8 +8,8 @@ interface SpeakingFeedback {
   improvedResponse?: string;
   feedback?: string;
   tips?: string[];
-  pronunciationFeedback?: string[];
   pragmaticsFeedback?: string[];
+  transcriptionNote?: string;
   score?: number;
   passed?: boolean;
   mastery?: number;
@@ -19,14 +19,12 @@ interface SpeakingFeedback {
 
 interface SpeakingLabProps {
   sessionTitle?: string;
-  pronunciationFocus?: string;
   speakingFocus?: string;
   keyLanguage?: string[];
   lessonContext?: LessonLabContext;
 }
 
 export default function SpeakingLab({
-  pronunciationFocus,
   speakingFocus,
   keyLanguage = [],
   lessonContext,
@@ -171,22 +169,20 @@ export default function SpeakingLab({
 
   return (
     <div className="space-y-4">
-      {(lessonContext?.prompt || pronunciationFocus || speakingFocus || languages.length > 0) && (
+      {(lessonContext?.prompt || speakingFocus || languages.length > 0) && (
         <div className="space-y-2 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
             {lessonContext?.mode === 'checkpoint' ? 'CEFR checkpoint speaking task' : 'Speaking & fluency focus'}
           </p>
           {lessonContext?.prompt && <p className="text-sm text-stone-800">{lessonContext.prompt}</p>}
-          {pronunciationFocus && (
-            <p className="text-xs text-stone-700">
-              <strong>Pronunciation:</strong> {pronunciationFocus}
-            </p>
-          )}
           {speakingFocus && (
             <p className="text-xs text-stone-700">
               <strong>Fluency:</strong> {speakingFocus}
             </p>
           )}
+          <p className="text-[11px] text-emerald-900/80">
+            AI evaluates content, grammar, vocabulary, and coherence from your transcript. Pronunciation is assessed by your teacher in live lessons and checkpoints (or self-checked in Shadowing Studio).
+          </p>
           {(lessonContext?.targetGrammar?.length ?? 0) > 0 && (
             <p className="text-xs text-stone-700">
               <strong>Target grammar:</strong> {lessonContext?.targetGrammar?.join(' · ')}
@@ -275,14 +271,14 @@ export default function SpeakingLab({
             </div>
           )}
           {feedback.feedback && <p className="text-stone-700">{feedback.feedback}</p>}
+          {feedback.transcriptionNote && (
+            <p className="rounded-lg bg-white p-2.5 text-xs text-stone-600 ring-1 ring-stone-200">
+              {feedback.transcriptionNote}
+            </p>
+          )}
           {feedback.tips?.map((tip, index) => (
             <p key={index} className="text-stone-700">
               • {tip}
-            </p>
-          ))}
-          {feedback.pronunciationFeedback?.map((item, index) => (
-            <p key={`p${index}`} className="text-stone-700">
-              • {item}
             </p>
           ))}
           {feedback.pragmaticsFeedback?.map((item, index) => (

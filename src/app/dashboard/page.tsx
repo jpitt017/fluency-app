@@ -27,9 +27,9 @@ const SKILLS: {
   cta: string;
   icon: typeof BookOpen;
 }[] = [
-  { key: 'grammar', label: 'Grammar', targetHours: 10, href: '/review', cta: 'Drill grammar', icon: Sparkles },
+  { key: 'grammar', label: 'Grammar', targetHours: 9, href: '/clinic', cta: 'Grammar Clinic', icon: Sparkles },
   { key: 'vocabulary', label: 'Vocabulary', targetHours: 8, href: '/vocabulary', cta: 'Review SRS', icon: Layers },
-  { key: 'listening', label: 'Listening', targetHours: 12, href: '/labs', cta: 'Shadow audio', icon: Headphones },
+  { key: 'listening', label: 'Listening', targetHours: 10, href: '/labs', cta: 'Shadow audio', icon: Headphones },
   { key: 'reading', label: 'Reading', targetHours: 10, href: '/curriculum', cta: 'Open texts', icon: BookOpen },
   { key: 'speaking', label: 'Speaking', targetHours: 12, href: '/labs', cta: 'Speaking lab', icon: Mic },
   { key: 'writing', label: 'Writing', targetHours: 10, href: '/labs', cta: 'Writing studio', icon: PenLine },
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
             Sign in to open your B1 → B2 dashboard
           </h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Track all 64 lessons, review your spaced-repetition vocabulary deck, monitor six skill meters, and save AI speaking and writing feedback.
+            Track all 112 daily sessions across 16 weeks, review your spaced-repetition vocabulary deck, monitor six skill meters, and save AI speaking and writing feedback.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
   }
 
   const lessonsCompleted = dashboard?.lessons_completed ?? 0;
-  const remainingLessons = Math.max(0, 64 - lessonsCompleted);
+  const remainingLessons = Math.max(0, 112 - lessonsCompleted);
   const streakDays = dashboard?.streak_days ?? 0;
   const dueCards = dashboard?.due_cards ?? 0;
   const totalReviewQueue = telemetry.dueErrorCards + telemetry.missedPracticeCount;
@@ -92,11 +92,11 @@ export default async function DashboardPage() {
       ? telemetry.placementRecommendation.recommended_lesson
       : nextLesson?.lesson_number ?? 1;
 
-  const progressPct = Math.min(100, Math.round((lessonsCompleted / 64) * 100));
+  const progressPct = Math.min(100, Math.round((lessonsCompleted / 112) * 100));
   const ringCircumference = 2 * Math.PI * 26;
   const ringOffset = ringCircumference - (progressPct / 100) * ringCircumference;
 
-  const vocabTotal = telemetry.activeVocabTotal || 84;
+  const vocabTotal = telemetry.activeVocabTotal || 145;
   const vocabMasteredPct = Math.min(100, Math.round((telemetry.activeVocabMastered / Math.max(1, vocabTotal)) * 100));
 
   const skillEntries = SKILLS.map((s) => ({
@@ -156,15 +156,15 @@ export default async function DashboardPage() {
               </div>
               <h1 className="font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
                 {lessonsCompleted === 0 && telemetry.placementRecommendation?.recommended_lesson
-                  ? `Placement Match: Start at Lesson ${recommendedLessonNum}`
+                  ? `Placement Match: Start at Session ${recommendedLessonNum}`
                   : nextLesson
-                    ? `Up next: Lesson ${nextLesson.lesson_number} — ${nextLesson.title}`
+                    ? `Up next: Session ${nextLesson.lesson_number} — ${nextLesson.title}`
                     : 'English B1 → B2 Study Workspace'}
               </h1>
               <p className="text-sm text-stone-600">
                 {nextLesson
                   ? `${nextLesson.module_title} · ${nextLesson.can_do}`
-                  : 'All 64 lessons completed! Review your checkpoints or practise in the AI Labs.'}
+                  : 'All 112 daily sessions completed! Review your checkpoints or practise in the AI Labs.'}
               </p>
             </div>
           </div>
@@ -258,13 +258,13 @@ export default async function DashboardPage() {
           className="group block rounded-2xl border border-stone-200/90 bg-white p-5 shadow-2xs transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">Guided Curriculum</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">16-Week Pathway</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
               <BookOpen className="h-4 w-4" />
             </span>
           </div>
           <p className="mt-2 font-serif text-3xl font-semibold text-stone-900">
-            {lessonsCompleted} <span className="font-sans text-base font-medium text-stone-400">/ 64</span>
+            {lessonsCompleted} <span className="font-sans text-base font-medium text-stone-400">/ 112</span>
           </p>
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
             <div
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
             />
           </div>
           <p className="mt-2 flex items-center justify-between text-xs text-stone-500">
-            <span>{remainingLessons}h remaining</span>
+            <span>{remainingLessons} sessions left</span>
             <span className="font-semibold text-indigo-700 group-hover:underline">Syllabus →</span>
           </p>
         </Link>
@@ -359,18 +359,18 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
-      {/* 8-Module Course Journey Strip */}
+      {/* 16-Week Course Journey Strip */}
       {modules.length > 0 && (
-        <section aria-label="Module progress" className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-2xs">
+        <section aria-label="16-week progress" className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-2xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="font-serif text-lg font-semibold text-stone-900">8-Module B1 → B2 Roadmap</h2>
+              <h2 className="font-serif text-lg font-semibold text-stone-900">16-Week B1 → B2 Roadmap</h2>
               <p className="text-xs text-stone-500">
-                Click any module to jump straight into its next incomplete lesson.
+                Listening {outline?.listening_weeks_completed ?? 0}/12+ wks · Reading {outline?.reading_weeks_completed ?? 0}/12+ wks · Click any week to jump in.
               </p>
             </div>
             <Link href="/curriculum" className="text-xs font-semibold text-indigo-700 hover:underline">
-              Full 64-lesson view →
+              Full 112-session view →
             </Link>
           </div>
           <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
@@ -396,12 +396,12 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center justify-between text-[11px] font-semibold">
                     <span className={isCurrent ? 'text-indigo-800' : 'text-stone-500'}>
-                      Module {mod.number}
-                      {mod.number % 2 === 0 ? ' · Checkpoint' : ''}
+                      Week {mod.number}
+                      {mod.number % 4 === 0 ? ' · Checkpoint' : ''}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-stone-700">
                       {isComplete && <CheckCircle2 className="h-3 w-3 text-emerald-600" />}
-                      {done}/{mod.lessons.length || 8}
+                      {done}/{mod.lessons.length || 7}
                     </span>
                   </div>
                   <p className="mt-1 truncate text-xs font-bold text-stone-900">{mod.title}</p>
@@ -517,7 +517,7 @@ export default async function DashboardPage() {
                 <p className="mt-0.5 text-xs text-stone-500">
                   {weakestSkill
                     ? `Priority focus: ${weakestSkill.label} (${weakestSkill.score}%)`
-                    : 'Balanced coverage across all 64 guided hours.'}
+                    : 'Balanced coverage across ~63 blended preparation hours.'}
                 </p>
               </div>
               <Link href="/curriculum" className="text-xs font-semibold text-indigo-700 hover:underline">
@@ -606,7 +606,7 @@ export default async function DashboardPage() {
                 View all →
               </Link>
             </div>
-            <p className="mt-0.5 text-xs text-stone-500">Four milestone evaluations across Modules 2, 4, 6 &amp; 8.</p>
+            <p className="mt-0.5 text-xs text-stone-500">Four milestone evaluations at Weeks 4, 8, 12 &amp; 16.</p>
             <div className="mt-4 space-y-2.5">
               {checkpoints.map((cp) => (
                 <Link

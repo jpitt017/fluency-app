@@ -18,6 +18,7 @@ import type {
   RecurringErrorTag,
   SkillArea,
   SpeakingTask,
+  TeacherRosterLearner,
   VocabDeckSummary,
   WeeklyReportRow,
   WritingTask,
@@ -66,7 +67,7 @@ function dedupeCheckpoints(checkpoints: OutlineCheckpoint[]): OutlineCheckpoint[
 }
 
 export async function loadLesson(lessonNumber: number): Promise<LessonPayload | null> {
-  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) return null;
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 112) return null;
 
   const supabase = await createServerSupabase();
   if (!supabase) return null;
@@ -152,7 +153,7 @@ export async function loadDashboard(): Promise<{
       signedIn: false,
       dashboard: null,
       recentXp: [],
-      weeklyGoalHours: 8,
+      weeklyGoalHours: 4,
       weeklyReport: null,
       subscriptionStatus: null,
       telemetry: emptyTelemetry,
@@ -168,7 +169,7 @@ export async function loadDashboard(): Promise<{
       signedIn: false,
       dashboard: null,
       recentXp: [],
-      weeklyGoalHours: 8,
+      weeklyGoalHours: 4,
       weeklyReport: null,
       subscriptionStatus: null,
       telemetry: emptyTelemetry,
@@ -375,7 +376,7 @@ export async function loadDashboard(): Promise<{
     signedIn: true,
     dashboard: (dashRes.data as DashboardPayload | null) ?? null,
     recentXp: (xpRes.data as XpEventRow[] | null) ?? [],
-    weeklyGoalHours: Number(prefRes.data?.target_hours_per_week ?? 8),
+    weeklyGoalHours: Number(prefRes.data?.target_hours_per_week ?? 4),
     weeklyReport: (reportRes.data as WeeklyReportRow | null) ?? null,
     subscriptionStatus: subRes.data?.subscription_status ?? null,
     telemetry: {
@@ -418,7 +419,7 @@ export async function loadHeaderSummary(): Promise<HeaderSummary> {
     }
 
     const [profileRes, completedRes] = await Promise.all([
-      supabase.from('profiles').select('xp_total, streak_days, learner_band').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('xp_total, streak_days, learner_band, role').eq('id', user.id).maybeSingle(),
       supabase
         .from('lesson_progress')
         .select('id', { count: 'exact', head: true })
@@ -432,6 +433,7 @@ export async function loadHeaderSummary(): Promise<HeaderSummary> {
       streakDays: profileRes.data?.streak_days ?? 0,
       band: (profileRes.data?.learner_band as LearnerBand | undefined) ?? 'B1_low',
       lessonsCompleted: completedRes.count ?? 0,
+      role: (profileRes.data?.role as HeaderSummary['role']) ?? 'learner',
     };
   } catch {
     return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
@@ -578,7 +580,7 @@ export async function loadCheckpointDetail(code: string): Promise<{
     user
       ? supabase
           .from('checkpoint_attempts')
-          .select('id, status, scores, result, completed_at')
+          .select('id, status, scores, result, teacher_status, teacher_notes, teacher_readiness_decision, completed_at')
           .eq('user_id', user.id)
           .eq('checkpoint_id', cp.id)
           .order('completed_at', { ascending: false, nullsFirst: false })
@@ -738,4 +740,41 @@ export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> 
     options: Array.isArray(row.options) ? row.options.map(String) : [],
     answer_index: Number(row.answer_index),
   }));
+}
+
+export async function loadTeacherRoster(): Promise<{
+  signedIn: boolean;
+  authorized: boolean;
+  learners: TeacherRosterLearner[];
+}> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return { signedIn: false, authorized: false, learners: [] };
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { signedIn: false, authorized: false, learners: [] };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const role = profile?.role;
+  if (role !== 'teacher' && role !== 'admin') {
+    return { signedIn: true, authorized: false, learners: [] };
+  }
+
+  const { data, error } = await supabase.rpc('teacher_get_roster');
+  if (error) {
+    console.error('teacher_get_roster failed:', error.message);
+    return { signedIn: true, authorized: true, learners: [] };
+  }
+
+  return {
+    signedIn: true,
+    authorized: true,
+    learners: (Array.isArray(data) ? data : []) as TeacherRosterLearner[],
+  };
 }

@@ -254,10 +254,24 @@ export default function CheckpointRunner({
           </p>
           <p className="mt-1 text-sm text-stone-600">{checkpoint.description}</p>
           {checkpoint.latestAttempt && (
-            <p className="mt-2 text-xs font-semibold text-emerald-700">
-              Latest attempt: {checkpoint.latestAttempt.status}
-              {typeof latestResult?.overall === 'number' ? ` · ${latestResult.overall}%` : ''}
-            </p>
+            <div className="mt-2 space-y-1 text-xs">
+              <p className="font-semibold text-emerald-700">
+                Latest attempt: {checkpoint.latestAttempt.status}
+                {typeof latestResult?.overall === 'number' ? ` · ${latestResult.overall}%` : ''}
+                {checkpoint.latestAttempt.teacher_status ? ` · Teacher: ${checkpoint.latestAttempt.teacher_status}` : ''}
+              </p>
+              {checkpoint.latestAttempt.teacher_readiness_decision && (
+                <p className="font-semibold text-indigo-800">
+                  Readiness outcome:{' '}
+                  {checkpoint.latestAttempt.teacher_readiness_decision === 'ready_for_b2_exam_prep'
+                    ? 'Ready to start B2 exam preparation'
+                    : 'Named next step'}
+                </p>
+              )}
+              {checkpoint.latestAttempt.teacher_notes && (
+                <p className="text-stone-600">Teacher note: {checkpoint.latestAttempt.teacher_notes}</p>
+              )}
+            </div>
           )}
         </div>
 

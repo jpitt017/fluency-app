@@ -16,8 +16,8 @@ async function resolveLesson(supabase: Awaited<ReturnType<typeof createServerSup
 
 export async function GET(request: NextRequest) {
   const lessonNumber = Number(request.nextUrl.searchParams.get('lessonNumber'));
-  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) {
-    return NextResponse.json({ error: 'lessonNumber must be between 1 and 64' }, { status: 400 });
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 112) {
+    return NextResponse.json({ error: 'lessonNumber must be between 1 and 112' }, { status: 400 });
   }
 
   const supabase = await createServerSupabase();
@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
   };
 
   const lessonNumber = Number(body.lessonNumber);
-  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 64) {
-    return NextResponse.json({ error: 'lessonNumber must be between 1 and 64' }, { status: 400 });
+  if (!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 112) {
+    return NextResponse.json({ error: 'lessonNumber must be between 1 and 112' }, { status: 400 });
   }
 
   const resolved = await resolveLesson(supabase, lessonNumber);

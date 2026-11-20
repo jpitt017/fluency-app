@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 const INCLUDED = [
-  'All 8 modules and 64 guided lessons (64 hours)',
-  'Spaced-repetition vocabulary decks across 8 topic areas',
-  'AI speaking evaluation with Whisper transcription & B2 rubrics',
-  '5-step writing studio with line-by-line corrections',
-  'Modules 2, 4, 6 & 8 CEFR assessment checkpoints',
+  'All 16 weeks and 112 daily sessions (~63h blended / 55h min)',
+  'Spaced-repetition vocabulary decks across 16 weekly themes + Grammar Clinic',
+  'AI speaking evaluation (content, grammar & coherence) + Shadowing Studio',
+  'Saturday writing studio with line-by-line B2 error feedback',
+  'Weeks 4, 8, 12 & 16 milestone checkpoints with teacher confirmation',
 ];
 
 export default function PricingPage() {
@@ -51,10 +51,10 @@ export default function PricingPage() {
             Fluency Studio Pro · B1 → B2
           </span>
           <h1 className="text-3xl font-bold tracking-tight text-stone-900">
-            Full Access to the 64-Hour Studio
+            Full Access to the 16-Week Studio
           </h1>
           <p className="text-sm leading-6 text-stone-600">
-            Unlock every lesson block, unlimited spaced-repetition review, AI speaking rubric feedback, writing corrections, and checkpoint evaluations.
+            Focused B2 preparation (not a guarantee of a B2 exam result): unlock all 112 daily sessions, unlimited spaced-repetition review, AI speaking and writing feedback, and milestone checkpoints.
           </p>
           <ul className="space-y-2 pt-2 text-sm text-stone-700">
             {INCLUDED.map((item) => (

@@ -68,10 +68,10 @@ export async function POST(request: NextRequest) {
       durationSeconds = Number(body.durationSeconds) || 0;
     }
 
-    if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 8) {
+    if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 16) {
       statusCode = 400;
       return NextResponse.json(
-        { error: 'A valid module number (1–8) is required.' },
+        { error: 'A valid week/module number (1–16) is required.' },
         { status: 400, headers: guard.headers },
       );
     }

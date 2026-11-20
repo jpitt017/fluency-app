@@ -23,21 +23,27 @@ const BLOCK_LABEL: Record<string, string> = {
   feedback: 'Feedback',
 };
 
+const REQ_BADGE: Record<string, { label: string; style: string }> = {
+  required: { label: 'Required output', style: 'bg-rose-100 text-rose-800' },
+  either_wed_thu: { label: 'Wed or Thu required (≥12/16 wks)', style: 'bg-sky-100 text-sky-800' },
+  optional: { label: 'Optional reinforcement', style: 'bg-stone-100 text-stone-600' },
+};
+
 function parseLessonNumber(value: string) {
   const number = Number(value);
-  return Number.isInteger(number) && number >= 1 && number <= 64 ? number : null;
+  return Number.isInteger(number) && number >= 1 && number <= 112 ? number : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ lessonNumber: string }> }) {
   const { lessonNumber } = await params;
   const number = parseLessonNumber(lessonNumber);
-  if (!number) return { title: 'Lesson not found' };
+  if (!number) return { title: 'Session not found' };
 
   const payload = await loadLesson(number);
-  if (!payload) return { title: 'Lesson not found' };
+  if (!payload) return { title: 'Session not found' };
 
   return {
-    title: `Lesson ${number}: ${payload.lesson.title} · Fluency Studio`,
+    title: `Session ${number}: ${payload.lesson.title} · Fluency Studio`,
     description: payload.lesson.can_do,
   };
 }
@@ -54,7 +60,9 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
   const orderedBlocks = [...blocks].sort((a, b) => a.sort_order - b.sort_order);
   const status = progress?.status ?? 'not_started';
   const previous = lesson.lesson_number > 1 ? lesson.lesson_number - 1 : null;
-  const next = lesson.lesson_number < 64 ? lesson.lesson_number + 1 : null;
+  const next = lesson.lesson_number < 112 ? lesson.lesson_number + 1 : null;
+  const weekNum = module.week_number ?? module.number;
+  const reqMeta = REQ_BADGE[lesson.session_requirement ?? 'optional'] ?? REQ_BADGE.optional;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -64,10 +72,12 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
         </Link>
         <span aria-hidden>/</span>
         <span>
-          Module {module.number}: {module.title}
+          Week {weekNum}: {module.title}
         </span>
         <span aria-hidden>/</span>
-        <span className="font-medium text-stone-700">Lesson {lesson.lesson_number}</span>
+        <span className="font-medium text-stone-700">
+          {lesson.day_of_week ? `${lesson.day_of_week} · ` : ''}Session {lesson.lesson_number}
+        </span>
       </nav>
 
       {/* Split Editorial Workspace */}
@@ -75,12 +85,14 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
         <div className="space-y-6 lg:col-span-8">
           <header className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-              <span className="rounded-full bg-indigo-700 px-2.5 py-1 text-white">Lesson {lesson.lesson_number}</span>
+              <span className="rounded-full bg-indigo-700 px-2.5 py-1 text-white">
+                Week {weekNum} · {lesson.day_of_week ?? `Day ${lesson.module_lesson_number}`}
+              </span>
               <span className="rounded-full bg-stone-100 px-2.5 py-1 text-stone-700">
                 {SKILL_LABEL[lesson.primary_skill] ?? lesson.primary_skill}
               </span>
               <span className="rounded-full bg-stone-100 px-2.5 py-1 text-stone-700">{lesson.duration_minutes} min</span>
-              <span className="rounded-full bg-stone-100 px-2.5 py-1 text-stone-700">{lesson.xp_reward} XP</span>
+              <span className={`rounded-full px-2.5 py-1 ${reqMeta.style}`}>{reqMeta.label}</span>
               <span
                 className={`rounded-full px-2.5 py-1 ${
                   status === 'completed'
@@ -109,7 +121,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
                 href={`/curriculum/lessons/${previous}`}
                 className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100"
               >
-                ← Lesson {previous}
+                ← Session {previous}
               </Link>
             ) : (
               <span />
@@ -119,14 +131,14 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
                 href={`/curriculum/lessons/${next}`}
                 className="rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800"
               >
-                {status === 'completed' ? 'Next lesson' : 'Skip ahead'} · Lesson {next} →
+                {status === 'completed' ? 'Next session' : 'Skip ahead'} · Session {next} →
               </Link>
             ) : (
               <Link
                 href="/curriculum"
                 className="rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800"
               >
-                Back to curriculum
+                Back to 16-week syllabus
               </Link>
             )}
           </nav>
@@ -135,7 +147,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
         {/* Sticky Companion Panel */}
         <aside className="space-y-4 lg:sticky lg:top-20 lg:col-span-4">
           <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Lesson Plan</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Session Plan</p>
             <h2 className="mt-1 text-base font-bold text-stone-900">5-Block Flow</h2>
             <ol className="mt-3 space-y-2">
               {orderedBlocks.map((block, index) => (
@@ -155,15 +167,24 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
           </div>
 
           <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
-            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Module Context</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Week Context</p>
             <h3 className="mt-1 text-sm font-bold text-stone-900">
-              Module {module.number}: {module.title}
+              Week {weekNum}: {module.title}
             </h3>
+            {module.phase && <p className="mt-0.5 text-[11px] font-semibold text-indigo-700">{module.phase}</p>}
             <p className="mt-1 text-xs leading-5 text-stone-600">{module.summary}</p>
             {lesson.grammar_point && (
               <div className="mt-3 rounded-lg bg-stone-50 p-3 text-xs">
-                <span className="font-semibold text-stone-700">Grammar focus:</span>{' '}
-                <span className="text-stone-800">{lesson.grammar_point}</span>
+                <p>
+                  <span className="font-semibold text-stone-700">Main grammar:</span>{' '}
+                  <span className="text-stone-800">{lesson.grammar_point}</span>
+                </p>
+                {module.light_grammar && (
+                  <p className="mt-1">
+                    <span className="font-semibold text-stone-700">Light grammar:</span>{' '}
+                    <span className="text-stone-800">{module.light_grammar}</span>
+                  </p>
+                )}
               </div>
             )}
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -171,9 +192,12 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonN
                 {module.topic}
               </span>
             </div>
-            <div className="mt-4 border-t border-stone-100 pt-3">
+            <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3">
               <Link href="/curriculum" className="text-xs font-semibold text-indigo-700 hover:underline">
-                View all 8 modules →
+                All 16 weeks →
+              </Link>
+              <Link href="/clinic" className="text-xs font-semibold text-stone-600 hover:text-indigo-700 hover:underline">
+                Grammar Clinic →
               </Link>
             </div>
           </div>

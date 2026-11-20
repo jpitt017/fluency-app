@@ -1,97 +1,209 @@
 {
-  "course_slug": "english-b1-b2",
   "course": {
     "slug": "english-b1-b2",
-    "title": "English B1 → B2: Independent User",
-    "subtitle": "64 guided hours across 8 modules, built around the Learn → Practise → Produce → Review → Get feedback loop.",
-    "description": "A 64-hour guided course that takes a B1 learner to a solid B2. Eight themed modules of eight lessons each cover grammar, vocabulary, listening, reading, speaking and writing, with spaced-repetition vocabulary, AI feedback on every recording and draft, and four assessment checkpoints. Designed for 8 hours a week over 8 weeks, or 45 minutes a day over roughly 9 weeks.",
-    "level_from": "B1",
-    "level_to": "B2",
-    "total_hours": 64,
-    "weekly_hours": 8,
-    "duration_weeks": 8,
-    "daily_minutes_min": 20,
-    "daily_minutes_max": 45,
-    "daily_flow": [
-      { "block": "warm_up", "minutes": 3, "label": "Warm-up", "description": "Review 5–10 spaced-repetition cards." },
-      { "block": "input", "minutes": 8, "label": "Input", "description": "Short grammar explanation, article or audio." },
-      { "block": "practice", "minutes": 10, "label": "Practice", "description": "Interactive exercises, listening questions or reading tasks." },
-      { "block": "output", "minutes": 10, "label": "Output", "description": "Voice recording, writing prompt or chat-based role-play." },
-      { "block": "feedback", "minutes": 4, "label": "Feedback", "description": "Corrections, alternative phrasing and a progress update." }
+    "title": "English B1 → B2: 16-Week Preparation",
+    "subtitle": "16-week blended B2 preparation course (~63 hours full, 55 hours minimum) with 15-minute daily app sessions, Saturday writing (30 min), two weekly live lessons, and 4 checkpoints.",
+    "description": "A structured 16-week B1 to B2 preparation pathway built on output before progress. Every week follows a 7-day rotation — vocabulary, grammar (1 main point + 1 light point), listening, reading, required Friday speaking, required Saturday writing, and Sunday review — paired with two weekly live lessons (60 and 55 minutes) and four milestone checkpoints. This course provides focused B2 preparation rather than a guarantee of a B2 exam result.",
+    "cefr_from": "B1",
+    "cefr_to": "B2",
+    "total_hours": 63,
+    "min_hours": 55,
+    "duration_weeks": 16,
+    "weekly_hours": 4,
+    "daily_minutes_min": 15,
+    "daily_minutes_max": 30,
+    "live_lessons_per_week": {
+      "count": 2,
+      "minutes": [60, 55]
+    },
+    "positioning": "Focused B2 preparation (~63 hours full / 55 hours minimum across 16 weeks), not a guarantee of a B2 result.",
+    "outcomes": [
+      "Narrate past experiences, contrast habits, and handle real-life social interaction accurately",
+      "Understand 2–4 minute multi-accent listening tracks and 150–350 word articles at B2 pace",
+      "Deliver structured recorded speaking up to 3 minutes, culminating in B2 position statements",
+      "Plan, draft, and revise 120–220 word reports, articles, and essays with controlled error patterns",
+      "Consolidate B1 basics through the Grammar Clinic and finish with a personalised Week 16 error-log review"
     ],
-    "skill_balance": [
-      { "skill": "grammar", "hours": 10 },
-      { "skill": "vocabulary", "hours": 8 },
-      { "skill": "listening", "hours": 12 },
-      { "skill": "reading", "hours": 10 },
-      { "skill": "speaking", "hours": 12 },
-      { "skill": "writing", "hours": 10 },
-      { "skill": "review", "hours": 2 }
+    "daily_flow": [
+      {
+        "day": "Mon",
+        "step": 1,
+        "kind": "vocabulary",
+        "label": "Vocabulary",
+        "minutes": 15,
+        "requirement": "optional",
+        "description": "Learn 8–10 new topic items with British English audio, collocations, and word families."
+      },
+      {
+        "day": "Tue",
+        "step": 2,
+        "kind": "grammar",
+        "label": "Grammar",
+        "minutes": 15,
+        "requirement": "optional",
+        "description": "Practise 1 main grammar point plus 1 light grammar point (Week 16 uses your personal error log)."
+      },
+      {
+        "day": "Wed",
+        "step": 3,
+        "kind": "listening",
+        "label": "Listening",
+        "minutes": 15,
+        "requirement": "either_wed_thu",
+        "description": "Complete one 2–4 minute multi-accent audio track with comprehension questions (at least 1 of Wed/Thu required weekly; listening in ≥12/16 weeks)."
+      },
+      {
+        "day": "Thu",
+        "step": 4,
+        "kind": "reading",
+        "label": "Reading",
+        "minutes": 15,
+        "requirement": "either_wed_thu",
+        "description": "Read one 150–350 word B1→B2 text with comprehension checks (at least 1 of Wed/Thu required weekly; reading in ≥12/16 weeks)."
+      },
+      {
+        "day": "Fri",
+        "step": 5,
+        "kind": "speaking",
+        "label": "Speaking",
+        "minutes": 15,
+        "requirement": "required",
+        "description": "Required recorded speaking task scaling from 60–90s to 3-minute B2 position statements, plus shadowing self-check."
+      },
+      {
+        "day": "Sat",
+        "step": 6,
+        "kind": "writing",
+        "label": "Writing",
+        "minutes": 30,
+        "requirement": "required",
+        "description": "Required 30-minute writing task scaling from 120–150 words to 200–220 words with structured error feedback."
+      },
+      {
+        "day": "Sun",
+        "step": 7,
+        "kind": "review",
+        "label": "Review",
+        "minutes": 15,
+        "requirement": "optional",
+        "description": "Review the week's spaced-repetition vocabulary cards and personal mistake log."
+      }
     ]
   },
   "checkpoints": [
     {
+      "module": 4,
       "code": "b1_consolidation",
-      "module": 2,
-      "title": "B1 consolidation",
-      "timing": "End of Module 2",
-      "description": "A grammar quiz on the two module grammar areas, a two-minute recording and a short email. Confirms the learner can operate reliably at B1 before the pace lifts.",
-      "minutes": 40,
+      "title": "Checkpoint 1 · B1 Consolidation",
+      "timing": "End of Week 4",
+      "description": "Confirm solid B1 control across narrative tenses, future forms, modals, passive voice, and a 60–90s spoken narrative plus 120–150 word piece.",
+      "minutes": 30,
       "skills": ["grammar", "speaking", "writing"],
       "tasks": [
-        { "kind": "quiz", "title": "Grammar quiz", "detail": "24 items: present perfect vs. past simple, narrative tenses, future forms, conditionals.", "minutes": 12 },
-        { "kind": "speaking", "title": "Two-minute recording", "detail": "Describe a major change in your life and one plan for the next year.", "minutes": 3 },
-        { "kind": "writing", "title": "Short email", "detail": "An informal email of 120–150 words catching up with a friend.", "minutes": 15 }
+        "12-item diagnostic across Weeks 1–4 grammar (narrative tenses, future forms, modals, passives)",
+        "Recorded spoken narrative (60–90s) reviewed by AI guidance and confirmed by teacher",
+        "120–150 word narrative/experience piece demonstrating accurate tense shifts"
       ]
     },
     {
-      "code": "mid_course_review",
-      "module": 4,
-      "title": "Mid-course review",
-      "timing": "End of Module 4",
-      "description": "A listening task, a reading task and a 180-word review. Checks that comprehension keeps pace with production.",
-      "minutes": 45,
-      "skills": ["listening", "reading", "writing"],
-      "tasks": [
-        { "kind": "listening", "title": "Listening task", "detail": "Two short audio extracts with detail and inference questions.", "minutes": 12 },
-        { "kind": "reading", "title": "Reading task", "detail": "A 400-word article with skimming, scanning and inference questions.", "minutes": 13 },
-        { "kind": "writing", "title": "Review", "detail": "A 180-word review of an app, film or product.", "minutes": 20 }
-      ]
-    },
-    {
-      "code": "b2_readiness",
-      "module": 6,
-      "title": "B2 readiness",
-      "timing": "End of Module 6",
-      "description": "A 200-word essay and a three-minute opinion talk. The first checkpoint scored against B2 criteria.",
-      "minutes": 55,
-      "skills": ["writing", "speaking"],
-      "tasks": [
-        { "kind": "writing", "title": "Argument essay", "detail": "200 words on a health or ethics question.", "minutes": 25 },
-        { "kind": "speaking", "title": "Three-minute opinion talk", "detail": "Present and defend a position, then answer two follow-up questions.", "minutes": 10 }
-      ]
-    },
-    {
-      "code": "final_b2_assessment",
       "module": 8,
-      "title": "Final B2 assessment",
-      "timing": "End of Module 8",
-      "description": "Timed reading and listening, a 200–220-word essay and a speaking interview. Produces the personalised B2-readiness report.",
-      "minutes": 90,
-      "skills": ["reading", "listening", "writing", "speaking"],
+      "code": "mid_course_review",
+      "title": "Checkpoint 2 · Mid-Course Review",
+      "timing": "End of Week 8",
+      "description": "Verify B1+ to B2-entry control of deduction, reported speech, gerunds/infinitives, and third/mixed conditionals in a 2-minute talk and 150–180 word response.",
+      "minutes": 35,
+      "skills": ["grammar", "listening", "speaking", "writing"],
       "tasks": [
-        { "kind": "reading", "title": "Timed reading", "detail": "Two texts in 25 minutes: meaning, information, opinion, detail.", "minutes": 25 },
-        { "kind": "listening", "title": "Timed listening", "detail": "Three extracts in 20 minutes with note-taking.", "minutes": 20 },
-        { "kind": "writing", "title": "Essay", "detail": "200–220 words arguing a position with examples.", "minutes": 30 },
-        { "kind": "speaking", "title": "Speaking interview", "detail": "Three-minute talk plus follow-up questions on organisation and pronunciation.", "minutes": 15 }
+        "12-item grammar check on deduction, reporting verbs, gerunds/infinitives, and conditionals",
+        "2-minute recorded response weighing technology, work, media, or environmental choices",
+        "150–180 word structured opinion or report with clear paragraphing"
+      ]
+    },
+    {
+      "module": 12,
+      "code": "b2_readiness",
+      "title": "Checkpoint 3 · B2 Readiness",
+      "timing": "End of Week 12",
+      "description": "Demonstrate B2 readiness through structured 3-minute speaking, a 180–200 word argument, and comprehension of 3-minute listening and 250–350 word reading.",
+      "minutes": 40,
+      "skills": ["reading", "listening", "speaking", "writing"],
+      "tasks": [
+        "3-minute structured speaking task using causatives, articles/quantifiers, participle clauses, or emphasis",
+        "180–200 word analytical argument balancing competing viewpoints",
+        "Timed listening (3 min) and reading (250–350 words) comprehension verification"
+      ]
+    },
+    {
+      "module": 16,
+      "code": "final_b2_assessment",
+      "title": "Checkpoint 4 · Final B2 Assessment",
+      "timing": "End of Week 16",
+      "description": "Full B2 readiness review: recorded position statement (up to 3 min), 200–220 word essay/proposal, personal error-log mastery check, and teacher readiness decision (Ready to start B2 exam preparation vs. named next step).",
+      "minutes": 45,
+      "skills": ["grammar", "vocabulary", "listening", "reading", "speaking", "writing"],
+      "tasks": [
+        "Recorded B2 position statement (up to 3 minutes) defending and qualifying a complex view",
+        "200–220 word formal argument or proposal using hedging, concession, and formal register",
+        "Mixed error-log consolidation check & teacher confirmation (Ready for B2 exam preparation or named next step)"
       ]
     }
   ],
   "badges": [
-    { "code": "first_monologue", "title": "First 2-Minute Monologue", "icon": "🎙️", "xp": 60, "description": "Record a spoken answer of at least two minutes and have it evaluated.", "criteria": { "type": "speaking_seconds", "seconds": 120 } },
-    { "code": "essay_completed", "title": "Essay Completed", "icon": "✍️", "xp": 70, "description": "Submit an essay or formal piece and receive feedback.", "criteria": { "type": "writing_tasks", "count": 1 } },
-    { "code": "streak_7", "title": "7-Day Streak", "icon": "🔥", "xp": 50, "description": "Study on seven consecutive days.", "criteria": { "type": "streak_days", "days": 7 } },
-    { "code": "collocations_100", "title": "100 Collocations Learned", "icon": "🧩", "xp": 100, "description": "Recall 100 vocabulary items correctly in review.", "criteria": { "type": "collocations", "count": 100 } },
-    { "code": "speaking_lab_10", "title": "Ten Recordings", "icon": "🎧", "xp": 80, "description": "Submit ten speaking recordings across the course.", "criteria": { "type": "speaking_seconds", "seconds": 600 } }
+    {
+      "code": "first_step",
+      "title": "Week 1 Output",
+      "description": "Completed your first required output session in the 16-week pathway.",
+      "icon": "🌱",
+      "xp": 30,
+      "criteria": { "lessons_completed": 1 }
+    },
+    {
+      "code": "streak_7",
+      "title": "Full 7-Day Rhythm",
+      "description": "Maintained a 7-day output-backed study streak.",
+      "icon": "🔥",
+      "xp": 60,
+      "criteria": { "streak_days": 7 }
+    },
+    {
+      "code": "words_50",
+      "title": "50 Active Words",
+      "description": "Learned and reviewed 50 B1→B2 core vocabulary items.",
+      "icon": "🗂️",
+      "xp": 75,
+      "criteria": { "vocab_cards": 50 }
+    },
+    {
+      "code": "words_130",
+      "title": "Core Lexicon Builder",
+      "description": "Reviewed over 130 core B1→B2 vocabulary items across the 16 weeks.",
+      "icon": "📚",
+      "xp": 150,
+      "criteria": { "vocab_cards": 130 }
+    },
+    {
+      "code": "voice_builder",
+      "title": "Voice Builder",
+      "description": "Submitted 8 Friday speaking recordings with self-check.",
+      "icon": "🎙️",
+      "xp": 100,
+      "criteria": { "speaking_attempts": 8 }
+    },
+    {
+      "code": "clear_writer",
+      "title": "Clear Writer",
+      "description": "Completed 8 Saturday writing tasks with revision.",
+      "icon": "✍️",
+      "xp": 100,
+      "criteria": { "writing_submissions": 8 }
+    },
+    {
+      "code": "b2_ready",
+      "title": "16-Week Finisher",
+      "description": "Completed Checkpoint 4 at the end of Week 16.",
+      "icon": "🏅",
+      "xp": 250,
+      "criteria": { "checkpoint_passed": "final_b2_assessment" }
+    }
   ]
 }

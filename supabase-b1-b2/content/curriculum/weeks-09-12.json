@@ -1,0 +1,1982 @@
+{
+  "course_slug": "english-b1-b2",
+  "modules": [
+    {
+      "number": 9,
+      "phase": "Month 3: Develop B2 communication",
+      "title": "Health and wellbeing",
+      "summary": "Distinguish arranged services with causative verbs (have/get something done) and present public health findings neutrally with passive reporting.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Wellbeing, preventive care and daily habits",
+      "lightGrammar": "Passive reporting",
+      "grammar": [
+        {
+          "key": "causatives",
+          "name": "Causative verbs",
+          "explanation": "Use have or get something done when someone else performs a service for you, and have someone do something when you arrange it directly.",
+          "keyPoints": [
+            "Service: I had my blood pressure checked last week.",
+            "Arrangement: She got the pharmacy to deliver the prescription.",
+            "Trouble: He had his appendix removed on Monday."
+          ],
+          "example": "I had my eyes tested on Friday and got the optician to adjust the lenses for free.",
+          "items": [
+            {
+              "prompt": "I ___ my blood pressure checked last week.",
+              "options": [
+                "checked",
+                "had",
+                "did checked"
+              ],
+              "answer": "had",
+              "explanation": "Have + object + past participle shows a service performed by someone else.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence means someone else did the work?",
+              "options": [
+                "I repaired my bike.",
+                "I had my bike repaired.",
+                "I was repairing my bike."
+              ],
+              "answer": "I had my bike repaired.",
+              "explanation": "The causative makes the agent of the action someone other than the subject.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "She ___ the pharmacy to deliver the prescription.",
+              "options": [
+                "had",
+                "got",
+                "made"
+              ],
+              "answer": "got",
+              "explanation": "Get + person + to + infinitive describes persuading or arranging.",
+              "difficulty": 3
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "passive-reporting",
+          "role": "light",
+          "name": "Passive reporting",
+          "explanation": "Report widely held beliefs or medical findings formally with \"It is believed/estimated that…\" or \"Subject + is thought to + infinitive\".",
+          "keyPoints": [
+            "Impersonal frame: It is widely recognised that poor sleep affects concentration.",
+            "Personal frame: Short afternoon walks are thought to reduce stress levels.",
+            "Use \"to have + past participle\" for an earlier event: Stress is thought to have contributed to the rise."
+          ],
+          "example": "Regular walking is widely reported to lower blood pressure, so more patients are getting their check-ups booked early.",
+          "items": [
+            {
+              "prompt": "Adequate sleep ___ to improve memory consolidation overnight.",
+              "options": [
+                "is known",
+                "knows",
+                "is knowing"
+              ],
+              "answer": "is known",
+              "explanation": "Passive reporting uses \"is known/thought/believed + to-infinitive\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "It is ___ estimated that sitting all day raises discomfort in the lower back.",
+              "options": [
+                "wide",
+                "widely",
+                "widen"
+              ],
+              "answer": "widely",
+              "explanation": "Collocation: \"widely estimated / reported / recognised\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Older residents ___ their prescriptions delivered directly by a local pharmacist.",
+              "options": [
+                "have",
+                "are knowing",
+                "report"
+              ],
+              "answer": "have",
+              "explanation": "Causative \"have + object + past participle\" describes an arranged service.",
+              "difficulty": 2
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "balanced diet",
+          "pos": "noun",
+          "definition": "a way of eating with the right variety of nutrients",
+          "example": "A balanced diet matters more than any single superfood.",
+          "collocations": [
+            "maintain a balanced diet"
+          ],
+          "wordFamily": [
+            "balanced diet"
+          ],
+          "translation": "dieta equilibrada",
+          "band": "B2",
+          "audioRef": "week-9/balanced-diet.mp3"
+        },
+        {
+          "term": "sedentary lifestyle",
+          "pos": "noun",
+          "definition": "a way of living with very little physical activity",
+          "example": "A sedentary lifestyle raises the risk of heart disease.",
+          "collocations": [
+            "lead a sedentary lifestyle"
+          ],
+          "wordFamily": [
+            "sedentary lifestyle"
+          ],
+          "translation": "estilo de vida sedentario",
+          "band": "B2",
+          "audioRef": "week-9/sedentary-lifestyle.mp3"
+        },
+        {
+          "term": "mental wellbeing",
+          "pos": "noun",
+          "definition": "the state of feeling psychologically healthy",
+          "example": "Sleep affects mental wellbeing more than most people realise.",
+          "collocations": [
+            "support mental wellbeing"
+          ],
+          "wordFamily": [
+            "mental wellbeing"
+          ],
+          "translation": "bienestar mental",
+          "band": "B2",
+          "audioRef": "week-9/mental-wellbeing.mp3"
+        },
+        {
+          "term": "cut down on",
+          "pos": "phrasal verb",
+          "definition": "reduce the amount you consume",
+          "example": "I am cutting down on sugary drinks.",
+          "collocations": [
+            "cut down on sugar"
+          ],
+          "wordFamily": [
+            "cut down on"
+          ],
+          "translation": "reducir el consumo de",
+          "band": "B2",
+          "audioRef": "week-9/cut-down-on.mp3"
+        },
+        {
+          "term": "addictive",
+          "pos": "adjective",
+          "definition": "difficult to stop doing or consuming",
+          "example": "Highly processed food is designed to be addictive.",
+          "collocations": [
+            "highly addictive"
+          ],
+          "wordFamily": [
+            "addictive"
+          ],
+          "translation": "adictivo",
+          "band": "B2",
+          "audioRef": "week-9/addictive.mp3"
+        },
+        {
+          "term": "ethical",
+          "pos": "adjective",
+          "definition": "morally right or acceptable",
+          "example": "Is it ethical to advertise junk food to children?",
+          "collocations": [
+            "an ethical question"
+          ],
+          "wordFamily": [
+            "ethical"
+          ],
+          "translation": "ético",
+          "band": "B2",
+          "audioRef": "week-9/ethical.mp3"
+        },
+        {
+          "term": "consumer choice",
+          "pos": "noun",
+          "definition": "the freedom to decide what to buy",
+          "example": "Taxes are meant to shape consumer choice, not punish it.",
+          "collocations": [
+            "restrict consumer choice"
+          ],
+          "wordFamily": [
+            "consumer choice"
+          ],
+          "translation": "elección del consumidor",
+          "band": "B2",
+          "audioRef": "week-9/consumer-choice.mp3"
+        },
+        {
+          "term": "fair trade",
+          "pos": "noun",
+          "definition": "trade that pays producers a fair price",
+          "example": "The café only sells fair trade coffee.",
+          "collocations": [
+            "fair trade products"
+          ],
+          "wordFamily": [
+            "fair trade"
+          ],
+          "translation": "comercio justo",
+          "band": "B2",
+          "audioRef": "week-9/fair-trade.mp3"
+        },
+        {
+          "term": "sugary drinks",
+          "pos": "noun",
+          "definition": "beverages with a high sugar content",
+          "example": "Several cities now tax sugary drinks.",
+          "collocations": [
+            "a tax on sugary drinks"
+          ],
+          "wordFamily": [
+            "sugary drinks"
+          ],
+          "translation": "bebidas azucaradas",
+          "band": "B2",
+          "audioRef": "week-9/sugary-drinks.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Panel discussion: whose responsibility is health?",
+          "source": "Studio original — panel discussion",
+          "accent": "British and South African",
+          "seconds": 180,
+          "body": "CHAIR: Whose responsibility is health? DR OSEI: I get uncomfortable when we talk only about individual choice, because choice is shaped. If the only shop within a kilometre sells processed food, that is not a free choice. DR LEWIS: I agree up to a point, but people do respond to information. Smoking fell for decades before any ban, largely because attitudes changed. CHAIR: So is taxation part of the answer? DR OSEI: It can be, provided the revenue goes back into prevention. Otherwise it just looks like a fine on being poor. Later in the programme, the physiotherapist explained why small workplace adjustments matter just as much as weekend exercise. Many desk workers never get their chair height or screen distance checked until neck pain sets in. It is increasingly recognised that short five-minute movement breaks every hour protect focus as well as posture. Meanwhile, the community nutritionist noted that people cut down on ultra-processed snacks much more easily when healthy lunches are affordable near schools and train stations.",
+          "questions": [
+            {
+              "prompt": "Why does Dr Osei distrust the 'individual choice' argument?",
+              "options": [
+                "Because choice is shaped by the environment",
+                "Because people are irresponsible",
+                "Because taxation never works"
+              ],
+              "answer": "Because choice is shaped by the environment"
+            },
+            {
+              "prompt": "What condition does Dr Osei set for taxation?",
+              "options": [
+                "Revenue must fund prevention",
+                "It must apply only to the rich",
+                "It must be temporary"
+              ],
+              "answer": "Revenue must fund prevention"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "CHAIR",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "DR OSEI",
+              "accent": "en-ZA",
+              "label": "South African"
+            },
+            {
+              "speaker": "DR LEWIS",
+              "accent": "en-GB",
+              "label": "British"
+            }
+          ],
+          "audioRef": "module-6/panel-discussion-whose-responsibility-is-health.mp3",
+          "audioStatus": "actor_pending"
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Should junk food be taxed? Two views",
+          "source": "Studio original — opinion page",
+          "body": "FOR: The case is straightforward. Sugar taxes reduce consumption, and consumption of sugar raises the risk of diseases that cost public health systems billions. A levy of ten per cent in one European country cut purchases of sugary drinks by eighteen per cent within a year, and the revenue funded free school meals. AGAINST: The case is equally straightforward. Such taxes are regressive: they take a larger share of income from poorer households, who also have less time to cook and fewer affordable alternatives. Education and better labelling would achieve more, and would not punish people for buying what is cheapest. Public health researchers also point out that labelling rules and local environment play a decisive role. When supermarkets place sugary drinks at eye level near every checkout, busy parents face constant nudges, whereas clear nutritional labelling makes healthier swaps straightforward. At the same time, critics warn that taxes alone rarely change habits unless revenue helps fund sports clubs, cycling routes, and affordable fresh produce in lower-income neighbourhoods. Ultimately, combining clear public information with practical neighbourhood support is widely thought to deliver steadier improvements than blame or strict bans. Employers and schools are also discovering that small structural nudges outperform dramatic wellness posters. Offering flexible walking meetings, keeping quiet break rooms free from work screens, and subsidising seasonal fruit bowls cost relatively little compared with high staff turnover. Even simple sleep hygiene workshops—encouraging people to dim bright screens an hour before bed and keep steady waking times—often improve afternoon focus more reliably than extra coffee. When healthier options become the easiest default on an ordinary Tuesday, citizens do not have to rely purely on willpower to protect long-term physical and mental wellbeing.",
+          "questions": [
+            {
+              "prompt": "What evidence supports the tax?",
+              "options": [
+                "An eighteen per cent drop in purchases",
+                "Higher employment",
+                "Lower food prices"
+              ],
+              "answer": "An eighteen per cent drop in purchases"
+            },
+            {
+              "prompt": "What is the main objection?",
+              "options": [
+                "The tax is regressive",
+                "The tax is too low",
+                "The tax is illegal"
+              ],
+              "answer": "The tax is regressive"
+            }
+          ],
+          "audioRef": "module-6/should-junk-food-be-taxed-two-views.mp3",
+          "audioStatus": "tts"
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Public health & personal habits (3 min)",
+          "prompt": "Argue either for or against a tax on junk food. Use two pieces of evidence, address the strongest objection and conclude. Two to three minutes.",
+          "seconds": 180,
+          "phrases": [
+            "The evidence suggests...",
+            "The strongest objection is...",
+            "On balance, I would argue..."
+          ],
+          "linkers": [
+            "whereas",
+            "nevertheless",
+            "consequently"
+          ],
+          "terms": [
+            "public health",
+            "consumer choice",
+            "regressive"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Argument essay: health and responsibility",
+        "prompt": "Write a 200-word argument essay: should governments tax unhealthy products to improve public health? Present both sides and reach a clear conclusion.",
+        "format": "argument essay",
+        "wordMin": 180,
+        "wordMax": 200,
+        "outline": {
+          "analyze": "Purpose: argue and conclude. Audience: an examiner or opinion page. Register: formal.",
+          "plan": "Introduction with position → argument for → argument against → evaluation → conclusion.",
+          "draft": "Use at least three advanced linkers and one causative structure.",
+          "improve": "Qualify your claims; replace absolutes with hedging where evidence is limited.",
+          "review": "Check that the conclusion follows from the evaluation, not from repetition."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Health and wellbeing",
+          "objective": "Learn 8–10 core B2 items for health and wellbeing, practising collocations and word families.",
+          "canDo": "I can deploy B2 health and wellbeing collocations accurately in context.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 health and wellbeing expressions",
+          "output": "Write or record 4 nuanced sentences using this week's B2 collocations.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Causative verbs",
+          "objective": "Practise Causative verbs + Passive reporting with contrast rules and diagnostic drills.",
+          "canDo": "I can control Causative verbs cleanly in formal and semi-formal B2 expression.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Causative verbs",
+          "output": "Write or speak 3 complex sentences using Causative verbs and Passive reporting.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Panel discussion: whose responsibility is health?",
+          "objective": "Follow a 3-minute multi-accent discussion on health and wellbeing, noting nuance and hedging.",
+          "canDo": "I can extract main arguments, concessions, and implied attitude from a 3-minute track.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise the speaker's position",
+          "output": "Summarise the main viewpoint and one counter-argument from today's listening track.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Should junk food be taxed? Two views",
+          "objective": "Analyse a 250–350 word B2 article on health and wellbeing for evidence, tone, and structure.",
+          "canDo": "I can evaluate evidence and distinguish fact from opinion in a 250–350 word text.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Critical reaction to the article",
+          "output": "Write or record a short reaction explaining which point in the article is strongest and why.",
+          "targetSeconds": 90,
+          "wordRange": [
+            80,
+            120
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Health and wellbeing",
+          "objective": "Deliver a structured 3-minute speaking response on health and wellbeing, plus Shadowing self-check.",
+          "canDo": "I can sustain a structured 3-minute B2 response on health and wellbeing.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Structured speaking task (180s)",
+          "output": "Speak for 3 minutes on health habits and public responsibility using causatives and passive reporting.",
+          "targetSeconds": 180,
+          "wordRange": [
+            100,
+            160
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Argument essay: health and responsibility",
+          "objective": "Plan, draft, and polish a 180–200 word B2 piece on health and wellbeing.",
+          "canDo": "I can produce a cohesive 180–200 word B2 text using Causative verbs.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Argument essay: health and responsibility",
+          "output": "Write a 200-word argument essay: should governments tax unhealthy products to improve public health? Present both sides and reach a clear conclusion.",
+          "targetSeconds": 180,
+          "wordRange": [
+            180,
+            200
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 9 cards & error log",
+          "objective": "Consolidate Week 9 vocabulary cards and self-correct recurring mistakes before the next week.",
+          "canDo": "I can recall this week's B2 vocabulary and rewrite my recurring mistakes cleanly.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log rewrite",
+          "output": "Review due SRS cards and complete at least two error-log rewrite checks.",
+          "targetSeconds": 60,
+          "wordRange": [
+            50,
+            90
+          ]
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "phase": "Month 3: Develop B2 communication",
+      "title": "Cities, transport and society",
+      "summary": "Consolidate article and quantifier precision for abstract urban issues, and weigh policies accurately using varied comparative structures.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Urban planning, transit and liveable neighbourhoods",
+      "lightGrammar": "Comparative structures",
+      "grammar": [
+        {
+          "key": "articles-quantifiers-consolidation",
+          "role": "main",
+          "name": "Articles and quantifiers (consolidation)",
+          "explanation": "Combine zero article for general uncountable concepts (traffic, pollution, housing) with \"the\" for specific urban policies and precise quantifiers (a great deal of, far fewer, hardly any).",
+          "keyPoints": [
+            "Use \"the + singular countable\" only for specific institutions or generic inventions (the underground, the bicycle).",
+            "Use far fewer / several with plural countables and far less / a considerable amount of with uncountables.",
+            "Remember that housing, transport, research, and congestion are uncountable."
+          ],
+          "example": "Cities with reliable trams see far fewer traffic jams and spend a great deal less on road repairs.",
+          "items": [
+            {
+              "prompt": "Pedestrian zones produce ___ noise than multi-lane ring roads.",
+              "options": [
+                "far fewer",
+                "much less",
+                "a few"
+              ],
+              "answer": "much less",
+              "explanation": "Noise is uncountable, so compare with \"much less\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "___ affordable housing remains one of the sharpest challenges in capital cities.",
+              "options": [
+                "The",
+                "An",
+                "No article"
+              ],
+              "answer": "No article",
+              "explanation": "General uncountable noun phrases (\"affordable housing\") take zero article.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Only ___ residents objected once the cycle lane opened safely.",
+              "options": [
+                "a little",
+                "a few",
+                "much"
+              ],
+              "answer": "a few",
+              "explanation": "\"Residents\" is plural countable, so use \"a few\".",
+              "difficulty": 1
+            }
+          ]
+        },
+        {
+          "key": "comparative-structures",
+          "role": "light",
+          "name": "Comparative structures",
+          "explanation": "Move past basic -er/more with B2 modifiers (far more, marginally quieter, nowhere near as expensive as) and double comparatives (the more…, the less…).",
+          "keyPoints": [
+            "Gradable modifiers: considerably faster, slightly cheaper, nowhere near as reliable as.",
+            "Double comparatives show cause-and-effect: The more frequent the trains, the fewer cars enter the centre.",
+            "Use \"as… as\" to compare equality or shortfall cleanly."
+          ],
+          "example": "The more reliable regional rail becomes, the less tempting it is to drive—and electric buses are nowhere near as noisy as older diesel fleets.",
+          "items": [
+            {
+              "prompt": "The wider the pavements are, ___ pleasant the high street feels.",
+              "options": [
+                "more",
+                "the more",
+                "most"
+              ],
+              "answer": "the more",
+              "explanation": "Double comparative structure: \"The + comparative..., the + comparative...\".",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Regional buses are ___ as punctual as express trains during rush hour.",
+              "options": [
+                "nowhere near",
+                "far less",
+                "slightly"
+              ],
+              "answer": "nowhere near",
+              "explanation": "\"Nowhere near as + adjective + as\" emphasises a big gap.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Walking is ___ healthier and cheaper than sitting in traffic.",
+              "options": [
+                "much more",
+                "considerably",
+                "very"
+              ],
+              "answer": "considerably",
+              "explanation": "\"Considerably\" modifies an existing comparative (\"healthier\"); avoid \"much more healthier\".",
+              "difficulty": 2
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "commute",
+          "pos": "verb / noun",
+          "definition": "travel regularly between home and work or college",
+          "example": "A reliable light-rail line cut her morning commute from an hour to twenty-five minutes.",
+          "collocations": [
+            "daily commute",
+            "commute by train"
+          ],
+          "wordFamily": [
+            "commuter",
+            "commuting"
+          ],
+          "translation": "desplazarse al trabajo",
+          "band": "B1",
+          "audioRef": "week-10/commute.mp3"
+        },
+        {
+          "term": "congestion",
+          "pos": "noun",
+          "definition": "the state of roads being crowded and slow because there is too much traffic",
+          "example": "Low-emission charges reduced peak congestion across the inner ring road.",
+          "collocations": [
+            "traffic congestion",
+            "ease congestion"
+          ],
+          "wordFamily": [
+            "congested"
+          ],
+          "translation": "congestión / atascos",
+          "band": "B2",
+          "audioRef": "week-10/congestion.mp3"
+        },
+        {
+          "term": "infrastructure",
+          "pos": "noun",
+          "definition": "the basic physical systems a city needs, such as railways, water pipes, and bridges",
+          "example": "Investing in cycling infrastructure pays off quickly in healthier neighbourhoods.",
+          "collocations": [
+            "transport infrastructure",
+            "ageing infrastructure"
+          ],
+          "wordFamily": [
+            "infrastructural"
+          ],
+          "translation": "infraestructura",
+          "band": "B2",
+          "audioRef": "week-10/infrastructure.mp3"
+        },
+        {
+          "term": "pedestrianise",
+          "pos": "verb",
+          "definition": "close a street to motor vehicles so people can walk safely",
+          "example": "When the town decided to pedestrianise Market Square, café terraces doubled.",
+          "collocations": [
+            "pedestrianised zone",
+            "pedestrianise the centre"
+          ],
+          "wordFamily": [
+            "pedestrian",
+            "pedestrianisation"
+          ],
+          "translation": "peatonalizar",
+          "band": "B2",
+          "audioRef": "week-10/pedestrianise.mp3"
+        },
+        {
+          "term": "affordable housing",
+          "pos": "noun phrase",
+          "definition": "homes priced so people on ordinary or lower incomes can rent or buy them",
+          "example": "Without affordable housing near transit stops, essential workers face exhausting journeys.",
+          "collocations": [
+            "shortage of affordable housing",
+            "build affordable housing"
+          ],
+          "wordFamily": [
+            "afford",
+            "affordability"
+          ],
+          "translation": "vivienda asequible",
+          "band": "B2",
+          "audioRef": "week-10/affordable-housing.mp3"
+        },
+        {
+          "term": "mixed-use",
+          "pos": "adjective",
+          "definition": "combining homes, shops, parks, and workplaces within the same neighbourhood",
+          "example": "Mixed-use streets stay lively in the evening without forcing residents to drive everywhere.",
+          "collocations": [
+            "mixed-use development",
+            "mixed-use neighbourhood"
+          ],
+          "wordFamily": [
+            "mix"
+          ],
+          "translation": "de uso mixto",
+          "band": "B2",
+          "audioRef": "week-10/mixed-use.mp3"
+        },
+        {
+          "term": "accessibility",
+          "pos": "noun",
+          "definition": "how easily everyone, including wheelchair users and parents with prams, can reach a place",
+          "example": "Step-free lifts greatly improved station accessibility for older travellers.",
+          "collocations": [
+            "improve accessibility",
+            "step-free accessibility"
+          ],
+          "wordFamily": [
+            "accessible",
+            "access"
+          ],
+          "translation": "accesibilidad",
+          "band": "B2",
+          "audioRef": "week-10/accessibility.mp3"
+        },
+        {
+          "term": "gentrification",
+          "pos": "noun",
+          "definition": "the process of renovating an area so wealthier residents move in and rents rise",
+          "example": "Long-term residents worried that rapid gentrification would price out family bakeries.",
+          "collocations": [
+            "rapid gentrification",
+            "resist gentrification"
+          ],
+          "wordFamily": [
+            "gentrify"
+          ],
+          "translation": "gentrificación",
+          "band": "B2",
+          "audioRef": "week-10/gentrification.mp3"
+        },
+        {
+          "term": "peak hours",
+          "pos": "noun phrase",
+          "definition": "the busiest times of day when transport and roads carry the most passengers",
+          "example": "Buses run every four minutes during morning peak hours.",
+          "collocations": [
+            "during peak hours",
+            "avoid peak hours"
+          ],
+          "wordFamily": [
+            "peak"
+          ],
+          "translation": "horas punta",
+          "band": "B1",
+          "audioRef": "week-10/peak-hours.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "The fifteen-minute neighbourhood: reality or slogan?",
+          "source": "Fluency Studio Urban Affairs Podcast",
+          "accent": "British & Canadian English",
+          "speaker_accents": [
+            {
+              "speaker": "Hannah",
+              "accent": "en-GB",
+              "label": "British English"
+            },
+            {
+              "speaker": "Tariq",
+              "accent": "en-CA",
+              "label": "Canadian English"
+            }
+          ],
+          "seconds": 180,
+          "audioRef": "week-10/fifteen-minute-city.mp3",
+          "audioStatus": "tts",
+          "body": "Hannah: Almost every mayor talks about liveable cities now, yet commuters still spend hours stuck in traffic. Tariq, you study urban transport across mid-sized European and Canadian towns. Why do some neighbourhoods feel effortless to walk around while others feel exhausting? Tariq: Honestly, it comes down to two practical details: safe street crossings and mixed-use zoning. When a district has only office towers or only rows of houses, people have no choice except to drive or crowd onto trains during peak hours. By contrast, where bakeries, primary schools, clinics, and parks sit within a fifteen-minute walk, far fewer short car journeys are needed. Hannah: Critics sometimes complain that pedestrianising centres hurts small shops or pushes rents higher. Is there truth in that? Tariq: There can be if councils stop at cosmetic paving. The cities that succeed pair car-free streets with strict affordable housing quotas and fast step-free buses linking outer estates to the centre. The better outer districts are connected, the less pressure builds up on historic streets. Good transit is nowhere near as expensive as widening motorways—and it leaves far more room for trees and benches.",
+          "questions": [
+            {
+              "prompt": "According to Tariq, what two details make a neighbourhood easy to walk around?",
+              "options": [
+                "Larger car parks and wider motorways",
+                "Safe street crossings and mixed-use zoning",
+                "Taller office towers and night buses"
+              ],
+              "answer": "Safe street crossings and mixed-use zoning"
+            },
+            {
+              "prompt": "How do successful cities prevent pedestrianisation from hurting outer residents?",
+              "options": [
+                "By pairing car-free zones with affordable housing quotas and fast buses",
+                "By closing all outer bus routes",
+                "By charging pedestrians to enter parks"
+              ],
+              "answer": "By pairing car-free zones with affordable housing quotas and fast buses"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "What makes a city street feel genuinely alive?",
+          "source": "Fluency Studio Architecture Essay",
+          "audioRef": "week-10/liveable-streets.mp3",
+          "audioStatus": "tts",
+          "body": "Walk through two neighbourhoods with similar population density and you may experience completely different atmospheres. On one street, pavements are narrow, blank walls line the ground floor, and delivery vans idle beside fast-moving traffic; pedestrians hurry past without looking up. Three blocks away, wider pavements, street trees, small independent grocers, and benches invite neighbours to pause and chat. Urban planners argue that liveability has far less to do with shiny skyscrapers than with what happens at eye level. When ground floors hold bookshops, repair cafés, clinics, and libraries rather than shuttered garages, streets feel considerably safer after dusk because ordinary people are naturally around. Transport infrastructure shapes that social life just as strongly. Cities that prioritise step-free accessibility, shaded bus shelters, and protected cycle lanes allow children, commuters, and older residents to share space comfortably without relying on private cars for every short errand. Of course, attractive districts can trigger rising rents and rapid gentrification if local authorities ignore housing supply. Protecting long-standing workshops and funding affordable housing alongside cleaner transit ensures that revitalised streets serve the whole community rather than pricing residents out. Encouragingly, several European and Latin American towns have proved that fairer street design does not require decades of underground tunnelling. Painted bus-priority lanes, secure cycle hangars on residential corners, and frequent weekend regional trains can transform daily mobility within two or three budget cycles. Residents who previously drove short three-kilometre errands willingly switch when walking routes feel well-lit, continuous, and pleasant in poor weather. Meanwhile, preserving ground-floor leases for independent pharmacies, repair workshops, and grocers keeps essential errands local, reducing congestion across the whole city while protecting social connection for older neighbours.",
+          "questions": [
+            {
+              "prompt": "Why do planners focus on what happens at eye level on a street?",
+              "options": [
+                "Tall skyscrapers are illegal in historic centres",
+                "Active ground-floor shops and spaces encourage safety and social contact",
+                "Delivery vans prefer wide pavements"
+              ],
+              "answer": "Active ground-floor shops and spaces encourage safety and social contact"
+            },
+            {
+              "prompt": "What risk does the essay warn about when a neighbourhood becomes more attractive?",
+              "options": [
+                "Rising rents and gentrification unless affordable housing is protected",
+                "Too many public libraries opening at night",
+                "A shortage of private cars"
+              ],
+              "answer": "Rising rents and gentrification unless affordable housing is protected"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "monologue",
+          "title": "Improving transport in your town (3 min)",
+          "prompt": "Speak for 3 minutes comparing two transport or housing options in a city you know. Explain how to reduce congestion and improve accessibility using accurate articles, quantifiers, and comparative structures.",
+          "seconds": 180,
+          "phrases": [
+            "Compared with driving during peak hours…",
+            "The more accessible public transit is, the fewer…",
+            "It is nowhere near as costly as…"
+          ],
+          "linkers": [
+            "meanwhile",
+            "consequently",
+            "on the other hand"
+          ],
+          "terms": [
+            "congestion",
+            "infrastructure",
+            "pedestrianise",
+            "affordable housing"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Council report: making a neighbourhood more liveable",
+        "prompt": "Write a 180–200 word report evaluating current transport or housing challenges in a town and recommending two practical changes using comparative structures and precise quantifiers.",
+        "format": "formal report",
+        "wordMin": 180,
+        "wordMax": 200,
+        "outline": {
+          "analyze": "Use clear report headings (Overview, Current Issues, Recommendations).",
+          "plan": "Introduction -> two key issues -> two specific recommendations.",
+          "draft": "Check uncountable nouns (housing, congestion, infrastructure) have no -s or \"a\".",
+          "improve": "Include at least one double comparative (\"The more..., the...\") and varied modifiers.",
+          "review": "Verify 180–200 words and neutral formal tone."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Cities, transport and society",
+          "objective": "Learn 8–10 core B2 items for cities, transport and society, practising collocations and word families.",
+          "canDo": "I can deploy B2 cities, transport and society collocations accurately in context.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 cities, transport and society expressions",
+          "output": "Write or record 4 nuanced sentences using this week's B2 collocations.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Articles and quantifiers (consolidation)",
+          "objective": "Practise Articles and quantifiers (consolidation) + Comparative structures with contrast rules and diagnostic drills.",
+          "canDo": "I can control Articles and quantifiers (consolidation) cleanly in formal and semi-formal B2 expression.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Articles and quantifiers (consolidation)",
+          "output": "Write or speak 3 complex sentences using Articles and quantifiers (consolidation) and Comparative structures.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: The fifteen-minute neighbourhood: reality or slogan?",
+          "objective": "Follow a 3-minute multi-accent discussion on cities, transport and society, noting nuance and hedging.",
+          "canDo": "I can extract main arguments, concessions, and implied attitude from a 3-minute track.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise the speaker's position",
+          "output": "Summarise the main viewpoint and one counter-argument from today's listening track.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: What makes a city street feel genuinely alive?",
+          "objective": "Analyse a 250–350 word B2 article on cities, transport and society for evidence, tone, and structure.",
+          "canDo": "I can evaluate evidence and distinguish fact from opinion in a 250–350 word text.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Critical reaction to the article",
+          "output": "Write or record a short reaction explaining which point in the article is strongest and why.",
+          "targetSeconds": 90,
+          "wordRange": [
+            80,
+            120
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Cities, transport and society",
+          "objective": "Deliver a structured 3-minute speaking response on cities, transport and society, plus Shadowing self-check.",
+          "canDo": "I can sustain a structured 3-minute B2 response on cities, transport and society.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Structured speaking task (180s)",
+          "output": "Speak for 3 minutes comparing urban transport solutions with accurate articles, quantifiers, and comparatives.",
+          "targetSeconds": 180,
+          "wordRange": [
+            100,
+            160
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Council report: making a neighbourhood more liveable",
+          "objective": "Plan, draft, and polish a 180–200 word B2 piece on cities, transport and society.",
+          "canDo": "I can produce a cohesive 180–200 word B2 text using Articles and quantifiers (consolidation).",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Council report: making a neighbourhood more liveable",
+          "output": "Write a 180–200 word report recommending urban transport and housing improvements.",
+          "targetSeconds": 180,
+          "wordRange": [
+            180,
+            200
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 10 cards & error log",
+          "objective": "Consolidate Week 10 vocabulary cards and self-correct recurring mistakes before the next week.",
+          "canDo": "I can recall this week's B2 vocabulary and rewrite my recurring mistakes cleanly.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log rewrite",
+          "output": "Review due SRS cards and complete at least two error-log rewrite checks.",
+          "targetSeconds": 60,
+          "wordRange": [
+            50,
+            90
+          ]
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "phase": "Month 3: Develop B2 communication",
+      "title": "Art, culture and creativity",
+      "summary": "Pack descriptive and analytical prose smoothly using participle clauses and reduced relative clauses.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Museums, cinema, creative work and funding",
+      "lightGrammar": "Reduced relative clauses",
+      "grammar": [
+        {
+          "key": "participle-clauses",
+          "role": "main",
+          "name": "Participle clauses",
+          "explanation": "Use present (-ing), past (-ed), or perfect (having + past participle) clauses to link time, reason, or background concisely—making sure both clauses share the same subject.",
+          "keyPoints": [
+            "Having visited the exhibition twice, she noticed subtle brushwork she had missed first time.",
+            "Built in 1894, the theatre still hosts community plays every autumn.",
+            "Avoid dangling participles: the subject after the comma must be the person/thing doing the participle action."
+          ],
+          "example": "Inspired by local folk tales, the director spent three winters filming along the coast.",
+          "items": [
+            {
+              "prompt": "___ in 1928, the cinema recently reopened as an independent arts centre.",
+              "options": [
+                "Building",
+                "Built",
+                "Having built"
+              ],
+              "answer": "Built",
+              "explanation": "Passive meaning (\"which was built\") uses the past participle \"Built\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "___ read the director’s notes, I understood the ending much better.",
+              "options": [
+                "Having",
+                "Have",
+                "Had"
+              ],
+              "answer": "Having",
+              "explanation": "\"Having + past participle\" shows one action finished before the main clause.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Which sentence avoids a dangling participle?",
+              "options": [
+                "Walking into the gallery, the sculptures immediately impressed us.",
+                "Walking into the gallery, we were immediately impressed by the sculptures.",
+                "Walking into the gallery, a large crowd was blocking the entrance."
+              ],
+              "answer": "Walking into the gallery, we were immediately impressed by the sculptures.",
+              "explanation": "\"We\" are the ones walking into the gallery, matching the participle clause subject.",
+              "difficulty": 3
+            }
+          ]
+        },
+        {
+          "key": "reduced-relative-clauses",
+          "role": "light",
+          "name": "Reduced relative clauses",
+          "explanation": "Shorten defining relative clauses cleanly by dropping \"who/which/that + be\" before active -ing or passive -ed phrases.",
+          "keyPoints": [
+            "Active: Visitors hoping to catch the evening talk (= who hope) should arrive early.",
+            "Passive: Photographs taken during the rehearsal (= which were taken) are displayed upstairs.",
+            "Never reduce a relative clause when the relative pronoun is the object of the verb."
+          ],
+          "example": "Artists applying for the residency (= who are applying) must submit work completed within the past two years.",
+          "items": [
+            {
+              "prompt": "The mural ___ by neighbourhood teenagers brightens the whole underpass.",
+              "options": [
+                "painting",
+                "painted",
+                "which painting"
+              ],
+              "answer": "painted",
+              "explanation": "Passive reduced relative clause (\"which was painted\").",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Musicians ___ in small venues often rely on ticket sales rather than streaming.",
+              "options": [
+                "performing",
+                "performed",
+                "who performing"
+              ],
+              "answer": "performing",
+              "explanation": "Active reduced relative clause (\"who perform\").",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Anyone ___ to attend Friday’s play should collect a pass at reception.",
+              "options": [
+                "wish",
+                "wishing",
+                "wished"
+              ],
+              "answer": "wishing",
+              "explanation": "\"Anyone wishing\" replaces \"anyone who wishes\".",
+              "difficulty": 2
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "thought-provoking",
+          "pos": "adjective",
+          "definition": "making you think seriously about an idea or question",
+          "example": "The documentary offered a thought-provoking look at how public libraries adapt.",
+          "collocations": [
+            "thought-provoking exhibition",
+            "deeply thought-provoking"
+          ],
+          "wordFamily": [
+            "thought",
+            "provoke"
+          ],
+          "translation": "que invita a la reflexión",
+          "band": "B2",
+          "audioRef": "week-11/thought-provoking.mp3"
+        },
+        {
+          "term": "curate",
+          "pos": "verb",
+          "definition": "select, organise, and present items in an exhibition, festival, or programme",
+          "example": "Local historians helped curate the photography display at the civic hall.",
+          "collocations": [
+            "curate an exhibition",
+            "carefully curated"
+          ],
+          "wordFamily": [
+            "curator",
+            "curation"
+          ],
+          "translation": "comisariar / seleccionar",
+          "band": "B2",
+          "audioRef": "week-11/curate.mp3"
+        },
+        {
+          "term": "mainstream",
+          "pos": "adjective / noun",
+          "definition": "considered normal and widely accepted by most people rather than experimental",
+          "example": "Several small animation studios stayed independent rather than chasing mainstream hits.",
+          "collocations": [
+            "mainstream cinema",
+            "enter the mainstream"
+          ],
+          "wordFamily": [
+            "mainstream"
+          ],
+          "translation": "convencional / mayoritario",
+          "band": "B2",
+          "audioRef": "week-11/mainstream.mp3"
+        },
+        {
+          "term": "acclaimed",
+          "pos": "adjective",
+          "definition": "publicly praised and admired by critics and audiences",
+          "example": "Her acclaimed short stories draw on voices from small coastal towns.",
+          "collocations": [
+            "critically acclaimed",
+            "widely acclaimed"
+          ],
+          "wordFamily": [
+            "acclaim"
+          ],
+          "translation": "aclamado",
+          "band": "B2",
+          "audioRef": "week-11/acclaimed.mp3"
+        },
+        {
+          "term": "patronage",
+          "pos": "noun",
+          "definition": "financial support given to artists or cultural organisations by councils, charities, or individuals",
+          "example": "Without steady public patronage, regional orchestras struggle to tour smaller towns.",
+          "collocations": [
+            "arts patronage",
+            "depend on patronage"
+          ],
+          "wordFamily": [
+            "patron"
+          ],
+          "translation": "mecenazgo / patrocinio",
+          "band": "B2",
+          "audioRef": "week-11/patronage.mp3"
+        },
+        {
+          "term": "evocative",
+          "pos": "adjective",
+          "definition": "bringing strong images, memories, or feelings clearly to mind",
+          "example": "The soundtrack used evocative folk melodies recorded in an empty chapel.",
+          "collocations": [
+            "evocative imagery",
+            "evocative description"
+          ],
+          "wordFamily": [
+            "evoke"
+          ],
+          "translation": "evocador",
+          "band": "B2",
+          "audioRef": "week-11/evocative.mp3"
+        },
+        {
+          "term": "breakthrough",
+          "pos": "noun",
+          "definition": "an important new discovery or creative step forward after a period of effort",
+          "example": "Winning the Edinburgh fringe prize marked a major breakthrough for the playwright.",
+          "collocations": [
+            "creative breakthrough",
+            "major breakthrough"
+          ],
+          "wordFamily": [
+            "break through"
+          ],
+          "translation": "avance decisivo",
+          "band": "B2",
+          "audioRef": "week-11/breakthrough.mp3"
+        },
+        {
+          "term": "accessible",
+          "pos": "adjective",
+          "definition": "easy for a wide range of people to understand, afford, or attend",
+          "example": "Pay-what-you-can evenings make live theatre accessible to students.",
+          "collocations": [
+            "accessible to everyone",
+            "make culture accessible"
+          ],
+          "wordFamily": [
+            "access"
+          ],
+          "translation": "accesible",
+          "band": "B2",
+          "audioRef": "week-11/accessible.mp3"
+        },
+        {
+          "term": "originality",
+          "pos": "noun",
+          "definition": "the quality of being genuinely new, fresh, and inventive rather than copied",
+          "example": "Judges praised the sculpture’s quiet originality and recycled materials.",
+          "collocations": [
+            "creative originality",
+            "lack originality"
+          ],
+          "wordFamily": [
+            "original",
+            "originally"
+          ],
+          "translation": "originalidad",
+          "band": "B2",
+          "audioRef": "week-11/originality.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Why regional arts venues matter",
+          "source": "Fluency Studio Culture Show",
+          "accent": "British & Australian English",
+          "speaker_accents": [
+            {
+              "speaker": "Claire",
+              "accent": "en-GB",
+              "label": "British English"
+            },
+            {
+              "speaker": "Ben",
+              "accent": "en-AU",
+              "label": "Australian English"
+            }
+          ],
+          "seconds": 180,
+          "audioRef": "week-11/regional-arts-venues.mp3",
+          "audioStatus": "tts",
+          "body": "Claire: When municipal budgets get tight, cultural grants are often the first line cut. Yet artists working outside capital cities say small theatres and neighbourhood galleries are where new voices actually begin. Ben, you directed a regional arts festival in Adelaide before moving to Sheffield. What disappears when a local venue closes? Ben: Far more than a Saturday night out. Having toured towns across two continents, I have seen how a single community cinema or rehearsal studio anchors an entire high street. Young writers experimenting with their first play rarely start on a West End stage; they test ideas in rooms seating eighty people, supported by curators willing to take a risk on originality. Built inside former warehouses or Victorian town halls, these spaces also bring generations together. A photography show curated by retired dockworkers alongside school students sparks conversations you never get in mainstream multiplexes. Claire: So public patronage is really seed funding for future culture? Ben: Exactly. Making culture accessible locally gives people confidence to create, not just consume.",
+          "questions": [
+            {
+              "prompt": "Why does Ben say small regional venues are vital for new artists?",
+              "options": [
+                "They pay higher salaries than national television",
+                "They give emerging creators space to test original work before smaller audiences",
+                "They only show mainstream blockbusters"
+              ],
+              "answer": "They give emerging creators space to test original work before smaller audiences"
+            },
+            {
+              "prompt": "What social benefit does Ben mention about local cultural spaces?",
+              "options": [
+                "They bring different generations together around shared exhibitions",
+                "They replace local schools and colleges",
+                "They keep ticket prices above commercial theatres"
+              ],
+              "answer": "They bring different generations together around shared exhibitions"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Does creative boredom still have a place?",
+          "source": "Fluency Studio Arts Essay",
+          "audioRef": "week-11/creative-boredom.mp3",
+          "audioStatus": "tts",
+          "body": "Ask novelists, composers, or designers where their strongest ideas first surfaced, and very few mention scrolling through a feed of trending clips. Surrounded by constant notifications and polished templates, modern creators can easily confuse rapid consumption with genuine originality. Several psychologists studying creative breakthroughs point out that the brain needs quiet, unstructured intervals to connect distant memories into something unexpected. Walking without headphones, sketching in a pocket notebook, or staring out of a train window may look unproductive on paper, yet those unhurried pauses often allow half-formed thoughts to settle. Museums and galleries curated with restraint understand this rhythm too. Exhibitions crowding fifty screens into a single room often leave visitors exhausted, whereas quieter galleries displaying twenty evocative paintings with space to sit invite sharper attention. Having stepped away from constant noise, viewers notice details—a shift in light, an unusual material, an unfinished line—that rushed viewing hides. Protecting creative space does not mean rejecting technology; rather, it means keeping room for stillness, curiosity, and slow experimentation alongside digital tools. Public arts education plays a quiet, vital role in keeping that curiosity alive across generations. When secondary schools protect time for theatre workshops, choral music, ceramics, and film editing alongside STEM subjects, teenagers discover practical ways to express complex ideas without relying purely on multiple-choice answers. Community funding also helps keep museum admissions affordable so families never feel excluded by ticket costs on wet Sunday afternoons. Whether through a small local bookshop hosting debut poets or a municipal gallery lending prints to clinics, accessible culture enriches everyday civic life far beyond major tourist festivals.",
+          "questions": [
+            {
+              "prompt": "What do psychologists say unstructured quiet intervals help the brain do?",
+              "options": [
+                "Memorise trending social feeds faster",
+                "Connect distant memories and ideas into original insights",
+                "Avoid visiting art galleries altogether"
+              ],
+              "answer": "Connect distant memories and ideas into original insights"
+            },
+            {
+              "prompt": "Why does the essay prefer restrained exhibitions over screen-crowded rooms?",
+              "options": [
+                "Quiet rooms with seating invite closer attention to detail",
+                "Paintings are cheaper to insure than screens",
+                "Visitors prefer spending less than ten minutes in museums"
+              ],
+              "answer": "Quiet rooms with seating invite closer attention to detail"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "monologue",
+          "title": "A film, book, or exhibition that stayed with you (3 min)",
+          "prompt": "Speak for 3 minutes reviewing a film, exhibition, book, or concert that genuinely moved you, and explain whether public funding for local arts venues is worthwhile. Use participle clauses and reduced relative clauses.",
+          "seconds": 180,
+          "phrases": [
+            "Having seen it twice…",
+            "Set in a quiet coastal town…",
+            "Works created by local artists…"
+          ],
+          "linkers": [
+            "notably",
+            "nevertheless",
+            "above all"
+          ],
+          "terms": [
+            "thought-provoking",
+            "curate",
+            "evocative",
+            "accessible"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Cultural article: why local arts spaces deserve support",
+        "prompt": "Write a 180–200 word magazine article reviewing a local cultural event or arguing why regional museums, libraries, and arts venues deserve steady funding.",
+        "format": "cultural feature article",
+        "wordMin": 180,
+        "wordMax": 200,
+        "outline": {
+          "analyze": "Engage readers with a vivid opening image before presenting your argument.",
+          "plan": "Hook -> personal or local example -> broader cultural value -> memorable closing thought.",
+          "draft": "Include at least two participle clauses (-ing / -ed / having + pp) and one reduced relative clause.",
+          "improve": "Check that every opening participle shares its subject with the main clause.",
+          "review": "Verify 180–200 words and rich cultural collocations."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Art, culture and creativity",
+          "objective": "Learn 8–10 core B2 items for art, culture and creativity, practising collocations and word families.",
+          "canDo": "I can deploy B2 art, culture and creativity collocations accurately in context.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 art, culture and creativity expressions",
+          "output": "Write or record 4 nuanced sentences using this week's B2 collocations.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Participle clauses",
+          "objective": "Practise Participle clauses + Reduced relative clauses with contrast rules and diagnostic drills.",
+          "canDo": "I can control Participle clauses cleanly in formal and semi-formal B2 expression.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Participle clauses",
+          "output": "Write or speak 3 complex sentences using Participle clauses and Reduced relative clauses.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Why regional arts venues matter",
+          "objective": "Follow a 3-minute multi-accent discussion on art, culture and creativity, noting nuance and hedging.",
+          "canDo": "I can extract main arguments, concessions, and implied attitude from a 3-minute track.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise the speaker's position",
+          "output": "Summarise the main viewpoint and one counter-argument from today's listening track.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Does creative boredom still have a place?",
+          "objective": "Analyse a 250–350 word B2 article on art, culture and creativity for evidence, tone, and structure.",
+          "canDo": "I can evaluate evidence and distinguish fact from opinion in a 250–350 word text.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Critical reaction to the article",
+          "output": "Write or record a short reaction explaining which point in the article is strongest and why.",
+          "targetSeconds": 90,
+          "wordRange": [
+            80,
+            120
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Art, culture and creativity",
+          "objective": "Deliver a structured 3-minute speaking response on art, culture and creativity, plus Shadowing self-check.",
+          "canDo": "I can sustain a structured 3-minute B2 response on art, culture and creativity.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Structured speaking task (180s)",
+          "output": "Speak for 3 minutes on an inspiring cultural work and public arts support using participle clauses.",
+          "targetSeconds": 180,
+          "wordRange": [
+            100,
+            160
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Cultural article: why local arts spaces deserve support",
+          "objective": "Plan, draft, and polish a 180–200 word B2 piece on art, culture and creativity.",
+          "canDo": "I can produce a cohesive 180–200 word B2 text using Participle clauses.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Cultural article: why local arts spaces deserve support",
+          "output": "Write a 180–200 word cultural article using participle and reduced relative clauses.",
+          "targetSeconds": 180,
+          "wordRange": [
+            180,
+            200
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 11 cards & error log",
+          "objective": "Consolidate Week 11 vocabulary cards and self-correct recurring mistakes before the next week.",
+          "canDo": "I can recall this week's B2 vocabulary and rewrite my recurring mistakes cleanly.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log rewrite",
+          "output": "Review due SRS cards and complete at least two error-log rewrite checks.",
+          "targetSeconds": 60,
+          "wordRange": [
+            50,
+            90
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "phase": "Month 3: Develop B2 communication",
+      "title": "Ethics, fairness and choices",
+      "summary": "Add rhetorical weight to ethical arguments using negative inversion (Not only…, Seldom…) and cleft sentences for sharp focus.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Fairness, transparency and everyday ethics",
+      "lightGrammar": "Cleft sentences",
+      "grammar": [
+        {
+          "key": "inversion-emphasis",
+          "name": "Inversion and emphasis",
+          "explanation": "After a negative or limiting adverbial at the start of a sentence, invert the subject and auxiliary to add emphasis.",
+          "keyPoints": [
+            "Not only did the policy cut emissions, but it also created jobs.",
+            "Rarely have I seen such a weak argument.",
+            "Never before has the city faced this choice. / Little did we know…"
+          ],
+          "example": "Not only did the levy reduce consumption, but it also funded school meals; rarely has a policy faced such organised opposition.",
+          "items": [
+            {
+              "prompt": "Not only ___ the policy cut emissions, but it also created jobs.",
+              "options": [
+                "did",
+                "has",
+                "did it"
+              ],
+              "answer": "did",
+              "explanation": "Not only + auxiliary + subject + verb: Not only did the policy cut emissions…",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Rarely ___ such a weak argument.",
+              "options": [
+                "I have heard",
+                "have I heard",
+                "I heard"
+              ],
+              "answer": "have I heard",
+              "explanation": "A fronted negative adverbial triggers inversion: Rarely have I heard…",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Which sentence is correctly inverted?",
+              "options": [
+                "Never the city has faced this choice.",
+                "Never has the city faced this choice.",
+                "Never has faced the city this choice."
+              ],
+              "answer": "Never has the city faced this choice.",
+              "explanation": "Auxiliary before subject, then the main verb.",
+              "difficulty": 3
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "cleft-sentences",
+          "role": "light",
+          "name": "Cleft sentences",
+          "explanation": "Highlight the key reason, person, or detail in a debate using \"It is… that…\" or \"What matters most is…\".",
+          "keyPoints": [
+            "It-cleft: It is clear labelling—not vague promises—that builds shopper trust.",
+            "What-cleft: What consumers actually need is transparent supply-chain data.",
+            "Use cleft sentences selectively so your emphasis stays punchy."
+          ],
+          "example": "Not only did the audit expose overtime abuses, but what shocked shoppers most was how easy fixes were.",
+          "items": [
+            {
+              "prompt": "___ matters most in fair-trade schemes is whether farmers receive stable prices.",
+              "options": [
+                "That",
+                "What",
+                "Which"
+              ],
+              "answer": "What",
+              "explanation": "What-cleft (\"What matters most is...\") puts focus on the clause after \"is\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "It was the lack of independent checks ___ undermined public trust.",
+              "options": [
+                "what",
+                "that",
+                "whom"
+              ],
+              "answer": "that",
+              "explanation": "It-cleft uses \"It is/was + focus + that/who...\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Only when companies publish audit results ___ trust the label.",
+              "options": [
+                "consumers can",
+                "can consumers",
+                "do consumers can"
+              ],
+              "answer": "can consumers",
+              "explanation": "\"Only when...\" at the start triggers subject-auxiliary inversion in the main clause.",
+              "difficulty": 3
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "accountability",
+          "pos": "noun",
+          "definition": "the duty to accept responsibility and explain decisions openly",
+          "example": "Public funding should always come with clear financial accountability.",
+          "collocations": [
+            "demand accountability",
+            "lack of accountability"
+          ],
+          "wordFamily": [
+            "accountable"
+          ],
+          "translation": "rendición de cuentas",
+          "band": "B2",
+          "audioRef": "week-12/accountability.mp3"
+        },
+        {
+          "term": "transparent",
+          "pos": "adjective",
+          "definition": "open and honest about rules, prices, or decisions so nothing is hidden",
+          "example": "Transparent pricing stops hidden fees appearing on the final screen.",
+          "collocations": [
+            "transparent process",
+            "be transparent about"
+          ],
+          "wordFamily": [
+            "transparency",
+            "transparently"
+          ],
+          "translation": "transparente",
+          "band": "B2",
+          "audioRef": "week-12/transparent.mp3"
+        },
+        {
+          "term": "dilemma",
+          "pos": "noun",
+          "definition": "a difficult situation where you must choose between two competing options",
+          "example": "Whistleblowers often face a moral dilemma between loyalty and honesty.",
+          "collocations": [
+            "ethical dilemma",
+            "face a dilemma"
+          ],
+          "wordFamily": [
+            "dilemma"
+          ],
+          "translation": "dilema",
+          "band": "B2",
+          "audioRef": "week-12/dilemma.mp3"
+        },
+        {
+          "term": "double standard",
+          "pos": "noun phrase",
+          "definition": "a rule or principle applied unfairly more strictly to one group than another",
+          "example": "Employees quickly notice a double standard if senior staff ignore office rules.",
+          "collocations": [
+            "expose a double standard",
+            "obvious double standard"
+          ],
+          "wordFamily": [
+            "standard"
+          ],
+          "translation": "doble rasero",
+          "band": "B2",
+          "audioRef": "week-12/double-standard.mp3"
+        },
+        {
+          "term": "exploit",
+          "pos": "verb",
+          "definition": "treat someone unfairly for your own financial or personal gain",
+          "example": "Strict labour inspections help ensure seasonal workers are not exploited.",
+          "collocations": [
+            "exploit workers",
+            "exploit a loophole"
+          ],
+          "wordFamily": [
+            "exploitation",
+            "exploitative"
+          ],
+          "translation": "explotar / aprovecharse de",
+          "band": "B2",
+          "audioRef": "week-12/exploit.mp3"
+        },
+        {
+          "term": "integrity",
+          "pos": "noun",
+          "definition": "the quality of being honest and sticking to strong moral principles",
+          "example": "Maintaining academic integrity means citing every source accurately.",
+          "collocations": [
+            "personal integrity",
+            "act with integrity"
+          ],
+          "wordFamily": [
+            "integral"
+          ],
+          "translation": "integridad",
+          "band": "B2",
+          "audioRef": "week-12/integrity.mp3"
+        },
+        {
+          "term": "conflict of interest",
+          "pos": "noun phrase",
+          "definition": "a situation where private gain could improperly influence an official decision",
+          "example": "Panel members must declare any conflict of interest before scoring bids.",
+          "collocations": [
+            "declare a conflict of interest",
+            "potential conflict of interest"
+          ],
+          "wordFamily": [
+            "conflict"
+          ],
+          "translation": "conflicto de intereses",
+          "band": "B2",
+          "audioRef": "week-12/conflict-of-interest.mp3"
+        },
+        {
+          "term": "loophole",
+          "pos": "noun",
+          "definition": "a gap in a rule or law that allows people to avoid its intended purpose",
+          "example": "Lawmakers closed the tax loophole after journalists published leaked records.",
+          "collocations": [
+            "close a loophole",
+            "exploit a loophole"
+          ],
+          "wordFamily": [
+            "loophole"
+          ],
+          "translation": "vacío legal",
+          "band": "B2",
+          "audioRef": "week-12/loophole.mp3"
+        },
+        {
+          "term": "stand up for",
+          "pos": "phrasal verb",
+          "definition": "defend or support a person or principle openly when it is difficult",
+          "example": "Colleagues respected her for standing up for junior staff during pay talks.",
+          "collocations": [
+            "stand up for fairness",
+            "stand up for yourself"
+          ],
+          "wordFamily": [
+            "stand up"
+          ],
+          "translation": "defender",
+          "band": "B2",
+          "audioRef": "week-12/stand-up-for.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Panel debate: should cities ban cars from the centre?",
+          "source": "Studio original — panel discussion",
+          "accent": "British and American",
+          "seconds": 180,
+          "body": "HOST: Is a car-free centre realistic? COUNCILLOR REID: Not only has it worked elsewhere, but it has also increased footfall in the shops. That is the part people miss. TRADER MS KOVAC: With respect, that has not been our experience. Our deliveries arrive before seven, and the loading bay is gone. COUNCILLOR REID: Then let us concede that point and solve it — timed access. MS KOVAC: I would accept timed access, provided it is enforced. My worry is that it looks good in a report and fails in the street. Later in the debate, the consumer advocate raised an ethical dilemma: what happens when green policies hit lower-income households harder than wealthy drivers? Not only must councils offer fair exemptions for shift workers and disabled residents, she argued, but what builds lasting fairness is transparent communication about where congestion fees go. When every pound raised funds cleaner regional buses, citizens see tangible accountability rather than a double standard.",
+          "questions": [
+            {
+              "prompt": "What does Councillor Reid claim about shops?",
+              "options": [
+                "Footfall increased elsewhere",
+                "Shops closed",
+                "Deliveries stopped"
+              ],
+              "answer": "Footfall increased elsewhere"
+            },
+            {
+              "prompt": "What does Ms Kovac accept in the end?",
+              "options": [
+                "Timed access with enforcement",
+                "A total ban",
+                "No change at all"
+              ],
+              "answer": "Timed access with enforcement"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "HOST",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "COUNCILLOR REID",
+              "accent": "en-GB",
+              "label": "British"
+            },
+            {
+              "speaker": "MS KOVAC",
+              "accent": "en-US",
+              "label": "American"
+            }
+          ],
+          "audioRef": "module-7/panel-debate-should-cities-ban-cars-from-the-centre.mp3",
+          "audioStatus": "actor_pending"
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Why small everyday fairness builds lasting trust",
+          "source": "Fluency Studio Ethics Essay",
+          "audioRef": "week-12/everyday-fairness.mp3",
+          "audioStatus": "tts",
+          "body": "When people think about ethics, dramatic courtroom trials or corporate scandals usually come to mind first. Yet in ordinary workplaces, schools, and local councils, trust rises or falls on much quieter decisions: whether rules apply equally to senior leaders, whether a conflict of interest is declared before a contract is awarded, and whether someone admits a mistake without shifting blame onto junior staff. Rarely do institutions collapse overnight; instead, credibility erodes slowly whenever double standards become routine. What distinguishes healthy organisations is not perfection, since human judgement is always fallible, but visible accountability when loopholes appear. Suppose a team notices that flexible working is praised in recruitment adverts yet quietly penalised during promotion reviews. Not only does morale fall, but talented staff stop speaking honestly in meetings. Conversely, when leaders publish clear criteria, explain trade-offs transparently, and protect colleagues who stand up for fair treatment, people feel safe raising concerns early. Integrity at scale begins with small, consistent choices long before any crisis arrives. Training programmes in medicine, law, and engineering now spend far more time on realistic case studies than abstract moral puzzles. Instead of debating unlikely emergencies, trainees examine everyday pressures: what to do when a manager asks you to omit an inconvenient delay from a client summary, or how to respond when an algorithm scores applicants unevenly. Practising clear, respectful phrases for raising concerns early makes ethical courage far easier when real pressure hits. Organisations that reward honesty during routine reviews build cultures where integrity becomes normal practice rather than a risky exception.",
+          "questions": [
+            {
+              "prompt": "According to the essay, how does institutional credibility usually erode?",
+              "options": [
+                "In a single dramatic courtroom trial",
+                "Gradually when double standards become routine",
+                "Whenever junior staff speak in meetings"
+              ],
+              "answer": "Gradually when double standards become routine"
+            },
+            {
+              "prompt": "What does the essay say builds psychological safety in healthy organisations?",
+              "options": [
+                "Transparent criteria, accountability, and protecting people who raise concerns",
+                "Never allowing flexible working arrangements",
+                "Keeping promotion criteria private"
+              ],
+              "answer": "Transparent criteria, accountability, and protecting people who raise concerns"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "monologue",
+          "title": "An ethical choice or fairness debate (3 min)",
+          "prompt": "Speak for 3 minutes about an ethical dilemma in business, sport, or everyday work—such as unpaid internships or hidden online fees. Use inversion and a cleft sentence to highlight your central argument.",
+          "seconds": 180,
+          "phrases": [
+            "Not only does this practice…",
+            "What matters most is…",
+            "Seldom do consumers see…"
+          ],
+          "linkers": [
+            "in contrast",
+            "consequently",
+            "furthermore"
+          ],
+          "terms": [
+            "accountability",
+            "transparent",
+            "double standard",
+            "integrity"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Analytical essay: fairness and transparency at work",
+        "prompt": "Write a 180–200 word analytical essay discussing whether companies should be legally required to publish pay ranges and supply-chain audits openly.",
+        "format": "analytical essay",
+        "wordMin": 180,
+        "wordMax": 200,
+        "outline": {
+          "analyze": "Present both the argument for mandatory transparency and business objections.",
+          "plan": "Introduction -> transparency benefits -> practical drawbacks -> balanced conclusion.",
+          "draft": "Use one negative inversion (\"Not only...\", \"Rarely...\") and one cleft sentence (\"What...\").",
+          "improve": "Strengthen topic sentences and replace general nouns with ethical terms (loophole, accountability).",
+          "review": "Check 180–200 words and inverted word order."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Ethics, fairness and choices",
+          "objective": "Learn 8–10 core B2 items for ethics, fairness and choices, practising collocations and word families.",
+          "canDo": "I can deploy B2 ethics, fairness and choices collocations accurately in context.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 ethics, fairness and choices expressions",
+          "output": "Write or record 4 nuanced sentences using this week's B2 collocations.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Inversion and emphasis",
+          "objective": "Practise Inversion and emphasis + Cleft sentences with contrast rules and diagnostic drills.",
+          "canDo": "I can control Inversion and emphasis cleanly in formal and semi-formal B2 expression.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Inversion and emphasis",
+          "output": "Write or speak 3 complex sentences using Inversion and emphasis and Cleft sentences.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Panel debate: should cities ban cars from the centre?",
+          "objective": "Follow a 3-minute multi-accent discussion on ethics, fairness and choices, noting nuance and hedging.",
+          "canDo": "I can extract main arguments, concessions, and implied attitude from a 3-minute track.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise the speaker's position",
+          "output": "Summarise the main viewpoint and one counter-argument from today's listening track.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Why small everyday fairness builds lasting trust",
+          "objective": "Analyse a 250–350 word B2 article on ethics, fairness and choices for evidence, tone, and structure.",
+          "canDo": "I can evaluate evidence and distinguish fact from opinion in a 250–350 word text.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Critical reaction to the article",
+          "output": "Write or record a short reaction explaining which point in the article is strongest and why.",
+          "targetSeconds": 90,
+          "wordRange": [
+            80,
+            120
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Ethics, fairness and choices",
+          "objective": "Deliver a structured 3-minute speaking response on ethics, fairness and choices, plus Shadowing self-check.",
+          "canDo": "I can sustain a structured 3-minute B2 response on ethics, fairness and choices.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Structured speaking task (180s)",
+          "output": "Speak for 3 minutes on an ethical dilemma using inversion and cleft sentences.",
+          "targetSeconds": 180,
+          "wordRange": [
+            100,
+            160
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Analytical essay: fairness and transparency at work",
+          "objective": "Plan, draft, and polish a 180–200 word B2 piece on ethics, fairness and choices.",
+          "canDo": "I can produce a cohesive 180–200 word B2 text using Inversion and emphasis.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Analytical essay: fairness and transparency at work",
+          "output": "Write a 180–200 word essay on pay and supply-chain transparency.",
+          "targetSeconds": 180,
+          "wordRange": [
+            180,
+            200
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 12 cards & error log",
+          "objective": "Consolidate Week 12 vocabulary cards and self-correct recurring mistakes before the next week.",
+          "canDo": "I can recall this week's B2 vocabulary and rewrite my recurring mistakes cleanly.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log rewrite",
+          "output": "Review due SRS cards and complete at least two error-log rewrite checks.",
+          "targetSeconds": 60,
+          "wordRange": [
+            50,
+            90
+          ]
+        }
+      ]
+    }
+  ]
+}

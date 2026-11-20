@@ -1,0 +1,1949 @@
+{
+  "course_slug": "english-b1-b2",
+  "modules": [
+    {
+      "number": 5,
+      "phase": "Month 2: Move toward B2",
+      "title": "Technology and digital life",
+      "summary": "Speculate about digital evidence with modals of deduction and report statements cleanly with accurate backshift.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Algorithms, privacy and digital habits",
+      "lightGrammar": "Reported statements (backshift)",
+      "grammar": [
+        {
+          "key": "modals-of-deduction",
+          "name": "Modals of deduction: must, might, could, can't",
+          "explanation": "Use must when you are almost certain, might or could when something is possible, and can't when you are almost certain it is untrue.",
+          "keyPoints": [
+            "Certain: The update must have broken the app.",
+            "Possible: She might be working from home.",
+            "Impossible: That can't be the reason they cancelled."
+          ],
+          "example": "The site is down, so they must be updating the servers; it could also be a network problem.",
+          "items": [
+            {
+              "prompt": "The site is down. They ___ be updating the servers.",
+              "options": [
+                "can't",
+                "must",
+                "might not"
+              ],
+              "answer": "must",
+              "explanation": "Must expresses strong certainty based on evidence.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "That ___ be the reason — the app works fine on other phones.",
+              "options": [
+                "must",
+                "can't",
+                "should"
+              ],
+              "answer": "can't",
+              "explanation": "Can't marks a conclusion you are almost certain is wrong.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Which sentence leaves the possibility open?",
+              "options": [
+                "It must be a bug.",
+                "It could be a bug.",
+                "It can't be a bug."
+              ],
+              "answer": "It could be a bug.",
+              "explanation": "Could expresses possibility without certainty.",
+              "difficulty": 1
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "reported-speech",
+          "name": "Reported statements (backshift)",
+          "explanation": "When you report speech, shift the tense back one step and adjust pronouns and time expressions; reporting verbs such as claim, admit and warn change the pattern that follows.",
+          "keyPoints": [
+            "'I will fix it tomorrow.' → She said she would fix it the next day.",
+            "Reporting verb + -ing: He admitted breaking the rules.",
+            "Reporting verb + to: They warned us not to share the link."
+          ],
+          "example": "The engineer said the update would take two days, admitted that the testing had been rushed, and warned us not to reinstall.",
+          "items": [
+            {
+              "prompt": "'I will fix it tomorrow.' → She said she ___ it the next day.",
+              "options": [
+                "will fix",
+                "would fix",
+                "fixes"
+              ],
+              "answer": "would fix",
+              "explanation": "Will shifts to would in reported speech.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "He admitted ___ the rules.",
+              "options": [
+                "to break",
+                "breaking",
+                "break"
+              ],
+              "answer": "breaking",
+              "explanation": "Admit takes the -ing form.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "They warned us ___ the link.",
+              "options": [
+                "not to share",
+                "to not share",
+                "no sharing"
+              ],
+              "answer": "not to share",
+              "explanation": "Warn + object + (not) to + infinitive.",
+              "difficulty": 2
+            }
+          ],
+          "role": "light"
+        }
+      ],
+      "vocab": [
+        {
+          "term": "algorithm",
+          "pos": "noun",
+          "definition": "a set of rules a computer follows to choose content",
+          "example": "The algorithm shows you what keeps you watching.",
+          "collocations": [
+            "the recommendation algorithm"
+          ],
+          "wordFamily": [
+            "algorithm"
+          ],
+          "translation": "algoritmo",
+          "band": "B2",
+          "audioRef": "week-5/algorithm.mp3"
+        },
+        {
+          "term": "screen time",
+          "pos": "noun",
+          "definition": "time spent looking at a device",
+          "example": "My screen time doubled last month.",
+          "collocations": [
+            "limit screen time"
+          ],
+          "wordFamily": [
+            "screen time"
+          ],
+          "translation": "tiempo de pantalla",
+          "band": "B2",
+          "audioRef": "week-5/screen-time.mp3"
+        },
+        {
+          "term": "data privacy",
+          "pos": "noun",
+          "definition": "control over who can see your personal information",
+          "example": "Data privacy is the main concern for users.",
+          "collocations": [
+            "protect data privacy"
+          ],
+          "wordFamily": [
+            "data privacy"
+          ],
+          "translation": "privacidad de datos",
+          "band": "B2",
+          "audioRef": "week-5/data-privacy.mp3"
+        },
+        {
+          "term": "misinformation",
+          "pos": "noun",
+          "definition": "false information spread without intent to deceive",
+          "example": "Misinformation travels faster than corrections.",
+          "collocations": [
+            "spread misinformation"
+          ],
+          "wordFamily": [
+            "misinformation"
+          ],
+          "translation": "desinformación",
+          "band": "B2",
+          "audioRef": "week-5/misinformation.mp3"
+        },
+        {
+          "term": "deepfake",
+          "pos": "noun",
+          "definition": "a video or audio clip generated to look real but false",
+          "example": "The deepfake of the mayor was shared thousands of times.",
+          "collocations": [
+            "a convincing deepfake"
+          ],
+          "wordFamily": [
+            "deepfake"
+          ],
+          "translation": "ultrafalso",
+          "band": "B2",
+          "audioRef": "week-5/deepfake.mp3"
+        },
+        {
+          "term": "go viral",
+          "pos": "phrase",
+          "definition": "spread rapidly online",
+          "example": "The clip went viral within hours.",
+          "collocations": [
+            "go viral overnight"
+          ],
+          "wordFamily": [
+            "go viral"
+          ],
+          "translation": "hacerse viral",
+          "band": "B2",
+          "audioRef": "week-5/go-viral.mp3"
+        },
+        {
+          "term": "clickbait",
+          "pos": "noun",
+          "definition": "a headline that exaggerates to attract clicks",
+          "example": "That headline is pure clickbait.",
+          "collocations": [
+            "clickbait headlines"
+          ],
+          "wordFamily": [
+            "clickbait"
+          ],
+          "translation": "cebo de clics",
+          "band": "B2",
+          "audioRef": "week-5/clickbait.mp3"
+        },
+        {
+          "term": "filter bubble",
+          "pos": "noun",
+          "definition": "a situation where you only see views like your own",
+          "example": "Social feeds can create a filter bubble.",
+          "collocations": [
+            "live in a filter bubble"
+          ],
+          "wordFamily": [
+            "filter bubble"
+          ],
+          "translation": "burbuja de filtros",
+          "band": "B2",
+          "audioRef": "week-5/filter-bubble.mp3"
+        },
+        {
+          "term": "digital footprint",
+          "pos": "noun",
+          "definition": "the trace your online activity leaves",
+          "example": "Employers sometimes check your digital footprint.",
+          "collocations": [
+            "leave a digital footprint"
+          ],
+          "wordFamily": [
+            "digital footprint"
+          ],
+          "translation": "huella digital",
+          "band": "B2",
+          "audioRef": "week-5/digital-footprint.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Tech news: the week in AI",
+          "source": "Studio original — news bulletin",
+          "accent": "American",
+          "seconds": 150,
+          "body": "A major video platform has announced that AI-generated clips must now be labelled. The company said the change would take effect within thirty days and admitted that earlier labelling had been inconsistent. Researchers welcomed the move but warned that labels alone will not stop misinformation, because most people share a clip before they read the caption. One campaign group claimed the policy was 'too little, too late', while the platform insisted that it was a first step. A listener asked whether schools should ban smartphones during lessons or teach students how algorithms sort newsfeeds. Both presenters agreed that banning devices alone cannot solve misinformation. One researcher said that teenagers who learnt how clickbait headlines are tested felt far less manipulated online. Before sharing a dramatic clip, they advised listeners to check who first posted it and ask whether a genuine photographer could have missed obvious details.",
+          "questions": [
+            {
+              "prompt": "What is the new policy?",
+              "options": [
+                "AI clips must be labelled",
+                "AI clips are banned",
+                "All clips must be shorter"
+              ],
+              "answer": "AI clips must be labelled"
+            },
+            {
+              "prompt": "What do researchers warn?",
+              "options": [
+                "Labels are not enough on their own",
+                "The policy is too strict",
+                "Nobody will notice"
+              ],
+              "answer": "Labels are not enough on their own"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "ANCHOR",
+              "accent": "en-US",
+              "label": "American"
+            }
+          ],
+          "audioRef": "module-4/tech-news-the-week-in-ai.mp3",
+          "audioStatus": "actor_pending"
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "The price of a free app",
+          "source": "Studio original",
+          "body": "Nothing on your phone is free. When an app costs nothing to install, the cost is usually paid in attention or data. A typical free app requests access to location, contacts and microphone, and many users accept without reading the prompt. Regulators have begun to push back: several countries now require plain-language summaries of what an app collects. Yet the strongest protection remains unglamorous. Turn off permissions you do not use. Read the prompt. And remember that a service designed to keep you scrolling is not designed to help you leave. Many users only notice how much data they share when an oddly specific advert appears seconds after a private search. Browser extensions and stricter permission settings can limit passive tracking, yet convenience often wins. Experts point out that reading a two-minute privacy summary before installing a new tool is one of the simplest ways to protect your digital footprint. Free software is rarely truly free; understanding the trade-off lets you decide which platforms actually deserve space on your home screen. When communities demand clearer consent screens, companies have to redesign defaults rather than hiding key controls behind five sub-menus. Beyond personal privacy settings, digital literacy also depends on slowing down emotional reactions. Platforms earn attention when users react instantly to outrage, confusion, or surprise. Taking ten seconds to check whether a startling claim includes an original link, a clear date, and a named source drastically lowers the chance of passing along misinformation. At home and at work, establishing simple boundaries—such as leaving phones out of the bedroom or checking group chats at fixed times—restores deep concentration. Technology serves daily life best when tools wait quietly until we deliberately open them, rather than pulling us into endless scrolling.",
+          "questions": [
+            {
+              "prompt": "What is the writer's main claim?",
+              "options": [
+                "Free apps are paid for with attention or data",
+                "Free apps are always unsafe",
+                "Paid apps are always better"
+              ],
+              "answer": "Free apps are paid for with attention or data"
+            },
+            {
+              "prompt": "What protection does the writer call strongest?",
+              "options": [
+                "New regulations",
+                "Your own habits and permissions",
+                "Deleting all apps"
+              ],
+              "answer": "Your own habits and permissions"
+            }
+          ],
+          "audioRef": "module-4/the-price-of-a-free-app.mp3",
+          "audioStatus": "tts"
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Digital habits & online evidence (2 min)",
+          "prompt": "Speak for 2 minutes about how algorithms or smartphones shape daily attention. Speculate about why people fall for clickbait (modals of deduction) and mention one habit you changed.",
+          "seconds": 120,
+          "phrases": [
+            "The way I see it...",
+            "There is no doubt that...",
+            "That said..."
+          ],
+          "linkers": [
+            "moreover",
+            "on the other hand",
+            "as a result"
+          ],
+          "terms": [
+            "filter bubble",
+            "misinformation",
+            "screen time"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Review: an app, film or product",
+        "prompt": "Write a 180-word review of an app, film or product for a general audience. Describe it, weigh its strengths and weaknesses, and give a clear recommendation.",
+        "format": "review",
+        "wordMin": 150,
+        "wordMax": 180,
+        "outline": {
+          "analyze": "Purpose: evaluate and recommend. Audience: potential users or viewers. Register: semi-formal.",
+          "plan": "Hook → description → two strengths → one weakness → recommendation.",
+          "draft": "Use one modal of deduction and two reported-speech structures.",
+          "improve": "Replace vague praise with evidence; vary sentence length.",
+          "review": "Check that the recommendation matches the evidence you gave."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Technology and digital life",
+          "objective": "Learn 8–10 core B1→B2 expressions for technology and digital life, focusing on collocations and word families.",
+          "canDo": "I can use core technology and digital life collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new technology and digital life collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about technology and digital life.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Modals of deduction",
+          "objective": "Master Modals of deduction + Reported statements (backshift) through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Modals of deduction accurately when discussing technology and digital life.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Modals of deduction",
+          "output": "Produce 3 original sentences demonstrating Modals of deduction and Reported statements (backshift).",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Tech news: the week in AI",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on technology and digital life.",
+          "canDo": "I can follow a 2.5-minute discussion about technology and digital life and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: The price of a free app",
+          "objective": "Read a B1→B2 text on technology and digital life, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on technology and digital life.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Technology and digital life",
+          "objective": "Complete the required 120-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 2 minutes on technology and digital life using Modals of deduction.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (120s)",
+          "output": "Speak for 2 minutes on digital habits and online reliability using modals of deduction.",
+          "targetSeconds": 120,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Review: an app, film or product",
+          "objective": "Plan, draft, and revise a 150–180 word text on technology and digital life.",
+          "canDo": "I can write a well-structured 150–180 word response incorporating Modals of deduction.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Review: an app, film or product",
+          "output": "Write a 180-word review of an app, film or product for a general audience. Describe it, weigh its strengths and weaknesses, and give a clear recommendation.",
+          "targetSeconds": 120,
+          "wordRange": [
+            150,
+            180
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 5 cards & error log",
+          "objective": "Consolidate Week 5 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "phase": "Month 2: Move toward B2",
+      "title": "Work and education",
+      "summary": "Choose accurately between gerunds and infinitives after key verbs and report workplace requests and instructions.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Careers, training, feedback and collaboration",
+      "lightGrammar": "Reported requests and commands",
+      "grammar": [
+        {
+          "key": "gerunds-and-infinitives",
+          "role": "main",
+          "name": "Gerunds and infinitives",
+          "explanation": "Distinguish verbs followed by -ing (avoid, consider, suggest, enjoy), verbs followed by to-infinitive (manage, afford, decide, refuse), and verbs whose meaning shifts (remember/stop/try).",
+          "keyPoints": [
+            "Verbs like suggest, recommend, avoid, and risk take -ing, never a to-infinitive.",
+            "Stop + -ing means quit an activity; stop + to-infinitive means pause in order to do something else.",
+            "Remember + -ing looks back at a memory; remember + to-infinitive reminds you of a duty."
+          ],
+          "example": "She suggested rehearsing the presentation twice before remembering to back up her slides.",
+          "items": [
+            {
+              "prompt": "Our mentor suggested ___ the workshop notes into three clear actions.",
+              "options": [
+                "to summarise",
+                "summarising",
+                "summarise"
+              ],
+              "answer": "summarising",
+              "explanation": "\"Suggest\" is followed by -ing (or a that-clause), not a to-infinitive.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "I stopped ___ emails after eight o’clock so I could sleep properly.",
+              "options": [
+                "checking",
+                "to check",
+                "checked"
+              ],
+              "answer": "checking",
+              "explanation": "Stop + -ing means giving up or ending the action.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Did you remember ___ the application form before the noon deadline?",
+              "options": [
+                "submitting",
+                "to submit",
+                "submit"
+              ],
+              "answer": "to submit",
+              "explanation": "Remember + to-infinitive refers to not forgetting a task.",
+              "difficulty": 1
+            }
+          ]
+        },
+        {
+          "key": "reported-requests-commands",
+          "role": "light",
+          "name": "Reported requests and commands",
+          "explanation": "Report instructions, advice, and requests cleanly using tell / ask / remind / advise + object + (not) to-infinitive.",
+          "keyPoints": [
+            "Use ask + object + to-infinitive for polite requests: She asked us to send the draft early.",
+            "Use tell / instruct + object + not to-infinitive for negative rules.",
+            "Never use \"say\" directly with object + to-infinitive."
+          ],
+          "example": "The coordinator asked us not to interrupt during the client demo and reminded everyone to mute notifications.",
+          "items": [
+            {
+              "prompt": "The line manager ___ me to double-check the budget figures.",
+              "options": [
+                "said",
+                "asked",
+                "suggested"
+              ],
+              "answer": "asked",
+              "explanation": "Ask + object + to-infinitive reports a request; \"said me to\" is incorrect.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Our tutor told us ___ memorise whole essays word for word.",
+              "options": [
+                "to not",
+                "not to",
+                "don’t"
+              ],
+              "answer": "not to",
+              "explanation": "Negative reported commands place \"not\" before \"to\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The HR adviser reminded new graduates ___ relevant examples in interviews.",
+              "options": [
+                "prepare",
+                "preparing",
+                "to prepare"
+              ],
+              "answer": "to prepare",
+              "explanation": "Remind takes object + to-infinitive.",
+              "difficulty": 1
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "apprenticeship",
+          "pos": "noun",
+          "definition": "a paid training programme combining practical workplace experience with formal study",
+          "example": "An engineering apprenticeship gave him hands-on experience without university debt.",
+          "collocations": [
+            "complete an apprenticeship",
+            "digital apprenticeship"
+          ],
+          "wordFamily": [
+            "apprentice"
+          ],
+          "translation": "contrato de formación / aprendizaje",
+          "band": "B2",
+          "audioRef": "week-6/apprenticeship.mp3"
+        },
+        {
+          "term": "delegate",
+          "pos": "verb",
+          "definition": "give a task or responsibility to another team member",
+          "example": "Learning to delegate routine checks freed her up for strategic planning.",
+          "collocations": [
+            "delegate tasks",
+            "delegate responsibility"
+          ],
+          "wordFamily": [
+            "delegation"
+          ],
+          "translation": "delegar",
+          "band": "B2",
+          "audioRef": "week-6/delegate.mp3"
+        },
+        {
+          "term": "constructive feedback",
+          "pos": "noun phrase",
+          "definition": "useful comments aimed at helping someone improve rather than merely criticising",
+          "example": "Good managers give constructive feedback as soon as a draft is ready.",
+          "collocations": [
+            "offer constructive feedback",
+            "welcome constructive feedback"
+          ],
+          "wordFamily": [
+            "construct",
+            "constructively"
+          ],
+          "translation": "retroalimentación constructiva",
+          "band": "B2",
+          "audioRef": "week-6/constructive-feedback.mp3"
+        },
+        {
+          "term": "transferable skills",
+          "pos": "noun phrase",
+          "definition": "abilities such as clear writing or problem-solving that are useful across different jobs",
+          "example": "Teaching helped her build transferable skills in public speaking and planning.",
+          "collocations": [
+            "develop transferable skills",
+            "highlight transferable skills"
+          ],
+          "wordFamily": [
+            "transfer"
+          ],
+          "translation": "habilidades transferibles",
+          "band": "B2",
+          "audioRef": "week-6/transferable-skills.mp3"
+        },
+        {
+          "term": "meet a deadline",
+          "pos": "verb phrase",
+          "definition": "finish a piece of work by the agreed time or date",
+          "example": "Splitting big projects into weekly targets makes it easier to meet a deadline.",
+          "collocations": [
+            "struggle to meet a deadline",
+            "comfortably meet a deadline"
+          ],
+          "wordFamily": [
+            "deadline"
+          ],
+          "translation": "cumplir un plazo",
+          "band": "B1",
+          "audioRef": "week-6/meet-a-deadline.mp3"
+        },
+        {
+          "term": "catch up on",
+          "pos": "phrasal verb",
+          "definition": "do work or reading you missed earlier so you reach the current stage",
+          "example": "After three days off, he spent Monday morning catching up on emails.",
+          "collocations": [
+            "catch up on reading",
+            "catch up on work"
+          ],
+          "wordFamily": [
+            "catch-up"
+          ],
+          "translation": "ponerse al día con",
+          "band": "B1",
+          "audioRef": "week-6/catch-up-on.mp3"
+        },
+        {
+          "term": "collaborative",
+          "pos": "adjective",
+          "definition": "involving two or more people working together toward a shared goal",
+          "example": "Weekly design critiques create a collaborative atmosphere across departments.",
+          "collocations": [
+            "collaborative environment",
+            "collaborative project"
+          ],
+          "wordFamily": [
+            "collaborate",
+            "collaboration"
+          ],
+          "translation": "colaborativo",
+          "band": "B2",
+          "audioRef": "week-6/collaborative.mp3"
+        },
+        {
+          "term": "mentor",
+          "pos": "noun",
+          "definition": "an experienced colleague or teacher who guides someone less experienced",
+          "example": "Having a supportive mentor made my first term at college far less daunting.",
+          "collocations": [
+            "an experienced mentor",
+            "act as a mentor"
+          ],
+          "wordFamily": [
+            "mentoring",
+            "mentorship"
+          ],
+          "translation": "mentor / tutor",
+          "band": "B2",
+          "audioRef": "week-6/mentor.mp3"
+        },
+        {
+          "term": "hand in",
+          "pos": "phrasal verb",
+          "definition": "submit homework, a report, or a form to a teacher or supervisor",
+          "example": "Students are expected to hand in their lab summaries by Friday at five.",
+          "collocations": [
+            "hand in an assignment",
+            "hand in on time"
+          ],
+          "wordFamily": [
+            "hand-in"
+          ],
+          "translation": "entregar",
+          "band": "B1",
+          "audioRef": "week-6/hand-in.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "First-year mentoring at work and university",
+          "source": "Fluency Studio Careers Roundtable",
+          "accent": "Scottish & British English",
+          "speaker_accents": [
+            {
+              "speaker": "Callum",
+              "accent": "en-GB",
+              "label": "Scottish English"
+            },
+            {
+              "speaker": "Maya",
+              "accent": "en-GB",
+              "label": "British English"
+            }
+          ],
+          "seconds": 150,
+          "audioRef": "week-6/mentoring-roundtable.mp3",
+          "audioStatus": "tts",
+          "body": "Callum: In today’s workplace brief, we are looking at why so many graduates struggle during their first six months in a new role. Maya, you run a mentoring scheme for young technicians. What surprised you most when you started? Maya: Honestly, it was not a lack of technical knowledge. Most apprentices already knew the software. What stressed them out was guessing unwritten expectations. Nobody had ever told them not to spend four hours polishing a routine update, or suggested asking for feedback halfway through a task instead of waiting until Friday. Callum: So clear communication saved time on both sides? Maya: Completely. We started pairing every newcomer with a senior mentor who meets them for twenty minutes each Wednesday. Mentors remind new staff to prioritise urgent jobs, delegate shared admin, and ask questions early. Within one term, fewer people missed deadlines and confidence jumped noticeably.",
+          "questions": [
+            {
+              "prompt": "What caused the most stress for new technicians in Maya’s scheme?",
+              "options": [
+                "Difficulty learning basic software",
+                "Guessing unwritten expectations about how to work",
+                "Long commutes to the office"
+              ],
+              "answer": "Guessing unwritten expectations about how to work"
+            },
+            {
+              "prompt": "What change helped reduce missed deadlines within one term?",
+              "options": [
+                "Short weekly check-ins with an experienced mentor",
+                "Removing all Friday deadlines",
+                "Banning internal emails"
+              ],
+              "answer": "Short weekly check-ins with an experienced mentor"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Beyond exam grades: what employers and tutors value",
+          "source": "Fluency Studio Education Brief",
+          "audioRef": "week-6/beyond-exam-grades.mp3",
+          "audioStatus": "tts",
+          "body": "For decades, university prospectuses and job adverts treated formal grades as the quickest way to compare applicants. While exam scores still show whether someone can absorb demanding material under pressure, hiring managers increasingly look for evidence of how candidates work once a project becomes messy. A recent survey of training coordinators across Britain found that three habits repeatedly set strong candidates apart: asking precise questions early, accepting constructive feedback without becoming defensive, and explaining complex choices clearly to non-specialists. None of these skills requires a specific degree subject. Students build them through part-time work, community volunteering, apprenticeships, and group seminars where deadlines actually matter. One coordinator noted that applicants who avoid admitting mistakes often slow an entire team down, whereas people who flag problems early help everyone adjust before a deadline slips. Practical reflection—asking what worked, what failed, and what to change next week—turns everyday study into genuine professional readiness. Interviews and probation reviews increasingly reflect this shift toward practical problem-solving. Rather than asking candidates to recite textbook definitions, hiring panels frequently present a realistic short scenario: a client has changed priorities two days before a deadline, or a teammate has fallen behind on shared data. Strong applicants explain who they would consult first, what tasks they would delegate or pause, and how they would confirm expectations in writing. At the same time, continuing to read widely and practising formal writing ensures that practical experience rests on clear communication. Combining hands-on adaptability with reflective study prepares learners for both university seminars and collaborative workplaces.",
+          "questions": [
+            {
+              "prompt": "Which habit did training coordinators warn slows teams down?",
+              "options": [
+                "Working part-time alongside university study",
+                "Avoiding admitting mistakes early",
+                "Asking questions during seminars"
+              ],
+              "answer": "Avoiding admitting mistakes early"
+            },
+            {
+              "prompt": "How does the article suggest students build transferable skills?",
+              "options": [
+                "Through real projects, teamwork, and practical reflection",
+                "By avoiding group assignments altogether",
+                "By choosing only theoretical exam subjects"
+              ],
+              "answer": "Through real projects, teamwork, and practical reflection"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "monologue",
+          "title": "Useful feedback at work or study (2 min)",
+          "prompt": "Speak for 2 minutes about a useful piece of advice or constructive feedback a teacher, mentor, or manager gave you. Explain what they asked you to do, what you tried changing, and what happened next.",
+          "seconds": 120,
+          "phrases": [
+            "My mentor suggested trying…",
+            "She reminded me not to…",
+            "Since then, I have managed to…"
+          ],
+          "linkers": [
+            "in addition",
+            "as a result",
+            "even though"
+          ],
+          "terms": [
+            "constructive feedback",
+            "mentor",
+            "meet a deadline",
+            "transferable skills"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Opinion piece: practical training vs. academic study",
+        "prompt": "Write 150–180 words discussing whether schools and universities should put more emphasis on practical projects and apprenticeships alongside traditional exams.",
+        "format": "opinion essay",
+        "wordMin": 150,
+        "wordMax": 180,
+        "outline": {
+          "analyze": "Take a clear position while acknowledging why exams still exist.",
+          "plan": "Introduction -> practical/apprenticeship benefits -> role of academic grounding -> conclusion.",
+          "draft": "Use at least three gerund/infinitive patterns accurately.",
+          "improve": "Replace repetitive \"work\" or \"study\" with collocations like transferable skills.",
+          "review": "Check 150–180 words and verb patterns after suggest, avoid, and decide."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Work and education",
+          "objective": "Learn 8–10 core B1→B2 expressions for work and education, focusing on collocations and word families.",
+          "canDo": "I can use core work and education collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new work and education collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about work and education.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Gerunds and infinitives",
+          "objective": "Master Gerunds and infinitives + Reported requests and commands through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Gerunds and infinitives accurately when discussing work and education.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Gerunds and infinitives",
+          "output": "Produce 3 original sentences demonstrating Gerunds and infinitives and Reported requests and commands.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: First-year mentoring at work and university",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on work and education.",
+          "canDo": "I can follow a 2.5-minute discussion about work and education and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Beyond exam grades: what employers and tutors value",
+          "objective": "Read a B1→B2 text on work and education, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on work and education.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Work and education",
+          "objective": "Complete the required 120-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 2 minutes on work and education using Gerunds and infinitives.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (120s)",
+          "output": "Speak for 2 minutes about helpful mentor feedback using gerunds, infinitives, and reported requests.",
+          "targetSeconds": 120,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Opinion piece: practical training vs. academic study",
+          "objective": "Plan, draft, and revise a 150–180 word text on work and education.",
+          "canDo": "I can write a well-structured 150–180 word response incorporating Gerunds and infinitives.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Opinion piece: practical training vs. academic study",
+          "output": "Write 150–180 words weighing practical apprenticeships against academic exams.",
+          "targetSeconds": 120,
+          "wordRange": [
+            150,
+            180
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 6 cards & error log",
+          "objective": "Consolidate Week 6 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "phase": "Month 2: Move toward B2",
+      "title": "Media, news and influence",
+      "summary": "Summarise press claims precisely with B2 reporting verbs (admit, deny, suggest, insist) and turn direct interview questions into reported questions.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Newsrooms, sources, bias and viral stories",
+      "lightGrammar": "Reported questions",
+      "grammar": [
+        {
+          "key": "reporting-verbs",
+          "role": "main",
+          "name": "Reporting verbs (admit, deny, suggest, insist)",
+          "explanation": "Move beyond \"say\" and \"tell\" by matching each reporting verb to its grammatical pattern: verb + -ing (admit, deny, suggest), verb + on + -ing (insist), or verb + to-infinitive (promise, refuse).",
+          "keyPoints": [
+            "Admit, deny, and suggest take -ing (or a that-clause): The editor denied altering the quote.",
+            "Insist takes on + -ing or that + clause: She insisted on checking both sources.",
+            "Warn and persuade require an object before the to-infinitive."
+          ],
+          "example": "The presenter denied exaggerating the figures and insisted on publishing the full dataset online.",
+          "items": [
+            {
+              "prompt": "The journalist admitted ___ an unverified headline too quickly.",
+              "options": [
+                "to share",
+                "sharing",
+                "share"
+              ],
+              "answer": "sharing",
+              "explanation": "\"Admit\" takes -ing or a that-clause.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The spokesperson insisted ___ reading the complete transcript before commenting.",
+              "options": [
+                "on",
+                "to",
+                "for"
+              ],
+              "answer": "on",
+              "explanation": "Insist pairs with the preposition \"on\" + -ing.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Several readers warned the site ___ confusing opinion columns with news reports.",
+              "options": [
+                "not",
+                "against",
+                "to not"
+              ],
+              "answer": "against",
+              "explanation": "\"Warn someone against + -ing\" is a natural B2 structure.",
+              "difficulty": 2
+            }
+          ]
+        },
+        {
+          "key": "reported-questions",
+          "role": "light",
+          "name": "Reported questions",
+          "explanation": "Report yes/no questions with if/whether and wh-questions with statement word order (no auxiliary do/did and no question mark).",
+          "keyPoints": [
+            "Use ask / wonder + if or whether for yes/no questions.",
+            "Keep subject before verb: She asked where the reporter had found the statistics.",
+            "Drop do/does/did and shift tenses back when the reporting verb is in the past."
+          ],
+          "example": "The host asked the editor whether readers still trusted local radio and how the newsroom checked viral clips.",
+          "items": [
+            {
+              "prompt": "The interviewer asked the author why ___ the article.",
+              "options": [
+                "had she written",
+                "she had written",
+                "did she write"
+              ],
+              "answer": "she had written",
+              "explanation": "Reported questions use statement word order (subject + verb).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Listeners asked ___ the podcast would release a follow-up episode.",
+              "options": [
+                "that",
+                "whether",
+                "what"
+              ],
+              "answer": "whether",
+              "explanation": "Yes/no reported questions require \"if\" or \"whether\".",
+              "difficulty": 1
+            },
+            {
+              "prompt": "He wanted to know how long the verification process usually ___.",
+              "options": [
+                "took",
+                "did take",
+                "takes it"
+              ],
+              "answer": "took",
+              "explanation": "Backshift present simple to past simple without \"did\".",
+              "difficulty": 2
+            }
+          ]
+        }
+      ],
+      "vocab": [
+        {
+          "term": "verify",
+          "pos": "verb",
+          "definition": "check carefully whether information or a source is accurate and true",
+          "example": "Reporters should verify every claim with at least two independent sources.",
+          "collocations": [
+            "verify a source",
+            "independently verify"
+          ],
+          "wordFamily": [
+            "verification",
+            "verified"
+          ],
+          "translation": "verificar",
+          "band": "B2",
+          "audioRef": "week-7/verify.mp3"
+        },
+        {
+          "term": "headline",
+          "pos": "noun",
+          "definition": "the title of a news story printed in large letters",
+          "example": "Dramatic headlines often oversimplify complicated economic reports.",
+          "collocations": [
+            "grab headlines",
+            "misleading headline"
+          ],
+          "wordFamily": [
+            "headline"
+          ],
+          "translation": "titular",
+          "band": "B1",
+          "audioRef": "week-7/headline.mp3"
+        },
+        {
+          "term": "biased",
+          "pos": "adjective",
+          "definition": "unfairly favouring one side or viewpoint over another",
+          "example": "Readers quickly lose trust when coverage feels obviously biased.",
+          "collocations": [
+            "heavily biased",
+            "politically biased"
+          ],
+          "wordFamily": [
+            "bias",
+            "unbiased"
+          ],
+          "translation": "sesgado",
+          "band": "B2",
+          "audioRef": "week-7/biased.mp3"
+        },
+        {
+          "term": "eyewitness",
+          "pos": "noun",
+          "definition": "a person who saw an event happen in person and can describe it",
+          "example": "The broadcast included an interview with an eyewitness at the harbour.",
+          "collocations": [
+            "eyewitness account",
+            "reliable eyewitness"
+          ],
+          "wordFamily": [
+            "witness"
+          ],
+          "translation": "testigo ocular",
+          "band": "B2",
+          "audioRef": "week-7/eyewitness.mp3"
+        },
+        {
+          "term": "sensationalise",
+          "pos": "verb",
+          "definition": "present a story as more shocking or dramatic than it really is",
+          "example": "Quality editors try not to sensationalise early medical studies.",
+          "collocations": [
+            "sensationalise a story",
+            "sensationalised reporting"
+          ],
+          "wordFamily": [
+            "sensational",
+            "sensationalism"
+          ],
+          "translation": "sensacionalizar",
+          "band": "B2",
+          "audioRef": "week-7/sensationalise.mp3"
+        },
+        {
+          "term": "reliable source",
+          "pos": "noun phrase",
+          "definition": "a person, document, or organisation whose facts you can trust",
+          "example": "Always look for a reliable source before repeating dramatic figures.",
+          "collocations": [
+            "cite a reliable source",
+            "cross-check reliable sources"
+          ],
+          "wordFamily": [
+            "rely",
+            "reliability"
+          ],
+          "translation": "fuente fiable",
+          "band": "B1",
+          "audioRef": "week-7/reliable-source.mp3"
+        },
+        {
+          "term": "retract",
+          "pos": "verb",
+          "definition": "officially withdraw a statement or article because it was wrong",
+          "example": "The magazine had to retract the claim after checking the public records.",
+          "collocations": [
+            "retract a statement",
+            "retract an article"
+          ],
+          "wordFamily": [
+            "retraction"
+          ],
+          "translation": "retractarse / retirar",
+          "band": "B2",
+          "audioRef": "week-7/retract.mp3"
+        },
+        {
+          "term": "echo chamber",
+          "pos": "noun phrase",
+          "definition": "an online space where people only hear views that reinforce their own beliefs",
+          "example": "Following journalists with different perspectives helps you step out of an echo chamber.",
+          "collocations": [
+            "online echo chamber",
+            "escape an echo chamber"
+          ],
+          "wordFamily": [
+            "echo"
+          ],
+          "translation": "cámara de eco",
+          "band": "B2",
+          "audioRef": "week-7/echo-chamber.mp3"
+        },
+        {
+          "term": "take with a pinch of salt",
+          "pos": "idiom",
+          "definition": "not completely believe something until you see stronger proof",
+          "example": "I always take anonymous product reviews with a pinch of salt.",
+          "collocations": [
+            "take claims with a pinch of salt"
+          ],
+          "wordFamily": [
+            "salt"
+          ],
+          "translation": "coger con pinzas",
+          "band": "B2",
+          "audioRef": "week-7/pinch-of-salt.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Inside a fact-checking desk",
+          "source": "Fluency Studio Media Podcast",
+          "accent": "British & Indian English",
+          "speaker_accents": [
+            {
+              "speaker": "Presenter",
+              "accent": "en-GB",
+              "label": "British English"
+            },
+            {
+              "speaker": "Ananya",
+              "accent": "en-IN",
+              "label": "Indian English"
+            }
+          ],
+          "seconds": 165,
+          "audioRef": "week-7/fact-checking-desk.mp3",
+          "audioStatus": "tts",
+          "body": "Presenter: When a dramatic video goes viral before breakfast, how does a small fact-checking team decide what is genuine? Ananya, you spent three years leading an investigative desk in Mumbai before moving to London. What happens in the first twenty minutes? Ananya: First, we slow down. Last month, a clip claimed a historic bridge had collapsed overnight. Several websites repeated the rumour immediately, though one local council denied any damage had occurred. Our team asked whether any eyewitnesses had posted clear photographs with local street signs, and we checked weather logs from that morning. Presenter: Did the original account admit making a mistake? Ananya: Not at first—they insisted on keeping the post up for clicks, even after engineers confirmed the footage came from an old film set in another region. Eventually, the platform added a warning label and the blog retracted its headline. Listeners asked how ordinary readers can avoid getting caught out. My rule is simple: pause for sixty seconds, check who benefits from your anger, and see whether two independent newsrooms confirm the same details.",
+          "questions": [
+            {
+              "prompt": "How did Ananya’s team prove the bridge footage was misleading?",
+              "options": [
+                "They deleted the blog’s account immediately",
+                "They checked eyewitness street details, weather logs, and the footage origin",
+                "They waited three weeks for a TV broadcast"
+              ],
+              "answer": "They checked eyewitness street details, weather logs, and the footage origin"
+            },
+            {
+              "prompt": "What first step does Ananya recommend to ordinary readers?",
+              "options": [
+                "Pause briefly and see if two independent outlets confirm the claim",
+                "Never read local news online",
+                "Share posts quickly so friends can check them"
+              ],
+              "answer": "Pause briefly and see if two independent outlets confirm the claim"
+            }
+          ]
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Why slow journalism is finding an audience again",
+          "source": "Fluency Studio Media Review",
+          "audioRef": "week-7/slow-journalism.mp3",
+          "audioStatus": "tts",
+          "body": "For much of the past decade, digital newsrooms raced to publish breaking updates faster than their rivals. Breaking alerts certainly help during emergencies, yet speed-first reporting carries a clear cost: nuances disappear, early rumours get repeated before anyone can verify them, and readers end up exhausted rather than informed. In response, a growing number of weekly newsletters, audio documentaries, and independent magazines have turned toward what editors call slow journalism. Instead of chasing every trending headline, journalists spend weeks interviewing eyewitnesses, checking public budgets, and testing claims against original data. When mistakes occur, transparent outlets admit getting a detail wrong and publish visible corrections rather than quietly editing a paragraph online. Readers appear willing to pay modestly for calmer reporting that respects their time and avoids sensationalising routine disagreements. As one editor put it recently, audiences do not want twenty breathless updates an hour; they want one trustworthy explanation they can still rely on next month. Choosing two or three balanced sources—including outlets outside your usual echo chamber—helps transform passive scrolling into genuinely critical reading. Digital tools have also made it far easier for everyday readers to verify basic claims themselves before reacting. Checking when an image first appeared online, reading past the headline to the original report, and comparing two outlets with different editorial traditions take less than three minutes. Teachers and community libraries increasingly run short workshops showing teenagers and older adults how headlines frame identical statistics in opposite ways. When readers ask \"Who collected this sample?\" or \"What important context is missing?\", sensationalised posts lose much of their power. Informed habits on the audience side reward journalists who invest time in accurate, unhurried reporting.",
+          "questions": [
+            {
+              "prompt": "What downside of speed-first reporting does the article highlight?",
+              "options": [
+                "Audiences refuse to read breaking alerts during emergencies",
+                "Rumours spread before verification and nuances get lost",
+                "Print newspapers become too expensive to deliver"
+              ],
+              "answer": "Rumours spread before verification and nuances get lost"
+            },
+            {
+              "prompt": "How do transparent slow-journalism outlets handle errors?",
+              "options": [
+                "They quietly delete the entire article",
+                "They admit mistakes openly and publish visible corrections",
+                "They blame social media algorithms"
+              ],
+              "answer": "They admit mistakes openly and publish visible corrections"
+            }
+          ]
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Evaluating a viral news story (2 min)",
+          "prompt": "Speak for 2 minutes about how you decide whether a surprising news story or social media claim is trustworthy. Report what someone once claimed or denied, and explain two steps you take to verify facts.",
+          "seconds": 120,
+          "phrases": [
+            "The headline claimed…",
+            "When I checked a reliable source…",
+            "I tend to take dramatic claims with a pinch of salt…"
+          ],
+          "linkers": [
+            "for instance",
+            "whereas",
+            "consequently"
+          ],
+          "terms": [
+            "verify",
+            "biased",
+            "reliable source",
+            "echo chamber"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Review: a news podcast, magazine, or media app",
+        "prompt": "Write a 150–180 word review of a news podcast, magazine, or media platform you use. Summarise what it covers, explain how balanced its reporting is, and recommend who would benefit from it.",
+        "format": "balanced review",
+        "wordMin": 150,
+        "wordMax": 180,
+        "outline": {
+          "analyze": "Balance description with clear evaluation criteria (accuracy, clarity, bias).",
+          "plan": "Introduction -> strengths -> one limitation -> clear recommendation.",
+          "draft": "Include at least one reporting verb (suggest, insist, admit) and varied linkers.",
+          "improve": "Swap vague adjectives (\"good\", \"interesting\") for precise terms (balanced, verify).",
+          "review": "Check 150–180 words and reported-question word order if used."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Media, news and influence",
+          "objective": "Learn 8–10 core B1→B2 expressions for media, news and influence, focusing on collocations and word families.",
+          "canDo": "I can use core media, news and influence collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new media, news and influence collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about media, news and influence.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Reporting verbs (admit, deny, suggest, insist)",
+          "objective": "Master Reporting verbs (admit, deny, suggest, insist) + Reported questions through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Reporting verbs (admit, deny, suggest, insist) accurately when discussing media, news and influence.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Reporting verbs (admit, deny, suggest, insist)",
+          "output": "Produce 3 original sentences demonstrating Reporting verbs (admit, deny, suggest, insist) and Reported questions.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Inside a fact-checking desk",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on media, news and influence.",
+          "canDo": "I can follow a 2.5-minute discussion about media, news and influence and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Why slow journalism is finding an audience again",
+          "objective": "Read a B1→B2 text on media, news and influence, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on media, news and influence.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Media, news and influence",
+          "objective": "Complete the required 120-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 2 minutes on media, news and influence using Reporting verbs (admit, deny, suggest, insist).",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (120s)",
+          "output": "Speak for 2 minutes on checking news reliability using reporting verbs and reported questions.",
+          "targetSeconds": 120,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Review: a news podcast, magazine, or media app",
+          "objective": "Plan, draft, and revise a 150–180 word text on media, news and influence.",
+          "canDo": "I can write a well-structured 150–180 word response incorporating Reporting verbs (admit, deny, suggest, insist).",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Review: a news podcast, magazine, or media app",
+          "output": "Write a 150–180 word balanced review of a media source or news podcast.",
+          "targetSeconds": 120,
+          "wordRange": [
+            150,
+            180
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 7 cards & error log",
+          "objective": "Consolidate Week 7 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "phase": "Month 2: Move toward B2",
+      "title": "Environment and sustainability",
+      "summary": "Reflect on past environmental choices with third and mixed conditionals, and express regrets or desired changes with wish / if only.",
+      "hours": 4,
+      "releaseStage": "live",
+      "vocabularyTopic": "Climate action, urban heat and sustainability",
+      "lightGrammar": "wish / if only",
+      "grammar": [
+        {
+          "key": "third-mixed-conditionals",
+          "name": "Conditionals 3 and mixed",
+          "explanation": "The third conditional imagines an unreal past; mixed conditionals connect an unreal past to a present result, or a present state to a past result.",
+          "keyPoints": [
+            "Third: If the city had invested earlier, the floods would not have been so severe.",
+            "Past → present: If I had studied planning, I would be working on this project now.",
+            "Present → past: If she were more patient, she would not have quit."
+          ],
+          "example": "If the council had built the drainage in 2015, the damage would not be costing us millions now.",
+          "items": [
+            {
+              "prompt": "If the city had invested earlier, the floods ___ so severe.",
+              "options": [
+                "would not be",
+                "would not have been",
+                "will not be"
+              ],
+              "answer": "would not have been",
+              "explanation": "Third conditional: had + past participle, would have + past participle.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "If I had studied planning, I ___ on this project now.",
+              "options": [
+                "would work",
+                "would be working",
+                "had worked"
+              ],
+              "answer": "would be working",
+              "explanation": "Mixed conditional: past cause with a present result.",
+              "difficulty": 3
+            },
+            {
+              "prompt": "Which sentence blames a past action for a present situation?",
+              "options": [
+                "If we had acted, the park would be open now.",
+                "If we act, the park will open.",
+                "If we were acting, the park would be open."
+              ],
+              "answer": "If we had acted, the park would be open now.",
+              "explanation": "Past perfect in the if-clause plus present result is the mixed pattern.",
+              "difficulty": 2
+            }
+          ],
+          "role": "main"
+        },
+        {
+          "key": "wish-regret",
+          "name": "wish / if only",
+          "explanation": "Use wish or if only with the past simple for a present regret, with the past perfect for a past regret, and with would to complain about someone else's behaviour.",
+          "keyPoints": [
+            "Present regret: I wish I lived closer to work.",
+            "Past regret: I wish we had started ten years ago.",
+            "Complaint: I wish the council would collect the bins on time."
+          ],
+          "example": "I wish the city had kept the old tram line; if only we could use it now.",
+          "items": [
+            {
+              "prompt": "I wish I ___ closer to work.",
+              "options": [
+                "live",
+                "lived",
+                "had lived"
+              ],
+              "answer": "lived",
+              "explanation": "A present regret takes the past simple after wish.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "I wish we ___ ten years ago.",
+              "options": [
+                "started",
+                "had started",
+                "would start"
+              ],
+              "answer": "had started",
+              "explanation": "A past regret takes the past perfect after wish.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "Which sentence complains about someone else's behaviour?",
+              "options": [
+                "I wish I had a bike.",
+                "I wish the council would fix the road.",
+                "If only I were taller."
+              ],
+              "answer": "I wish the council would fix the road.",
+              "explanation": "Wish + would expresses irritation about another person's action.",
+              "difficulty": 2
+            }
+          ],
+          "role": "light"
+        }
+      ],
+      "vocab": [
+        {
+          "term": "carbon footprint",
+          "pos": "noun",
+          "definition": "the amount of carbon dioxide your activity produces",
+          "example": "Flying less cut her carbon footprint in half.",
+          "collocations": [
+            "reduce your carbon footprint"
+          ],
+          "wordFamily": [
+            "carbon footprint"
+          ],
+          "translation": "huella de carbono",
+          "band": "B2",
+          "audioRef": "week-8/carbon-footprint.mp3"
+        },
+        {
+          "term": "renewable energy",
+          "pos": "noun",
+          "definition": "energy from sources that do not run out",
+          "example": "The island runs entirely on renewable energy.",
+          "collocations": [
+            "invest in renewable energy"
+          ],
+          "wordFamily": [
+            "renewable energy"
+          ],
+          "translation": "energía renovable",
+          "band": "B2",
+          "audioRef": "week-8/renewable-energy.mp3"
+        },
+        {
+          "term": "sustainable",
+          "pos": "adjective",
+          "definition": "able to continue without damaging resources",
+          "example": "We need a sustainable transport plan, not a short fix.",
+          "collocations": [
+            "a sustainable solution"
+          ],
+          "wordFamily": [
+            "sustainable"
+          ],
+          "translation": "sostenible",
+          "band": "B2",
+          "audioRef": "week-8/sustainable.mp3"
+        },
+        {
+          "term": "urban sprawl",
+          "pos": "noun",
+          "definition": "the uncontrolled spread of a city into the countryside",
+          "example": "Urban sprawl has swallowed the farmland around the city.",
+          "collocations": [
+            "limit urban sprawl"
+          ],
+          "wordFamily": [
+            "urban sprawl"
+          ],
+          "translation": "expansión urbana",
+          "band": "B2",
+          "audioRef": "week-8/urban-sprawl.mp3"
+        },
+        {
+          "term": "public transport network",
+          "pos": "noun",
+          "definition": "the system of buses, trains and trams people share",
+          "example": "The public transport network is cheap and reliable here.",
+          "collocations": [
+            "extend the public transport network"
+          ],
+          "wordFamily": [
+            "public transport network"
+          ],
+          "translation": "red de transporte público",
+          "band": "B2",
+          "audioRef": "week-8/public-transport-network.mp3"
+        },
+        {
+          "term": "green space",
+          "pos": "noun",
+          "definition": "parks and other open natural areas in a city",
+          "example": "Every district should have green space within ten minutes.",
+          "collocations": [
+            "protect green space"
+          ],
+          "wordFamily": [
+            "green space"
+          ],
+          "translation": "zona verde",
+          "band": "B2",
+          "audioRef": "week-8/green-space.mp3"
+        },
+        {
+          "term": "air quality",
+          "pos": "noun",
+          "definition": "how clean or polluted the air is",
+          "example": "Air quality improves when the schools close for summer.",
+          "collocations": [
+            "poor air quality"
+          ],
+          "wordFamily": [
+            "air quality"
+          ],
+          "translation": "calidad del aire",
+          "band": "B2",
+          "audioRef": "week-8/air-quality.mp3"
+        },
+        {
+          "term": "recycling scheme",
+          "pos": "noun",
+          "definition": "an organised system for reusing waste",
+          "example": "The new recycling scheme covers food waste.",
+          "collocations": [
+            "introduce a recycling scheme"
+          ],
+          "wordFamily": [
+            "recycling scheme"
+          ],
+          "translation": "programa de reciclaje",
+          "band": "B2",
+          "audioRef": "week-8/recycling-scheme.mp3"
+        },
+        {
+          "term": "climate target",
+          "pos": "noun",
+          "definition": "a goal for reducing emissions by a set date",
+          "example": "The city missed its climate target by two years.",
+          "collocations": [
+            "meet a climate target"
+          ],
+          "wordFamily": [
+            "climate target"
+          ],
+          "translation": "objetivo climático",
+          "band": "B2",
+          "audioRef": "week-8/climate-target.mp3"
+        }
+      ],
+      "inputs": [
+        {
+          "kind": "listening",
+          "lesson": 3,
+          "title": "Documentary excerpt: the city that cooled itself",
+          "source": "Studio original — documentary",
+          "accent": "British",
+          "seconds": 165,
+          "body": "In 2019 this square was a car park. Summer temperatures here were four degrees higher than in the park two streets away, an effect researchers call the urban heat island. The city tried something unfashionable: it planted trees, removed the asphalt and put a small fountain where the delivery vans used to park. Four years later, the temperature difference has almost disappeared. The scheme cost less than one kilometre of road. What surprised the engineers was not the cooling, but how quickly residents started using the space. Residents interviewed on the street said they wished earlier planners had protected older trees instead of paving over parks in the nineties. If those green corridors had survived, summer nights would be noticeably cooler right now. Even so, local volunteers remain practical: small shaded pocket parks and reliable trams prove that towns can adapt steadily when citizens and engineers plan together.",
+          "questions": [
+            {
+              "prompt": "What was the site before 2019?",
+              "options": [
+                "A park",
+                "A car park",
+                "A fountain"
+              ],
+              "answer": "A car park"
+            },
+            {
+              "prompt": "What surprised the engineers most?",
+              "options": [
+                "The cost",
+                "How quickly residents used the space",
+                "The temperature drop"
+              ],
+              "answer": "How quickly residents used the space"
+            }
+          ],
+          "speaker_accents": [
+            {
+              "speaker": "NARRATOR",
+              "accent": "en-GB",
+              "label": "British"
+            }
+          ],
+          "audioRef": "module-5/documentary-excerpt-the-city-that-cooled-itself.mp3",
+          "audioStatus": "actor_pending"
+        },
+        {
+          "kind": "reading",
+          "lesson": 4,
+          "title": "Problem, solution: the heat in our streets",
+          "source": "Studio original",
+          "body": "Cities are hotter than the countryside around them, and the difference is not evenly spread. Districts with fewer trees and more asphalt can be five degrees warmer than wealthier, greener neighbours, which means the people least able to afford air conditioning are the ones who need it most. The solutions are unglamorous and well understood: plant mature trees rather than saplings, replace dark surfaces with reflective ones, and open air-conditioned public buildings during heatwaves. The obstacle is rarely knowledge. It is the budget cycle, which rewards visible new projects over invisible maintenance. Look closely at how a few mid-sized cities turned summer complaints into lasting redesigns. Instead of waiting for expensive megaprojects, councils started by painting dark asphalt roofs pale white, planting native street trees outside bus shelters, and converting single car lanes into shaded cycle corridors. Within three summers, ground temperatures dropped and independent cafés reported higher afternoon footfall because people could actually sit outside comfortably. If local authorities had ignored those early pilot schemes, energy bills for air conditioning would now be climbing even faster. Every small adaptation teaches residents what a calmer, greener street feels like—turning abstract climate targets into everyday comfort. Just as importantly, community involvement ensures that green redesigns last beyond a single election cycle. When residents help decide where shaded benches, bike racks, and rainwater gardens go, neighbourhoods protect those spaces as shared assets rather than viewing them as imposed rules. Schoolchildren help water newly planted saplings along walking routes, while local shopkeepers notice calmer streets invite families to linger longer. Critics once worried that removing roadside parking spaces would reduce trade, yet surveys across several European towns showed retail footfall either held steady or rose once crossings felt safer and summer shade improved.",
+          "questions": [
+            {
+              "prompt": "Who suffers most from urban heat?",
+              "options": [
+                "The wealthiest districts",
+                "Districts with fewer trees and less money",
+                "People in the countryside"
+              ],
+              "answer": "Districts with fewer trees and less money"
+            },
+            {
+              "prompt": "What does the writer say is the real obstacle?",
+              "options": [
+                "Lack of knowledge",
+                "Budget priorities",
+                "Public opposition"
+              ],
+              "answer": "Budget priorities"
+            }
+          ],
+          "audioRef": "module-5/problem-solution-the-heat-in-our-streets.mp3",
+          "audioStatus": "tts"
+        }
+      ],
+      "speaking": [
+        {
+          "kind": "prompt_card",
+          "title": "Local environmental change (2 min)",
+          "prompt": "Identify one environmental problem in your area and propose a realistic solution. Explain the cost, the benefit and the obstacle. Two minutes.",
+          "seconds": 120,
+          "phrases": [
+            "The problem in my area is...",
+            "One solution would be...",
+            "The main obstacle is..."
+          ],
+          "linkers": [
+            "firstly",
+            "as a result",
+            "however"
+          ],
+          "terms": [
+            "green space",
+            "air quality",
+            "take action"
+          ]
+        }
+      ],
+      "writing": {
+        "title": "Problem-solution report: a local issue",
+        "prompt": "Write a 180–200-word report for a residents' association about one local environmental problem. Describe the problem, analyse two causes, propose two solutions and recommend one.",
+        "format": "problem-solution report",
+        "wordMin": 150,
+        "wordMax": 180,
+        "outline": {
+          "analyze": "Purpose: inform and recommend. Audience: residents and local officials. Register: formal, impersonal.",
+          "plan": "Problem → causes → solutions → recommendation.",
+          "draft": "Use the passive, one third or mixed conditional, and linkers of cause and consequence.",
+          "improve": "Replace informal phrasing with impersonal constructions; add figures or comparisons.",
+          "review": "Check that each solution answers one of the causes you described."
+        }
+      },
+      "lessons": [
+        {
+          "dayOfWeek": "Mon",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Vocabulary: Environment and sustainability",
+          "objective": "Learn 8–10 core B1→B2 expressions for environment and sustainability, focusing on collocations and word families.",
+          "canDo": "I can use core environment and sustainability collocations accurately in short personal examples.",
+          "skill": "vocabulary",
+          "input": "reading",
+          "outputTitle": "Use 4 new environment and sustainability collocations",
+          "output": "Write or record 4 short sentences using this week's target collocations about environment and sustainability.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Tue",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Grammar: Conditionals 3 and mixed",
+          "objective": "Master Conditionals 3 and mixed + wish / if only through guided contrast examples and instant-feedback drills.",
+          "canDo": "I can apply Conditionals 3 and mixed accurately when discussing environment and sustainability.",
+          "skill": "grammar",
+          "input": "reading",
+          "outputTitle": "Apply Conditionals 3 and mixed",
+          "output": "Produce 3 original sentences demonstrating Conditionals 3 and mixed and wish / if only.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Wed",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Listening: Documentary excerpt: the city that cooled itself",
+          "objective": "Listen for main ideas, speaker attitude, and detail in a multi-accent track on environment and sustainability.",
+          "canDo": "I can follow a 2.5-minute discussion about environment and sustainability and summarise key points.",
+          "skill": "listening",
+          "input": "listening",
+          "outputTitle": "Summarise what you heard",
+          "output": "Record or write a concise 2–3 sentence summary of the speaker's main point.",
+          "targetSeconds": 90,
+          "wordRange": [
+            60,
+            100
+          ]
+        },
+        {
+          "dayOfWeek": "Thu",
+          "requirement": "either_wed_thu",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Reading: Problem, solution: the heat in our streets",
+          "objective": "Read a B1→B2 text on environment and sustainability, tracking argument structure and implicit detail.",
+          "canDo": "I can identify the author's main claim and supporting evidence in an article on environment and sustainability.",
+          "skill": "reading",
+          "input": "reading",
+          "outputTitle": "Respond to the text",
+          "output": "State whether you agree with the article's main conclusion and give one supporting reason.",
+          "targetSeconds": 90,
+          "wordRange": [
+            70,
+            110
+          ]
+        },
+        {
+          "dayOfWeek": "Fri",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 15,
+          "title": "Speaking (Required): Environment and sustainability",
+          "objective": "Complete the required 120-second speaking task and self-check prosody in the Shadowing Lab.",
+          "canDo": "I can speak coherently for 2 minutes on environment and sustainability using Conditionals 3 and mixed.",
+          "skill": "speaking",
+          "input": "listening",
+          "outputTitle": "Recorded speaking task (120s)",
+          "output": "Speak for 2 minutes on an environmental problem and solution using third/mixed conditionals and wish.",
+          "targetSeconds": 120,
+          "wordRange": [
+            80,
+            130
+          ]
+        },
+        {
+          "dayOfWeek": "Sat",
+          "requirement": "required",
+          "outputRequired": true,
+          "minutes": 30,
+          "title": "Writing (Required): Problem-solution report: a local issue",
+          "objective": "Plan, draft, and revise a 150–180 word text on environment and sustainability.",
+          "canDo": "I can write a well-structured 150–180 word response incorporating Conditionals 3 and mixed.",
+          "skill": "writing",
+          "input": "reading",
+          "outputTitle": "Problem-solution report: a local issue",
+          "output": "Write a 180–200-word report for a residents' association about one local environmental problem. Describe the problem, analyse two causes, propose two solutions and recommend one.",
+          "targetSeconds": 120,
+          "wordRange": [
+            150,
+            180
+          ]
+        },
+        {
+          "dayOfWeek": "Sun",
+          "requirement": "optional",
+          "outputRequired": false,
+          "minutes": 15,
+          "title": "Review: Week 8 cards & error log",
+          "objective": "Consolidate Week 8 vocabulary via spaced repetition and rewrite your week's recurring error patterns.",
+          "canDo": "I can recall this week's target vocabulary and self-correct my top grammar or collocation slips.",
+          "skill": "review",
+          "input": "reading",
+          "outputTitle": "Error-log self-correction",
+          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "targetSeconds": 60,
+          "wordRange": [
+            40,
+            80
+          ]
+        }
+      ]
+    }
+  ]
+}

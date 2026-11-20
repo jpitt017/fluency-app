@@ -12,6 +12,7 @@ import {
   Menu,
   Mic,
   RotateCcw,
+  Stethoscope,
   X,
 } from 'lucide-react';
 import type { HeaderSummary } from '@/lib/b1b2/types';
@@ -30,6 +31,7 @@ const BAND_LABEL: Record<string, string> = {
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/curriculum', label: 'Curriculum', icon: BookOpen },
+  { href: '/clinic', label: 'Clinic', icon: Stethoscope },
   { href: '/vocabulary', label: 'Vocabulary', icon: Layers },
   { href: '/review', label: 'Review', icon: RotateCcw },
   { href: '/checkpoints', label: 'Checkpoints', icon: Award },
@@ -107,6 +109,14 @@ export default function AppHeader({ summary }: { summary: HeaderSummary }) {
             </>
           ) : summary.signedIn ? (
             <>
+              {(summary.role === 'teacher' || summary.role === 'admin') && (
+                <Link
+                  href="/teacher"
+                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-100"
+                >
+                  Teacher
+                </Link>
+              )}
               <Link
                 href="/dashboard"
                 className="hidden items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs shadow-2xs transition hover:border-indigo-300 lg:flex"
@@ -114,7 +124,7 @@ export default function AppHeader({ summary }: { summary: HeaderSummary }) {
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-indigo-700">{BAND_LABEL[summary.band] ?? 'B1 Low'}</span>
                 <span aria-hidden className="text-stone-300">·</span>
-                <span className="font-medium text-stone-700">{summary.lessonsCompleted}/64</span>
+                <span className="font-medium text-stone-700">{summary.lessonsCompleted}/112</span>
                 <span aria-hidden className="text-stone-300">·</span>
                 <span className="font-medium text-amber-700">{summary.streakDays}d</span>
               </Link>

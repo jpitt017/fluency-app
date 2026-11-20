@@ -28,7 +28,7 @@ const BLOCK_META: Record<BlockKind, { label: string; accent: string; icon: typeo
 
 export default function LessonRunner({ payload, signedIn }: { payload: LessonPayload; signedIn: boolean }) {
   const router = useRouter();
-  const { lesson, module, blocks, items, progress } = payload;
+  const { lesson, module, blocks, items, progress, personal_error_log: personalErrorLog = [] } = payload;
 
   const [practiceScore, setPracticeScore] = useState({
     correct: progress?.practice_correct ?? 0,
@@ -41,6 +41,7 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
   const [error, setError] = useState('');
 
   const orderedBlocks = useMemo(() => [...blocks].sort((a, b) => a.sort_order - b.sort_order), [blocks]);
+  const outputGateBlocked = Boolean(lesson.output_required) && !outputSubmitted;
 
   async function markComplete() {
     setSaving(true);
@@ -109,7 +110,13 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
                 />
               )}
 
-              {block.block_kind === 'input' && <InputSection content={block.content as InputContent} payload={payload} />}
+              {block.block_kind === 'input' && (
+                <InputSection
+                  content={block.content as InputContent}
+                  payload={payload}
+                  personalErrorLog={personalErrorLog}
+                />
+              )}
 
               {block.block_kind === 'practice' && (
                 <PracticeSection
@@ -143,6 +150,7 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
                   lessonNumber={lesson.lesson_number}
                   practiceScore={practiceScore}
                   outputSubmitted={outputSubmitted}
+                  outputGateBlocked={outputGateBlocked}
                   xpReward={lesson.xp_reward}
                   onComplete={markComplete}
                 />
@@ -159,7 +167,7 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
       )}
 
       <p className="text-center text-xs text-stone-500">
-        Module {module.number} · {module.title} · lesson {lesson.module_lesson_number} of 8
+        Week {module.week_number ?? module.number} · {module.title} · {lesson.day_of_week ?? `Day ${lesson.module_lesson_number}`} ({lesson.module_lesson_number} of 7)
       </p>
     </div>
   );
@@ -181,12 +189,66 @@ function WarmUpSection({ content, lessonNumber, signedIn }: { content: WarmUpCon
   );
 }
 
-function InputSection({ content, payload }: { content: InputContent; payload: LessonPayload }) {
+function InputSection({
+  content,
+  payload,
+  personalErrorLog = [],
+}: {
+  content: InputContent;
+  payload: LessonPayload;
+  personalErrorLog?: LessonPayload['personal_error_log'];
+}) {
   const input = payload.input;
+  const isWeek16 = (payload.module.week_number ?? payload.module.number) === 16;
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-stone-700">{content.summary}</p>
+
+      {isWeek16 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-amber-900">
+              Week 16 Personal Error-Log Targets
+            </h3>
+            <div className="flex gap-3 text-xs font-semibold">
+              <Link href="/clinic" className="text-indigo-700 hover:underline">
+                Grammar Clinic →
+              </Link>
+              <Link href="/review" className="text-indigo-700 hover:underline">
+                Full review deck →
+              </Link>
+            </div>
+          </div>
+          {personalErrorLog && personalErrorLog.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {personalErrorLog.map((item) => (
+                <li key={item.id} className="rounded-lg bg-white p-3 text-xs ring-1 ring-amber-200/80">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+                      {item.category.replace(/_/g, ' ')} · {item.occurrence_count}×
+                    </span>
+                    <span className="text-[11px] font-semibold text-stone-500">
+                      {item.mastered ? 'Mastered' : 'Needs repair'}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-rose-700 line-through">{item.incorrect_sentence}</p>
+                  <p className="mt-0.5 font-semibold text-emerald-800">{item.target_sentence}</p>
+                  {item.explanation && <p className="mt-1 text-stone-600">{item.explanation}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-xs text-stone-600">
+              Your Week 16 grammar focus automatically pulls your top recurring speaking and writing mistakes once logged. Practise B1 basics anytime in the{' '}
+              <Link href="/clinic" className="font-semibold text-indigo-700 hover:underline">
+                Grammar Clinic
+              </Link>
+              .
+            </p>
+          )}
+        </div>
+      )}
 
       {input && <ListeningInputCard input={input} />}
 
@@ -310,6 +372,7 @@ function FeedbackSection({
   lessonNumber,
   practiceScore,
   outputSubmitted,
+  outputGateBlocked,
   xpReward,
   onComplete,
 }: {
@@ -322,6 +385,7 @@ function FeedbackSection({
   lessonNumber: number;
   practiceScore: { correct: number; total: number };
   outputSubmitted: boolean;
+  outputGateBlocked: boolean;
   xpReward: number;
   onComplete: () => void;
 }) {
@@ -364,18 +428,23 @@ function FeedbackSection({
         <p className="text-xs text-stone-600">
           Practice score {practiceScore.correct}/{practiceScore.total || '—'} · Output {outputSubmitted ? 'evaluated' : 'not evaluated yet'}
         </p>
+        {outputGateBlocked && !completed && (
+          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
+            Output before progress: this is a required speaking or writing session. Submit your evaluated output in Block 4 above before marking this session complete.
+          </p>
+        )}
         {completed ? (
           <p className="mt-2 text-sm font-semibold text-emerald-800">
-            Lesson complete — {xpReward} XP banked. Continue to the next lesson.
+            Session complete — {xpReward} XP banked. Continue to the next session.
           </p>
         ) : signedIn ? (
           <button
             type="button"
             onClick={onComplete}
-            disabled={saving}
+            disabled={saving || outputGateBlocked}
             className="mt-3 rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:bg-stone-300"
           >
-            {saving ? 'Saving…' : 'Mark lesson complete'}
+            {saving ? 'Saving…' : 'Mark session complete'}
           </button>
         ) : (
           <Link

@@ -7,15 +7,15 @@ import type { WeeklyReportRow } from '@/lib/b1b2/types';
 
 const PACE_OPTIONS = [
   { hours: 3, label: '3h / wk', hint: '~21 wks total' },
-  { hours: 5, label: '5h / wk', hint: '~13 wks total' },
-  { hours: 8, label: '8h / wk', hint: '8 wks total' },
-  { hours: 10, label: '10h / wk', hint: '~6.5 wks total' },
-  { hours: 12, label: '12h / wk', hint: '~5.5 wks total' },
+  { hours: 4, label: '4h / wk', hint: '16 wks standard' },
+  { hours: 5, label: '5h / wk', hint: '~12.5 wks total' },
+  { hours: 8, label: '8h / wk', hint: '~8 wks intensive' },
+  { hours: 10, label: '10h / wk', hint: '~6.5 wks sprint' },
 ] as const;
 
 export function WeeklyPaceSelector({
   currentHours,
-  remainingLessons = 64,
+  remainingLessons = 112,
 }: {
   currentHours: number;
   remainingLessons?: number;
@@ -25,7 +25,8 @@ export function WeeklyPaceSelector({
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
 
-  const weeksRemaining = Math.max(0, remainingLessons / Math.max(1, hours));
+  const remainingHours = remainingLessons * (63 / 112);
+  const weeksRemaining = Math.max(0, remainingHours / Math.max(1, hours));
   const dailyMinutes = Math.round((hours * 60) / 7);
 
   async function selectHours(nextHours: number) {

@@ -12,6 +12,7 @@ export const VocabItemSchema = z.object({
   definition: z.string().trim().min(5),
   example: z.string().trim().min(8),
   collocations: z.array(z.string().trim().min(2)).min(1, 'Each vocabulary item needs at least one collocation'),
+  wordFamily: z.array(z.string().trim().min(2)).optional(),
   translation: z.string().trim().min(1),
   ipa: z.string().trim().optional(),
   band: z.enum(['B1', 'B2']).optional(),
@@ -33,6 +34,7 @@ export const GrammarItemSchema = z
 
 export const GrammarPointSchema = z.object({
   key: z.string().trim().regex(/^[a-z0-9-]+$/),
+  role: z.enum(['main', 'light']).default('main'),
   name: z.string().trim().min(3),
   explanation: z.string().trim().min(15),
   keyPoints: z.array(z.string().trim().min(5)).min(1),
@@ -53,7 +55,7 @@ export const InputQuestionSchema = z
 export const ContentInputSchema = z
   .object({
     kind: z.enum(['listening', 'reading']),
-    lesson: z.number().int().min(1).max(8),
+    lesson: z.number().int().min(1).max(7),
     title: z.string().trim().min(3),
     source: z.string().trim().min(3),
     accent: z.string().trim().optional(),
@@ -124,6 +126,10 @@ export const WritingTaskSchema = z
   });
 
 export const LessonTemplateSchema = z.object({
+  dayOfWeek: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
+  requirement: z.enum(['required', 'either_wed_thu', 'optional']),
+  outputRequired: z.boolean().default(false),
+  minutes: z.number().int().min(10).max(45),
   title: z.string().trim().min(4),
   objective: z.string().trim().min(10),
   canDo: z.string().trim().min(10),
@@ -137,113 +143,116 @@ export const LessonTemplateSchema = z.object({
 
 export const ModuleSchema = z
   .object({
-    number: z.number().int().min(1).max(8),
+    number: z.number().int().min(1).max(16),
+    phase: z.string().trim().min(5).optional(),
     title: z.string().trim().min(3),
     summary: z.string().trim().min(15),
     hours: z.number().int().min(1).max(20),
     releaseStage: z.enum(['live', 'beta', 'draft']).default('live'),
     vocabularyTopic: z.string().trim().min(3),
-    grammar: z.array(GrammarPointSchema).length(2),
-    vocab: z.array(VocabItemSchema).min(8).max(16),
+    lightGrammar: z.string().trim().nullable().optional(),
+    grammar: z.array(GrammarPointSchema).min(1).max(2),
+    vocab: z.array(VocabItemSchema).min(8).max(12),
     inputs: z.array(ContentInputSchema).min(2),
-    speaking: z.array(SpeakingTaskSchema).length(3),
+    speaking: z.array(SpeakingTaskSchema).min(1).max(3),
     writing: WritingTaskSchema,
-    lessons: z.array(LessonTemplateSchema).length(8),
+    skillMix: z.record(z.string(), z.number().min(0).max(1)).optional(),
+    lessons: z.array(LessonTemplateSchema).length(7),
   })
   .superRefine((mod, ctx) => {
-    const hasListening = mod.inputs.some((i) => i.kind === 'listening');
-    const hasReading = mod.inputs.some((i) => i.kind === 'reading');
-    if (!hasListening || !hasReading) {
+    const terms = new Set(mod.vocab.map((v) => v.term.toLowerCase()));
+    if (terms.size !== mod.vocab.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Module ${mod.number} must include at least one listening and one reading input`,
+        message: `Week ${mod.number} contains duplicate vocabulary terms`,
       });
     }
-
-    const terms = new Set<string>();
-    for (const v of mod.vocab) {
-      const key = v.term.toLowerCase();
-      if (terms.has(key)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Module ${mod.number} has duplicate vocab term "${v.term}"`,
-        });
-      }
-      terms.add(key);
+    const listeningInputs = mod.inputs.filter((i) => i.kind === 'listening');
+    const readingInputs = mod.inputs.filter((i) => i.kind === 'reading');
+    if (listeningInputs.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Week ${mod.number} needs at least 1 listening input`,
+      });
+    }
+    if (readingInputs.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Week ${mod.number} needs at least 1 reading input`,
+      });
+    }
+    const days = mod.lessons.map((l) => l.dayOfWeek);
+    if (days.join(',') !== 'Mon,Tue,Wed,Thu,Fri,Sat,Sun') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Week ${mod.number} lessons must be ordered Mon,Tue,Wed,Thu,Fri,Sat,Sun`,
+      });
     }
   });
 
 export const ModulesDocSchema = z.object({
-  course_slug: z.literal('english-b1-b2'),
+  course_slug: z.string().trim().min(1),
   modules: z.array(ModuleSchema).min(1),
 });
 
 export const CourseDocSchema = z.object({
-  course_slug: z.literal('english-b1-b2'),
   course: z.object({
-    slug: z.literal('english-b1-b2'),
-    title: z.string().trim().min(3),
+    slug: z.string().trim().min(1),
+    title: z.string().trim().min(5),
     subtitle: z.string().trim().min(10),
     description: z.string().trim().min(20),
-    level_from: z.literal('B1'),
-    level_to: z.literal('B2'),
-    total_hours: z.number().int().positive(),
+    cefr_from: z.string().trim().min(2),
+    cefr_to: z.string().trim().min(2),
+    total_hours: z.number().int().min(40),
+    min_hours: z.number().int().min(30).optional(),
+    duration_weeks: z.number().int().min(16).max(16).default(16),
     weekly_hours: z.number().positive(),
-    duration_weeks: z.number().int().positive(),
     daily_minutes_min: z.number().int().positive(),
     daily_minutes_max: z.number().int().positive(),
+    live_lessons_per_week: z
+      .object({
+        count: z.number().int().min(1),
+        minutes: z.array(z.number().int().positive()),
+      })
+      .optional(),
+    positioning: z.string().trim().min(10).optional(),
+    outcomes: z.array(z.string().trim().min(10)).min(4),
     daily_flow: z
       .array(
         z.object({
-          block: z.string().trim().min(1),
+          day: z.string().trim().optional(),
+          step: z.number().int().min(1).max(7),
+          kind: z.string().trim().min(2),
+          label: z.string().trim().min(2),
           minutes: z.number().int().positive(),
-          label: z.string().trim().min(1),
-          description: z.string().trim().min(5),
+          requirement: z.enum(['required', 'either_wed_thu', 'optional']).optional(),
+          description: z.string().trim().min(10),
         }),
       )
-      .length(5),
-    skill_balance: z
-      .array(
-        z.object({
-          skill: z.string().trim().min(1),
-          hours: z.number().positive(),
-        }),
-      )
-      .min(6),
+      .length(7),
   }),
   checkpoints: z
     .array(
       z.object({
+        module: z.number().int().min(1).max(16),
         code: z.string().trim().min(3),
-        module: z.number().int().min(1).max(8),
         title: z.string().trim().min(3),
         timing: z.string().trim().min(3),
         description: z.string().trim().min(10),
         minutes: z.number().int().positive(),
-        skills: z.array(z.string().trim().min(2)).min(1),
-        tasks: z
-          .array(
-            z.object({
-              kind: z.string().trim().min(2),
-              title: z.string().trim().min(2),
-              detail: z.string().trim().min(5),
-              minutes: z.number().int().positive(),
-            }),
-          )
-          .min(2),
+        skills: z.array(z.string().trim().min(2)).min(2),
+        tasks: z.array(z.string().trim().min(5)).min(2),
       }),
     )
-    .min(4),
-  badges: z
-    .array(
-      z.object({
-        code: z.string().trim().min(2),
-        title: z.string().trim().min(2),
-        icon: z.string().trim().min(1),
-        xp: z.number().int().positive(),
-        description: z.string().trim().min(5),
-        criteria: z.record(z.string(), z.unknown()),
-      }),
-    )
-    .min(1),
+    .length(4),
+  badges: z.array(
+    z.object({
+      code: z.string().trim().min(2),
+      title: z.string().trim().min(2),
+      description: z.string().trim().min(5),
+      icon: z.string().trim().min(1),
+      xp: z.number().int().nonnegative(),
+      criteria: z.record(z.string(), z.unknown()),
+    }),
+  ),
 });

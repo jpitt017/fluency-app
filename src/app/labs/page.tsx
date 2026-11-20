@@ -30,14 +30,14 @@ export default async function LabsPage() {
               Speaking, Writing & Role-Play Labs
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-stone-600">
-              Free-practice AI coaching alongside your 64-lesson curriculum: structured writing evaluation, speech transcription and rubric scoring, and interactive conversation practice.
+              Free-practice AI coaching alongside your 16-week (112-session) curriculum: structured writing evaluation, speech transcription and content/grammar scoring, and interactive conversation practice.
             </p>
           </div>
           <Link
             href="/curriculum"
             className="shrink-0 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-100"
           >
-            Browse 64-lesson curriculum →
+            Browse 16-week curriculum →
           </Link>
         </div>
       </header>
