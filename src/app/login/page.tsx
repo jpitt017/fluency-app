@@ -7,6 +7,15 @@ import { createClient } from '@/utils/supabase/client';
 
 type PendingAction = 'auth' | 'magic' | 'reset' | null;
 
+function formatAuthError(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : fallback;
+  const lower = raw.toLowerCase();
+  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit')) {
+    return 'Email sending limit reached (Supabase default allows 2 emails/hour without custom SMTP). Sign in with your password above, or wait before requesting another link.';
+  }
+  return raw;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
@@ -69,7 +78,7 @@ function LoginForm() {
       if (otpError) throw otpError;
       setMessage('Check your email for a one-time sign-in link.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to send a sign-in link.');
+      setError(formatAuthError(err, 'Unable to send a sign-in link.'));
     } finally {
       setPendingAction(null);
     }
@@ -96,7 +105,7 @@ function LoginForm() {
       if (resetError) throw resetError;
       setMessage('If an account exists for that email, a password-reset link will be sent.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to send a password-reset email.');
+      setError(formatAuthError(err, 'Unable to send a password-reset email.'));
     } finally {
       setPendingAction(null);
     }
@@ -165,7 +174,7 @@ function LoginForm() {
         window.location.assign(safeNext);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An unexpected authentication error occurred.');
+      setError(formatAuthError(err, 'An unexpected authentication error occurred.'));
     } finally {
       setPendingAction(null);
     }
@@ -178,7 +187,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border border-stone-200/90 bg-white p-8 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)]">
+    <div className="mx-auto w-full max-w-md rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)] sm:p-8">
       <div className="mb-7 text-center">
         <span className="inline-flex items-center rounded-full border border-indigo-200/80 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-indigo-700">
           English B1 → B2 · Fluency Studio
@@ -348,7 +357,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-[calc(100vh-140px)] items-center justify-center px-4 py-10">
+    <main className="flex min-h-[calc(100vh-140px)] items-start justify-center px-4 py-6 sm:items-center sm:py-10">
       <Suspense fallback={<div className="mx-auto h-80 w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8" />}>
         <LoginForm />
       </Suspense>
