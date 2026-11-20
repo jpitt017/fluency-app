@@ -289,3 +289,66 @@ export interface HeaderSummary {
   lessonsCompleted: number;
 }
 
+export interface VocabDeckSummary {
+  id: string;
+  slug: string;
+  title: string;
+  topic: string;
+  description: string;
+  daily_target: number;
+  module_number: number | null;
+  items: {
+    id: string;
+    term: string;
+    part_of_speech: string;
+    ipa: string | null;
+    definition: string;
+    example: string;
+    collocations: string[];
+    translation_es: string | null;
+    band: string;
+  }[];
+}
+
+export interface WeeklyReportRow {
+  id: string;
+  week_start: string;
+  study_minutes: number;
+  words_learned: number;
+  recordings: number;
+  writing_tasks: number;
+  weakest_skill: SkillArea | null;
+  payload: Record<string, unknown>;
+}
+
+export interface CheckpointDetail {
+  id: string;
+  code: string;
+  title: string;
+  timing_label: string;
+  description: string;
+  duration_minutes: number;
+  skills: SkillArea[];
+  tasks: { kind: string; title: string; detail: string; minutes: number }[];
+  module: {
+    id: string;
+    module_number: number;
+    title: string;
+    summary: string;
+    grammar_focus: string[];
+    vocabulary_topic: string;
+  } | null;
+  inputs: ContentInput[];
+  practiceItems: PracticeItem[];
+  speakingTask: SpeakingTask | null;
+  writingTask: WritingTask | null;
+  latestAttempt: {
+    id: string;
+    status: string;
+    scores: Record<string, unknown>;
+    result: Record<string, unknown>;
+    completed_at: string | null;
+  } | null;
+}
+
+
