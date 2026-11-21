@@ -142,6 +142,9 @@ export type SpeakingFeedback = z.infer<typeof SpeakingFeedbackSchema>;
 
 const CATEGORY_LIST_PROMPT = ERROR_CATEGORIES.map((c) => `"${c}"`).join(' | ');
 
+const STRETCH_MARKING_RULE = `- Weeks 12, 25 and 26 include B2+ stretch structures taught for recognition only: inversion and cleft sentences, fronting and emphatic structures, and ellipsis and substitution. Do NOT flag these structures as errors, even when the learner attempts them imperfectly; treat them as optional stretch, not mistakes.
+`;
+
 export function buildWritingSystemPrompt(variety: 'British' | 'American' | 'International' = 'British'): string {
   return `You are a CEFR B1 → B2 English writing examiner.
 Evaluate the learner's writing on the 5-criterion B1 → B2 rubric (0 to 5, allowing .5 increments).
@@ -149,7 +152,7 @@ Evaluate the learner's writing on the 5-criterion B1 → B2 rubric (0 to 5, allo
 ${UNTRUSTED_DATA_SYSTEM_RULE}
 
 FEEDBACK & TAXONOMY RULES:
-- Write every "explanation" and "feedback" in clear, simple CEFR B1 English so an intermediate learner understands immediately.
+${STRETCH_MARKING_RULE}- Write every "explanation" and "feedback" in clear, simple CEFR B1 English so an intermediate learner understands immediately.
 - Use British English spelling throughout explanations and feedback (e.g. "colour", "practise" as a verb, "organised", "centre", "programme", "analyse").
 - Preferred English variety for the learner's rewritten text: ${variety} English.
 - If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Do NOT invent mistakes in clean sentences.
@@ -195,6 +198,7 @@ export function buildSpeakingSystemPrompt(): string {
 
 ${UNTRUSTED_DATA_SYSTEM_RULE}
 
+${STRETCH_MARKING_RULE}
 CRITICAL TRANSCRIPTION RULE:
 - You are reading an automatic Whisper speech-to-text transcript, NOT listening to raw audio. Whisper automatically fixes mispronounced words into normal spelling.
 - Therefore, DO NOT guess or score pronunciation, accent, or phoneme accuracy from the transcript.

@@ -852,6 +852,11 @@
         "mainItems": 4,
         "lightItems": 1,
         "focus": "Finished time, past-to-now, past continuous background, past perfect sequence; Light: used to / would"
+      },
+      "cefr": {
+        "canDo": "tell the story of a change in my life, saying how things were before and how they are now",
+        "scale": "Sustained monologue: describing experience",
+        "level": "B1"
       }
     },
     {
@@ -1581,6 +1586,11 @@
         "mainItems": 4,
         "lightItems": 1,
         "focus": "Intention, arrangement, two ordinary future time clauses; Light: first vs second conditional"
+      },
+      "cefr": {
+        "canDo": "explain a goal, my plans and a back-up plan, and ask for advice in a letter",
+        "scale": "Correspondence",
+        "level": "B1"
       }
     },
     {
@@ -2313,6 +2323,11 @@
         "mainItems": 4,
         "lightItems": 1,
         "focus": "One item each for obligation, advice, ability and permission; Light: one question form"
+      },
+      "cefr": {
+        "canDo": "explain the rules and routines of a shared home politely, and answer questions about them",
+        "scale": "Conversation",
+        "level": "B1"
       }
     },
     {
@@ -3053,6 +3068,11 @@
         "mainItems": 4,
         "lightItems": 1,
         "focus": "Two present passives and two past passives; Light: one relative clause or comparative/superlative"
+      },
+      "cefr": {
+        "canDo": "recommend a place I know, separating facts about it from my own experience",
+        "scale": "Sustained monologue: describing experience",
+        "level": "B1"
       }
     }
   ],

@@ -28,6 +28,9 @@ details.weeks?.forEach((week, index) => {
   const position = week.number;
   check(position === index + 1, `detail week ${position} is out of order`);
   check(Boolean(week.canDo?.trim()), `week ${position} needs a can-do statement`);
+  check(Boolean(week.cefr?.canDo?.trim()), `week ${position} needs a CEFR can-do statement`);
+  check(Boolean(week.cefr?.scale?.trim()), `week ${position} needs a CEFR scale`);
+  check(Boolean(week.cefr?.level?.trim()), `week ${position} needs a CEFR level`);
   check(Boolean(week.grammar?.main?.trim()), `week ${position} needs main grammar notes`);
   check(Boolean(week.grammar?.light?.trim()), `week ${position} needs light grammar notes`);
   check(Boolean(week.writing?.words?.[0] === 120 && week.writing?.words?.[1] === 150), `week ${position} writing must be 120–150 words`);

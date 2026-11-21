@@ -22,6 +22,7 @@ import {
   getWeek,
   levelForWeek,
   loadSyllabusContent,
+  onTargetLevelForWeek,
   phaseForWeek,
   skillLevelsForWeek,
   syllabus,
@@ -113,6 +114,12 @@ export default async function WeekPage({ params }: PageProps) {
               {syllabus.stages[week.stage - 1].hours}h stage
             </span>
           )}
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-900">
+            CEFR {week.cefr.level}
+          </span>
+          <span className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-stone-600">
+            On target: {onTargetLevelForWeek(weekNumber)}
+          </span>
           <span className="ml-auto text-[10px] uppercase tracking-wider text-stone-400">
             {source === 'supabase' ? 'Synced from Supabase' : 'Bundled syllabus'}
           </span>
@@ -123,6 +130,17 @@ export default async function WeekPage({ params }: PageProps) {
         <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
           {phase?.focus ?? stage?.aim} {stage?.grammar}
         </p>
+        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-800">
+            CEFR can-do · {week.cefr.scale} · {week.cefr.level}
+          </p>
+          <p className="mt-1.5 text-sm leading-6 text-emerald-950">By the end of the week I can {week.cefr.canDo}.</p>
+          {phase?.pronunciationFocus && (
+            <p className="mt-2 text-xs leading-5 text-emerald-800">
+              <strong className="font-semibold">Pronunciation focus:</strong> {phase.pronunciationFocus}
+            </p>
+          )}
+        </div>
         {week.skillsFocus && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs font-semibold text-emerald-900">
             <Flag className="h-3.5 w-3.5" />
@@ -150,11 +168,23 @@ export default async function WeekPage({ params }: PageProps) {
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-stone-200 bg-white p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">Main grammar</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">Main grammar</p>
+            {week.grammar?.stretch && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                B2+ stretch · recognition only
+              </span>
+            )}
+          </div>
           <h2 className="mt-2 font-serif text-xl font-semibold leading-snug text-stone-900">{week.mainGrammar}</h2>
           <p className="mt-2 text-xs leading-6 text-stone-600">
             One grammar point at a time: study the model, do the guided practice, then use it in your own speaking and writing.
           </p>
+          {week.grammar?.stretch && (
+            <p className="mt-2 text-xs leading-5 text-stone-600">
+              Stretch structures: {week.grammar.structures}. {week.grammar.marking}
+            </p>
+          )}
         </div>
         <div className="rounded-2xl border border-stone-200 bg-white p-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">Also this week</p>
@@ -186,6 +216,28 @@ export default async function WeekPage({ params }: PageProps) {
           ))}
         </div>
       </section>
+
+      {week.mediation && (
+        <section className="space-y-3 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-serif text-xl font-semibold text-stone-900">Mediation task</h2>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-indigo-800">
+              Recommended · {week.mediation.time}
+            </span>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-stone-600">
+              Does not count towards unlocking
+            </span>
+          </div>
+          <p className="text-sm leading-6 text-stone-800">{week.mediation.prompt}</p>
+          <div className="grid gap-2 text-xs leading-5 text-stone-600 sm:grid-cols-2">
+            <p><strong className="font-semibold text-stone-800">Source:</strong> {week.mediation.source}</p>
+            <p><strong className="font-semibold text-stone-800">Output:</strong> {week.mediation.output}</p>
+            <p><strong className="font-semibold text-stone-800">CEFR scale:</strong> {week.mediation.scale}</p>
+            <p><strong className="font-semibold text-stone-800">Level:</strong> {week.mediation.level}</p>
+          </div>
+          <p className="text-[11px] leading-5 text-stone-600">{week.mediation.feedback}</p>
+        </section>
+      )}
 
       {weekDetail && inputContent?.listening.content && inputContent.reading.content && (
           <WeekDetailPanel
@@ -243,7 +295,7 @@ export default async function WeekPage({ params }: PageProps) {
             </h2>
           </div>
           <p className="mt-2 text-sm leading-6 text-emerald-900">{checkpoint.assessed}</p>
-          <p className="mt-2 text-xs leading-5 text-emerald-800">{syllabus.marking}</p>
+          <p className="mt-2 text-xs leading-5 text-emerald-800">{syllabus.marking.summary}</p>
         </section>
       )}
 

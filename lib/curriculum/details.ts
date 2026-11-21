@@ -157,6 +157,7 @@ export interface WeekDetail {
   number: number;
   title: string;
   canDo: string;
+  cefr: { canDo: string; scale: string; level: string };
   featuredVocabulary: string[];
   stretchPhrases: string[];
   grammar: {
@@ -380,7 +381,11 @@ export async function loadDetailedContent({ includeAnswers = false }: { includeA
 
     const byCode = Object.fromEntries(assessmentsRes.data.map((row) => [row.code, row.payload]));
     return finish({
-      weeks: weeksRes.data.map((row) => row.payload as unknown as WeekDetail),
+      weeks: weeksRes.data.map((row) => {
+        const payload = row.payload as unknown as WeekDetail;
+        const bundledCefr = curriculumDetails.weeks.find((item) => item.number === payload.number)?.cefr;
+        return payload.cefr ? payload : { ...payload, cefr: bundledCefr! };
+      }),
       assessments: {
         ...assessments,
         writingDescriptors: (byCode['writing-descriptors'] ?? assessments.writingDescriptors) as AssessmentsDocument['writingDescriptors'],
