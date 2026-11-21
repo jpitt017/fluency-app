@@ -13,6 +13,7 @@
     "build:details-seed": "node supabase-b1-b2/scripts/build-details-seed.mjs",
     "build:syllabus-seed": "node supabase-b1-b2/scripts/build-syllabus-seed.mjs",
     "test:rls": "node scripts/test-rls.mjs",
+    "check:live-schema": "node scripts/check-live-schema.mjs",
     "test:mediation": "node --experimental-strip-types --test tests/unit/mediation.test.mjs",
     "test:e2e": "playwright test"
   },

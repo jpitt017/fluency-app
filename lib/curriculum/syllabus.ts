@@ -244,7 +244,13 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
       skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
       cefr: (row.cefr ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.cefr) as WeekCefr,
       grammar: (row.grammar ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.grammar) as SyllabusWeek['grammar'],
-      mediation: (row.mediation ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.mediation) as SyllabusWeek['mediation'],
+      mediation: (() => {
+        const fromDb = row.mediation as WeekMediation | null;
+        const hasContent = fromDb && typeof fromDb === 'object' && Object.keys(fromDb).length > 0;
+        return hasContent
+          ? fromDb
+          : syllabus.weeks.find((item) => item.number === Number(row.week_number))?.mediation;
+      })() as SyllabusWeek['mediation'],
     }));
 
     const checkpoints: SyllabusCheckpoint[] = checkpointsRes.data.map((row) => ({
