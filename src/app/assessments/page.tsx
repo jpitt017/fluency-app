@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpenCheck, ClipboardCheck, Compass, FileText, Flag, Info, PenLine } from 'lucide-react';
 import CheckpointBank from '@/components/curriculum/CheckpointBank';
+import { requireTeacherViewer } from '@/lib/auth/require-teacher';
 import { SpeakingDescriptors } from '@/components/curriculum/SpeakingSpec';
 import { allCheckpointItems, loadDetailedContent } from '@/lib/curriculum/details';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Assessment specs · Writing, speaking, placement & Checkpoint 1 | Fluency Studio',
+  robots: { index: false, follow: false },
   description:
     'Writing and speaking bands, the 24-question placement blueprint and the full Checkpoint 1 question bank for the B1 → B2 course.',
 };
@@ -33,7 +37,8 @@ function Card({
 }
 
 export default async function AssessmentsPage() {
-  const { assessments: doc, source } = await loadDetailedContent();
+  await requireTeacherViewer();
+  const { assessments: doc, source } = await loadDetailedContent({ includeAnswers: true });
   const items = [...doc.checkpoint1.items, ...doc.checkpoint1.reserves];
   const descriptor = doc.writingDescriptors;
 
