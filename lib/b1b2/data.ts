@@ -462,7 +462,7 @@ export async function loadVocabDecks(): Promise<{
       .order('slug'),
     supabase
       .from('vocab_items')
-      .select('id, deck_id, term, part_of_speech, ipa, definition, example, collocations, word_family, usage_note, translation_es, audio_url, band')
+      .select('id, deck_id, term, part_of_speech, ipa, definition, example, collocations, word_family, usage_note, translation_es, audio_url, band, teaching_role')
       .order('term'),
   ]);
 
@@ -482,6 +482,7 @@ export async function loadVocabDecks(): Promise<{
       translation_es: row.translation_es,
       audio_url: row.audio_url ?? null,
       band: row.band,
+      teaching_role: (row.teaching_role as 'P' | 'B' | 'O' | null | undefined) ?? null,
     });
     itemsByDeck.set(row.deck_id, list);
   }

@@ -40,8 +40,21 @@ export interface LessonRow {
   xp_reward: number;
 }
 
+export type UseRole = 'P' | 'B' | 'O';
+
 export interface VocabPackCollocation {
   phrase: string;
+  example: string;
+  note?: string;
+  band?: 'B1' | 'B2';
+  useRole?: UseRole;
+}
+
+export interface VocabPackWordFamilyForm {
+  form: string;
+  pos?: string;
+  band?: 'B1' | 'B2';
+  useRole?: UseRole;
   example: string;
   note?: string;
 }
@@ -49,6 +62,7 @@ export interface VocabPackCollocation {
 export interface VocabPackWordFamily {
   base: string;
   forms: string[];
+  formDetails?: VocabPackWordFamilyForm[];
   example: string;
   note?: string;
 }
@@ -57,12 +71,25 @@ export interface VocabPackLinker {
   expression: string;
   functionLabel: string;
   example: string;
+  note?: string;
+  band?: 'B1' | 'B2';
+  useRole?: UseRole;
+}
+
+export interface VocabPackOptionalExtension {
+  phrase: string;
+  pos?: string;
+  band?: 'B1' | 'B2';
+  useRole?: UseRole;
+  example: string;
+  note?: string;
 }
 
 export interface VocabPack {
   collocations?: VocabPackCollocation[];
   wordFamilies?: VocabPackWordFamily[];
   linkingExpressions?: VocabPackLinker[];
+  optionalExtensions?: VocabPackOptionalExtension[];
 }
 
 export interface LessonVocabItem {
@@ -78,6 +105,7 @@ export interface LessonVocabItem {
   sentence_prompt?: string | null;
   translation_es?: string | null;
   band?: string;
+  teaching_role?: UseRole | null;
   audio_url?: string | null;
 }
 
@@ -411,6 +439,7 @@ export interface VocabDeckSummary {
     translation_es: string | null;
     audio_url?: string | null;
     band: string;
+    teaching_role?: UseRole | null;
   }[];
 }
 
