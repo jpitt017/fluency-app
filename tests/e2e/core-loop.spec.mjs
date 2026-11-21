@@ -26,7 +26,9 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
 
     await page.goto('/clinic');
     await expect(page.getByRole('heading', { name: /Grammar Clinic/i })).toBeVisible();
-    await expect(page.getByText(/6 B1 Baseline Clinics/i)).toBeVisible();
+    await expect(page.getByText(/8 B1 Baseline Clinics/i)).toBeVisible();
+    await expect(page.getByText(/Zero & second conditionals/i)).toBeVisible();
+    await expect(page.getByText(/Comparatives & superlatives/i)).toBeVisible();
 
     await page.goto('/teacher');
     await expect(page.getByRole('heading', { name: /Sign in with a teacher account|Teacher Review/i })).toBeVisible();
@@ -53,6 +55,17 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
       await page.goto('/curriculum/lessons/15');
       await expect(page.getByText(/Part 5 · Optional Extensions/i)).toBeVisible();
       await expect(page.getByText(/pop round/i)).toBeVisible();
+
+      await page.goto('/curriculum/lessons/2');
+      await expect(page.getByText(/Step 1 · Hear & notice the model/i)).toBeVisible();
+      await expect(page.getByText(/5 items · 5 grammar/i)).toBeVisible();
+
+      await page.goto('/checkpoints/b1_consolidation');
+      await expect(page.getByText(/Part 1 · 16-Item Grammar Diagnostic \(Weeks 1–4\)/i)).toBeVisible();
+      await expect(page.getByText(/Per-Week & Skill Breakdown/i)).toBeVisible();
+      await expect(page.getByText(/Optional Reserve Items \(4 extra/i)).toBeVisible();
+      await expect(page.getByText(/Part 2 · Separate Spoken Narrative/i)).toBeVisible();
+      await expect(page.getByText(/Part 3 · Separate Written Visitor Note/i)).toBeVisible();
     }
   });
 

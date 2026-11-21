@@ -96,13 +96,13 @@
       "code": "b1_consolidation",
       "title": "Checkpoint 1 · B1 Consolidation",
       "timing": "End of Week 4",
-      "description": "Confirm solid B1 control across narrative tenses, future forms, modals, passive voice, and a 60–90s spoken narrative plus 120–150 word piece.",
+      "description": "Course checkpoint (not a CEFR placement or certification test): check control across Weeks 1–4 grammar (16 items), a 45–60s spoken narrative about a change, and a short written visitor note.",
       "minutes": 30,
       "skills": ["grammar", "speaking", "writing"],
       "tasks": [
-        "12-item diagnostic across Weeks 1–4 grammar (narrative tenses, future forms, modals, passives)",
-        "Recorded spoken narrative (60–90s) reviewed by AI guidance and confirmed by teacher",
-        "120–150 word narrative/experience piece demonstrating accurate tense shifts"
+        "16-item diagnostic across Weeks 1–4 (4 per week: past vs present perfect, future meanings, house-rule modals, present/past passives)",
+        "45–60s spoken narrative in response to a new prompt about a change (kept separate from quiz scoring)",
+        "Short written visitor note (100–140 words) separating a place fact from personal experience"
       ]
     },
     {

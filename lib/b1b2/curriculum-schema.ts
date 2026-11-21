@@ -103,6 +103,7 @@ export const GrammarItemSchema = z
     prompt: z.string().trim().min(5),
     options: z.array(z.string().trim().min(1)).min(2),
     answer: z.string().trim().min(1),
+    acceptedAnswers: z.array(z.string().trim().min(1)).optional(),
     explanation: z.string().trim().min(5),
     difficulty: z.number().int().min(1).max(3).default(1),
   })
@@ -182,6 +183,8 @@ export const SpeakingTaskSchema = z.object({
   phrases: z.array(z.string().trim().min(3)).min(1),
   linkers: z.array(z.string().trim().min(2)).min(1),
   terms: z.array(z.string().trim().min(2)).min(1),
+  modelAnswer: z.string().trim().min(20).optional(),
+  b2Stretch: z.string().trim().min(10).optional(),
 });
 
 export const WritingTaskSchema = z
@@ -217,6 +220,7 @@ export const LessonTemplateSchema = z.object({
   output: z.string().trim().min(10),
   targetSeconds: z.number().int().min(30).max(600).optional(),
   wordRange: z.tuple([z.number().int().min(20), z.number().int().max(500)]).optional(),
+  delayedRecallPrompt: z.string().trim().min(10).optional(),
 });
 
 export const ModuleSchema = z

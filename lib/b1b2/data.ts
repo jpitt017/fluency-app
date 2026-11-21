@@ -1,4 +1,10 @@
 import { createServerSupabase } from '@/utils/supabase/server';
+import {
+  CHECKPOINT_1_RESERVE_ITEMS,
+  CHECKPOINT_1_SCORED_ITEMS,
+  CHECKPOINT_1_SPEAKING_TASK,
+  CHECKPOINT_1_WRITING_TASK,
+} from './checkpoint1-blueprint';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import type {
   AiObservabilitySummary,
@@ -538,13 +544,14 @@ export async function loadCheckpointDetail(code: string): Promise<{
   const { data: cp, error } = await supabase
     .from('checkpoints')
     .select('id, code, title, timing_label, description, duration_minutes, skills, tasks, module_id')
-    .eq('code', code)
+    .ilike('code', code)
     .maybeSingle();
 
   if (error || !cp) {
     return { signedIn: Boolean(user), checkpoint: null };
   }
 
+  const isCheckpoint1 = cp.code === 'b1_consolidation';
   const modId = cp.module_id;
   const [modRes, inputsRes, speakingRes, writingRes, lessonsRes, attemptRes] = await Promise.all([
     modId
@@ -554,13 +561,13 @@ export async function loadCheckpointDetail(code: string): Promise<{
           .eq('id', modId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    modId
+    !isCheckpoint1 && modId
       ? supabase
           .from('content_inputs')
           .select('id, kind, title, source_label, accent, audio_url, speaker_accents, body, duration_seconds, word_count, questions')
           .eq('module_id', modId)
       : Promise.resolve({ data: [] }),
-    modId
+    !isCheckpoint1 && modId
       ? supabase
           .from('speaking_tasks')
           .select('id, kind, title, prompt, target_seconds, useful_phrases, target_linkers, target_terms')
@@ -569,7 +576,7 @@ export async function loadCheckpointDetail(code: string): Promise<{
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    modId
+    !isCheckpoint1 && modId
       ? supabase
           .from('writing_tasks')
           .select('id, title, prompt, format, word_min, word_max, outline')
@@ -577,7 +584,7 @@ export async function loadCheckpointDetail(code: string): Promise<{
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    modId
+    !isCheckpoint1 && modId
       ? supabase.from('lessons').select('id').eq('module_id', modId).order('module_lesson_number')
       : Promise.resolve({ data: [] }),
     user
@@ -593,15 +600,19 @@ export async function loadCheckpointDetail(code: string): Promise<{
   ]);
 
   let practiceItems: PracticeItem[] = [];
-  const lessonIds = (lessonsRes.data ?? []).map((l) => l.id);
-  if (user && lessonIds.length > 0) {
-    const { data: pItems } = await supabase
-      .from('practice_items')
-      .select('id, kind, sort_order, prompt, options, answer, explanation, difficulty')
-      .in('lesson_id', lessonIds)
-      .lte('sort_order', 2)
-      .limit(12);
-    practiceItems = (pItems as PracticeItem[] | null) ?? [];
+  if (isCheckpoint1) {
+    practiceItems = CHECKPOINT_1_SCORED_ITEMS;
+  } else {
+    const lessonIds = (lessonsRes.data ?? []).map((l) => l.id);
+    if (user && lessonIds.length > 0) {
+      const { data: pItems } = await supabase
+        .from('practice_items')
+        .select('id, kind, sort_order, prompt, options, answer, explanation, difficulty')
+        .in('lesson_id', lessonIds)
+        .lte('sort_order', 2)
+        .limit(12);
+      practiceItems = (pItems as PracticeItem[] | null) ?? [];
+    }
   }
 
   return {
@@ -618,8 +629,14 @@ export async function loadCheckpointDetail(code: string): Promise<{
       module: modRes.data ?? null,
       inputs: (inputsRes.data as ContentInput[] | null) ?? [],
       practiceItems,
-      speakingTask: (speakingRes.data as SpeakingTask | null) ?? null,
-      writingTask: (writingRes.data as WritingTask | null) ?? null,
+      reservePracticeItems: isCheckpoint1 ? CHECKPOINT_1_RESERVE_ITEMS : undefined,
+      separateOpenResponses: isCheckpoint1,
+      speakingTask: isCheckpoint1
+        ? CHECKPOINT_1_SPEAKING_TASK
+        : ((speakingRes.data as SpeakingTask | null) ?? null),
+      writingTask: isCheckpoint1
+        ? CHECKPOINT_1_WRITING_TASK
+        : ((writingRes.data as WritingTask | null) ?? null),
       latestAttempt: attemptRes.data ?? null,
     },
   };

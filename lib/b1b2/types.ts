@@ -150,6 +150,7 @@ export interface OutputContent {
   mode: SkillArea;
   target_seconds: number;
   word_range: [number, number];
+  delayed_recall_prompt?: string | null;
 }
 
 export interface FeedbackContent {
@@ -182,8 +183,12 @@ export interface PracticeItem {
   prompt: string;
   options: string[] | null;
   answer: string;
+  accepted_answers?: string[] | null;
   explanation: string | null;
   difficulty: number;
+  week?: number;
+  skill_tag?: string;
+  recommended_lesson?: number;
 }
 
 export interface InputQuestion {
@@ -221,6 +226,8 @@ export interface SpeakingTask {
   useful_phrases: string[];
   target_linkers: string[];
   target_terms: string[];
+  model_answer?: string | null;
+  b2_stretch?: string | null;
 }
 
 export interface WritingTask {
@@ -473,6 +480,8 @@ export interface CheckpointDetail {
   } | null;
   inputs: ContentInput[];
   practiceItems: PracticeItem[];
+  reservePracticeItems?: PracticeItem[];
+  separateOpenResponses?: boolean;
   speakingTask: SpeakingTask | null;
   writingTask: WritingTask | null;
   latestAttempt: {

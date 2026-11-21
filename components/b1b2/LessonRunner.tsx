@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CheckSquare, Flame, Headphones, Mic, Target } from 'lucide-react';
+import { CheckSquare, Flame, Headphones, Mic, Target, Volume2 } from 'lucide-react';
 import ListeningInputCard from '@/components/b1b2/ListeningInputCard';
 import MondayVocabPack from '@/components/b1b2/MondayVocabPack';
 import OutputStudio from '@/components/b1b2/OutputStudio';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
 import WarmUpDeck from '@/components/b1b2/WarmUpDeck';
+import { speakPhrase } from '@/lib/b1b2/speech';
 import type {
   BlockKind,
   FeedbackContent,
@@ -127,6 +128,7 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
                   onScoreChange={(correct, total) => setPracticeScore({ correct, total })}
                   signedIn={signedIn}
                   lessonNumber={lesson.lesson_number}
+                  moduleLessonNumber={lesson.module_lesson_number}
                   lessonId={lesson.id}
                   grammarPoint={lesson.grammar_point}
                 />
@@ -269,6 +271,43 @@ function InputSection({
           signedIn={signedIn}
           lessonNumber={payload.lesson.lesson_number}
         />
+      ) : payload.lesson.module_lesson_number === 2 ? (
+        <>
+          {content.model_example && (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-indigo-900">
+                  Step 1 · Hear &amp; notice the model
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => void speakPhrase(content.model_example, 'en-GB', 0.95)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-700 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-800"
+                >
+                  <Volume2 className="h-3.5 w-3.5" />
+                  <span>Listen to model</span>
+                </button>
+              </div>
+              <p className="mt-2 rounded-lg border-l-4 border-indigo-400 bg-white p-3 text-sm italic leading-6 text-stone-800">
+                {content.model_example}
+              </p>
+            </div>
+          )}
+
+          {content.key_points?.length ? (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Step 2 · Brief pattern review</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-stone-700">
+                {content.key_points.map((point) => (
+                  <li key={point} className="flex gap-2">
+                    <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </>
       ) : (
         <>
           {input && <ListeningInputCard input={input} />}
@@ -289,7 +328,17 @@ function InputSection({
 
           {content.model_example && (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Model example</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Model example</h3>
+                <button
+                  type="button"
+                  onClick={() => void speakPhrase(content.model_example, 'en-GB', 0.95)}
+                  className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100"
+                >
+                  <Volume2 className="h-3 w-3" />
+                  <span>Listen</span>
+                </button>
+              </div>
               <p className="mt-2 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/50 p-3 text-sm italic leading-6 text-stone-700">
                 {content.model_example}
               </p>
@@ -307,6 +356,7 @@ function PracticeSection({
   onScoreChange,
   signedIn,
   lessonNumber,
+  moduleLessonNumber,
   lessonId,
   grammarPoint,
 }: {
@@ -315,6 +365,7 @@ function PracticeSection({
   onScoreChange: (correct: number, total: number) => void;
   signedIn: boolean;
   lessonNumber: number;
+  moduleLessonNumber: number;
   lessonId: string;
   grammarPoint: string | null;
 }) {
@@ -333,12 +384,14 @@ function PracticeSection({
           lessonId={lessonId}
           signedIn={signedIn}
           grammarPoint={grammarPoint}
+          hideCustomSentence={moduleLessonNumber === 2}
           items={items.map((item) => ({
             id: item.id,
             kind: item.kind,
             prompt: item.prompt,
             options: item.options,
             answer: item.answer,
+            accepted_answers: item.accepted_answers,
             explanation: item.explanation,
           }))}
           onScoreChange={onScoreChange}
@@ -369,6 +422,10 @@ function OutputSection({
   signedIn: boolean;
   onSubmitted: () => void;
 }) {
+  const outputBlockTitle =
+    payload.blocks.find((b) => b.block_kind === 'output')?.title?.replace(/^Produce:\s*/i, '') ||
+    payload.lesson.title;
+
   return (
     <div>
       <p className="text-sm text-stone-700">{content.summary}</p>
@@ -376,6 +433,11 @@ function OutputSection({
         <OutputStudio
           lessonId={payload.lesson.id}
           lessonNumber={payload.lesson.lesson_number}
+          moduleLessonNumber={payload.lesson.module_lesson_number}
+          outputTitle={outputBlockTitle}
+          outputPrompt={content.summary}
+          delayedRecallPrompt={content.delayed_recall_prompt}
+          grammarPoint={payload.lesson.grammar_point}
           signedIn={signedIn}
           speaking={payload.speaking}
           writing={payload.writing}
