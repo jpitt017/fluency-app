@@ -337,7 +337,7 @@
       ],
       "writing": {
         "title": "Review: an app, film or product",
-        "prompt": "Write a 180-word review of an app, film or product for a general audience. Describe it, weigh its strengths and weaknesses, and give a clear recommendation.",
+        "prompt": "Write a 150–180 word review of an app, film or product for a general audience. Describe it, weigh its strengths and weaknesses, and give a clear recommendation.",
         "format": "review",
         "wordMin": 150,
         "wordMax": 180,
@@ -476,7 +476,82 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "protect data privacy",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Users expect messaging apps to protect data privacy by default."
+          },
+          {
+            "phrase": "spread misinformation",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Sensational headlines often spread misinformation faster than corrections."
+          },
+          {
+            "phrase": "limit screen time",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Setting an evening curfew helped me limit screen time during the week."
+          },
+          {
+            "phrase": "leave a digital footprint",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Every public comment and photo can leave a lasting digital footprint."
+          },
+          {
+            "phrase": "go viral overnight",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Short clips can go viral overnight without anyone checking the original source."
+          },
+          {
+            "phrase": "live in a filter bubble",
+            "band": "B2",
+            "useRole": "B",
+            "example": "If you never read opposing views, you can end up living in a filter bubble."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "private",
+            "forms": [
+              "privacy",
+              "privately"
+            ],
+            "example": "Strong data privacy rules let people communicate privately online."
+          },
+          {
+            "base": "inform",
+            "forms": [
+              "information",
+              "misinformation",
+              "misinform"
+            ],
+            "example": "False claims can misinform readers and turn reliable information into misinformation."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "judging by",
+            "functionLabel": "Deduction",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Judging by the phrasing, the message must have been automated."
+          },
+          {
+            "expression": "on the surface",
+            "functionLabel": "Contrast",
+            "band": "B2",
+            "useRole": "B",
+            "example": "On the surface, the app looks free, yet it collects extensive usage data."
+          }
+        ]
+      }
     },
     {
       "number": 6,
@@ -971,7 +1046,81 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "complete an apprenticeship",
+            "band": "B2",
+            "useRole": "B",
+            "example": "She chose to complete an apprenticeship in electrical engineering after college."
+          },
+          {
+            "phrase": "offer constructive feedback",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Good mentors offer constructive feedback rather than vague praise."
+          },
+          {
+            "phrase": "develop transferable skills",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Part-time retail roles still help graduates develop transferable skills."
+          },
+          {
+            "phrase": "meet a deadline",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Breaking large projects into weekly tasks helps teams meet a deadline."
+          },
+          {
+            "phrase": "delegate responsibility",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Experienced managers learn to delegate responsibility without losing oversight."
+          },
+          {
+            "phrase": "hand in an assignment",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Remember to hand in the written assignment before five on Friday."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "collaborate",
+            "forms": [
+              "collaborative",
+              "collaboration"
+            ],
+            "example": "Effective collaboration thrives in a genuinely collaborative workplace."
+          },
+          {
+            "base": "construct",
+            "forms": [
+              "constructive",
+              "constructively"
+            ],
+            "example": "Offering feedback constructively turns criticism into constructive support."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "as a result",
+            "functionLabel": "Result",
+            "band": "B1",
+            "useRole": "P",
+            "example": "He acted on his mentor’s advice; as a result, his presentations improved."
+          },
+          {
+            "expression": "whereas",
+            "functionLabel": "Contrast",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Academic courses prioritise theory, whereas apprenticeships build hands-on skill."
+          }
+        ]
+      }
     },
     {
       "number": 7,
@@ -1466,7 +1615,82 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "verify a source",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Responsible editors always verify a source before repeating an extraordinary claim."
+          },
+          {
+            "phrase": "cite a reliable source",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Every front-page report ought to cite a reliable source."
+          },
+          {
+            "phrase": "grab headlines",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Dramatic statistics grab headlines even when the sample is tiny."
+          },
+          {
+            "phrase": "retract a statement",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The magazine had to retract a statement after an eyewitness contradicted it."
+          },
+          {
+            "phrase": "sensationalise a story",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Click-driven outlets often sensationalise a story for quick attention."
+          },
+          {
+            "phrase": "take claims with a pinch of salt",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Always take anonymous claims on social media with a pinch of salt."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "verify",
+            "forms": [
+              "verification",
+              "verified",
+              "unverified"
+            ],
+            "example": "Independent verification separates verified facts from unverified rumours."
+          },
+          {
+            "base": "bias",
+            "forms": [
+              "biased",
+              "unbiased"
+            ],
+            "example": "Readers notice biased framing quickly when they compare it with unbiased reporting."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "according to",
+            "functionLabel": "Attribution",
+            "band": "B1",
+            "useRole": "P",
+            "example": "According to the regional survey, trust in local journalism is rising."
+          },
+          {
+            "expression": "nevertheless",
+            "functionLabel": "Concession",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The clip spread widely; nevertheless, reporters insisted on checking the date."
+          }
+        ]
+      }
     },
     {
       "number": 8,
@@ -1804,7 +2028,7 @@
       ],
       "writing": {
         "title": "Problem-solution report: a local issue",
-        "prompt": "Write a 180–200-word report for a residents' association about one local environmental problem. Describe the problem, analyse two causes, propose two solutions and recommend one.",
+        "prompt": "Write a 150–180 word report for a residents' association about one local environmental problem. Describe the problem, analyse two causes, propose two solutions and recommend one.",
         "format": "problem-solution report",
         "wordMin": 150,
         "wordMax": 180,
@@ -1943,7 +2167,82 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "reduce your carbon footprint",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Replacing short flights with rail travel can significantly reduce your carbon footprint."
+          },
+          {
+            "phrase": "invest in renewable energy",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Several coastal towns decided to invest in renewable energy last decade."
+          },
+          {
+            "phrase": "limit urban sprawl",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Planners built around existing stations to limit urban sprawl."
+          },
+          {
+            "phrase": "protect green space",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Residents campaigned to protect green space near the canal."
+          },
+          {
+            "phrase": "introduce a recycling scheme",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The council could introduce a recycling scheme for small electronics."
+          },
+          {
+            "phrase": "meet a climate target",
+            "band": "B2",
+            "useRole": "B",
+            "example": "If cities had acted earlier, more regions would meet a climate target on time."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "sustain",
+            "forms": [
+              "sustainable",
+              "sustainability",
+              "unsustainable"
+            ],
+            "example": "True sustainability requires replacing unsustainable habits with sustainable transit."
+          },
+          {
+            "base": "renew",
+            "forms": [
+              "renewable",
+              "non-renewable"
+            ],
+            "example": "Shifting from non-renewable fuels to renewable power lowers emissions."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "if only",
+            "functionLabel": "Regret",
+            "band": "B2",
+            "useRole": "B",
+            "example": "If only planners had planted street trees twenty years ago."
+          },
+          {
+            "expression": "provided that",
+            "functionLabel": "Condition",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Cycle lanes work well, provided that junctions are properly protected."
+          }
+        ]
+      }
     }
   ]
 }

@@ -26,6 +26,17 @@ const contentDir = path.join(process.cwd(), 'supabase-b1-b2/content/curriculum')
 const US_SPELLING_REGEX =
   /\b(color|colors|favorite|favor|favors|organize|organized|organizing|realize|realized|realizing|center|centers|traveler|travelers|traveling|traveled|defense|offense|labor|behavior|neighbor|program|programs)\b/gi;
 
+const PHASE_LADDERS = [
+  { weeks: [1, 2, 3, 4], listenMin: 110, listenMax: 140, readMin: 150, readMax: 215, speakMin: 45, speakMax: 65, writeMin: 120, writeMax: 150 },
+  { weeks: [5, 6, 7, 8], listenMin: 135, listenMax: 180, readMin: 200, readMax: 300, speakMin: 115, speakMax: 135, writeMin: 150, writeMax: 180 },
+  { weeks: [9, 10, 11, 12], listenMin: 165, listenMax: 200, readMin: 240, readMax: 300, speakMin: 165, speakMax: 195, writeMin: 180, writeMax: 200 },
+  { weeks: [13, 14, 15, 16], listenMin: 195, listenMax: 250, readMin: 250, readMax: 350, speakMin: 175, speakMax: 195, writeMin: 200, writeMax: 220 },
+];
+
+function getPhaseLadder(weekNumber) {
+  return PHASE_LADDERS.find((p) => p.weeks.includes(weekNumber));
+}
+
 async function fileExists(p) {
   try {
     await access(p);
@@ -88,12 +99,66 @@ async function main() {
       totalGrammarItems += week.grammar.reduce((n, g) => n + g.items.length, 0);
       totalQuestions += week.inputs.reduce((n, i) => n + i.questions.length, 0);
 
+      // Monday vocabPack check (collocations, word families, linking expressions across all 16 weeks)
+      if (!week.vocabPack) {
+        throw new Error(`Week ${week.number} is missing vocabPack`);
+      }
+      const minCollocations = week.number >= 5 ? 5 : 4;
+      if (week.vocabPack.collocations.length < minCollocations || week.vocabPack.collocations.length > 8) {
+        throw new Error(
+          `Week ${week.number} vocabPack.collocations length (${week.vocabPack.collocations.length}) outside ${minCollocations}–8`,
+        );
+      }
+      if (week.vocabPack.wordFamilies.length < 2) {
+        throw new Error(`Week ${week.number} vocabPack.wordFamilies must have at least 2 entries`);
+      }
+      const minLinkers = week.number >= 5 ? 2 : 1;
+      if (week.vocabPack.linkingExpressions.length < minLinkers) {
+        throw new Error(`Week ${week.number} vocabPack.linkingExpressions must have at least ${minLinkers} entries`);
+      }
+
+      // Main + light grammar check (Weeks 1-15) vs Week 16 personal error-log review
+      if (week.number <= 15 && !week.lightGrammar) {
+        throw new Error(`Week ${week.number} is missing lightGrammar`);
+      }
+      if (week.number === 16 && week.lightGrammar) {
+        throw new Error('Week 16 must have lightGrammar: null (uses personal error log)');
+      }
+
+      // Per-phase skill ladder checks
+      const ladder = getPhaseLadder(week.number);
+      if (!ladder) {
+        throw new Error(`No phase ladder configured for Week ${week.number}`);
+      }
+      if (week.writing.wordMin !== ladder.writeMin || week.writing.wordMax !== ladder.writeMax) {
+        throw new Error(
+          `Week ${week.number} writing range ${week.writing.wordMin}-${week.writing.wordMax} does not match phase target ${ladder.writeMin}-${ladder.writeMax}`,
+        );
+      }
+      const primarySpeaking = week.speaking[0];
+      if (!primarySpeaking || primarySpeaking.seconds < ladder.speakMin || primarySpeaking.seconds > ladder.speakMax) {
+        throw new Error(
+          `Week ${week.number} speaking seconds ${primarySpeaking?.seconds} outside phase target ${ladder.speakMin}-${ladder.speakMax}`,
+        );
+      }
+
       for (const inp of week.inputs) {
         if (inp.kind === 'listening' && inp.seconds) {
           totalListeningSeconds += inp.seconds;
+          if (inp.seconds < ladder.listenMin || inp.seconds > ladder.listenMax) {
+            throw new Error(
+              `Week ${week.number} listening duration ${inp.seconds}s outside phase target ${ladder.listenMin}-${ladder.listenMax}s`,
+            );
+          }
         }
         if (inp.kind === 'reading') {
-          totalReadingWords += inp.body.trim().split(/\s+/).length;
+          const words = inp.body.trim().split(/\s+/).length;
+          totalReadingWords += words;
+          if (words < ladder.readMin || words > ladder.readMax) {
+            throw new Error(
+              `Week ${week.number} reading length ${words}w outside phase target ${ladder.readMin}-${ladder.readMax}w`,
+            );
+          }
         }
       }
 
@@ -108,6 +173,9 @@ async function main() {
         week.summary,
         ...week.grammar.flatMap((g) => [g.explanation, g.example, ...g.keyPoints]),
         ...week.vocab.flatMap((v) => [v.definition, v.example]),
+        ...week.vocabPack.collocations.flatMap((c) => [c.phrase, c.example]),
+        ...week.vocabPack.wordFamilies.map((wf) => wf.example),
+        ...week.vocabPack.linkingExpressions.flatMap((le) => [le.expression, le.example]),
         ...week.inputs
           .filter((i) => !/\bAmerican\b/i.test(i.accent ?? ''))
           .map((i) => i.body),
