@@ -139,6 +139,7 @@ export interface WritingDetail {
   reviseAndRetryFocus: string;
   modelAnswer: string;
   delayedRecall: string;
+  pairedReading: string;
 }
 
 export interface WritingSpec {
@@ -148,6 +149,7 @@ export interface WritingSpec {
   marking: string;
   unlocking: string;
   source: string;
+  reviewChecklist: string[];
   weeks: { week: number; title: string }[];
 }
 

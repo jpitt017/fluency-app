@@ -108,7 +108,7 @@
     "speaking": "Record 60–90 seconds. Hide the model before the first take. One specific AI correction, then record again straight away.",
     "writing": "30 minutes, 120–150 words, instant AI feedback and revise-and-retry. A few days later a new speaking prompt without the phrase bank.",
     "conversation": "15 minutes recommended; 3–4 turns with the AI partner on the week's theme, grammar and featured words. Feedback after the exchange, then one turn retried.",
-    "extensiveInput": "About 60 minutes a week of graded B1 listening or reading with transcripts or captions, tagged to the week's theme; 40 minutes minimum; up to 5 personal words.",
+    "extensiveInput": "About 60 minutes a week of graded B1 listening or reading with transcripts or captions, tagged to the week's theme; 40 minutes recommended; up to 5 personal words.",
     "progression": "No fixed days or deadlines. The next week opens when speaking, writing and either listening or reading are done.",
     "level": "Adults and older teenagers (16+) at secure B1. Adult contexts: work, flat-sharing, plans and travel. Judge control and clarity, not the number of forms used.",
     "grammarClinic": "Only syllabus B1 basics: present simple and continuous, articles, quantifiers, prepositions, subject–verb agreement and verb forms. Every Light point is taught in its own week, not moved to the clinic."
@@ -709,7 +709,8 @@
         "correctionPriority": "1) past simple vs present perfect with time words (I have moved in 2020); 2) would with states (would live); 3) the -ing form after get used to.",
         "reviseAndRetryFocus": "Add one sentence with the past perfect or past continuous to set the scene, and check every finished time (last year, in 2020) uses the past simple.",
         "modelAnswer": "When I finished university, I moved from a small village to the city for my first job. I had never lived alone before, and at first everything felt strange. In the village, I used to know everyone, and my neighbours would often stop to chat. In the city, nobody said hello.\n\nThe biggest challenge I faced was cooking for myself. For the first few weeks, I ate takeaways almost every night! Then my flatmate’s mum gave me a simple recipe book, and I started to try one new dish every weekend.\n\nEventually, I got used to my new routine. Since then, I’ve learnt to cook about twenty dishes, and I’ve been inviting friends round for dinner every month. Now the city feels like home, and I’m proud of how much I’ve changed.",
-        "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?"
+        "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?",
+        "pairedReading": "\"A year in Manchester\" (blog post)"
       },
       "conversation": {
         "scenario": "Catching up with an old friend.",
@@ -1435,7 +1436,8 @@
         "correctionPriority": "1) will after when, as soon as or if (when I will finish); 2) going to vs present continuous for fixed arrangements; 3) look forward to + -ing.",
         "reviseAndRetryFocus": "Check every time clause (when, as soon as, before, after) uses the present simple, and add a day or date to the arrangement.",
         "modelAnswer": "Dear Sam,\n\nI’m 31 and I work in a bank, but my goal is to start a career in graphic design. I’ve signed up for an online course, which starts on 10 January, and I’m meeting my tutor for the first time next Monday.\n\nI’m going to practise every evening in order to build a portfolio quickly. When I finish the course in June, I’ll apply for junior jobs in design studios. If I don’t find a job straight away, I’ll do some freelance work to get more experience.\n\nI intend to keep my current job until then. I’m really looking forward to the course, but I’m worried about telling my manager. Should I tell her about my plans now, or wait until I find a new job?\n\nThanks,\nLucía",
-        "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?"
+        "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?",
+        "pairedReading": "\"Ask Sam\" (advice column)"
       },
       "conversation": {
         "scenario": "A colleague asks about plans.",
@@ -2151,7 +2153,8 @@
         "correctionPriority": "1) mustn’t vs don’t have to; 2) to after a modal (you must to); 3) -s after a modal (she can speaks).",
         "reviseAndRetryFocus": "Check that each rule uses the right modal for its meaning (required, forbidden, optional), and add a linker where two ideas contrast.",
         "modelAnswer": "Hi Tom,\n\nWelcome to the flat! We’re really pleased you’re moving in on Saturday. Here are a few things you should know.\n\nWe have to take the bins out on Thursday evenings, and we take turns, so check the rota on the kitchen door. You mustn’t leave food in the living room, because we’ve had problems with mice! On the other hand, you don’t have to join us for dinner. We all have different routines, and most of us cook for ourselves.\n\nMy advice? You should get to know our neighbour, Mrs Hill. In fact, she’s lived here for forty years and knows everything about the area. Apart from that, just relax and make yourself at home. We all get on with each other really well.\n\nSee you on Saturday!\nElena",
-        "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional."
+        "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional.",
+        "pairedReading": "\"Welcome to 14 Park Road!\" (email)"
       },
       "conversation": {
         "scenario": "A new flatmate's first evening.",
@@ -2890,7 +2893,8 @@
         "correctionPriority": "1) be + past participle (was build, is visit); 2) irregular participles (held, built, taken); 3) comparative forms (more quiet, the most big).",
         "reviseAndRetryFocus": "Turn one fact about the place into the passive, and check each comparison uses -er / -est or more / most correctly.",
         "modelAnswer": "Last summer I spent a weekend in Edinburgh, and I’d definitely recommend it.\n\nTo begin with, we visited Edinburgh Castle, which sits on top of an old volcano. The oldest part was built in the twelfth century. Almost every day, a gun is fired from the castle at one o’clock, a tradition which started in 1861.\n\nIn the afternoon, we walked down the Royal Mile, a busy street where you can find lots of small local shops and cafés. Then we climbed Arthur’s Seat. It was harder than I expected, but the view was the best of the whole trip.\n\nAll in all, Edinburgh is a great destination for a short break. If you go, set off early, because the castle gets very busy by lunchtime.",
-        "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place."
+        "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place.",
+        "pairedReading": "\"48 hours in Bath\" (travel guide); model set in Edinburgh to avoid repeating Bath"
       },
       "conversation": {
         "scenario": "A weekend visitor asks for tips.",
@@ -4257,6 +4261,15 @@
         "week": 4,
         "title": "A trip worth taking"
       }
+    ],
+    "reviewChecklist": [
+      "Each model answer is 120–150 words, covers every required point and uses the week's grammar, two or more featured words and the named linkers.",
+      "Required points are concrete enough for the AI to check (each maps to a form or a piece of content).",
+      "Week 4 model facts checked: Edinburgh Castle on an extinct volcano; its oldest part (St Margaret's Chapel) built in the twelfth century; the One O'Clock Gun fired most days since 1861. The model is set in Edinburgh so it doesn't repeat the Week 4 reading (Bath).",
+      "Correction priorities match the grammar plan and the speaking content for the same week.",
+      "AI marking compared with a teacher's marks on 10–20 sample answers per week before the pilot (agreement on at least 8 in 10).",
+      "Timing checked with 3–5 pilot learners: plan, write and revise fit in about 30 minutes.",
+      "A second teacher checks every task, frame and model."
     ]
   }
 }

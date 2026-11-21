@@ -31,6 +31,7 @@ export default function WritingSpec({ writing, spec }: { writing: WritingDetail;
           {writing.stretchWords.length > 0 && <> (stretch: {writing.stretchWords.join(', ')})</>}
         </p>
         <p className="mt-1"><strong className="font-semibold text-stone-800">Linkers:</strong> {writing.linkers.join(', ')}</p>
+        <p className="mt-1"><strong className="font-semibold text-stone-800">Paired reading:</strong> {writing.pairedReading}</p>
       </div>
 
       <details className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs">
@@ -45,6 +46,10 @@ export default function WritingSpec({ writing, spec }: { writing: WritingDetail;
         </ol>
         <p className="mt-3 border-t border-stone-100 pt-2 leading-5 text-stone-600">{spec.marking}</p>
         <p className="mt-1 leading-5 text-stone-600">{spec.unlocking}</p>
+        <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-stone-500">Review before launch</p>
+        <ul className="mt-1 space-y-1 text-[11px] leading-5 text-stone-600">
+          {spec.reviewChecklist.map((item) => <li key={item}>• {item}</li>)}
+        </ul>
       </details>
 
       <div className="grid gap-3 md:grid-cols-2">

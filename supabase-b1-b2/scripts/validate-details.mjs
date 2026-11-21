@@ -91,6 +91,11 @@ check(
 
 check(String(details.writing?.status).includes('pilot draft'), 'writing content must be marked as pilot draft');
 check(details.writing?.steps?.length === 5, 'writing task needs five steps');
+check(details.writing?.reviewChecklist?.length === 7, 'writing review checklist needs seven items');
+check(
+  details.writing?.reviewChecklist?.some((item) => item.includes('Edinburgh Castle on an extinct volcano') && item.includes("St Margaret's Chapel")),
+  'the writing review checklist must carry the revised Week 4 Edinburgh fact-check',
+);
 check(details.writing?.weeks?.length === 4, 'writing content needs four weeks');
 details.weeks?.forEach((week, index) => {
   const writing = week.writing;
@@ -106,11 +111,16 @@ details.weeks?.forEach((week, index) => {
   check(Boolean(writing?.reviseAndRetryFocus?.trim()), `week ${index + 1} needs a revise-and-retry focus`);
   check(Boolean(writing?.modelAnswer?.trim()), `week ${index + 1} needs a model answer`);
   check(Boolean(writing?.delayedRecall?.trim()), `week ${index + 1} needs a delayed-recall prompt`);
+  check(Boolean(writing?.pairedReading?.trim()), `week ${index + 1} needs its paired reading`);
 });
 check(details.writing?.source?.includes('revised so each task matches the repo reading texts'), 'writing source must record the revision');
 check(details.weeks?.[1]?.writing?.prompt?.includes('Ask Sam advice column'), 'Week 2 writing must be the Ask Sam letter');
 check(details.weeks?.[1]?.writing?.requiredPoints?.some((point) => point.includes('question asking for advice')), 'Week 2 must require an advice question');
 check(details.weeks?.[3]?.writing?.modelAnswer?.includes('Edinburgh'), 'Week 4 model answer must use the revised Edinburgh trip');
+
+details.weeks?.forEach((week) => {
+  check(!week.writing?.modelAnswer?.includes('Bath'), `Week ${week.number} writing model must not mention Bath`);
+});
 
 check(Boolean(assessments.checkpoint1?.writing?.onTarget?.trim()), 'checkpoint writing needs an on-target rule');
 
