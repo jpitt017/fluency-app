@@ -6,6 +6,17 @@ export const SpeakerAccentSchema = z.object({
   label: z.string().trim().min(2),
 });
 
+export const VocabGapFillSchema = z
+  .object({
+    prompt: z.string().trim().min(5),
+    options: z.array(z.string().trim().min(1)).min(2),
+    answer: z.string().trim().min(1),
+    explanation: z.string().trim().min(5),
+  })
+  .refine((item) => item.options.includes(item.answer), {
+    message: 'Vocab gap-fill answer must match one of its options exactly',
+  });
+
 export const VocabItemSchema = z.object({
   term: z.string().trim().min(1),
   pos: z.string().trim().min(1),
@@ -13,11 +24,46 @@ export const VocabItemSchema = z.object({
   example: z.string().trim().min(8),
   collocations: z.array(z.string().trim().min(2)).min(1, 'Each vocabulary item needs at least one collocation'),
   wordFamily: z.array(z.string().trim().min(2)).optional(),
+  note: z.string().trim().min(3).optional(),
+  ukUsNote: z.string().trim().min(3).optional(),
+  gapFill: VocabGapFillSchema.optional(),
+  sentencePrompt: z.string().trim().min(8).optional(),
   translation: z.string().trim().min(1),
   ipa: z.string().trim().optional(),
   band: z.enum(['B1', 'B2']).optional(),
   audioRef: z.string().trim().min(5, 'Each vocabulary item needs an audioRef path'),
   audioUrl: z.string().trim().optional(),
+});
+
+export const VocabPackSchema = z.object({
+  collocations: z
+    .array(
+      z.object({
+        phrase: z.string().trim().min(2),
+        example: z.string().trim().min(8),
+        note: z.string().trim().optional(),
+      }),
+    )
+    .min(1),
+  wordFamilies: z
+    .array(
+      z.object({
+        base: z.string().trim().min(2),
+        forms: z.array(z.string().trim().min(2)).min(2),
+        example: z.string().trim().min(8),
+        note: z.string().trim().optional(),
+      }),
+    )
+    .min(1),
+  linkingExpressions: z
+    .array(
+      z.object({
+        expression: z.string().trim().min(3),
+        functionLabel: z.string().trim().min(2),
+        example: z.string().trim().min(8),
+      }),
+    )
+    .min(1),
 });
 
 export const GrammarItemSchema = z
@@ -151,6 +197,7 @@ export const ModuleSchema = z
     releaseStage: z.enum(['live', 'beta', 'draft']).default('live'),
     vocabularyTopic: z.string().trim().min(3),
     lightGrammar: z.string().trim().nullable().optional(),
+    vocabPack: VocabPackSchema.optional(),
     grammar: z.array(GrammarPointSchema).min(1).max(2),
     vocab: z.array(VocabItemSchema).min(8).max(12),
     inputs: z.array(ContentInputSchema).min(2),

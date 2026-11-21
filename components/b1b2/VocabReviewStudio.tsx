@@ -16,6 +16,8 @@ interface DueCard {
   definition: string | null;
   example: string | null;
   collocations: string[] | null;
+  word_family?: string[] | null;
+  usage_note?: string | null;
   translation_es: string | null;
   audio_url?: string | null;
   ladder_step: number;
@@ -88,7 +90,7 @@ export default function VocabReviewStudio({
         const { data, error: cardError } = await supabase
           .from('vocab_cards')
           .select(
-            'id, ladder_step, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, translation_es, audio_url)',
+            'id, ladder_step, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, word_family, usage_note, translation_es, audio_url)',
           )
           .eq('vocab_items.deck_id', deckId)
           .lte('due_at', nowIso)
@@ -106,6 +108,8 @@ export default function VocabReviewStudio({
             definition: string | null;
             example: string | null;
             collocations: string[] | null;
+            word_family: string[] | null;
+            usage_note: string | null;
             translation_es: string | null;
             audio_url: string | null;
           };
@@ -118,6 +122,8 @@ export default function VocabReviewStudio({
             definition: item.definition,
             example: item.example,
             collocations: item.collocations,
+            word_family: item.word_family,
+            usage_note: item.usage_note,
             translation_es: item.translation_es,
             audio_url: item.audio_url,
             ladder_step: Number(row.ladder_step ?? 0),
@@ -353,6 +359,17 @@ export default function VocabReviewStudio({
                             {currentCard.collocations?.join(' · ')}
                           </p>
                         ) : null}
+                        {currentCard.word_family && currentCard.word_family.length > 1 ? (
+                          <p className="text-xs text-stone-600">
+                            <strong className="text-stone-700">Word family:</strong>{' '}
+                            {currentCard.word_family.join(' · ')}
+                          </p>
+                        ) : null}
+                        {currentCard.usage_note ? (
+                          <p className="rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-950">
+                            <strong>Note:</strong> {currentCard.usage_note}
+                          </p>
+                        ) : null}
                         {currentCard.translation_es && (
                           <p className="text-xs text-stone-500">ES: {currentCard.translation_es}</p>
                         )}
@@ -468,6 +485,14 @@ export default function VocabReviewStudio({
                         <p className="mt-0.5 italic text-stone-500">{item.example}</p>
                         {item.collocations.length > 0 && (
                           <p className="mt-1 text-[11px] text-stone-500">Collocations: {item.collocations.join(' · ')}</p>
+                        )}
+                        {item.word_family && item.word_family.length > 1 && (
+                          <p className="mt-0.5 text-[11px] text-stone-500">Family: {item.word_family.join(' · ')}</p>
+                        )}
+                        {item.usage_note && (
+                          <p className="mt-1 rounded bg-amber-50/70 px-2 py-1 text-[11px] text-amber-950">
+                            {item.usage_note}
+                          </p>
                         )}
                       </div>
                     ))}

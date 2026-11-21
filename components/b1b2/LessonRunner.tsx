@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { CheckSquare, Flame, Headphones, Mic, Target } from 'lucide-react';
 import ListeningInputCard from '@/components/b1b2/ListeningInputCard';
+import MondayVocabPack from '@/components/b1b2/MondayVocabPack';
 import OutputStudio from '@/components/b1b2/OutputStudio';
 import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
 import WarmUpDeck from '@/components/b1b2/WarmUpDeck';
@@ -114,6 +115,7 @@ export default function LessonRunner({ payload, signedIn }: { payload: LessonPay
                 <InputSection
                   content={block.content as InputContent}
                   payload={payload}
+                  signedIn={signedIn}
                   personalErrorLog={personalErrorLog}
                 />
               )}
@@ -192,18 +194,28 @@ function WarmUpSection({ content, lessonNumber, signedIn }: { content: WarmUpCon
 function InputSection({
   content,
   payload,
+  signedIn,
   personalErrorLog = [],
 }: {
   content: InputContent;
   payload: LessonPayload;
+  signedIn: boolean;
   personalErrorLog?: LessonPayload['personal_error_log'];
 }) {
   const input = payload.input;
   const isWeek16 = (payload.module.week_number ?? payload.module.number) === 16;
+  const vocabItems = payload.vocab_items ?? [];
+  const vocabPack = payload.module.vocab_pack ?? null;
+  const hasMondayPack =
+    payload.lesson.module_lesson_number === 1 &&
+    (vocabItems.length > 0 ||
+      Boolean(vocabPack?.collocations?.length || vocabPack?.wordFamilies?.length || vocabPack?.linkingExpressions?.length));
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-stone-700">{content.summary}</p>
+      <p className="text-sm text-stone-700">
+        {hasMondayPack ? payload.lesson.objective : content.summary}
+      </p>
 
       {isWeek16 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
@@ -250,29 +262,40 @@ function InputSection({
         </div>
       )}
 
-      {input && <ListeningInputCard input={input} />}
+      {hasMondayPack ? (
+        <MondayVocabPack
+          vocabItems={vocabItems}
+          vocabPack={vocabPack}
+          signedIn={signedIn}
+          lessonNumber={payload.lesson.lesson_number}
+        />
+      ) : (
+        <>
+          {input && <ListeningInputCard input={input} />}
 
-      {content.key_points?.length ? (
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Key points</h3>
-          <ul className="mt-2 space-y-1.5 text-sm text-stone-700">
-            {content.key_points.map((point) => (
-              <li key={point} className="flex gap-2">
-                <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+          {content.key_points?.length ? (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Key points</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-stone-700">
+                {content.key_points.map((point) => (
+                  <li key={point} className="flex gap-2">
+                    <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
-      {content.model_example && (
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Model example</h3>
-          <p className="mt-2 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/50 p-3 text-sm italic leading-6 text-stone-700">
-            {content.model_example}
-          </p>
-        </div>
+          {content.model_example && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-stone-600">Model example</h3>
+              <p className="mt-2 rounded-lg border-l-4 border-indigo-400 bg-indigo-50/50 p-3 text-sm italic leading-6 text-stone-700">
+                {content.model_example}
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -312,6 +335,7 @@ function PracticeSection({
           grammarPoint={grammarPoint}
           items={items.map((item) => ({
             id: item.id,
+            kind: item.kind,
             prompt: item.prompt,
             options: item.options,
             answer: item.answer,
