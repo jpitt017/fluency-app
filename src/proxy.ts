@@ -5,8 +5,7 @@ const AI_PROTECTED_PATHS = new Set([
   '/api/speaking/chat',
   '/api/speaking/evaluate',
   '/api/writing/correct',
-  '/api/checkpoints/evaluate',
-  '/api/checkpoints/writing',
+  '/api/review/check-rewrite',
 ]);
 
 export async function proxy(request: NextRequest) {

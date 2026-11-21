@@ -65,7 +65,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
           <h2 className="font-serif text-base font-semibold text-stone-900">
             Learner Roster ({learners.length})
           </h2>
-          <span className="text-[11px] font-semibold text-stone-500">16 weeks · 112 sessions</span>
+          <span className="text-[11px] font-semibold text-stone-500">B1 → B2 Studio</span>
         </div>
 
         <div className="space-y-2">
@@ -85,15 +85,13 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-bold text-stone-900">{learner.full_name}</span>
                   <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700 ring-1 ring-stone-200">
-                    {learner.total_sessions_completed}/112
+                    {learner.streak_days}d streak
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-stone-600">
                   <span>{learner.learner_band.replace(/_/g, ' ')}</span>
                   <span>·</span>
-                  <span>{learner.streak_days}d streak</span>
-                  <span>·</span>
-                  <span>L {learner.listening_weeks}/12+ · R {learner.reading_weeks}/12+</span>
+                  <span>{learner.recent_speaking.length} spk · {learner.recent_writing.length} wrt</span>
                 </div>
               </button>
             );
@@ -126,42 +124,11 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
 
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-800">
-                  Sessions: {selected.total_sessions_completed} / 112
+                  Speaking: {selected.recent_speaking.length} · Writing: {selected.recent_writing.length}
                 </span>
                 <span className="rounded-full bg-stone-100 px-3 py-1 font-semibold text-stone-700">
-                  Listening weeks: {selected.listening_weeks} / 12+
+                  Streak: {selected.streak_days}d
                 </span>
-                <span className="rounded-full bg-stone-100 px-3 py-1 font-semibold text-stone-700">
-                  Reading weeks: {selected.reading_weeks} / 12+
-                </span>
-              </div>
-            </div>
-
-            {/* 16-Week Output Compliance Grid */}
-            <div className="mt-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">
-                16-Week Output &amp; Wed/Thu Gate Compliance
-              </p>
-              <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {selected.weeks.map((wk) => (
-                  <div key={wk.week_number} className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-xs">
-                    <div className="flex items-center justify-between font-bold text-stone-900">
-                      <span>W{wk.week_number}</span>
-                      <span className="text-indigo-700">{wk.sessions_completed}/7</span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-1 text-[10px] font-semibold">
-                      <span className={`rounded px-1.5 py-0.5 ${wk.wed_or_thu_done ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200/70 text-stone-500'}`}>
-                        W/T
-                      </span>
-                      <span className={`rounded px-1.5 py-0.5 ${wk.fri_speaking_done ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200/70 text-stone-500'}`}>
-                        Fri Spk
-                      </span>
-                      <span className={`rounded px-1.5 py-0.5 ${wk.sat_writing_done ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200/70 text-stone-500'}`}>
-                        Sat Wrt
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -169,7 +136,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             {selected.top_errors.length > 0 && (
               <div className="mt-5 border-t border-stone-100 pt-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-stone-500">
-                  Top Error Patterns (for live lessons &amp; Week 16 focus)
+                  Top Error Patterns (for live lessons)
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {selected.top_errors.map((err) => (

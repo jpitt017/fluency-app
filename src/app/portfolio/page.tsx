@@ -32,7 +32,7 @@ export default async function PortfolioPage() {
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Study Portfolio</span>
           <h1 className="mt-2 text-2xl font-bold text-stone-900">Sign in to view your saved speaking &amp; writing work</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Replay your past audio recordings, inspect AI rubric scores, and revisit B2 model rewrites from your lessons and checkpoints.
+            Replay your past audio recordings, inspect AI rubric scores, and revisit B2 model rewrites from your speaking and writing labs.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -42,10 +42,10 @@ export default async function PortfolioPage() {
               Sign in →
             </Link>
             <Link
-              href="/curriculum"
+              href="/labs"
               className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-100"
             >
-              Browse curriculum
+              Open AI Labs
             </Link>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default async function PortfolioPage() {
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Output Archive</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">Speaking &amp; Writing Portfolio</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
-            All evaluated lesson responses and milestone checkpoint submissions with audio playback and B2 model upgrades.
+            All evaluated speaking and writing submissions with audio playback and B2 model upgrades.
           </p>
         </div>
         <div className="flex gap-2">
@@ -105,7 +105,7 @@ export default async function PortfolioPage() {
 
           {speaking.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-500">
-              No evaluated speaking attempts yet. Complete a lesson Output block or a Checkpoint speaking task to save your first recording.
+              No evaluated speaking attempts yet. Record a speaking response in the AI Labs to save your first recording.
             </div>
           ) : (
             speaking.map((item) => (
@@ -147,7 +147,7 @@ export default async function PortfolioPage() {
 
           {writing.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-500">
-              No evaluated writing submissions yet. Draft a paragraph inside a lesson Output block or a Checkpoint writing task.
+              No evaluated writing submissions yet. Draft a paragraph in the Writing Studio to save your first submission.
             </div>
           ) : (
             writing.map((item) => (

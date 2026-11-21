@@ -6,27 +6,24 @@ import { createClient } from '@/utils/supabase/client';
 import type { WeeklyReportRow } from '@/lib/b1b2/types';
 
 const PACE_OPTIONS = [
-  { hours: 3, label: '3h / wk', hint: '~21 wks total' },
-  { hours: 4, label: '4h / wk', hint: '16 wks standard' },
-  { hours: 5, label: '5h / wk', hint: '~12.5 wks total' },
-  { hours: 8, label: '8h / wk', hint: '~8 wks intensive' },
-  { hours: 10, label: '10h / wk', hint: '~6.5 wks sprint' },
+  { hours: 3, label: '3h / wk', hint: 'Light pace' },
+  { hours: 4, label: '4h / wk', hint: 'Steady pace' },
+  { hours: 5, label: '5h / wk', hint: 'Balanced' },
+  { hours: 8, label: '8h / wk', hint: 'Intensive' },
+  { hours: 10, label: '10h / wk', hint: 'Sprint' },
 ] as const;
 
 export function WeeklyPaceSelector({
   currentHours,
-  remainingLessons = 112,
 }: {
   currentHours: number;
-  remainingLessons?: number;
 }) {
   const router = useRouter();
+  const supabase = createClient();
   const [hours, setHours] = useState(currentHours);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
 
-  const remainingHours = remainingLessons * (63 / 112);
-  const weeksRemaining = Math.max(0, remainingHours / Math.max(1, hours));
   const dailyMinutes = Math.round((hours * 60) / 7);
 
   async function selectHours(nextHours: number) {
@@ -34,15 +31,15 @@ export function WeeklyPaceSelector({
     setSaving(true);
     setStatus('');
     try {
-      const res = await fetch('/api/curriculum/progress', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetHoursPerWeek: nextHours }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? 'Could not save study pace.');
-      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sign in required.');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ weekly_goal_hours: nextHours })
+        .eq('id', user.id);
+      if (error) throw error;
       setStatus(`Saved (${nextHours}h/wk)`);
       router.refresh();
     } catch (caught) {
@@ -59,13 +56,9 @@ export function WeeklyPaceSelector({
           <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Study Pace</p>
           <h2 className="mt-0.5 font-serif text-lg font-semibold text-stone-900">
             {hours} hrs / week
-            {remainingLessons > 0 ? (
-              <span className="ml-2 font-sans text-xs font-medium text-stone-500">
-                · ~{dailyMinutes} min/day · ~{weeksRemaining.toFixed(1)} wks left
-              </span>
-            ) : (
-              <span className="ml-2 font-sans text-xs font-semibold text-emerald-700">· Course complete</span>
-            )}
+            <span className="ml-2 font-sans text-xs font-medium text-stone-500">
+              · ~{dailyMinutes} min/day
+            </span>
           </h2>
         </div>
         {status && <span className="text-xs font-semibold text-emerald-700">{status}</span>}
