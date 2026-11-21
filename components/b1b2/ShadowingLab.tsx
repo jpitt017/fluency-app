@@ -22,9 +22,11 @@ const DEFAULT_CHECKLIST = [
 export default function ShadowingLab({
   targets,
   title = 'Listen-and-Compare Shadowing Lab',
+  pronunciationFocus,
 }: {
   targets: ShadowingTarget[];
   title?: string;
+  pronunciationFocus?: string;
 }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [rate, setRate] = useState<0.85 | 1>(1);
@@ -209,6 +211,11 @@ export default function ShadowingLab({
             <p className="text-[11px] text-stone-500">
               Listen to the model, shadow aloud with live waveform feedback, then self-check stress &amp; linking.
             </p>
+            {pronunciationFocus && (
+              <p className="mt-1 text-[11px] font-semibold text-emerald-800">
+                Pronunciation tip: {pronunciationFocus}
+              </p>
+            )}
           </div>
         </div>
 

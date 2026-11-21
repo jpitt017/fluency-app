@@ -20,12 +20,14 @@ interface SpeakingFeedback {
 interface SpeakingLabProps {
   sessionTitle?: string;
   speakingFocus?: string;
+  pronunciationFocus?: string;
   keyLanguage?: string[];
   lessonContext?: LessonLabContext;
 }
 
 export default function SpeakingLab({
   speakingFocus,
+  pronunciationFocus,
   keyLanguage = [],
   lessonContext,
 }: SpeakingLabProps) {
@@ -143,6 +145,11 @@ export default function SpeakingLab({
           {speakingFocus && (
             <p className="text-xs text-stone-700">
               <strong>Fluency:</strong> {speakingFocus}
+            </p>
+          )}
+          {pronunciationFocus && (
+            <p className="text-xs text-emerald-900">
+              <strong>Pronunciation tip:</strong> {pronunciationFocus}
             </p>
           )}
           <p className="text-[11px] text-emerald-900/80">

@@ -5,11 +5,16 @@ import ConversationalSpeakingLab from '@/components/labs/ConversationalSpeakingL
 import ShadowingLab from '@/components/b1b2/ShadowingLab';
 import type { LessonLabContext } from '@/components/labs/LessonLabContext';
 import { getViewer } from '@/lib/b1b2/data';
+import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
 
 export const dynamic = 'force-dynamic';
 
-export default async function LabsPage() {
+type LabsProps = { searchParams: Promise<{ week?: string | string[] }> };
+
+export default async function LabsPage({ searchParams }: LabsProps) {
   const viewer = await getViewer();
+  const weekNumber = learnerWeekFromParam((await searchParams).week);
+  const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
   const freeContext: LessonLabContext = {
     prompt:
       'Practise B1 → B2 English fluency. Organise your ideas with clear linkers (whereas, consequently, nevertheless), precise collocations, and confident pacing.',
@@ -32,6 +37,11 @@ export default async function LabsPage() {
             <p className="mt-1.5 max-w-2xl text-sm text-stone-600">
               AI coaching for B1 → B2 English fluency: structured writing evaluation, speech transcription and content/grammar scoring, prosody shadowing, and interactive conversation practice.
             </p>
+            {pronunciationFocus && (
+              <p className="mt-2 text-xs font-semibold text-emerald-800">
+                Pronunciation tip for weeks {phaseForWeek(weekNumber)?.weeks}: {pronunciationFocus}
+              </p>
+            )}
           </div>
           <Link
             href="/portfolio"
@@ -74,13 +84,14 @@ export default async function LabsPage() {
               Record 60–180 seconds for Whisper transcription and B1 → B2 feedback.
             </p>
           </div>
-          <SpeakingLab lessonContext={freeContext} />
+          <SpeakingLab lessonContext={freeContext} pronunciationFocus={pronunciationFocus} />
         </section>
       </div>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
         <ShadowingLab
           title="Listen-and-Compare Shadowing Studio"
+          pronunciationFocus={pronunciationFocus}
           targets={[
             {
               label: 'Narrative pacing · Turning point',
