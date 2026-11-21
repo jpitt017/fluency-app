@@ -1116,8 +1116,8 @@ as $$
   from expected;
 $$;
 
-revoke all on function public.verify_app_schema() from public, anon;
-grant execute on function public.verify_app_schema() to service_role;
+revoke all on function public.verify_app_schema() from public;
+grant execute on function public.verify_app_schema() to anon, authenticated, service_role;
 
 -- -- Reconcile drifted consume_ai_usage with the current repo behaviour (free/pro tiers and /api/review/check-rewrite).
 create or replace function public.consume_ai_usage(p_endpoint text, p_units integer)
