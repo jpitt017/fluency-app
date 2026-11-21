@@ -117,7 +117,7 @@ push();
 push('insert into public.syllabus_assessments (code, title, payload) values');
 push(`  ('writing-descriptors', 'Writing descriptors', ${lit(JSON.stringify(assessments))}::jsonb->'writingDescriptors'),
   ('placement', 'Placement', ${lit(JSON.stringify(assessments))}::jsonb->'placement'),
-  ('checkpoint-1', 'Checkpoint 1', ${lit(JSON.stringify(assessments))}::jsonb->'checkpoint-1')
+  ('checkpoint-1', 'Checkpoint 1', ${lit(JSON.stringify(assessments))}::jsonb->'checkpoint1')
 on conflict (code) do update set title = excluded.title, payload = excluded.payload;`);
 push();
 
