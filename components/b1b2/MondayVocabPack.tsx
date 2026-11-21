@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { BookOpen, Layers, Link2, Sparkles, Volume2 } from 'lucide-react';
+import { BookOpen, Layers, Link2, Sparkles, Star, Volume2 } from 'lucide-react';
+import VocabRoleBadge from '@/components/b1b2/VocabRoleBadge';
 import { playAudioOrSpeak } from '@/lib/b1b2/speech';
 import type { LessonVocabItem, VocabPack } from '@/lib/b1b2/types';
 
@@ -34,6 +35,14 @@ export default function MondayVocabPack({
   const collocations = vocabPack?.collocations ?? [];
   const wordFamilies = vocabPack?.wordFamilies ?? [];
   const linkingExpressions = vocabPack?.linkingExpressions ?? [];
+  const optionalExtensions = vocabPack?.optionalExtensions ?? [];
+
+  const hasRoleBadges =
+    vocabItems.some((v) => Boolean(v.teaching_role)) ||
+    collocations.some((c) => Boolean(c.useRole)) ||
+    wordFamilies.some((wf) => Boolean(wf.formDetails?.length)) ||
+    linkingExpressions.some((l) => Boolean(l.useRole)) ||
+    optionalExtensions.length > 0;
 
   async function checkSentence(item: LessonVocabItem) {
     const draft = (drafts[item.id] ?? '').trim();
@@ -80,53 +89,72 @@ export default function MondayVocabPack({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-700">
-          <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
-            1. {vocabItems.length} core expressions
-          </span>
-          {collocations.length > 0 && (
+      <div className="space-y-2.5 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-700">
             <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
-              2. {collocations.length} collocations
+              1. {vocabItems.length} core expressions
             </span>
-          )}
-          {wordFamilies.length > 0 && (
-            <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
-              3. {wordFamilies.length} word families
-            </span>
-          )}
-          {linkingExpressions.length > 0 && (
-            <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
-              4. {linkingExpressions.length} linking expressions
-            </span>
-          )}
-        </div>
+            {collocations.length > 0 && (
+              <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
+                2. {collocations.length} collocations
+              </span>
+            )}
+            {wordFamilies.length > 0 && (
+              <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
+                3. {wordFamilies.length} word families
+              </span>
+            )}
+            {linkingExpressions.length > 0 && (
+              <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
+                4. {linkingExpressions.length} linking expressions
+              </span>
+            )}
+            {optionalExtensions.length > 0 && (
+              <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-stone-200">
+                5. {optionalExtensions.length} optional extension{optionalExtensions.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowTranslations((v) => !v)}
-            className="rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
-          >
-            {showTranslations ? 'Hide ES gloss' : 'Show ES gloss'}
-          </button>
-          <div className="inline-flex rounded-lg border border-stone-200 bg-white p-0.5 text-xs font-semibold">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setAccent('en-GB')}
-              className={`rounded-md px-2 py-0.5 ${accent === 'en-GB' ? 'bg-indigo-700 text-white' : 'text-stone-600'}`}
+              onClick={() => setShowTranslations((v) => !v)}
+              className="rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             >
-              UK Audio
+              {showTranslations ? 'Hide ES gloss' : 'Show ES gloss'}
             </button>
-            <button
-              type="button"
-              onClick={() => setAccent('en-US')}
-              className={`rounded-md px-2 py-0.5 ${accent === 'en-US' ? 'bg-indigo-700 text-white' : 'text-stone-600'}`}
-            >
-              US Audio
-            </button>
+            <div className="inline-flex rounded-lg border border-stone-200 bg-white p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setAccent('en-GB')}
+                className={`rounded-md px-2 py-0.5 ${accent === 'en-GB' ? 'bg-indigo-700 text-white' : 'text-stone-600'}`}
+              >
+                UK Audio
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccent('en-US')}
+                className={`rounded-md px-2 py-0.5 ${accent === 'en-US' ? 'bg-indigo-700 text-white' : 'text-stone-600'}`}
+              >
+                US Audio
+              </button>
+            </div>
           </div>
         </div>
+
+        {hasRoleBadges && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-stone-200/80 pt-2 text-[11px] text-stone-600">
+            <span className="font-semibold text-stone-700">Teaching role:</span>
+            <VocabRoleBadge role="P" />
+            <span>core active use</span>
+            <VocabRoleBadge role="B" />
+            <span>guided target with model</span>
+            <VocabRoleBadge role="O" />
+            <span>recognition only</span>
+          </div>
+        )}
       </div>
 
       {/* Part 1: Core Vocabulary */}
@@ -152,7 +180,7 @@ export default function MondayVocabPack({
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[11px] font-bold text-indigo-700">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
@@ -165,6 +193,7 @@ export default function MondayVocabPack({
                             {item.band}
                           </span>
                         )}
+                        <VocabRoleBadge role={item.teaching_role} />
                       </div>
                       {item.ipa && <p className="mt-0.5 text-xs text-stone-500">{item.ipa}</p>}
                     </div>
@@ -300,8 +329,16 @@ export default function MondayVocabPack({
                 key={col.phrase}
                 className="rounded-xl border border-stone-200 bg-stone-50/60 p-3.5"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-bold text-stone-900">{col.phrase}</p>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-sm font-bold text-stone-900">{col.phrase}</p>
+                    {col.band && (
+                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-800">
+                        {col.band}
+                      </span>
+                    )}
+                    <VocabRoleBadge role={col.useRole} />
+                  </div>
                   <button
                     type="button"
                     onClick={() => void playAudioOrSpeak(null, col.example, accent, 0.95)}
@@ -333,17 +370,53 @@ export default function MondayVocabPack({
                 <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
                   Base: {wf.base}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {wf.forms.map((form) => (
-                    <span
-                      key={form}
-                      className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900"
-                    >
-                      {form}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs italic leading-5 text-stone-700">&ldquo;{wf.example}&rdquo;</p>
+
+                {wf.formDetails && wf.formDetails.length > 0 ? (
+                  <div className="mt-2.5 space-y-2">
+                    {wf.formDetails.map((detail) => (
+                      <div
+                        key={detail.form}
+                        className="rounded-lg border border-stone-100 bg-stone-50/70 p-2"
+                      >
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-xs font-bold text-stone-900">{detail.form}</span>
+                          {detail.pos && (
+                            <span className="text-[10px] font-medium text-stone-500">
+                              ({detail.pos})
+                            </span>
+                          )}
+                          {detail.band && (
+                            <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-indigo-800">
+                              {detail.band}
+                            </span>
+                          )}
+                          <VocabRoleBadge role={detail.useRole} />
+                        </div>
+                        <p className="mt-1 text-[11px] italic leading-4 text-stone-600">
+                          &ldquo;{detail.example}&rdquo;
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {wf.forms.map((form) => (
+                        <span
+                          key={form}
+                          className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900"
+                        >
+                          {form}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs italic leading-5 text-stone-700">
+                      &ldquo;{wf.example}&rdquo;
+                    </p>
+                  </>
+                )}
+
+                {wf.note && <p className="mt-2 text-[11px] leading-4 text-stone-600">{wf.note}</p>}
               </div>
             ))}
           </div>
@@ -363,9 +436,17 @@ export default function MondayVocabPack({
             {linkingExpressions.map((linker) => (
               <div key={linker.expression} className="rounded-xl border border-stone-200 bg-white p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-900 ring-1 ring-emerald-200">
-                    {linker.functionLabel}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-900 ring-1 ring-emerald-200">
+                      {linker.functionLabel}
+                    </span>
+                    {linker.band && (
+                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-800">
+                        {linker.band}
+                      </span>
+                    )}
+                    <VocabRoleBadge role={linker.useRole} />
+                  </div>
                   <button
                     type="button"
                     onClick={() => void playAudioOrSpeak(null, linker.example, accent, 0.95)}
@@ -376,6 +457,53 @@ export default function MondayVocabPack({
                 </div>
                 <p className="mt-2 text-sm font-semibold text-stone-900">{linker.expression}</p>
                 <p className="mt-1 text-xs italic leading-5 text-stone-600">&ldquo;{linker.example}&rdquo;</p>
+                {linker.note && <p className="mt-1 text-[11px] text-stone-600">{linker.note}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Part 5: Optional Extensions (Recognition) */}
+      {optionalExtensions.length > 0 && (
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <Star className="h-4 w-4 text-stone-600" />
+            <h3 className="text-xs font-bold uppercase tracking-wide text-stone-700">
+              Part 5 · Optional Extensions (Recognition)
+            </h3>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {optionalExtensions.map((ext) => (
+              <div
+                key={ext.phrase}
+                className="rounded-xl border border-dashed border-stone-300 bg-stone-50/70 p-3.5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-sm font-bold text-stone-900">{ext.phrase}</p>
+                    {ext.pos && (
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-stone-600 ring-1 ring-stone-200">
+                        {ext.pos}
+                      </span>
+                    )}
+                    {ext.band && (
+                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-800">
+                        {ext.band}
+                      </span>
+                    )}
+                    <VocabRoleBadge role={ext.useRole ?? 'O'} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void playAudioOrSpeak(null, ext.example, accent, 0.95)}
+                    className="shrink-0 rounded-md border border-stone-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-stone-600 hover:bg-stone-100"
+                  >
+                    Listen
+                  </button>
+                </div>
+                <p className="mt-1.5 text-xs italic leading-5 text-stone-700">&ldquo;{ext.example}&rdquo;</p>
+                {ext.note && <p className="mt-1 text-[11px] text-stone-600">{ext.note}</p>}
               </div>
             ))}
           </div>

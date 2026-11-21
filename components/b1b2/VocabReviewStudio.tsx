@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import VocabRoleBadge from '@/components/b1b2/VocabRoleBadge';
 import { previewFsrsIntervals, type ReviewGrade } from '@/lib/b1b2/fsrs';
 import { playAudioOrSpeak } from '@/lib/b1b2/speech';
 import { createClient } from '@/utils/supabase/client';
-import type { VocabDeckSummary } from '@/lib/b1b2/types';
+import type { UseRole, VocabDeckSummary } from '@/lib/b1b2/types';
 
 interface DueCard {
   card_id: string;
@@ -19,6 +20,7 @@ interface DueCard {
   word_family?: string[] | null;
   usage_note?: string | null;
   translation_es: string | null;
+  teaching_role?: UseRole | null;
   audio_url?: string | null;
   ladder_step: number;
   due_at?: string | null;
@@ -90,7 +92,7 @@ export default function VocabReviewStudio({
         const { data, error: cardError } = await supabase
           .from('vocab_cards')
           .select(
-            'id, ladder_step, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, word_family, usage_note, translation_es, audio_url)',
+            'id, ladder_step, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, vocab_items!inner(id, deck_id, term, part_of_speech, ipa, definition, example, collocations, word_family, usage_note, translation_es, teaching_role, audio_url)',
           )
           .eq('vocab_items.deck_id', deckId)
           .lte('due_at', nowIso)
@@ -111,6 +113,7 @@ export default function VocabReviewStudio({
             word_family: string[] | null;
             usage_note: string | null;
             translation_es: string | null;
+            teaching_role: UseRole | null;
             audio_url: string | null;
           };
           return {
@@ -125,6 +128,7 @@ export default function VocabReviewStudio({
             word_family: item.word_family,
             usage_note: item.usage_note,
             translation_es: item.translation_es,
+            teaching_role: item.teaching_role,
             audio_url: item.audio_url,
             ladder_step: Number(row.ladder_step ?? 0),
             due_at: row.due_at ? String(row.due_at) : null,
@@ -319,7 +323,10 @@ export default function VocabReviewStudio({
                   <>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-2xl font-bold text-stone-900">{currentCard.term}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-2xl font-bold text-stone-900">{currentCard.term}</p>
+                          <VocabRoleBadge role={currentCard.teaching_role} />
+                        </div>
                         <p className="mt-1 text-xs text-stone-500">
                           {currentCard.part_of_speech ?? 'lexical item'}
                           {currentCard.ipa ? ` · ${currentCard.ipa}` : ''}
@@ -463,11 +470,14 @@ export default function VocabReviewStudio({
                   <div className="mt-4 max-h-72 space-y-2 overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-3">
                     {deck.items.map((item) => (
                       <div key={item.id} className="rounded-lg bg-white p-2.5 text-xs ring-1 ring-stone-200/80">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-stone-900">
-                            {item.term}{' '}
-                            {item.ipa && <span className="font-normal text-stone-500">{item.ipa}</span>}
-                          </span>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-bold text-stone-900">
+                              {item.term}{' '}
+                              {item.ipa && <span className="font-normal text-stone-500">{item.ipa}</span>}
+                            </span>
+                            <VocabRoleBadge role={item.teaching_role} compact />
+                          </div>
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"

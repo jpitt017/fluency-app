@@ -17,6 +17,8 @@ export const VocabGapFillSchema = z
     message: 'Vocab gap-fill answer must match one of its options exactly',
   });
 
+export const UseRoleSchema = z.enum(['P', 'B', 'O']);
+
 export const VocabItemSchema = z.object({
   term: z.string().trim().min(1),
   pos: z.string().trim().min(1),
@@ -31,6 +33,7 @@ export const VocabItemSchema = z.object({
   translation: z.string().trim().min(1),
   ipa: z.string().trim().optional(),
   band: z.enum(['B1', 'B2']).optional(),
+  useRole: UseRoleSchema.optional(),
   audioRef: z.string().trim().min(5, 'Each vocabulary item needs an audioRef path'),
   audioUrl: z.string().trim().optional(),
 });
@@ -42,6 +45,8 @@ export const VocabPackSchema = z.object({
         phrase: z.string().trim().min(2),
         example: z.string().trim().min(8),
         note: z.string().trim().optional(),
+        band: z.enum(['B1', 'B2']).optional(),
+        useRole: UseRoleSchema.optional(),
       }),
     )
     .min(1),
@@ -49,7 +54,19 @@ export const VocabPackSchema = z.object({
     .array(
       z.object({
         base: z.string().trim().min(2),
-        forms: z.array(z.string().trim().min(2)).min(2),
+        forms: z.array(z.string().trim().min(2)).min(1),
+        formDetails: z
+          .array(
+            z.object({
+              form: z.string().trim().min(2),
+              pos: z.string().trim().optional(),
+              band: z.enum(['B1', 'B2']).optional(),
+              useRole: UseRoleSchema.optional(),
+              example: z.string().trim().min(8),
+              note: z.string().trim().optional(),
+            }),
+          )
+          .optional(),
         example: z.string().trim().min(8),
         note: z.string().trim().optional(),
       }),
@@ -61,9 +78,24 @@ export const VocabPackSchema = z.object({
         expression: z.string().trim().min(3),
         functionLabel: z.string().trim().min(2),
         example: z.string().trim().min(8),
+        note: z.string().trim().optional(),
+        band: z.enum(['B1', 'B2']).optional(),
+        useRole: UseRoleSchema.optional(),
       }),
     )
     .min(1),
+  optionalExtensions: z
+    .array(
+      z.object({
+        phrase: z.string().trim().min(2),
+        pos: z.string().trim().optional(),
+        band: z.enum(['B1', 'B2']).optional(),
+        useRole: UseRoleSchema.optional(),
+        example: z.string().trim().min(8),
+        note: z.string().trim().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const GrammarItemSchema = z
