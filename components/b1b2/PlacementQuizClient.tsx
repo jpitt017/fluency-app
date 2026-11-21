@@ -53,7 +53,8 @@ function placementRecommendation(score: number, total: number, writingScore: num
 export default function PlacementQuizClient({ questions }: { questions: PlacementQuestionRow[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
   const [stage, setStage] = useState<'quiz' | 'writing' | 'done'>('quiz');
   const [writingSample, setWritingSample] = useState('');
   const [writingScore, setWritingScore] = useState<number | null>(null);
@@ -81,9 +82,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
 
   function handleNextQuestion() {
     if (selectedOption === null) return;
-    const isCorrect = selectedOption === questions[currentIndex].answer_index;
-    const newScore = isCorrect ? score + 1 : score;
-    setScore(newScore);
+    setAnswers((previous) => [...previous, selectedOption]);
     setSelectedOption(null);
 
     if (currentIndex + 1 < questions.length) {
@@ -97,6 +96,22 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     setLoading(true);
     let evaluatedScore: number | null = null;
     let feedbackText = '';
+    let scored = 0;
+
+    try {
+      const scoreRes = await fetch('/api/placement/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers }),
+      });
+      if (scoreRes.ok) {
+        const data = (await scoreRes.json()) as { score?: number };
+        if (typeof data.score === 'number') scored = data.score;
+      }
+    } catch {
+      // Offline: fall back to a zero quiz score rather than exposing keys client-side.
+    }
+    setQuizScore(scored);
 
     const sample = writingSample.trim();
     if (!skipWriting && sample.split(/\s+/).filter(Boolean).length >= 15) {
@@ -124,7 +139,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     setWritingScore(evaluatedScore);
     setWritingFeedback(feedbackText);
 
-    const rec = placementRecommendation(score, questions.length, evaluatedScore);
+    const rec = placementRecommendation(scored, questions.length, evaluatedScore);
     try {
       if (supabase) {
         const {
@@ -136,7 +151,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
             .update({
               onboarding_completed: true,
               placement_result: {
-                score,
+                score: scored,
                 total: questions.length,
                 writing_score: evaluatedScore,
                 band: rec.band,
@@ -154,7 +169,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     }
   }
 
-  const recommendation = placementRecommendation(score, questions.length, writingScore);
+  const recommendation = placementRecommendation(quizScore, questions.length, writingScore);
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-140px)] max-w-2xl items-center justify-center px-4 py-10 sm:px-6">
@@ -223,7 +238,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
         {stage === 'writing' && (
           <div className="space-y-4">
             <p className="text-sm leading-6 text-stone-700">
-              Grammar score: <strong>{score} / {questions.length}</strong>. Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
+              Grammar score: <strong>{quizScore} / {questions.length}</strong>. Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
             </p>
             <textarea
               rows={4}
@@ -271,7 +286,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
                   Suggested Band: {recommendation.band}
                 </span>
                 <span className="text-sm font-bold text-stone-900">
-                  Quiz {score}/{questions.length}
+                  Quiz {quizScore}/{questions.length}
                   {writingScore !== null ? ` · Writing ${writingScore}/100` : ''}
                 </span>
               </div>

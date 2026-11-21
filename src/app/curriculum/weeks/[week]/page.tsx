@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import WeekDetailPanel from '@/components/curriculum/WeekDetailPanel';
+import { requireTeacherViewer } from '@/lib/auth/require-teacher';
 import { curriculumDetails } from '@/lib/curriculum/details';
 import { loadDetailedContent } from '@/lib/curriculum/details';
 import {
@@ -28,16 +29,15 @@ import {
 
 type PageProps = { params: Promise<{ week: string }> };
 
-export function generateStaticParams() {
-  return syllabus.weeks.map((week) => ({ week: String(week.number) }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { week: weekParam } = await params;
   const week = getWeek(Number(weekParam));
-  if (!week) return { title: 'Week not found · Fluency Studio' };
+  if (!week) return { title: 'Week not found · Fluency Studio', robots: { index: false } };
   return {
     title: `Week ${week.number}: ${week.theme} · B1 → B2 | Fluency Studio`,
+    robots: { index: false, follow: false },
     description: `${week.mainGrammar}. ${week.secondaryGrammar ?? ''}`.trim(),
   };
 }
@@ -55,13 +55,14 @@ const TASK_ICONS: Record<string, typeof BookOpen> = {
 };
 
 export default async function WeekPage({ params }: PageProps) {
+  await requireTeacherViewer();
   const { week: weekParam } = await params;
   const weekNumber = Number(weekParam);
   if (!Number.isInteger(weekNumber)) notFound();
 
   const [{ weeks, source }, detailed] = await Promise.all([
     loadSyllabusContent(),
-    loadDetailedContent(),
+    loadDetailedContent({ includeAnswers: true }),
   ]);
   const week = weeks.find((item) => item.number === weekNumber) ?? getWeek(weekNumber);
   if (!week) notFound();

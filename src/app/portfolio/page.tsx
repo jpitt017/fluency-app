@@ -122,7 +122,6 @@ export default async function PortfolioPage() {
 
                 <SpeakingRecording
                   recordingUrl={item.audio_path ? `/api/checkpoints/recording/${item.id}` : null}
-                  transcript={item.transcript}
                 />
 
                 {item.transcript && (

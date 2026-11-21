@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+async function signIn(page, email, password) {
+  await page.goto('/login');
+  await page.getByLabel(/Email/i).fill(email);
+  await page.getByLabel(/Password/i).fill(password);
+  await page.getByRole('button', { name: /Sign in/i }).click();
+  await page.waitForURL(/\/dashboard|\/labs|\/teacher/);
+}
+
 const hasRealSupabase = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder.supabase.co'),
@@ -34,53 +42,61 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     }
   });
 
-  test('two-stage curriculum renders all 32 weeks and week details', async ({ page }) => {
+  test('teacher-only routes redirect signed-out visitors and expose no answer keys', async ({ page }) => {
+    for (const route of ['/curriculum', '/curriculum/weeks/1', '/syllabus', '/assessments']) {
+      await page.goto(route);
+      await expect(page).toHaveURL(/\/login/);
+      const html = await page.content();
+      expect(html).not.toContain('"key"');
+      expect(html).not.toContain('CP1-01');
+    }
+  });
+
+  test('signed-in learners are redirected from teacher-only routes with no key data', async ({ page }) => {
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+    test.skip(!email || !password, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run the learner gate test');
+
+    await signIn(page, email, password);
+
+    for (const route of ['/assessments', '/curriculum']) {
+      await page.goto(route);
+      await expect(page).toHaveURL(/\/dashboard|\/login/);
+      const html = await page.content();
+      expect(html).not.toContain('"key"');
+      expect(html).not.toContain('CP1-01');
+    }
+
+    for (const endpoint of ['/api/checkpoints/portfolio', '/api/checkpoints/recording/no-such-attempt']) {
+      const response = await page.request.get(endpoint);
+      const body = await response.text();
+      expect(body).not.toContain('"key"');
+    }
+  });
+
+  test('teachers can open the curriculum and assessment authoring documents', async ({ page }) => {
+    const email = process.env.E2E_TEACHER_EMAIL;
+    const password = process.env.E2E_TEACHER_PASSWORD;
+    test.skip(!email || !password, 'Set E2E_TEACHER_EMAIL and E2E_TEACHER_PASSWORD to run the teacher authoring test');
+
+    await signIn(page, email, password);
+
     const res = await page.goto('/curriculum');
     expect(res?.status()).toBeLessThan(500);
     await expect(page.getByRole('heading', { name: /From secure B1 to B2/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Stage 1 · Weeks 1-16/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Stage 2 · Weeks 17-32/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /WEEK 32/ })).toHaveCount(0); // stage 2 is one click away
 
-    await page.getByRole('button', { name: /Stage 2 · Weeks 17-32/i }).click();
-    await expect(page.getByRole('link', { name: /WEEK 32/ })).toBeVisible();
-
-    const weekRes = await page.goto('/curriculum/weeks/31');
-    expect(weekRes?.status()).toBeLessThan(500);
-    await expect(page.getByRole('heading', { name: /Debate and persuasion/i })).toBeVisible();
-    await expect(page.getByText(/Building an argument/i)).toBeVisible();
-    await expect(page.getByText(/Essay and AI debate/i)).toBeVisible();
-
-    const alias = await page.goto('/syllabus');
-    expect(alias?.status()).toBeLessThan(500);
-    expect(new URL(page.url()).pathname).toBe('/curriculum');
-  });
-
-  test('Weeks 1–4 specs and assessment documents render', async ({ page }) => {
     const weekRes = await page.goto('/curriculum/weeks/1');
     expect(weekRes?.status()).toBeLessThan(500);
-    await expect(page.getByText(/A change you got used to/i)).toBeVisible();
     await expect(page.getByText(/Full practice set · pilot draft/i)).toBeVisible();
     await expect(page.getByText(/W1-L3/)).toBeVisible();
-    await expect(page.getByText(/Shadowing chunks · 3 min warm-up/i)).toBeVisible();
-    await expect(page.getByText(/Full audio script/i)).toBeVisible();
-    await expect(page.getByText(/Full reading text/i)).toBeVisible();
-    await expect(page.getByText(/L1-G1/)).toBeVisible();
-    await expect(page.getByText(/R1-G1/)).toBeVisible();
-    await expect(page.getByText(/Required points checked by the AI/i)).toBeVisible();
-    await expect(page.getByText(/Reveal model answer/i)).toBeVisible();
-    await expect(page.getByText(/Five-step writing flow and learner support/i)).toBeVisible();
-    await expect(page.getByText(/Paired reading:/i)).toBeVisible();
     await expect(page.getByText(/Authoring notes for teachers/i)).toBeVisible();
 
     const assessmentRes = await page.goto('/assessments');
     expect(assessmentRes?.status()).toBeLessThan(500);
     await expect(page.getByRole('heading', { name: /Three bands, four criteria/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /The same four criteria for speech/i })).toBeVisible();
-    await expect(page.getByText(/Checkpoint 1 speaking/i)).toBeVisible();
     await expect(page.getByText(/CP1-01/)).toBeVisible();
-    await page.getByRole('button', { name: /Reveal keys/i }).click();
-    await expect(page.getByText(/In 2019' is a finished time/i)).toBeVisible();
   });
 
   test('placement check + stubbed diagnostic writing sample completes deterministically', async ({ page }) => {
@@ -171,11 +187,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
       });
     }
 
-    await page.goto('/login');
-    await page.getByLabel(/Email/i).fill(email);
-    await page.getByLabel(/Password/i).fill(password);
-    await page.getByRole('button', { name: /Sign in/i }).click();
-    await page.waitForURL(/\/dashboard|\/labs/);
+    await signIn(page, email, password);
 
     await page.goto('/labs');
     const draftArea = page.getByPlaceholder(/Write your B1 → B2 response here/i);

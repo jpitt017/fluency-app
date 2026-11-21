@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /curriculum
+Disallow: /curriculum/weeks/
+Disallow: /syllabus
+Disallow: /assessments

@@ -296,15 +296,70 @@ export interface DetailedContent {
   source: 'supabase' | 'bundled';
 }
 
+/**
+ * Removes anything that would give a learner the answer before they submit.
+ * Used by default so any future learner-facing caller cannot leak keys even if
+ * the UI forgets to hide a reveal button.
+ */
+export function redactDetailedContent(content: DetailedContent): DetailedContent {
+  return {
+    ...content,
+    weeks: content.weeks.map((week) => ({
+      ...week,
+      grammar: {
+        ...week.grammar,
+        sampleItems: week.grammar.sampleItems.map((item) => {
+        const safe = { ...item };
+        delete (safe as Partial<SampleItem>).key;
+        delete (safe as Partial<SampleItem>).reason;
+        return safe;
+      }) as SampleItem[],
+        practice: {
+          ...week.grammar.practice,
+          items: week.grammar.practice.items.map((item) => {
+            const safe = { ...item };
+            delete (safe as Partial<GrammarItem>).key;
+            delete (safe as Partial<GrammarItem>).accepted;
+            delete (safe as Partial<GrammarItem>).reason;
+            return safe;
+          }) as GrammarItem[],
+        },
+      },
+      speaking: { ...week.speaking, model: '', correctionPriority: '' },
+      writing: {
+        ...week.writing,
+        modelAnswer: '',
+        correctionPriority: '',
+        reviseAndRetryFocus: '',
+      },
+    })),
+    assessments: {
+      ...content.assessments,
+      checkpoint1: {
+        ...content.assessments.checkpoint1,
+        items: [],
+        reserves: [],
+        quiz: {
+          ...content.assessments.checkpoint1.quiz,
+          blueprint: 'The Checkpoint 1 question bank is available to teachers only.',
+        },
+      },
+    },
+  };
+}
+
 function bundled(): DetailedContent {
   return { weeks: curriculumDetails.weeks, assessments, source: 'bundled' };
 }
 
 /** Prefer the database copies; fall back to the bundled specs if unavailable. */
-export async function loadDetailedContent(): Promise<DetailedContent> {
+export async function loadDetailedContent({ includeAnswers = false }: { includeAnswers?: boolean } = {}): Promise<DetailedContent> {
+  const finish = (content: DetailedContent): DetailedContent =>
+    includeAnswers ? content : redactDetailedContent(content);
+
   try {
     const supabase = await createServerSupabase();
-    if (!supabase) return bundled();
+    if (!supabase) return finish(bundled());
 
     const [weeksRes, assessmentsRes] = await Promise.all([
       supabase
@@ -320,11 +375,11 @@ export async function loadDetailedContent(): Promise<DetailedContent> {
       weeksRes.data?.length !== curriculumDetails.weeks.length ||
       assessmentsRes.data?.length !== 4
     ) {
-      return bundled();
+      return finish(bundled());
     }
 
     const byCode = Object.fromEntries(assessmentsRes.data.map((row) => [row.code, row.payload]));
-    return {
+    return finish({
       weeks: weeksRes.data.map((row) => row.payload as unknown as WeekDetail),
       assessments: {
         ...assessments,
@@ -334,8 +389,8 @@ export async function loadDetailedContent(): Promise<DetailedContent> {
         checkpoint1: (byCode['checkpoint-1'] ?? assessments.checkpoint1) as AssessmentsDocument['checkpoint1'],
       },
       source: 'supabase',
-    };
+    });
   } catch {
-    return bundled();
+    return finish(bundled());
   }
 }

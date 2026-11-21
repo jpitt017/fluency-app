@@ -533,7 +533,8 @@ export interface PlacementQuestionRow {
   area: string;
   question: string;
   options: string[];
-  answer_index: number;
+  /** Server-only; never sent to the browser with learner-facing questions. */
+  answer_index?: number;
 }
 
 export interface AiObservabilitySummary {

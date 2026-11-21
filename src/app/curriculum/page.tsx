@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import CurriculumExplorer from '@/components/curriculum/CurriculumExplorer';
+import { requireTeacherViewer } from '@/lib/auth/require-teacher';
 import {
   loadSyllabusContent,
   syllabus,
@@ -23,8 +24,11 @@ import {
   type SyllabusWeek,
 } from '@/lib/curriculum/syllabus';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Curriculum · B1 → B2 in 32 weeks | Fluency Studio',
+  robots: { index: false, follow: false },
   description:
     'The full two-stage Fluency Studio syllabus: 32 weeks, eight checkpoints, weekly speaking and writing, and a skill ladder from B1 to B2.',
 };
@@ -67,6 +71,7 @@ function checkpointLabel(checkpoint: SyllabusCheckpoint, weeks: SyllabusWeek[]) 
 }
 
 export default async function CurriculumPage() {
+  await requireTeacherViewer();
   const { weeks, checkpoints, source } = await loadSyllabusContent();
 
   return (

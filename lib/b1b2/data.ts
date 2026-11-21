@@ -417,7 +417,9 @@ export async function loadObservabilitySummary(days = 7): Promise<AiObservabilit
   return data as AiObservabilitySummary;
 }
 
-export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> {
+export async function loadPlacementQuestions({
+  includeAnswers = false,
+}: { includeAnswers?: boolean } = {}): Promise<PlacementQuestionRow[]> {
   const supabase = await createServerSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -426,14 +428,17 @@ export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> 
     .eq('active', true)
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
-  return data.map((row) => ({
-    id: String(row.id),
-    sort_order: Number(row.sort_order),
-    area: String(row.area),
-    question: String(row.question),
-    options: Array.isArray(row.options) ? row.options.map(String) : [],
-    answer_index: Number(row.answer_index),
-  }));
+  return data.map((row) => {
+    const question: PlacementQuestionRow = {
+      id: String(row.id),
+      sort_order: Number(row.sort_order),
+      area: String(row.area),
+      question: String(row.question),
+      options: Array.isArray(row.options) ? row.options.map(String) : [],
+    };
+    if (includeAnswers) question.answer_index = Number(row.answer_index);
+    return question;
+  });
 }
 
 export async function loadTeacherRoster(): Promise<{
