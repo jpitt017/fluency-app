@@ -48,3 +48,13 @@ An AI-powered British English learning platform focused on CEFR B1 speaking and 
 git clone [https://github.com/jpitt017/fluency-app.git](https://github.com/jpitt017/fluency-app.git)
 cd fluency-app
 npm install
+---
+
+## Production test users
+
+Any smoke test against the live production project must create a throwaway
+learner through the Supabase **admin API** with an `@example.test` address and
+`email_confirm: true` (no confirmation email). Use
+`scripts/lib/test-user.mjs#createTestUser` and always call `deleteTestUser` in a
+`finally` block so the user and every linked learning-data row are removed.
+Never reuse a personal or long-lived account for production tests.

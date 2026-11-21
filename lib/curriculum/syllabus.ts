@@ -201,7 +201,8 @@ export interface SyllabusContent {
   source: 'supabase' | 'bundled';
 }
 
-function bundledContent(): SyllabusContent {
+function bundledContent(reason: string): SyllabusContent {
+  console.warn(`[syllabus] Using bundled curriculum content: ${reason}`);
   return { weeks: syllabus.weeks, checkpoints: syllabus.checkpoints, source: 'bundled' };
 }
 
@@ -209,7 +210,7 @@ function bundledContent(): SyllabusContent {
 export async function loadSyllabusContent(): Promise<SyllabusContent> {
   try {
     const supabase = await createServerSupabase();
-    if (!supabase) return bundledContent();
+    if (!supabase) return bundledContent('Supabase client unavailable');
 
     const [weeksRes, checkpointsRes] = await Promise.all([
       supabase
@@ -230,28 +231,41 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
       weeksRes.data?.length !== syllabus.course.totalWeeks ||
       checkpointsRes.data?.length !== syllabus.checkpoints.length
     ) {
-      return bundledContent();
+      return bundledContent(
+        `published rows failed or incomplete (weeks=${weeksRes.data?.length ?? 'error'}, checkpoints=${checkpointsRes.data?.length ?? 'error'})`,
+      );
     }
 
-    const weeks: SyllabusWeek[] = weeksRes.data.map((row) => ({
-      number: Number(row.week_number),
-      stage: Number(row.stage_number),
-      phase: String(row.phase),
-      theme: String(row.theme),
-      mainGrammar: String(row.main_grammar),
-      secondaryGrammarLabel: String(row.secondary_grammar_label),
-      secondaryGrammar: row.secondary_grammar ? String(row.secondary_grammar) : null,
-      skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
-      cefr: (row.cefr ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.cefr) as WeekCefr,
-      grammar: (row.grammar ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.grammar) as SyllabusWeek['grammar'],
-      mediation: (() => {
-        const fromDb = row.mediation as WeekMediation | null;
-        const hasContent = fromDb && typeof fromDb === 'object' && Object.keys(fromDb).length > 0;
-        return hasContent
-          ? fromDb
-          : syllabus.weeks.find((item) => item.number === Number(row.week_number))?.mediation;
-      })() as SyllabusWeek['mediation'],
-    }));
+    const hasContent = (value: unknown): boolean =>
+      Boolean(value && typeof value === 'object' && Object.keys(value as object).length > 0);
+    const fallbackField = (week: number, field: string) =>
+      console.warn(`[syllabus] Week ${week}: published ${field} is empty; using bundled content`);
+
+    const weeks: SyllabusWeek[] = weeksRes.data.map((row) => {
+      const weekNumber = Number(row.week_number);
+      const bundled = syllabus.weeks.find((item) => item.number === weekNumber);
+      const dbCefr = row.cefr as WeekCefr | null;
+      const dbGrammar = row.grammar as SyllabusWeek['grammar'] | null;
+      const dbMediation = row.mediation as WeekMediation | null;
+
+      if (!hasContent(dbCefr) && bundled?.cefr) fallbackField(weekNumber, 'cefr');
+      if (!hasContent(dbGrammar) && bundled?.grammar) fallbackField(weekNumber, 'grammar');
+      if (!hasContent(dbMediation) && bundled?.mediation) fallbackField(weekNumber, 'mediation');
+
+      return {
+        number: weekNumber,
+        stage: Number(row.stage_number),
+        phase: String(row.phase),
+        theme: String(row.theme),
+        mainGrammar: String(row.main_grammar),
+        secondaryGrammarLabel: String(row.secondary_grammar_label),
+        secondaryGrammar: row.secondary_grammar ? String(row.secondary_grammar) : null,
+        skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
+        cefr: (hasContent(dbCefr) ? dbCefr : bundled?.cefr) as WeekCefr,
+        grammar: (hasContent(dbGrammar) ? dbGrammar : bundled?.grammar) as SyllabusWeek['grammar'],
+        mediation: (hasContent(dbMediation) ? dbMediation : bundled?.mediation) as SyllabusWeek['mediation'],
+      };
+    });
 
     const checkpoints: SyllabusCheckpoint[] = checkpointsRes.data.map((row) => ({
       number: Number(row.checkpoint_number),
@@ -262,7 +276,7 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
     }));
 
     return { weeks, checkpoints, source: 'supabase' };
-  } catch {
-    return bundledContent();
+  } catch (error) {
+    return bundledContent(`error reading published rows: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

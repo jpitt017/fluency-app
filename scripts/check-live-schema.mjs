@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Fails when the Supabase project the app points at is missing a table used by
- * the app. Uses the read-only verify_app_schema() RPC from migration 0024.
+ * Fails when the live Supabase project is missing any object the app uses.
+ * Uses the read-only verify_app_schema() RPC from migrations 0024/0026, which
+ * compares tables, columns, functions, RLS policies, triggers and storage
+ * buckets against the inventory parsed from the repo migrations.
+ *
  * Set SUPABASE_LIVE_URL to check a specific project in CI; otherwise the app's
  * NEXT_PUBLIC_SUPABASE_URL is used.
  */
@@ -24,8 +27,33 @@ const supabase = createClient(url, apiKey);
 const { data, error } = await supabase.rpc('verify_app_schema');
 
 if (error) throw new Error(`verify_app_schema failed: ${error.message}`);
-if (!data?.covered) {
-  throw new Error(`Live schema is missing tables used by the app: ${JSON.stringify(data?.missing_tables ?? [])}`);
+
+const sections = [
+  ['tables', 'missing_tables'],
+  ['columns', 'missing_columns'],
+  ['functions', 'missing_functions'],
+  ['RLS policies', 'missing_policies'],
+  ['triggers', 'missing_triggers'],
+  ['storage buckets', 'missing_buckets'],
+];
+
+const problems = sections
+  .map(([label, key]) => {
+    const missing = data?.[key];
+    if (!Array.isArray(missing)) return `${key}: RPC did not return a list`;
+    if (missing.length === 0) return null;
+    const preview = missing.slice(0, 8).join(', ');
+    const suffix = missing.length > 8 ? ` (+${missing.length - 8} more)` : '';
+    return `missing ${label}: ${preview}${suffix}`;
+  })
+  .filter(Boolean);
+
+if (data?.covered !== true || problems.length > 0) {
+  throw new Error(`Live schema does not match the expected objects: ${problems.join('; ') || 'covered=false'}`);
 }
 
-console.log('PASS: live project contains every table used by the app.');
+const checked = data?.checked ?? {};
+console.log(
+  'PASS: live schema matches expected tables, columns, functions, RLS policies, triggers and buckets ' +
+    `(${JSON.stringify(checked)}).`,
+);

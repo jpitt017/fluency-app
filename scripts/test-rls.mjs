@@ -9,6 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createTestUser, deleteTestUser } from './lib/test-user.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -22,30 +23,16 @@ if (!url || !anonKey || !serviceKey) {
 const admin = createClient(url, serviceKey);
 
 async function run() {
-  const emailA = `rls-a-${Date.now()}@example.com`;
-  const emailB = `rls-b-${Date.now()}@example.com`;
-  const password = 'RlsTestPassword!2026';
-
-  const { data: userA, error: errA } = await admin.auth.admin.createUser({
-    email: emailA,
-    password,
-    email_confirm: true,
-  });
-  const { data: userB, error: errB } = await admin.auth.admin.createUser({
-    email: emailB,
-    password,
-    email_confirm: true,
-  });
-
-  if (errA || errB || !userA.user || !userB.user) {
-    throw new Error(`Could not provision test users: ${errA?.message || errB?.message}`);
-  }
+  const userA = await createTestUser(admin, 'rls-a');
+  const userB = await createTestUser(admin, 'rls-b');
+  const userAId = userA.id;
+  const userBId = userB.id;
 
   try {
     const { data: insertedErr, error: insertErr } = await admin
       .from('learner_errors')
       .insert({
-        user_id: userB.user.id,
+        user_id: userBId,
         source_type: 'writing',
         category: 'tense',
         original: 'I have started yesterday.',
@@ -60,7 +47,7 @@ async function run() {
 
     const anonClient = createClient(url, anonKey);
     const clientA = createClient(url, anonKey);
-    const { error: signInErr } = await clientA.auth.signInWithPassword({ email: emailA, password });
+    const { error: signInErr } = await clientA.auth.signInWithPassword({ email: userA.email, password: userA.password });
     if (signInErr) throw signInErr;
 
     // 1. User A must see 0 rows when querying User B's learner_errors
@@ -75,7 +62,7 @@ async function run() {
 
     // 2. User A must NOT be able to insert into learner_errors with user_id = User B
     const { error: spoofErr } = await clientA.from('learner_errors').insert({
-      user_id: userB.user.id,
+      user_id: userBId,
       source_type: 'writing',
       category: 'article',
       original: 'Spoof test',
@@ -104,7 +91,7 @@ async function run() {
     const { data: insertedAttempt, error: attemptErr } = await admin
       .from('mediation_attempts')
       .insert({
-        user_id: userB.user.id,
+        user_id: userBId,
         week: 4,
         task_key: 'week-4-mediation',
         transcript: 'Do not miss the cathedral.',
@@ -141,11 +128,11 @@ async function run() {
     const { error: roleErr } = await admin
       .from('profiles')
       .update({ role: 'teacher' })
-      .eq('id', userB.user.id);
+      .eq('id', userBId);
     if (roleErr) throw new Error(`Could not mark test user B as teacher: ${roleErr.message}`);
 
     const clientB = createClient(url, anonKey);
-    const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: emailB, password });
+    const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: userB.email, password: userB.password });
     if (teacherSignInErr) throw teacherSignInErr;
 
     const { data: staffAttempts, error: staffAttemptErr } = await clientB
@@ -228,8 +215,8 @@ async function run() {
 
     console.log('PASS: Postgres RLS isolation, staff-only answer tables, answer-free views & delete coverage verified.');
   } finally {
-    await admin.auth.admin.deleteUser(userA.user.id);
-    await admin.auth.admin.deleteUser(userB.user.id);
+    await deleteTestUser(admin, userAId);
+    await deleteTestUser(admin, userBId);
   }
 }
 
