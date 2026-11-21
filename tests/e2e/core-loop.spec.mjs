@@ -74,6 +74,57 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     }
   });
 
+  test('learners see Week 4 CEFR content and mediation without reaching teacher routes', async ({ page }) => {
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+    test.skip(!email || !password, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run the learner CEFR test');
+
+    await page.route('**/api/mediation/feedback', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          criteria: [
+            { label: 'Task fulfilment', note: 'You included the three places and the tip.' },
+            { label: 'Clarity for the reader', note: 'The advice is easy to follow.' },
+            { label: 'Language accuracy', note: 'The language is clear.' },
+            { label: 'Organisation', note: 'Your points are well ordered.' },
+          ],
+          readerNeed: 'Yes — your friend knows what to see and do.',
+          feedback: 'Good mediation practice.',
+          suggestion: 'Add one practical detail next time.',
+        }),
+      });
+    });
+
+    await signIn(page, email, password);
+
+    await page.goto('/dashboard?week=4');
+    await expect(page.getByText(/By the end of this week I can/i)).toBeVisible();
+    await expect(
+      page.getByText(/recommend a place I know, separating facts about it from my own experience/i),
+    ).toBeVisible();
+    await expect(page.getByText(/Sustained monologue: describing experience · Level B1/i)).toBeVisible();
+
+    await page.goto('/labs?week=4');
+    await expect(page.getByText(/word stress in featured words and -ed endings/i)).toBeVisible();
+
+    await page.goto('/review?week=4');
+    await expect(page.getByText(/A friend is visiting your town and missed the travel guide/i)).toBeVisible();
+    await expect(page.getByText(/Does not affect unlocking/i)).toBeVisible();
+    await page.getByRole('button', { name: /Type instead/i }).click();
+    await page
+      .getByPlaceholder(/Write your voice message/i)
+      .fill('Do not miss the cathedral, the harbour and the old quarter. Take the train, not a taxi.');
+    await page.getByRole('button', { name: /Get mediation feedback/i }).click();
+    await expect(page.getByText(/Did the reader get what they need/i)).toBeVisible();
+
+    for (const route of ['/curriculum', '/assessments']) {
+      await page.goto(route);
+      await expect(page).toHaveURL(/\/dashboard|\/login/);
+    }
+  });
+
   test('teachers can open the curriculum and assessment authoring documents', async ({ page }) => {
     const email = process.env.E2E_TEACHER_EMAIL;
     const password = process.env.E2E_TEACHER_PASSWORD;

@@ -16,6 +16,7 @@ import {
 import { WeeklyPaceSelector, WeeklyReportCard } from '@/components/b1b2/DashboardControls';
 import { formatBandLabel, loadDashboard, loadObservabilitySummary } from '@/lib/b1b2/data';
 import type { SkillArea } from '@/lib/b1b2/types';
+import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +35,13 @@ const SKILLS: {
   { key: 'writing', label: 'Writing', href: '/labs', cta: 'Writing studio', icon: PenLine },
 ];
 
-export default async function DashboardPage() {
-  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, weeklyReport, subscriptionStatus, telemetry }, obs] =
-    await Promise.all([loadDashboard(), loadObservabilitySummary(7)]);
+type DashboardProps = { searchParams: Promise<{ week?: string | string[] }> };
+
+export default async function DashboardPage({ searchParams }: DashboardProps) {
+  const weekNumber = learnerWeekFromParam((await searchParams).week);
+  const [{ signedIn, dashboard, recentXp, weeklyGoalHours, weeklyReport, subscriptionStatus, telemetry }, obs, syllabusContent] =
+    await Promise.all([loadDashboard(), loadObservabilitySummary(7), loadSyllabusContent()]);
+  const week = syllabusContent.weeks.find((item) => item.number === weekNumber);
 
   if (!signedIn) {
     return (
@@ -149,6 +154,36 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {week && (
+        <section aria-label="Weekly CEFR target" className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">
+              Week {week.number} · Your CEFR target
+            </p>
+            <nav aria-label="Choose week" className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-emerald-900">
+              {[1, 4, 8, 12].map((number) => (
+                <Link
+                  key={number}
+                  href={`/dashboard?week=${number}`}
+                  className={`rounded-full border px-2.5 py-1 ${
+                    weekNumber === number
+                      ? 'border-emerald-700 bg-emerald-700 text-white'
+                      : 'border-emerald-200 bg-white hover:border-emerald-400'
+                  }`}
+                >
+                  Week {number}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-emerald-950">By the end of this week I can…</p>
+          <p className="mt-1 font-serif text-xl leading-snug text-stone-900 sm:text-2xl">{week.cefr.canDo}</p>
+          <p className="mt-2 text-xs text-emerald-800">
+            {week.cefr.scale} · Level {week.cefr.level}
+          </p>
+        </section>
+      )}
 
       <section aria-label="Skill telemetry" className="grid gap-4 sm:grid-cols-3">
         <Link

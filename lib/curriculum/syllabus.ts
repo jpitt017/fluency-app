@@ -145,6 +145,13 @@ export function getWeek(weekNumber: number): SyllabusWeek | undefined {
   return syllabus.weeks.find((week) => week.number === weekNumber);
 }
 
+/** Learner-facing week selector; clamps unknown values to Week 1. */
+export function learnerWeekFromParam(value: string | string[] | undefined): number {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 32 ? parsed : 1;
+}
+
 export function weeksForStage(stageNumber: number): SyllabusWeek[] {
   return syllabus.weeks.filter((week) => week.stage === stageNumber);
 }
