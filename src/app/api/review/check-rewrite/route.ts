@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { computeWordDiff, normalizeSentenceForCompare } from '@/lib/b1b2/diff';
+import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import {
   sanitizeLearnerText,
@@ -45,7 +46,7 @@ async function checkSemanticEquivalence(params: {
   if (!apiKey) return null;
 
   const groq = new Groq({ apiKey });
-  const completion = await groq.chat.completions.create({
+  const completion = await createGroqJsonCompletion(groq, {
     model: MODEL_ID,
     messages: [
       {
@@ -66,13 +67,10 @@ ${wrapLearnerSubmission(params.rewrite)}`,
       },
     ],
     temperature: 0,
-    max_tokens: 180,
-    response_format: { type: 'json_object' },
+    maxCompletionTokens: 1024,
   });
 
-  const raw = completion.choices[0]?.message?.content;
-  const parsedJson = raw ? (JSON.parse(raw) as unknown) : {};
-  const validated = RewriteCheckResultSchema.safeParse(parsedJson);
+  const validated = RewriteCheckResultSchema.safeParse(completion.parsed);
   if (!validated.success) {
     return null;
   }
@@ -80,8 +78,8 @@ ${wrapLearnerSubmission(params.rewrite)}`,
   return {
     fixed: validated.data.fixed,
     reason: validated.data.reason,
-    promptTokens: completion.usage?.prompt_tokens ?? 0,
-    completionTokens: completion.usage?.completion_tokens ?? 0,
+    promptTokens: completion.promptTokens,
+    completionTokens: completion.completionTokens,
   };
 }
 

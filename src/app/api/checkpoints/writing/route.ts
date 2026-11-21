@@ -8,6 +8,7 @@ import {
   validateWritingFeedback,
 } from '@/lib/b1b2/feedback-schema';
 import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
+import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     if (!validated) {
       const groq = new Groq({ apiKey });
-      const completion = await groq.chat.completions.create({
+      const completion = await createGroqJsonCompletion(groq, {
         model: MODEL_ID,
         messages: [
           { role: 'system', content: buildWritingSystemPrompt('British') },
@@ -123,16 +124,13 @@ export async function POST(request: NextRequest) {
           },
         ],
         temperature: 0.3,
-        max_tokens: 1100,
-        response_format: { type: 'json_object' },
+        maxCompletionTokens: 4096,
       });
 
-      promptTokens = completion.usage?.prompt_tokens ?? 0;
-      completionTokens = completion.usage?.completion_tokens ?? 0;
+      promptTokens = completion.promptTokens;
+      completionTokens = completion.completionTokens;
 
-      const raw = completion.choices[0]?.message?.content;
-      const parsed = raw ? (JSON.parse(raw) as unknown) : {};
-      validated = validateWritingFeedback(parsed, writing);
+      validated = validateWritingFeedback(completion.parsed, writing);
 
       await writeEvalCache(supabase, {
         cacheKey,

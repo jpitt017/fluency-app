@@ -9,6 +9,7 @@ import {
   validateWritingFeedback,
   type WritingFeedback,
 } from '@/lib/b1b2/feedback-schema';
+import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
@@ -118,23 +119,20 @@ Target Vocabulary: ${targetKeywords.length > 0 ? targetKeywords.join(', ') : 'No
 
 ${wrapLearnerSubmission(text)}`;
 
-      const completion = await groq.chat.completions.create({
+      const completion = await createGroqJsonCompletion(groq, {
         model: MODEL_ID,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.25,
-        max_tokens: 1150,
-        response_format: { type: 'json_object' },
+        maxCompletionTokens: 4096,
       });
 
-      promptTokens = completion.usage?.prompt_tokens ?? 0;
-      completionTokens = completion.usage?.completion_tokens ?? 0;
+      promptTokens = completion.promptTokens;
+      completionTokens = completion.completionTokens;
 
-      const rawContent = completion.choices[0]?.message?.content;
-      const parsed = rawContent ? (JSON.parse(rawContent) as unknown) : {};
-      validated = validateWritingFeedback(parsed, text);
+      validated = validateWritingFeedback(completion.parsed, text);
 
       await writeEvalCache(supabase, {
         cacheKey,

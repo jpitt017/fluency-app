@@ -9,6 +9,7 @@ import {
   validateSpeakingFeedback,
   type SpeakingFeedback,
 } from '@/lib/b1b2/feedback-schema';
+import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
@@ -148,23 +149,20 @@ Target Language: ${targetPhrase || 'None'}
 
 ${wrapLearnerSubmission(transcript)}`;
 
-      const evaluation = await groq.chat.completions.create({
+      const evaluation = await createGroqJsonCompletion(groq, {
         model: MODEL_ID,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.25,
-        max_tokens: 1000,
-        response_format: { type: 'json_object' },
+        maxCompletionTokens: 4096,
       });
 
-      promptTokens = evaluation.usage?.prompt_tokens ?? 0;
-      completionTokens = evaluation.usage?.completion_tokens ?? 0;
+      promptTokens = evaluation.promptTokens;
+      completionTokens = evaluation.completionTokens;
 
-      const rawEval = evaluation.choices[0]?.message?.content;
-      const parsed = rawEval ? (JSON.parse(rawEval) as unknown) : {};
-      validated = validateSpeakingFeedback(parsed, transcript);
+      validated = validateSpeakingFeedback(evaluation.parsed, transcript);
 
       await writeEvalCache(supabase, {
         cacheKey,

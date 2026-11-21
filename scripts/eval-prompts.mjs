@@ -299,7 +299,9 @@ async function evaluateSingleSentence(groq, item) {
       { role: 'user', content: `<learner_submission>\n${sanitizeForPrompt(item.input)}\n</learner_submission>` },
     ],
     temperature: 0.15,
-    max_tokens: 750,
+    max_completion_tokens: 2048,
+    reasoning_effort: 'low',
+    include_reasoning: false,
     response_format: { type: 'json_object' },
   });
 
@@ -399,7 +401,9 @@ async function checkLiveGroq() {
         },
       ],
       temperature: 0,
-      max_tokens: 160,
+      max_completion_tokens: 1024,
+      reasoning_effort: 'low',
+      include_reasoning: false,
       response_format: { type: 'json_object' },
     });
 

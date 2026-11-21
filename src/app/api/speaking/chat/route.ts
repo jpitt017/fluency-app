@@ -104,7 +104,9 @@ Guidelines:
       model: MODEL_ID,
       messages: [{ role: 'system', content: systemPrompt }, ...sanitizedMessages],
       temperature: 0.7,
-      max_tokens: 300,
+      max_completion_tokens: 1024,
+      reasoning_effort: 'low',
+      include_reasoning: false,
     });
 
     promptTokens = completion.usage?.prompt_tokens ?? 0;
