@@ -1,4 +1,5 @@
 import { createServerSupabase } from '@/utils/supabase/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import type {
   AiObservabilitySummary,
@@ -417,28 +418,35 @@ export async function loadObservabilitySummary(days = 7): Promise<AiObservabilit
   return data as AiObservabilitySummary;
 }
 
-export async function loadPlacementQuestions({
-  includeAnswers = false,
-}: { includeAnswers?: boolean } = {}): Promise<PlacementQuestionRow[]> {
+/** Learner-facing placement questions: no answer indices, via the safe view. */
+export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> {
   const supabase = await createServerSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
+    .from('placement_questions_safe')
+    .select('id, sort_order, area, question, options')
+    .order('sort_order', { ascending: true });
+  if (error || !data) return [];
+  return data.map((row) => ({
+    id: String(row.id),
+    sort_order: Number(row.sort_order),
+    area: String(row.area),
+    question: String(row.question),
+    options: Array.isArray(row.options) ? row.options.map(String) : [],
+  }));
+}
+
+/** Server-only answer key for placement scoring; never sent to the browser. */
+export async function loadPlacementAnswerKey(): Promise<number[]> {
+  const admin = createAdminSupabase();
+  if (!admin) return [];
+  const { data, error } = await admin
     .from('placement_questions')
-    .select('id, sort_order, area, question, options, answer_index')
+    .select('answer_index')
     .eq('active', true)
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
-  return data.map((row) => {
-    const question: PlacementQuestionRow = {
-      id: String(row.id),
-      sort_order: Number(row.sort_order),
-      area: String(row.area),
-      question: String(row.question),
-      options: Array.isArray(row.options) ? row.options.map(String) : [],
-    };
-    if (includeAnswers) question.answer_index = Number(row.answer_index);
-    return question;
-  });
+  return data.map((row) => Number(row.answer_index));
 }
 
 export async function loadTeacherRoster(): Promise<{

@@ -48,6 +48,13 @@ items), `syllabus_grammar_items` (120 items), `syllabus_input_items` (80 listeni
 and reading questions) and `syllabus_checkpoint_items` (20 scored + 4 reserves), all with the same public read policy. Regenerate it with `npm run build:details-seed` after
 editing `content/curriculum/weeks-01-04-details.json` or `assessments.json`.
 
+Migration `0021_lock_answer_tables.sql` locks answer-bearing tables
+(`syllabus_*` item/detail/assessment tables and `placement_questions`) behind a
+security-definer `is_staff()` role check and exposes safe views
+(`*_safe`) with keys, accepted answers, reasons, models and `answer_index`
+removed. Placement scoring uses a service-role answer-key lookup; the browser
+only receives the safe view. `syllabus_vocab_items` stays public.
+
 Edit `content/curriculum/two-stage-syllabus.json`, then run
 `npm run validate:syllabus && npm run build:syllabus-seed` before applying the
 regenerated migration. See [`docs/CONTENT_PIPELINE.md`](../docs/CONTENT_PIPELINE.md).
