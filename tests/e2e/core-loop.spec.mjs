@@ -15,6 +15,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Listen-and-Compare Shadowing Studio/i)).toBeVisible();
     await expect(page.getByText(/Prosody self-check checklist/i)).toBeVisible();
     await expect(page.getByText(/Model replays:/i)).toBeVisible();
+    await expect(page.getByText(/Temporary voice/i).first()).toBeVisible();
 
     await page.goto('/privacy');
     await expect(page.getByRole('button', { name: /Delete my learning data/i })).toBeVisible();

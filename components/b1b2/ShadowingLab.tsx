@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckSquare, Headphones, Mic, Play, RotateCcw, Square, Volume2 } from 'lucide-react';
 import { resolveAudioUrl } from '@/lib/b1b2/audio';
-import { playAudioOrSpeak, stopActiveAudio } from '@/lib/b1b2/speech';
+import { playAudioOrSpeak, speakPhrase, stopActiveAudio } from '@/lib/b1b2/speech';
 
 export interface ShadowingTarget {
   label: string;
@@ -36,6 +36,8 @@ export default function ShadowingLab({
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
+  const [modelAudioFailed, setModelAudioFailed] = useState(false);
+  const [recordedAudioFailed, setRecordedAudioFailed] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -55,7 +57,8 @@ export default function ShadowingLab({
           },
         ];
   const active = safeTargets[Math.min(selectedIdx, safeTargets.length - 1)];
-  const activeAudioUrl = resolveAudioUrl(active.audioUrl);
+  const resolvedAudioUrl = resolveAudioUrl(active.audioUrl);
+  const useTemporaryVoice = !resolvedAudioUrl || modelAudioFailed;
 
   useEffect(() => {
     return () => {
@@ -117,7 +120,11 @@ export default function ShadowingLab({
     setPlayingModel(true);
     setModelPlayCount((n) => n + 1);
     try {
-      await playAudioOrSpeak(activeAudioUrl, active.text, 'en-GB', rate);
+      if (useTemporaryVoice) {
+        await speakPhrase(active.text, 'en-GB', rate);
+      } else {
+        await playAudioOrSpeak(resolvedAudioUrl, active.text, 'en-GB', rate);
+      }
     } finally {
       window.setTimeout(() => setPlayingModel(false), 1200);
     }
@@ -228,6 +235,8 @@ export default function ShadowingLab({
               onClick={() => {
                 setSelectedIdx(idx);
                 setRecordedUrl(null);
+                setModelAudioFailed(false);
+                setRecordedAudioFailed(false);
               }}
               className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                 idx === selectedIdx
@@ -252,7 +261,7 @@ export default function ShadowingLab({
             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
           >
             {playingModel ? <Volume2 className="h-3.5 w-3.5" /> : <Play className="h-3 w-3 fill-current" />}
-            <span>{activeAudioUrl ? 'Play studio model' : 'Play UK model'}</span>
+            <span>{useTemporaryVoice ? 'Play UK model' : 'Play studio model'}</span>
           </button>
 
           {!recording ? (
@@ -297,40 +306,59 @@ export default function ShadowingLab({
           </div>
         )}
 
-        {(activeAudioUrl || recordedUrl) && (
+        {(useTemporaryVoice || recordedUrl) && (
           <div className="mt-3 grid gap-3 border-t border-stone-100 pt-3 sm:grid-cols-2">
             <div className="rounded-lg bg-stone-50 p-2.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
                 1. Reference Model
               </p>
-              {activeAudioUrl ? (
+              {useTemporaryVoice ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
+                    className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                  >
+                    Replay UK model ({rate}×)
+                  </button>
+                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary voice</p>
+                </>
+              ) : (
                 <audio
                   controls
-                  src={activeAudioUrl}
+                  src={resolvedAudioUrl ?? undefined}
                   onPlay={() => setModelPlayCount((n) => n + 1)}
+                  onError={() => {
+                    setModelAudioFailed(true);
+                    void speakPhrase(active.text, 'en-GB', rate);
+                  }}
                   className="h-8 w-full"
                 />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void playModel()}
-                  className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
-                >
-                  Replay UK model ({rate}×)
-                </button>
               )}
             </div>
             <div className="rounded-lg bg-stone-50 p-2.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-rose-800">
                 2. Your Shadowing Take
               </p>
-              {recordedUrl ? (
+              {recordedUrl && !recordedAudioFailed ? (
                 <audio
                   controls
                   src={recordedUrl}
                   onPlay={() => setSelfReplayCount((n) => n + 1)}
+                  onError={() => setRecordedAudioFailed(true)}
                   className="h-8 w-full"
                 />
+              ) : recordedUrl ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
+                    className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                  >
+                    Hear the model with a UK voice
+                  </button>
+                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary voice</p>
+                </div>
               ) : (
                 <p className="text-xs text-stone-500">Record your attempt to compare side by side.</p>
               )}

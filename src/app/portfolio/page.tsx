@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SpeakingRecording from '@/components/b1b2/SpeakingRecording';
 import { createServerSupabase } from '@/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -119,9 +120,10 @@ export default async function PortfolioPage() {
                   )}
                 </div>
 
-                {item.audio_path && (
-                  <audio controls preload="none" src={`/api/checkpoints/recording/${item.id}`} className="h-8 w-full" />
-                )}
+                <SpeakingRecording
+                  recordingUrl={item.audio_path ? `/api/checkpoints/recording/${item.id}` : null}
+                  transcript={item.transcript}
+                />
 
                 {item.transcript && (
                   <p className="rounded-xl bg-stone-50 p-3 text-sm italic text-stone-700">&ldquo;{item.transcript}&rdquo;</p>
