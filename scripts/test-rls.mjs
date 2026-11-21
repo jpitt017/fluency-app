@@ -100,6 +100,43 @@ async function run() {
       throw new Error('RLS BREACH: User A modified User B learner_errors!');
     }
 
+    // 3b. Mediation attempts: learners see only their own rows; staff see all rows.
+    const { data: insertedAttempt, error: attemptErr } = await admin
+      .from('mediation_attempts')
+      .insert({
+        user_id: userB.user.id,
+        week: 4,
+        task_key: 'week-4-mediation',
+        transcript: 'Do not miss the cathedral.',
+        response_text: null,
+        feedback: { criteria: [] },
+      })
+      .select('id')
+      .single();
+
+    if (attemptErr || !insertedAttempt) throw new Error(`Seed mediation attempt failed: ${attemptErr?.message}`);
+
+    const { data: crossAttempts } = await clientA
+      .from('mediation_attempts')
+      .select('id')
+      .eq('id', insertedAttempt.id);
+    if ((crossAttempts ?? []).length > 0) {
+      throw new Error('RLS BREACH: User A could read User B mediation attempts!');
+    }
+
+    await clientA
+      .from('mediation_attempts')
+      .update({ needs_review: true })
+      .eq('id', insertedAttempt.id);
+    const { data: checkAttempt } = await admin
+      .from('mediation_attempts')
+      .select('needs_review')
+      .eq('id', insertedAttempt.id)
+      .single();
+    if (checkAttempt?.needs_review !== false) {
+      throw new Error('RLS BREACH: User A modified User B mediation attempt!');
+    }
+
     // 4. Answer tables: anon and learners see no rows; staff see the locked tables.
     const { error: roleErr } = await admin
       .from('profiles')
@@ -110,6 +147,15 @@ async function run() {
     const clientB = createClient(url, anonKey);
     const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: emailB, password });
     if (teacherSignInErr) throw teacherSignInErr;
+
+    const { data: staffAttempts, error: staffAttemptErr } = await clientB
+      .from('mediation_attempts')
+      .select('id')
+      .eq('id', insertedAttempt.id);
+    if (staffAttemptErr) throw new Error(`STAFF MEDIATION READ FAILED: ${staffAttemptErr.message}`);
+    if ((staffAttempts ?? []).length === 0) {
+      throw new Error('STAFF READ FAILED: teacher could not read mediation attempts!');
+    }
 
     const relationMissing = (error) =>
       Boolean(error && /does not exist|could not find the table|not found/i.test(error.message));
