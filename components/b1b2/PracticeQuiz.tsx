@@ -5,10 +5,26 @@ import { createClient } from '@/utils/supabase/client';
 
 export interface QuizItem {
   id: string;
+  kind?: string;
   prompt: string;
   options: string[] | null;
   answer: string;
   explanation?: string | null;
+}
+
+function renderPromptWithBlank(prompt: string, fillText?: string) {
+  if (!prompt.includes('___')) return prompt;
+  const parts = prompt.split('___');
+  return parts.map((part, idx) => (
+    <span key={idx}>
+      {part}
+      {idx < parts.length - 1 && (
+        <span className="mx-1 inline-block min-w-[5rem] border-b-2 border-indigo-400 bg-indigo-50/70 px-2 py-0.5 text-center font-semibold text-indigo-900 rounded">
+          {fillText?.trim() ? fillText : '______'}
+        </span>
+      )}
+    </span>
+  ));
 }
 
 function normalizeAnswer(value: string): string {
@@ -188,10 +204,17 @@ export default function PracticeQuiz({
 
           return (
             <li key={item.id} className="rounded-xl border border-stone-200 bg-white p-4">
-              <p className="text-sm font-semibold text-stone-900">
-                <span className="mr-2 text-xs font-bold text-indigo-700">{String(index + 1).padStart(2, '0')}</span>
-                {item.prompt}
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-sm font-semibold leading-6 text-stone-900">
+                  <span className="mr-2 text-xs font-bold text-indigo-700">{String(index + 1).padStart(2, '0')}</span>
+                  {renderPromptWithBlank(item.prompt, userAnswer)}
+                </p>
+                {item.kind === 'gap_fill' && (
+                  <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900 ring-1 ring-amber-200/80">
+                    Gap-fill
+                  </span>
+                )}
+              </div>
 
               {useTyping ? (
                 <div className="mt-3 space-y-2">

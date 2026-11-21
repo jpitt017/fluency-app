@@ -8,7 +8,7 @@
       "summary": "Narrate past events clearly, separate finished past from life experience, and describe habits that changed over time.",
       "hours": 4,
       "releaseStage": "live",
-      "vocabularyTopic": "Personality, upbringing and life changes",
+      "vocabularyTopic": "Personal experiences, life changes & adaptation",
       "lightGrammar": "used to / would; present perfect continuous",
       "grammar": [
         {
@@ -108,164 +108,270 @@
       ],
       "vocab": [
         {
-          "term": "outgoing",
-          "pos": "adjective",
-          "definition": "sociable and happy to meet new people",
-          "example": "She is more outgoing now than she was at school.",
+          "term": "adapt",
+          "pos": "verb",
+          "definition": "gradually change your behaviour or habits to deal with a new situation",
+          "example": "It took me a few months to adapt to life in Manchester.",
           "collocations": [
-            "an outgoing personality",
-            "naturally outgoing"
+            "adapt to a new environment",
+            "adapt quickly to change"
           ],
           "wordFamily": [
-            "outgoing"
+            "adapt",
+            "adaptable",
+            "adaptation"
           ],
-          "translation": "extrovertido",
+          "note": "Followed by to, then a noun or -ing form.",
+          "gapFill": {
+            "prompt": "It took my sister several months to ___ living in a much larger city.",
+            "options": [
+              "adapt to",
+              "adapt for",
+              "adapt with"
+            ],
+            "answer": "adapt to",
+            "explanation": "Use \"adapt to\" followed by a noun or an -ing verb form."
+          },
+          "sentencePrompt": "Write a sentence about a time you had to adapt to a new routine, city, or job.",
+          "translation": "adaptarse",
           "band": "B1",
-          "audioRef": "module-1/outgoing.mp3"
-        },
-        {
-          "term": "reserved",
-          "pos": "adjective",
-          "definition": "quiet and slow to show feelings or opinions",
-          "example": "He seems reserved until you get to know him.",
-          "collocations": [
-            "a reserved manner",
-            "quiet and reserved"
-          ],
-          "wordFamily": [
-            "reserved"
-          ],
-          "translation": "reservado",
-          "band": "B1",
-          "audioRef": "module-1/reserved.mp3"
-        },
-        {
-          "term": "get on with",
-          "pos": "phrasal verb",
-          "definition": "have a good, friendly relationship with someone",
-          "example": "I get on with my flatmates really well.",
-          "collocations": [
-            "get on well with",
-            "easy to get on with"
-          ],
-          "wordFamily": [
-            "get on with"
-          ],
-          "translation": "llevarse bien con",
-          "band": "B1",
-          "audioRef": "module-1/get-on-with.mp3"
-        },
-        {
-          "term": "set in your ways",
-          "pos": "phrase",
-          "definition": "fixed in your habits and unwilling to change them",
-          "example": "My grandfather is kind, but he is set in his ways.",
-          "collocations": [
-            "become set in your ways",
-            "rather set in his ways"
-          ],
-          "wordFamily": [
-            "set in your ways"
-          ],
-          "translation": "ser de costumbres fijas",
-          "band": "B1",
-          "audioRef": "module-1/set-in-your-ways.mp3"
+          "audioRef": "module-1/adapt.mp3"
         },
         {
           "term": "turning point",
           "pos": "noun",
-          "definition": "the moment at which something changes decisively",
-          "example": "Moving abroad was the turning point in my career.",
+          "definition": "the moment at which a situation changes in an important or decisive way",
+          "example": "Moving to Leeds was a turning point for me.",
           "collocations": [
-            "a major turning point",
-            "reach a turning point"
+            "a turning point in my life",
+            "mark a major turning point"
           ],
           "wordFamily": [
             "turning point"
           ],
+          "note": "Countable: a turning point.",
+          "gapFill": {
+            "prompt": "Switching careers at thirty turned out to be a major ___ in my life.",
+            "options": [
+              "turning point",
+              "changing side",
+              "moving step"
+            ],
+            "answer": "turning point",
+            "explanation": "\"A turning point\" is a countable noun phrase meaning a decisive moment of change."
+          },
+          "sentencePrompt": "Describe a turning point in your education, career, or personal life.",
           "translation": "punto de inflexión",
           "band": "B1",
-          "audioRef": "module-1/turning-point.mp3"
+          "audioRef": "module-1/turning-point.mp3",
+          "audioUrl": "/audio/module-1/turning-point.mp3"
         },
         {
-          "term": "settle down",
-          "pos": "phrasal verb",
-          "definition": "start a calm, stable life in one place",
-          "example": "They settled down in Valencia after years of travelling.",
+          "term": "challenge",
+          "pos": "noun",
+          "definition": "something new and difficult that tests your ability or determination",
+          "example": "She faced a real challenge in her first year at university.",
           "collocations": [
-            "settle down somewhere",
-            "settle down with someone"
+            "face a challenge",
+            "rise to the challenge"
           ],
           "wordFamily": [
-            "settle down"
+            "challenge",
+            "challenging",
+            "unchallenged"
           ],
-          "translation": "establecerse",
+          "note": "Also: rise to the challenge.",
+          "gapFill": {
+            "prompt": "Although the new role looked daunting, Dan was eager to ___ the challenge.",
+            "options": [
+              "rise to",
+              "climb up",
+              "win over"
+            ],
+            "answer": "rise to",
+            "explanation": "Common B2 collocations are \"face a challenge\" and \"rise to the challenge\"."
+          },
+          "sentencePrompt": "Write one sentence about a real challenge you faced and how you handled it.",
+          "translation": "reto / desafío",
           "band": "B1",
-          "audioRef": "module-1/settle-down.mp3"
+          "audioRef": "module-1/challenge.mp3"
+        },
+        {
+          "term": "settle in",
+          "pos": "phrasal verb",
+          "definition": "become comfortable and familiar with a new home, school, or job",
+          "example": "The children settled in quickly at their new school.",
+          "collocations": [
+            "settle in quickly",
+            "help someone settle in"
+          ],
+          "wordFamily": [
+            "settle in",
+            "settled"
+          ],
+          "note": "Not followed by an object (UK/US natural everyday phrasal verb).",
+          "gapFill": {
+            "prompt": "Everyone in the team was friendly, which helped me ___ during my first week.",
+            "options": [
+              "settle in",
+              "settle on",
+              "settle up"
+            ],
+            "answer": "settle in",
+            "explanation": "\"Settle in\" is intransitive (no object) and means to feel at home in a new place."
+          },
+          "sentencePrompt": "Write a sentence about how long it took you to settle in somewhere new.",
+          "translation": "instalarse / adaptarse",
+          "band": "B1",
+          "audioRef": "module-1/settle-in.mp3"
+        },
+        {
+          "term": "grow up",
+          "pos": "phrasal verb",
+          "definition": "gradually develop from a child into an adult",
+          "example": "I grew up in a small town near Bristol.",
+          "collocations": [
+            "grow up in a small town",
+            "grow up speaking two languages"
+          ],
+          "wordFamily": [
+            "grow up",
+            "grown-up",
+            "upbringing"
+          ],
+          "note": "Not followed by an object.",
+          "gapFill": {
+            "prompt": "My grandparents ___ in a coastal village before moving inland for work.",
+            "options": [
+              "grew up",
+              "brought up",
+              "rose up"
+            ],
+            "answer": "grew up",
+            "explanation": "\"Grow up\" takes no object; parents \"bring up\" children, while children \"grow up\"."
+          },
+          "sentencePrompt": "Write a sentence comparing where you grew up with where you live today.",
+          "translation": "crecer / criarse",
+          "band": "B1",
+          "audioRef": "module-1/grow-up.mp3"
         },
         {
           "term": "look back on",
           "pos": "phrasal verb",
-          "definition": "think about something that happened in the past",
-          "example": "I look back on that year with real affection.",
+          "definition": "think about something that happened in your past",
+          "example": "When I look back on that year, I realise how much I changed.",
           "collocations": [
-            "look back on the past",
-            "look back fondly"
+            "look back on those years",
+            "look back fondly on"
           ],
           "wordFamily": [
             "look back on"
           ],
-          "translation": "recordar con nostalgia",
+          "note": "Followed by an object.",
+          "gapFill": {
+            "prompt": "When I ___ my student days in Cardiff, I realise how much I learnt.",
+            "options": [
+              "look back on",
+              "look forward on",
+              "look over at"
+            ],
+            "answer": "look back on",
+            "explanation": "\"Look back on\" must be followed by a noun phrase object (e.g. \"those years\")."
+          },
+          "sentencePrompt": "Write a sentence starting with \"When I look back on...\" about an important year.",
+          "translation": "recordar / echar la vista atrás",
           "band": "B1",
-          "audioRef": "module-1/look-back-on.mp3"
+          "audioRef": "module-1/look-back-on.mp3",
+          "audioUrl": "/audio/module-1/look-back-on.mp3"
         },
         {
-          "term": "bring up",
-          "pos": "phrasal verb",
-          "definition": "care for and raise a child",
-          "example": "She was brought up by her grandparents in Galicia.",
+          "term": "regret",
+          "pos": "verb",
+          "definition": "feel sorry or disappointed about something you did or did not do",
+          "example": "I don't regret leaving my job. I have no regrets.",
           "collocations": [
-            "bring up children",
-            "be brought up abroad"
+            "have no regrets",
+            "deeply regret"
           ],
           "wordFamily": [
-            "bring up"
+            "regret",
+            "regrettable",
+            "regretful"
           ],
-          "translation": "criar",
+          "note": "Regret + -ing for the past (UK/US: identical pattern).",
+          "gapFill": {
+            "prompt": "She never regretted ___ her flat in London to move closer to the sea.",
+            "options": [
+              "selling",
+              "to sell",
+              "sell"
+            ],
+            "answer": "selling",
+            "explanation": "Use \"regret + -ing\" when talking about a past decision you feel sorry (or not sorry) about."
+          },
+          "sentencePrompt": "Write a sentence using \"regret + -ing\" or \"have no regrets\" about a past choice.",
+          "translation": "arrepentirse de",
           "band": "B1",
-          "audioRef": "module-1/bring-up.mp3"
+          "audioRef": "module-1/regret.mp3"
         },
         {
-          "term": "come round to",
-          "pos": "phrasal verb",
-          "definition": "gradually accept an idea or opinion",
-          "example": "My parents came round to the idea after a few months.",
+          "term": "gradually",
+          "pos": "adverb",
+          "definition": "slowly, over a long period of time rather than all at once",
+          "example": "My English improved gradually over the winter.",
           "collocations": [
-            "come round to the idea",
-            "slowly come round"
+            "change gradually",
+            "gradually build confidence"
           ],
           "wordFamily": [
-            "come round to"
+            "gradually",
+            "gradual"
           ],
-          "translation": "acabar aceptando",
+          "note": "Opposite: suddenly.",
+          "gapFill": {
+            "prompt": "At first she felt nervous speaking aloud, but her confidence ___ grew over the term.",
+            "options": [
+              "gradually",
+              "suddenly",
+              "immediately"
+            ],
+            "answer": "gradually",
+            "explanation": "\"Gradually\" means little by little over time, the opposite of \"suddenly\"."
+          },
+          "sentencePrompt": "Write a sentence about a skill or habit that changed gradually for you.",
+          "translation": "gradualmente / poco a poco",
           "band": "B1",
-          "audioRef": "module-1/come-round-to.mp3"
+          "audioRef": "module-1/gradually.mp3"
         },
         {
-          "term": "get used to",
-          "pos": "phrase",
-          "definition": "become familiar with something new",
-          "example": "It took me a year to get used to the climate.",
+          "term": "memorable",
+          "pos": "adjective",
+          "definition": "worth remembering or easy to remember because it was special",
+          "example": "Our first night in Edinburgh was truly memorable.",
           "collocations": [
-            "get used to the weather",
-            "slowly get used to"
+            "a memorable experience",
+            "truly memorable"
           ],
           "wordFamily": [
-            "get used to"
+            "memorable",
+            "memory",
+            "memorably"
           ],
-          "translation": "acostumbrarse a",
+          "note": "Positive; often used with experience, trip, day.",
+          "gapFill": {
+            "prompt": "Hearing live folk music in an old pub made our weekend in Galway truly ___.",
+            "options": [
+              "memorable",
+              "memory",
+              "memorised"
+            ],
+            "answer": "memorable",
+            "explanation": "\"Memorable\" is an adjective with a positive meaning, often paired with experience, trip, or night."
+          },
+          "sentencePrompt": "Write a sentence describing a memorable trip, day, or conversation.",
+          "translation": "memorable / inolvidable",
           "band": "B1",
-          "audioRef": "module-1/get-used-to.mp3"
+          "audioRef": "module-1/memorable.mp3"
         }
       ],
       "inputs": [
@@ -377,14 +483,16 @@
             "Looking back, I would say..."
           ],
           "linkers": [
-            "because",
-            "although",
-            "in the end"
+            "At first",
+            "Eventually",
+            "As a result",
+            "Since then"
           ],
           "terms": [
             "turning point",
-            "settle down",
-            "get used to"
+            "adapt",
+            "settle in",
+            "look back on"
           ]
         }
       ],
@@ -529,7 +637,93 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "make a big decision",
+            "example": "Leaving my hometown was a big decision to make at twenty-two.",
+            "note": "Always use \"make\" (never \"do\") with \"decision\"."
+          },
+          {
+            "phrase": "take a risk",
+            "example": "They took a risk by opening a bakery during a quiet winter.",
+            "note": "Fixed collocation: \"take a risk\", not \"make a risk\"."
+          },
+          {
+            "phrase": "get used to living alone",
+            "example": "It took me several months to get used to living alone after university.",
+            "note": "\"Get used to\" is followed by a noun or -ing form (here, \"living\")."
+          },
+          {
+            "phrase": "keep in touch with old friends",
+            "example": "Even after moving to Glasgow, I tried to keep in touch with old friends.",
+            "note": "Opposite: \"lose touch with someone\"."
+          },
+          {
+            "phrase": "make progress",
+            "example": "Once I started speaking for ten minutes a day, I began to make real progress.",
+            "note": "Uncountable: \"make progress\" (never \"a progress\")."
+          },
+          {
+            "phrase": "take up a new hobby",
+            "example": "She took up a new hobby — pottery — to unwind after busy shifts.",
+            "note": "Phrasal verb \"take up\" means start a sport, hobby, or regular activity."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "change",
+            "forms": [
+              "change (verb and noun)",
+              "changeable",
+              "unchanged"
+            ],
+            "example": "British spring weather is changeable, yet the village itself has remained unchanged for decades."
+          },
+          {
+            "base": "adapt",
+            "forms": [
+              "adapt",
+              "adaptable",
+              "adaptation"
+            ],
+            "example": "Being adaptable helps when a new environment requires quick adaptation."
+          },
+          {
+            "base": "decide",
+            "forms": [
+              "decide",
+              "decision",
+              "decisive",
+              "indecisive"
+            ],
+            "example": "I used to be indecisive, so making a decisive career decision felt empowering."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "At first, I found it hard to understand people, but ...",
+            "functionLabel": "Initial contrast",
+            "example": "At first, I found it hard to understand people, but after a month the local accent clicked."
+          },
+          {
+            "expression": "Eventually, I got used to the accent.",
+            "functionLabel": "Outcome over time",
+            "example": "I kept listening to local radio every morning and, eventually, I got used to the accent."
+          },
+          {
+            "expression": "As a result, I made friends quickly.",
+            "functionLabel": "Consequence",
+            "example": "I joined a weekly running club; as a result, I made friends quickly."
+          },
+          {
+            "expression": "Since then, I have felt much more confident.",
+            "functionLabel": "Present link",
+            "example": "Since then, I have felt much more confident speaking in group meetings."
+          }
+        ]
+      }
     },
     {
       "number": 2,
@@ -538,7 +732,7 @@
       "summary": "Distinguish arrangements, fixed intentions, and spontaneous decisions, and review zero, first, and second conditionals.",
       "hours": 4,
       "releaseStage": "live",
-      "vocabularyTopic": "Goals, training and career decisions",
+      "vocabularyTopic": "Plans, goals and ambitions",
       "lightGrammar": "Conditionals 0–2 (review)",
       "grammar": [
         {
@@ -638,148 +832,268 @@
       ],
       "vocab": [
         {
-          "term": "career path",
+          "term": "ambition",
           "pos": "noun",
-          "definition": "the series of jobs a person does over their working life",
-          "example": "Teaching was not the career path she expected.",
+          "definition": "a strong wish to achieve something important in your work or life",
+          "example": "Her ambition is to run her own restaurant one day.",
           "collocations": [
-            "choose a career path",
-            "change career path"
+            "achieve an ambition",
+            "fulfil a lifelong ambition"
           ],
           "wordFamily": [
-            "career path"
+            "ambition",
+            "ambitious",
+            "ambitiously"
           ],
-          "translation": "trayectoria profesional",
+          "note": "Adjective: ambitious.",
+          "gapFill": {
+            "prompt": "Ever since secondary school, his main ___ has been to train as a civil engineer.",
+            "options": [
+              "ambition",
+              "ambitious",
+              "ambitiously"
+            ],
+            "answer": "ambition",
+            "explanation": "Use the noun \"ambition\" after \"his main\"; \"ambitious\" is the adjective."
+          },
+          "sentencePrompt": "Write a sentence about a personal or career ambition using \"ambition\" or \"ambitious\".",
+          "translation": "ambición / meta",
           "band": "B1",
-          "audioRef": "week-2/career-path.mp3"
+          "audioRef": "week-2/ambition.mp3"
         },
         {
-          "term": "apply for",
-          "pos": "phrasal verb",
-          "definition": "formally ask for a job, course or permission",
-          "example": "I applied for three roles last week.",
-          "collocations": [
-            "apply for a job",
-            "apply for funding"
-          ],
-          "wordFamily": [
-            "apply for"
-          ],
-          "translation": "solicitar",
-          "band": "B1",
-          "audioRef": "week-2/apply-for.mp3"
-        },
-        {
-          "term": "take on",
-          "pos": "phrasal verb",
-          "definition": "accept responsibility or employ someone",
-          "example": "She took on more responsibility without a pay rise.",
-          "collocations": [
-            "take on a role",
-            "take on staff"
-          ],
-          "wordFamily": [
-            "take on"
-          ],
-          "translation": "asumir, contratar",
-          "band": "B1",
-          "audioRef": "week-2/take-on.mp3"
-        },
-        {
-          "term": "workload",
+          "term": "goal",
           "pos": "noun",
-          "definition": "the amount of work a person has to do",
-          "example": "My workload doubles in September.",
+          "definition": "something specific you want to achieve within a certain time",
+          "example": "I set myself a goal of reading one book a month.",
           "collocations": [
-            "a heavy workload",
-            "manage your workload"
+            "set a goal",
+            "reach a goal"
           ],
           "wordFamily": [
-            "workload"
+            "goal",
+            "goal-oriented"
           ],
-          "translation": "carga de trabajo",
+          "note": "Also: reach a goal.",
+          "gapFill": {
+            "prompt": "It helps to ___ a clear goal at the start of each sixteen-week term.",
+            "options": [
+              "set",
+              "do",
+              "bring"
+            ],
+            "answer": "set",
+            "explanation": "In English we \"set a goal\" (choose it) and \"reach\" or \"achieve a goal\"."
+          },
+          "sentencePrompt": "Write a sentence about a realistic language goal you have set yourself this month.",
+          "translation": "objetivo / meta",
           "band": "B1",
-          "audioRef": "week-2/workload.mp3"
+          "audioRef": "week-2/goal.mp3"
+        },
+        {
+          "term": "achieve",
+          "pos": "verb",
+          "definition": "succeed in finishing or reaching something after hard work",
+          "example": "If you work hard, you can achieve almost anything.",
+          "collocations": [
+            "achieve your goals",
+            "achieve a high standard"
+          ],
+          "wordFamily": [
+            "achieve",
+            "achievement",
+            "achievable"
+          ],
+          "note": "Noun: achievement.",
+          "gapFill": {
+            "prompt": "With steady daily practice, a solid B2 level is completely ___ within four months.",
+            "options": [
+              "achievable",
+              "achieve",
+              "achievement"
+            ],
+            "answer": "achievable",
+            "explanation": "\"Achievable\" is the adjective meaning possible to reach through effort."
+          },
+          "sentencePrompt": "Write a sentence about something you worked hard to achieve recently.",
+          "translation": "lograr / alcanzar",
+          "band": "B1",
+          "audioRef": "week-2/achieve.mp3"
+        },
+        {
+          "term": "intend",
+          "pos": "verb",
+          "definition": "have a firm plan or purpose to do something in the future",
+          "example": "We intend to move to the coast next year.",
+          "collocations": [
+            "intend to do something",
+            "fully intend to"
+          ],
+          "wordFamily": [
+            "intend",
+            "intention",
+            "intentional"
+          ],
+          "note": "Intend + to + infinitive, not -ing, in this meaning.",
+          "gapFill": {
+            "prompt": "We ___ to complete all four pilot modules before the summer break.",
+            "options": [
+              "intend",
+              "intending",
+              "are intend"
+            ],
+            "answer": "intend",
+            "explanation": "Use \"intend + to + infinitive\" to express a clear future plan."
+          },
+          "sentencePrompt": "Write a sentence starting with \"Next year I intend to...\" about a concrete plan.",
+          "translation": "tener intención de",
+          "band": "B2",
+          "audioRef": "week-2/intend.mp3"
+        },
+        {
+          "term": "pursue",
+          "pos": "verb",
+          "definition": "follow a career, interest, or plan steadily over a long period",
+          "example": "He decided to pursue a career in medicine.",
+          "collocations": [
+            "pursue a career",
+            "pursue further study"
+          ],
+          "wordFamily": [
+            "pursue",
+            "pursuit"
+          ],
+          "note": "Formal; stronger than follow.",
+          "gapFill": {
+            "prompt": "After finishing her undergraduate degree, Maya decided to ___ a career in renewable energy.",
+            "options": [
+              "pursue",
+              "chase",
+              "insist"
+            ],
+            "answer": "pursue",
+            "explanation": "\"Pursue a career\" is a natural B2 formal collocation stronger than \"follow\"."
+          },
+          "sentencePrompt": "Write a sentence about a career path or personal interest you would like to pursue.",
+          "translation": "seguir / dedicarse a",
+          "band": "B2",
+          "audioRef": "week-2/pursue.mp3"
         },
         {
           "term": "deadline",
           "pos": "noun",
-          "definition": "the latest time by which something must be finished",
-          "example": "We missed the deadline by two days.",
+          "definition": "a date or time by which a task must be finished",
+          "example": "I need to meet the deadline on Friday.",
           "collocations": [
             "meet a deadline",
-            "a tight deadline"
+            "miss a deadline"
           ],
           "wordFamily": [
             "deadline"
           ],
-          "translation": "fecha límite",
+          "note": "Also: miss a deadline.",
+          "gapFill": {
+            "prompt": "If we divide the editing today, we will easily ___ the Friday deadline.",
+            "options": [
+              "meet",
+              "catch",
+              "arrive"
+            ],
+            "answer": "meet",
+            "explanation": "Use \"meet a deadline\" (finish on time) or \"miss a deadline\" (finish late)."
+          },
+          "sentencePrompt": "Write a sentence about how you organise your week to meet a tight deadline.",
+          "translation": "fecha límite / plazo",
           "band": "B1",
           "audioRef": "week-2/deadline.mp3"
         },
         {
-          "term": "qualification",
-          "pos": "noun",
-          "definition": "an exam pass or official skill that allows you to do something",
-          "example": "The role requires a teaching qualification.",
+          "term": "apply for",
+          "pos": "phrasal verb",
+          "definition": "make a formal written request for a job, course, or grant",
+          "example": "She has applied for a place at a university in Glasgow.",
           "collocations": [
-            "gain a qualification",
-            "formal qualifications"
+            "apply for a job",
+            "apply to a university"
           ],
           "wordFamily": [
-            "qualification"
+            "apply for",
+            "application",
+            "applicant"
           ],
-          "translation": "titulación",
+          "note": "Apply to a person or organisation, for a job or course.",
+          "gapFill": {
+            "prompt": "Tom has applied ___ the council ___ a small grant for his community garden.",
+            "options": [
+              "to ... for",
+              "for ... to",
+              "at ... for"
+            ],
+            "answer": "to ... for",
+            "explanation": "Remember: apply TO a person or organisation, FOR a job, place, or grant."
+          },
+          "sentencePrompt": "Write a sentence about a job, course, or opportunity you applied for or plan to apply for.",
+          "translation": "solicitar / postularse a",
           "band": "B1",
-          "audioRef": "week-2/qualification.mp3"
+          "audioRef": "week-2/apply-for.mp3"
         },
         {
-          "term": "promotion",
-          "pos": "noun",
-          "definition": "a move to a more important position at work",
-          "example": "He got a promotion after eighteen months.",
+          "term": "look forward to",
+          "pos": "phrasal verb",
+          "definition": "feel pleased and excited about something that is going to happen",
+          "example": "I'm really looking forward to starting my new course.",
           "collocations": [
-            "get a promotion",
-            "be offered a promotion"
+            "look forward to + -ing",
+            "really look forward to"
           ],
           "wordFamily": [
-            "promotion"
+            "look forward to"
           ],
-          "translation": "ascenso",
+          "note": "To is a preposition here, so -ing follows.",
+          "gapFill": {
+            "prompt": "I am really looking forward to ___ my colleagues in Edinburgh next week.",
+            "options": [
+              "meeting",
+              "meet",
+              "met"
+            ],
+            "answer": "meeting",
+            "explanation": "In \"look forward to\", \"to\" is a preposition, so always use the -ing form or a noun."
+          },
+          "sentencePrompt": "Write a sentence about something upcoming you are looking forward to (using -ing).",
+          "translation": "tener ganas de / esperar con ilusión",
           "band": "B1",
-          "audioRef": "week-2/promotion.mp3"
+          "audioRef": "week-2/look-forward-to.mp3"
         },
         {
-          "term": "job satisfaction",
-          "pos": "noun",
-          "definition": "the feeling that your work is worthwhile",
-          "example": "Job satisfaction matters more to me than salary.",
+          "term": "determined",
+          "pos": "adjective",
+          "definition": "having made a firm decision and refusing to let difficulties stop you",
+          "example": "He is determined to pass the exam this time.",
           "collocations": [
-            "high job satisfaction",
-            "a sense of job satisfaction"
+            "determined to succeed",
+            "fiercely determined"
           ],
           "wordFamily": [
-            "job satisfaction"
+            "determined",
+            "determination",
+            "determine"
           ],
-          "translation": "satisfacción laboral",
+          "note": "Followed by to + infinitive.",
+          "gapFill": {
+            "prompt": "Despite failing her driving test twice, Priya was determined ___ again in May.",
+            "options": [
+              "to try",
+              "trying",
+              "try"
+            ],
+            "answer": "to try",
+            "explanation": "\"Determined\" is followed by \"to + infinitive\" (e.g. \"determined to succeed\")."
+          },
+          "sentencePrompt": "Write a sentence about something you are determined to finish this year.",
+          "translation": "decidido / resuelto",
           "band": "B1",
-          "audioRef": "week-2/job-satisfaction.mp3"
-        },
-        {
-          "term": "retrain",
-          "pos": "verb",
-          "definition": "learn new skills in order to change career",
-          "example": "He retrained as a nurse at forty.",
-          "collocations": [
-            "retrain as a teacher",
-            "retrain mid-career"
-          ],
-          "wordFamily": [
-            "retrain"
-          ],
-          "translation": "reciclarse profesionalmente",
-          "band": "B1",
-          "audioRef": "week-2/retrain.mp3"
+          "audioRef": "week-2/determined.mp3"
         }
       ],
       "inputs": [
@@ -868,15 +1182,17 @@
             "If my schedule gets busy, I will…"
           ],
           "linkers": [
-            "first of all",
-            "provided that",
-            "otherwise"
+            "In order to",
+            "so that",
+            "As soon as",
+            "Sooner or later"
           ],
           "terms": [
-            "career path",
+            "ambition",
+            "goal",
             "deadline",
-            "retrain",
-            "workload"
+            "apply for",
+            "look forward to"
           ]
         }
       ],
@@ -1021,7 +1337,93 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "make plans for the weekend",
+            "example": "Let's make plans for the weekend before the trains sell out.",
+            "note": "Always plural \"make plans\" for general arrangements."
+          },
+          {
+            "phrase": "save up for a holiday",
+            "example": "We've been saving up for a holiday in northern Spain since January.",
+            "note": "\"Save up\" implies setting money aside gradually for a specific goal."
+          },
+          {
+            "phrase": "work towards a degree",
+            "example": "She is working towards a degree in architecture while working part-time.",
+            "note": "UK spelling: \"towards\" (US often drops the -s: \"toward\")."
+          },
+          {
+            "phrase": "take the first step",
+            "example": "Booking a placement test is often the hardest part — just take the first step.",
+            "note": "Pairs naturally with \"towards\": take the first step towards B2."
+          },
+          {
+            "phrase": "fulfil your potential",
+            "example": "Good mentoring helps learners fulfil their potential without burning out.",
+            "note": "British spelling: \"fulfil\" (single l at the end; US: \"fulfill\")."
+          },
+          {
+            "phrase": "put something off",
+            "example": "I kept putting off my tax return until there were only two days left.",
+            "note": "Separable phrasal verb meaning delay or postpone (\"put it off\")."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "ambition",
+            "forms": [
+              "ambition",
+              "ambitious",
+              "ambitiously"
+            ],
+            "example": "His ambition seemed ambitious at first, yet he pursued it ambitiously and steadily."
+          },
+          {
+            "base": "achieve",
+            "forms": [
+              "achieve",
+              "achievement",
+              "achievable"
+            ],
+            "example": "Breaking big targets into achievable weekly tasks makes every achievement easier to achieve."
+          },
+          {
+            "base": "succeed",
+            "forms": [
+              "succeed",
+              "success",
+              "successful",
+              "successfully"
+            ],
+            "example": "If you want to succeed, remember that successful people handle setbacks successfully."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "In order to save money, I'm going to cook at home more.",
+            "functionLabel": "Purpose",
+            "example": "In order to save money, I'm going to cook at home more during the week."
+          },
+          {
+            "expression": "I'll study hard so that I can get a place at university.",
+            "functionLabel": "Purpose / result",
+            "example": "I'll study hard so that I can get a place at university next autumn."
+          },
+          {
+            "expression": "As soon as I finish this course, I'll look for a new job.",
+            "functionLabel": "Time trigger",
+            "example": "As soon as I finish this course, I'll look for a new job in Bristol."
+          },
+          {
+            "expression": "Sooner or later, I'd like to start my own business.",
+            "functionLabel": "Long-term aim",
+            "example": "Sooner or later, I'd like to start my own design studio."
+          }
+        ]
+      }
     },
     {
       "number": 3,
@@ -1030,7 +1432,7 @@
       "summary": "Express obligation, advice, ability, and polite permission naturally, and keep conversations flowing with clear questions and linkers.",
       "hours": 4,
       "releaseStage": "live",
-      "vocabularyTopic": "Everyday etiquette, neighbours and social plans",
+      "vocabularyTopic": "Daily life, relationships & social interaction",
       "lightGrammar": "Question forms; basic linkers",
       "grammar": [
         {
@@ -1130,154 +1532,272 @@
       ],
       "vocab": [
         {
-          "term": "keep in touch",
-          "pos": "verb phrase",
-          "definition": "stay in contact with someone by speaking or writing regularly",
-          "example": "Even after changing jobs, we still keep in touch over coffee once a month.",
-          "collocations": [
-            "keep in touch with",
-            "try to keep in touch"
-          ],
-          "wordFamily": [
-            "touch",
-            "in touch"
-          ],
-          "translation": "mantener el contacto",
-          "band": "B1",
-          "audioRef": "week-3/keep-in-touch.mp3"
-        },
-        {
-          "term": "pop round",
-          "pos": "phrasal verb",
-          "definition": "visit someone nearby for a short, informal time",
-          "example": "Feel free to pop round later if you need a spare charger.",
-          "collocations": [
-            "pop round for tea",
-            "pop round quickly"
-          ],
-          "wordFamily": [
-            "pop",
-            "pop in"
-          ],
-          "translation": "pasarse un momento",
-          "band": "B1",
-          "audioRef": "week-3/pop-round.mp3"
-        },
-        {
-          "term": "let someone down",
-          "pos": "phrasal verb",
-          "definition": "disappoint someone by failing to do what you promised",
-          "example": "I hate letting friends down, so I only promise what I know I can deliver.",
-          "collocations": [
-            "let a friend down",
-            "never let someone down"
-          ],
-          "wordFamily": [
-            "letdown"
-          ],
-          "translation": "decepcionar a alguien",
-          "band": "B1",
-          "audioRef": "week-3/let-someone-down.mp3"
-        },
-        {
-          "term": "considerate",
-          "pos": "adjective",
-          "definition": "careful not to inconvenience or hurt other people",
-          "example": "Our new neighbours are really considerate about keeping noise low after ten.",
-          "collocations": [
-            "considerate behaviour",
-            "deeply considerate"
-          ],
-          "wordFamily": [
-            "consider",
-            "consideration",
-            "considerately"
-          ],
-          "translation": "considerado",
-          "band": "B2",
-          "audioRef": "week-3/considerate.mp3"
-        },
-        {
-          "term": "arrange",
-          "pos": "verb",
-          "definition": "organise or agree on a time and plan for something",
-          "example": "Shall we arrange to meet outside the station at half past six?",
-          "collocations": [
-            "arrange a meeting",
-            "arrange to catch up"
-          ],
-          "wordFamily": [
-            "arrangement",
-            "arranged"
-          ],
-          "translation": "quedar / organizar",
-          "band": "B1",
-          "audioRef": "week-3/arrange.mp3"
-        },
-        {
-          "term": "small talk",
-          "pos": "noun",
-          "definition": "polite, light conversation about everyday topics with people you do not know well",
-          "example": "Asking about someone’s weekend is an easy way to start small talk.",
-          "collocations": [
-            "make small talk",
-            "awkward small talk"
-          ],
-          "wordFamily": [
-            "talk"
-          ],
-          "translation": "charla informal",
-          "band": "B1",
-          "audioRef": "week-3/small-talk.mp3"
-        },
-        {
-          "term": "put off",
-          "pos": "phrasal verb",
-          "definition": "delay or move an event or task to a later time",
-          "example": "We had to put off the picnic until Sunday because of heavy rain.",
-          "collocations": [
-            "put off a decision",
-            "put off until later"
-          ],
-          "wordFamily": [
-            "put off"
-          ],
-          "translation": "posponer",
-          "band": "B1",
-          "audioRef": "week-3/put-off.mp3"
-        },
-        {
           "term": "get along with",
           "pos": "phrasal verb",
-          "definition": "have a friendly relationship with someone",
-          "example": "It helps when flatmates get along with each other on everyday chores.",
+          "definition": "have a friendly, easy relationship with someone",
+          "example": "I get along well with my neighbours.",
           "collocations": [
-            "get along well with",
-            "get along easily"
+            "get along well with colleagues",
+            "easy to get along with"
           ],
           "wordFamily": [
-            "get along"
+            "get along with"
           ],
+          "note": "Informal; British also: get on with.",
+          "ukUsNote": "Audio note: UK speakers often say \"get on with\", while US/international speakers prefer \"get along with\".",
+          "gapFill": {
+            "prompt": "I am lucky because I ___ really well with everyone in my flat.",
+            "options": [
+              "get along",
+              "get across",
+              "get round"
+            ],
+            "answer": "get along",
+            "explanation": "\"Get along with\" (or British \"get on with\") means have a friendly relationship."
+          },
+          "sentencePrompt": "Write a sentence about someone at work, school, or home whom you get along with well.",
           "translation": "llevarse bien con",
           "band": "B1",
           "audioRef": "week-3/get-along-with.mp3"
         },
         {
-          "term": "favour",
-          "pos": "noun",
-          "definition": "a helpful act you do for someone out of kindness",
-          "example": "Could I ask a quick favour while you are out at the shops?",
+          "term": "catch up with",
+          "pos": "phrasal verb",
+          "definition": "meet or speak to someone you have not seen recently to share news",
+          "example": "I'm meeting Sam on Saturday to catch up.",
           "collocations": [
-            "do someone a favour",
-            "ask a favour"
+            "catch up with friends",
+            "meet for a quick catch-up"
           ],
           "wordFamily": [
-            "favourable",
-            "favourably"
+            "catch up with",
+            "catch-up"
           ],
-          "translation": "favor",
+          "note": "Also used without an object.",
+          "gapFill": {
+            "prompt": "We have not spoken since Easter — let us grab a coffee on Sunday and ___.",
+            "options": [
+              "catch up",
+              "pick up",
+              "make up"
+            ],
+            "answer": "catch up",
+            "explanation": "\"Catch up\" can be used with \"with someone\" or on its own without an object."
+          },
+          "sentencePrompt": "Write a sentence about a friend you want to catch up with soon.",
+          "translation": "ponerse al día con",
           "band": "B1",
-          "audioRef": "week-3/favour.mp3"
+          "audioRef": "week-3/catch-up-with.mp3"
+        },
+        {
+          "term": "arrange",
+          "pos": "verb",
+          "definition": "plan and agree on the time and place for something to happen",
+          "example": "We arranged to meet outside the station at six.",
+          "collocations": [
+            "arrange to meet",
+            "make arrangements"
+          ],
+          "wordFamily": [
+            "arrange",
+            "arrangement"
+          ],
+          "note": "Arrange + to + infinitive.",
+          "gapFill": {
+            "prompt": "Have you ___ to meet your study partner before Friday’s speaking task?",
+            "options": [
+              "arranged",
+              "arranged for",
+              "arranging"
+            ],
+            "answer": "arranged",
+            "explanation": "Follow \"arrange\" with \"to + infinitive\" (\"arranged to meet\")."
+          },
+          "sentencePrompt": "Write a sentence about plans you recently arranged to do with friends or colleagues.",
+          "translation": "quedar / organizar",
+          "band": "B1",
+          "audioRef": "week-3/arrange.mp3"
+        },
+        {
+          "term": "routine",
+          "pos": "noun",
+          "definition": "the usual order and way in which you regularly do daily things",
+          "example": "I try to stick to a routine, even at weekends.",
+          "collocations": [
+            "stick to a routine",
+            "a daily routine"
+          ],
+          "wordFamily": [
+            "routine",
+            "routinely"
+          ],
+          "note": "Countable: a daily routine; also an adjective meaning ordinary.",
+          "gapFill": {
+            "prompt": "Working from home is easier when you ___ a clear morning routine.",
+            "options": [
+              "stick to",
+              "hang on",
+              "stay in"
+            ],
+            "answer": "stick to",
+            "explanation": "Common collocation: \"stick to a routine\" (or \"break your routine\")."
+          },
+          "sentencePrompt": "Write a sentence describing one habit in your daily routine that keeps you productive.",
+          "translation": "rutina",
+          "band": "B1",
+          "audioRef": "week-3/routine.mp3"
+        },
+        {
+          "term": "rely on",
+          "pos": "phrasal verb",
+          "definition": "trust someone or something to support you or work when needed",
+          "example": "You can always rely on Maria to help.",
+          "collocations": [
+            "rely on someone",
+            "heavily rely on"
+          ],
+          "wordFamily": [
+            "rely",
+            "reliable",
+            "reliably",
+            "unreliable"
+          ],
+          "note": "Adjective: reliable.",
+          "gapFill": {
+            "prompt": "When trains are cancelled in winter, commuters cannot always ___ the timetable.",
+            "options": [
+              "rely on",
+              "rely to",
+              "rely with"
+            ],
+            "answer": "rely on",
+            "explanation": "Always pair \"rely\" with the preposition \"on\" (or \"upon\" in formal prose)."
+          },
+          "sentencePrompt": "Write a sentence about a friend or colleague you can always rely on.",
+          "translation": "confiar en / depender de",
+          "band": "B1",
+          "audioRef": "week-3/rely-on.mp3"
+        },
+        {
+          "term": "polite",
+          "pos": "adjective",
+          "definition": "showing respect and good manners when speaking or behaving towards others",
+          "example": "It is polite to say thank you when someone helps you.",
+          "collocations": [
+            "be polite to someone",
+            "a polite request"
+          ],
+          "wordFamily": [
+            "polite",
+            "politely",
+            "politeness",
+            "impolite"
+          ],
+          "note": "Opposite: impolite or rude.",
+          "gapFill": {
+            "prompt": "Even if you disagree with a customer, it is essential to stay ___ at all times.",
+            "options": [
+              "polite",
+              "politeness",
+              "impolite"
+            ],
+            "answer": "polite",
+            "explanation": "Use the adjective \"polite\" after \"stay\"; its opposites are \"impolite\" or \"rude\"."
+          },
+          "sentencePrompt": "Write a polite request or explain one polite habit in your culture.",
+          "translation": "educado / amable",
+          "band": "B1",
+          "audioRef": "week-3/polite.mp3"
+        },
+        {
+          "term": "misunderstanding",
+          "pos": "noun",
+          "definition": "a situation in which someone fails to understand something correctly",
+          "example": "There was a misunderstanding about the time of the meeting.",
+          "collocations": [
+            "a misunderstanding",
+            "clear up a misunderstanding"
+          ],
+          "wordFamily": [
+            "misunderstanding",
+            "misunderstand"
+          ],
+          "note": "Verb: misunderstand.",
+          "gapFill": {
+            "prompt": "I sent a quick message to ___ the misunderstanding about Tuesday’s start time.",
+            "options": [
+              "clear up",
+              "wipe out",
+              "turn off"
+            ],
+            "answer": "clear up",
+            "explanation": "We \"clear up a misunderstanding\" when we explain what actually happened."
+          },
+          "sentencePrompt": "Write a sentence about a small misunderstanding and how it was resolved.",
+          "translation": "malentendido",
+          "band": "B2",
+          "audioRef": "week-3/misunderstanding.mp3"
+        },
+        {
+          "term": "invite",
+          "pos": "verb",
+          "definition": "ask someone politely to come to your home, an event, or a meal",
+          "example": "She invited us round for dinner on Friday.",
+          "collocations": [
+            "invite someone round",
+            "send out invitations"
+          ],
+          "wordFamily": [
+            "invite",
+            "invitation",
+            "inviting"
+          ],
+          "note": "British: round or over; noun: invitation.",
+          "ukUsNote": "Audio note: British English commonly uses \"invite someone round\", while American English prefers \"invite someone over\".",
+          "gapFill": {
+            "prompt": "Our new neighbours kindly ___ us round for tea on Sunday afternoon.",
+            "options": [
+              "invited",
+              "invitation",
+              "arranged"
+            ],
+            "answer": "invited",
+            "explanation": "In British English we say \"invite someone round\" (or \"over\") for tea or dinner."
+          },
+          "sentencePrompt": "Write a sentence using \"invite someone round\" (or \"over\") for a meal or celebration.",
+          "translation": "invitar",
+          "band": "B1",
+          "audioRef": "week-3/invite.mp3"
+        },
+        {
+          "term": "awkward",
+          "pos": "adjective",
+          "definition": "uncomfortable, embarrassing, or difficult to deal with socially",
+          "example": "There was an awkward silence after he asked the question.",
+          "collocations": [
+            "an awkward silence",
+            "feel awkward"
+          ],
+          "wordFamily": [
+            "awkward",
+            "awkwardly",
+            "awkwardness"
+          ],
+          "note": "Also: feel awkward.",
+          "gapFill": {
+            "prompt": "When nobody remembered the guest speaker’s name, an ___ silence filled the room.",
+            "options": [
+              "awkward",
+              "awkwardly",
+              "easy"
+            ],
+            "answer": "awkward",
+            "explanation": "\"An awkward silence\" is a very natural collocation for an uncomfortable pause."
+          },
+          "sentencePrompt": "Write a sentence describing an awkward moment or awkward silence you experienced.",
+          "translation": "incómodo",
+          "band": "B2",
+          "audioRef": "week-3/awkward.mp3"
         }
       ],
       "inputs": [
@@ -1366,15 +1886,17 @@
             "Could you let me know…?"
           ],
           "linkers": [
-            "because",
-            "although",
-            "so"
+            "However",
+            "On the other hand",
+            "In fact",
+            "Apart from that"
           ],
           "terms": [
-            "favour",
-            "considerate",
+            "get along with",
+            "catch up with",
             "arrange",
-            "keep in touch"
+            "rely on",
+            "polite"
           ]
         }
       ],
@@ -1519,7 +2041,95 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "make an effort",
+            "example": "She always makes an effort to welcome new colleagues during their first week.",
+            "note": "Always \"make an effort\" (never \"do an effort\")."
+          },
+          {
+            "phrase": "have a lot in common with someone",
+            "example": "Although we grew up in different countries, we have a lot in common with each other.",
+            "note": "Negative form: \"have nothing in common with someone\"."
+          },
+          {
+            "phrase": "run errands",
+            "example": "Saturday morning is when I usually run errands like picking up parcels and groceries.",
+            "note": "Means doing short everyday tasks outside the house."
+          },
+          {
+            "phrase": "get in touch",
+            "example": "Do get in touch if you're ever passing through Cardiff.",
+            "note": "Means contact someone by phone, message, or email."
+          },
+          {
+            "phrase": "pop round to see someone",
+            "example": "I might pop round to see my aunt after work if it is not too late.",
+            "note": "Informal British; US/international equivalent: \"stop by to see someone\"."
+          },
+          {
+            "phrase": "keep a promise",
+            "example": "People trust you more when you consistently keep a promise.",
+            "note": "Opposite: \"break a promise\"."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "friend",
+            "forms": [
+              "friend",
+              "friendly",
+              "friendship",
+              "unfriendly"
+            ],
+            "example": "A friendly smile turned an awkward chat into a lasting friendship with my new friend."
+          },
+          {
+            "base": "polite",
+            "forms": [
+              "polite",
+              "politely",
+              "politeness",
+              "impolite"
+            ],
+            "example": "Saying no politely shows politeness, whereas interrupting feels impolite even when you mean to be polite."
+          },
+          {
+            "base": "rely",
+            "forms": [
+              "rely",
+              "reliable",
+              "reliably",
+              "unreliable"
+            ],
+            "example": "You can rely on a reliable teammate to deliver work reliably when unreliable tools fail."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "However, I don't always have time to see them.",
+            "functionLabel": "Contrast",
+            "example": "I love catching up with college friends; however, I don't always have time to see them."
+          },
+          {
+            "expression": "On the other hand, it is nice to have a quiet evening.",
+            "functionLabel": "Balanced contrast",
+            "example": "Going out on Friday is fun; on the other hand, it is nice to have a quiet evening at home."
+          },
+          {
+            "expression": "In fact, we only met last month.",
+            "functionLabel": "Clarifying detail",
+            "example": "People think we have known each other for years. In fact, we only met last month."
+          },
+          {
+            "expression": "Apart from that, everything is going well.",
+            "functionLabel": "Exception / summary",
+            "example": "My commute is a bit crowded in the rain. Apart from that, everything is going well."
+          }
+        ]
+      }
     },
     {
       "number": 4,
@@ -1528,7 +2138,7 @@
       "summary": "Describe heritage sites and travel logistics with the passive voice, and add vivid detail using relative clauses and comparatives.",
       "hours": 4,
       "releaseStage": "live",
-      "vocabularyTopic": "Responsible travel, heritage and culture shock",
+      "vocabularyTopic": "Travel, transport & cultural experiences",
       "lightGrammar": "Relative clauses; comparatives and superlatives",
       "grammar": [
         {
@@ -1628,140 +2238,267 @@
       ],
       "vocab": [
         {
+          "term": "tradition",
+          "pos": "noun",
+          "definition": "a custom, belief, or way of doing things passed down over a long time",
+          "example": "Eating fish and chips on Fridays is a long-standing tradition.",
+          "collocations": [
+            "a local tradition",
+            "a long-standing tradition"
+          ],
+          "wordFamily": [
+            "tradition",
+            "traditional",
+            "traditionally"
+          ],
+          "note": "Adjective: traditional.",
+          "gapFill": {
+            "prompt": "Baking special bread for the autumn harvest is a ___ local tradition in this region.",
+            "options": [
+              "long-standing",
+              "standing-long",
+              "newly-old"
+            ],
+            "answer": "long-standing",
+            "explanation": "\"Long-standing tradition\" is a natural B2 collocation for something practised for generations."
+          },
+          "sentencePrompt": "Write a sentence describing a local tradition in your town or country (using passive voice if possible).",
+          "translation": "tradición",
+          "band": "B1",
+          "audioRef": "week-4/tradition.mp3"
+        },
+        {
+          "term": "custom",
+          "pos": "noun",
+          "definition": "an accepted way of behaving or doing something in a particular society",
+          "example": "It's the custom to remove your shoes before entering the house.",
+          "collocations": [
+            "a local custom",
+            "follow a custom"
+          ],
+          "wordFamily": [
+            "custom",
+            "customary"
+          ],
+          "note": "Different from customs at an airport.",
+          "gapFill": {
+            "prompt": "Before travelling abroad, it helps to read about local ___ so you do not offend anyone.",
+            "options": [
+              "customs",
+              "tickets",
+              "borders"
+            ],
+            "answer": "customs",
+            "explanation": "Singular \"a custom\" is a social habit; \"customs\" at an airport checks luggage and goods."
+          },
+          "sentencePrompt": "Write a sentence explaining a polite custom visitors should know in your country.",
+          "translation": "costumbre",
+          "band": "B1",
+          "audioRef": "week-4/custom.mp3"
+        },
+        {
+          "term": "destination",
+          "pos": "noun",
+          "definition": "the town, city, or country that someone is travelling to",
+          "example": "Lisbon is a popular destination for city breaks.",
+          "collocations": [
+            "a popular destination",
+            "reach your destination"
+          ],
+          "wordFamily": [
+            "destination"
+          ],
+          "note": "The place you are travelling to.",
+          "gapFill": {
+            "prompt": "Thanks to high-speed trains, northern Spain has become a popular ___ for weekend breaks.",
+            "options": [
+              "destination",
+              "direction",
+              "departure"
+            ],
+            "answer": "destination",
+            "explanation": "Your \"destination\" is the final place you travel to."
+          },
+          "sentencePrompt": "Write a sentence about a travel destination you would recommend and why.",
+          "translation": "destino",
+          "band": "B1",
+          "audioRef": "week-4/destination.mp3"
+        },
+        {
+          "term": "book",
+          "pos": "verb",
+          "definition": "arrange in advance to have a hotel room, table, or travel ticket kept for you",
+          "example": "We booked our hotel three months in advance.",
+          "collocations": [
+            "book a flight in advance",
+            "fully booked"
+          ],
+          "wordFamily": [
+            "book",
+            "booking"
+          ],
+          "note": "British: book; American also: reserve.",
+          "ukUsNote": "Audio note: British speakers usually say \"book a hotel/table\"; American speakers often also say \"reserve\".",
+          "gapFill": {
+            "prompt": "Because August is peak season, our ferry tickets had to be ___ two months in advance.",
+            "options": [
+              "booked",
+              "kept",
+              "saved"
+            ],
+            "answer": "booked",
+            "explanation": "British English uses \"book\" for tickets, rooms, and tables (passive: \"had to be booked\")."
+          },
+          "sentencePrompt": "Write a sentence using \"book ... in advance\" (or passive \"was booked\") about a trip.",
+          "translation": "reservar",
+          "band": "B1",
+          "audioRef": "week-4/book.mp3"
+        },
+        {
+          "term": "set off",
+          "pos": "phrasal verb",
+          "definition": "start a journey, especially early in the morning",
+          "example": "We set off at six to avoid the traffic.",
+          "collocations": [
+            "set off early",
+            "set off on a journey"
+          ],
+          "wordFamily": [
+            "set off"
+          ],
+          "note": "Begin a journey.",
+          "gapFill": {
+            "prompt": "We ___ at dawn so that we could cross the border before the midday heat.",
+            "options": [
+              "set off",
+              "took off",
+              "turned off"
+            ],
+            "answer": "set off",
+            "explanation": "\"Set off\" means begin a journey (\"take off\" is only for planes leaving the ground)."
+          },
+          "sentencePrompt": "Write a sentence about a journey where you had to set off very early.",
+          "translation": "ponerse en marcha / salir de viaje",
+          "band": "B1",
+          "audioRef": "week-4/set-off.mp3"
+        },
+        {
           "term": "get around",
           "pos": "phrasal verb",
-          "definition": "travel from place to place",
-          "example": "It is easy to get around the city by tram.",
+          "definition": "travel from place to place within a city, area, or country",
+          "example": "It's easy to get around Amsterdam by bike.",
           "collocations": [
-            "get around easily"
+            "get around the city",
+            "easy to get around"
           ],
           "wordFamily": [
             "get around"
           ],
-          "translation": "moverse por",
+          "note": "Also: get about (British informal).",
+          "ukUsNote": "Audio note: British speakers sometimes also say \"get about\" with the same meaning.",
+          "gapFill": {
+            "prompt": "With an unlimited tram pass, it is easy to ___ the historic centre without a car.",
+            "options": [
+              "get around",
+              "get away",
+              "get over"
+            ],
+            "answer": "get around",
+            "explanation": "\"Get around\" (or British \"get about\") means move around a city or region."
+          },
+          "sentencePrompt": "Write a sentence explaining the best way for visitors to get around your city.",
+          "translation": "desplazarse / moverse por",
           "band": "B1",
           "audioRef": "week-4/get-around.mp3"
         },
         {
-          "term": "off the beaten track",
-          "pos": "phrase",
-          "definition": "away from the popular tourist routes",
-          "example": "The village is off the beaten track but worth the trip.",
+          "term": "unfamiliar",
+          "pos": "adjective",
+          "definition": "not known to you; strange or new because you have not experienced it before",
+          "example": "Everything felt unfamiliar when we first arrived.",
           "collocations": [
-            "far off the beaten track"
+            "an unfamiliar place",
+            "unfamiliar with the language"
           ],
           "wordFamily": [
-            "off the beaten track"
+            "unfamiliar",
+            "familiar",
+            "familiarity"
           ],
-          "translation": "fuera de los circuitos turísticos",
-          "band": "B1",
-          "audioRef": "week-4/off-the-beaten-track.mp3"
+          "note": "Opposite: familiar; followed by to or with.",
+          "gapFill": {
+            "prompt": "At first, travellers may feel ___ with local tipping rules.",
+            "options": [
+              "unfamiliar",
+              "unwelcoming",
+              "unknown"
+            ],
+            "answer": "unfamiliar",
+            "explanation": "A person is \"unfamiliar with\" a rule; a rule or place is \"unfamiliar to\" a person."
+          },
+          "sentencePrompt": "Write a sentence about navigating an unfamiliar city or custom for the first time.",
+          "translation": "desconocido / poco familiar",
+          "band": "B2",
+          "audioRef": "week-4/unfamiliar.mp3"
         },
         {
-          "term": "customs",
-          "pos": "noun",
-          "definition": "traditional ways of behaving in a society",
-          "example": "Removing your shoes indoors is a local custom.",
+          "term": "welcoming",
+          "pos": "adjective",
+          "definition": "friendly and making visitors feel happy and comfortable",
+          "example": "The villagers were warm and welcoming.",
           "collocations": [
-            "local customs",
-            "respect local customs"
+            "a welcoming atmosphere",
+            "warm and welcoming"
           ],
           "wordFamily": [
-            "customs"
+            "welcoming",
+            "welcome"
           ],
-          "translation": "costumbres",
+          "note": "Noun: welcome.",
+          "gapFill": {
+            "prompt": "The family-run guesthouse was decorated with fresh flowers and had a genuinely ___ atmosphere.",
+            "options": [
+              "welcoming",
+              "welcome",
+              "welcomed"
+            ],
+            "answer": "welcoming",
+            "explanation": "Use \"welcoming\" as an adjective before nouns like \"atmosphere\", \"host\", or \"village\"."
+          },
+          "sentencePrompt": "Write a sentence describing a welcoming place or host you met while travelling.",
+          "translation": "acogedor",
           "band": "B1",
-          "audioRef": "week-4/customs.mp3"
+          "audioRef": "week-4/welcoming.mp3"
         },
         {
-          "term": "landmark",
-          "pos": "noun",
-          "definition": "an easily recognised building or place",
-          "example": "The cathedral is the city's best-known landmark.",
+          "term": "authentic",
+          "pos": "adjective",
+          "definition": "real, traditional, and true to the local culture rather than made only for tourists",
+          "example": "We wanted to try authentic local food, not tourist menus.",
           "collocations": [
-            "a famous landmark"
+            "an authentic experience",
+            "authentic local cuisine"
           ],
           "wordFamily": [
-            "landmark"
+            "authentic",
+            "authenticity",
+            "authentically"
           ],
-          "translation": "punto de referencia",
-          "band": "B1",
-          "audioRef": "week-4/landmark.mp3"
-        },
-        {
-          "term": "culture shock",
-          "pos": "noun",
-          "definition": "the disorientation of living in an unfamiliar culture",
-          "example": "She had real culture shock in her first month.",
-          "collocations": [
-            "experience culture shock"
-          ],
-          "wordFamily": [
-            "culture shock"
-          ],
-          "translation": "choque cultural",
-          "band": "B1",
-          "audioRef": "week-4/culture-shock.mp3"
-        },
-        {
-          "term": "blend in",
-          "pos": "phrasal verb",
-          "definition": "look and behave like the people around you",
-          "example": "Learning a few words helps you blend in.",
-          "collocations": [
-            "blend in with locals"
-          ],
-          "wordFamily": [
-            "blend in"
-          ],
-          "translation": "integrarse",
-          "band": "B1",
-          "audioRef": "week-4/blend-in.mp3"
-        },
-        {
-          "term": "tourist trap",
-          "pos": "noun",
-          "definition": "an expensive place that exists mainly for tourists",
-          "example": "The restaurant by the station is a tourist trap.",
-          "collocations": [
-            "avoid the tourist traps"
-          ],
-          "wordFamily": [
-            "tourist trap"
-          ],
-          "translation": "trampa para turistas",
-          "band": "B1",
-          "audioRef": "week-4/tourist-trap.mp3"
-        },
-        {
-          "term": "cultural heritage",
-          "pos": "noun",
-          "definition": "the traditions and monuments a society inherits",
-          "example": "The old quarter is protected as cultural heritage.",
-          "collocations": [
-            "preserve cultural heritage"
-          ],
-          "wordFamily": [
-            "cultural heritage"
-          ],
-          "translation": "patrimonio cultural",
-          "band": "B1",
-          "audioRef": "week-4/cultural-heritage.mp3"
-        },
-        {
-          "term": "overcrowding",
-          "pos": "noun",
-          "definition": "too many people in one place",
-          "example": "Overcrowding has pushed rents up in the centre.",
-          "collocations": [
-            "tackle overcrowding"
-          ],
-          "wordFamily": [
-            "overcrowding"
-          ],
-          "translation": "masificación",
-          "band": "B1",
-          "audioRef": "week-4/overcrowding.mp3"
+          "note": "Opposite: fake or touristy.",
+          "gapFill": {
+            "prompt": "Walking two streets away from the cathedral led us to an ___ neighbourhood bakery.",
+            "options": [
+              "authentic",
+              "artificial",
+              "touristy"
+            ],
+            "answer": "authentic",
+            "explanation": "\"Authentic\" describes genuine local culture or food, the opposite of \"touristy\" or \"fake\"."
+          },
+          "sentencePrompt": "Write a sentence contrasting an authentic local experience with a touristy attraction.",
+          "translation": "auténtico",
+          "band": "B2",
+          "audioRef": "week-4/authentic.mp3"
         }
       ],
       "inputs": [
@@ -1845,14 +2582,17 @@
             "A good example is..."
           ],
           "linkers": [
-            "whereas",
-            "however",
-            "in my experience"
+            "To begin with",
+            "What is more",
+            "Despite",
+            "All in all"
           ],
           "terms": [
-            "customs",
-            "respectful",
-            "cultural heritage"
+            "destination",
+            "custom",
+            "book",
+            "set off",
+            "authentic"
           ]
         }
       ],
@@ -1997,7 +2737,92 @@
             80
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "go sightseeing",
+            "example": "On Saturday morning we went sightseeing around the old harbour.",
+            "note": "Always \"go sightseeing\" (never \"do sightseeing\" or \"make sightseeing\")."
+          },
+          {
+            "phrase": "take a guided tour",
+            "example": "We took a guided tour of the castle so we would understand its history.",
+            "note": "Also passive: \"Visitors are taken on a guided tour.\""
+          },
+          {
+            "phrase": "try the local cuisine",
+            "example": "Whenever I travel by train, I make time to try the local cuisine at market stalls.",
+            "note": "\"Cuisine\" is slightly more formal than \"food\" and works well in B2 essays."
+          },
+          {
+            "phrase": "travel light",
+            "example": "When you travel light with just a rucksack, catching early trains is far easier.",
+            "note": "Means packing only a small amount of luggage."
+          },
+          {
+            "phrase": "break the journey",
+            "example": "We decided to break the journey in York for lunch instead of driving straight through.",
+            "note": "British expression meaning stop halfway on a long trip to rest."
+          },
+          {
+            "phrase": "miss the connection",
+            "example": "Because our first coach was delayed in heavy rain, we missed the connection in Lyon.",
+            "note": "Used for trains, buses, or flights when you arrive too late for the next leg."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "culture",
+            "forms": [
+              "culture",
+              "cultural",
+              "culturally"
+            ],
+            "example": "Every culture has cultural festivals that remain culturally meaningful for locals."
+          },
+          {
+            "base": "tradition",
+            "forms": [
+              "tradition",
+              "traditional",
+              "traditionally"
+            ],
+            "example": "This local tradition is kept alive by traditional markets that are traditionally held at dawn."
+          },
+          {
+            "base": "tourist",
+            "forms": [
+              "tourist",
+              "tourism",
+              "touristy"
+            ],
+            "example": "Sustainable tourism helps every tourist avoid overly touristy districts."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "To begin with, the journey was long and tiring.",
+            "functionLabel": "Opening point",
+            "example": "To begin with, the journey was long and tiring, though the views soon improved."
+          },
+          {
+            "expression": "What is more, the food was excellent.",
+            "functionLabel": "Adding emphasis",
+            "example": "The guesthouse was inexpensive; what is more, the food was excellent."
+          },
+          {
+            "expression": "Despite the rain, we enjoyed every day.",
+            "functionLabel": "Concession",
+            "example": "Despite the rain, we enjoyed every day in the Highlands."
+          },
+          {
+            "expression": "All in all, it was a trip I will never forget.",
+            "functionLabel": "Conclusion",
+            "example": "All in all, it was a trip I will never forget and would gladly repeat."
+          }
+        ]
+      }
     }
   ]
 }

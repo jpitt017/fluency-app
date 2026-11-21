@@ -43,6 +43,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
 
       await page.goto('/curriculum/lessons/1');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.getByText(/Part 1 · Core Vocabulary \(9 expressions\)/i)).toBeVisible();
+      await expect(page.getByText(/Part 2 · Collocations & Phrasal Expressions/i)).toBeVisible();
+      await expect(page.getByText(/Part 3 · Word Families/i)).toBeVisible();
+      await expect(page.getByText(/Part 4 · Useful Linking Expressions/i)).toBeVisible();
     }
   });
 

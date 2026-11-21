@@ -40,6 +40,47 @@ export interface LessonRow {
   xp_reward: number;
 }
 
+export interface VocabPackCollocation {
+  phrase: string;
+  example: string;
+  note?: string;
+}
+
+export interface VocabPackWordFamily {
+  base: string;
+  forms: string[];
+  example: string;
+  note?: string;
+}
+
+export interface VocabPackLinker {
+  expression: string;
+  functionLabel: string;
+  example: string;
+}
+
+export interface VocabPack {
+  collocations?: VocabPackCollocation[];
+  wordFamilies?: VocabPackWordFamily[];
+  linkingExpressions?: VocabPackLinker[];
+}
+
+export interface LessonVocabItem {
+  id: string;
+  term: string;
+  part_of_speech: string;
+  ipa?: string | null;
+  definition: string;
+  example: string;
+  collocations: string[];
+  word_family?: string[];
+  usage_note?: string | null;
+  sentence_prompt?: string | null;
+  translation_es?: string | null;
+  band?: string;
+  audio_url?: string | null;
+}
+
 export interface ModuleSummary {
   id: string;
   number: number;
@@ -50,6 +91,7 @@ export interface ModuleSummary {
   topic: string;
   grammar: string[];
   light_grammar?: string | null;
+  vocab_pack?: VocabPack | null;
   hours: number;
 }
 
@@ -188,6 +230,7 @@ export interface LessonPayload {
   module: ModuleSummary;
   blocks: LessonBlock[];
   items: PracticeItem[];
+  vocab_items?: LessonVocabItem[];
   input: ContentInput | null;
   speaking: SpeakingTask | null;
   writing: WritingTask | null;
@@ -363,6 +406,8 @@ export interface VocabDeckSummary {
     definition: string;
     example: string;
     collocations: string[];
+    word_family?: string[];
+    usage_note?: string | null;
     translation_es: string | null;
     audio_url?: string | null;
     band: string;

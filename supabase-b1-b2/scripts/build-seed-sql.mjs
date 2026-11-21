@@ -99,6 +99,14 @@ join lateral (
 ) it on true
 cross join generate_series(1, 2) as k
 where it.idx = ((l.module_lesson_number - 1 + 6 + k - 1) % it.total)
+  and (
+    l.module_lesson_number <> 1
+    or not exists (
+      select 1 from public.vocab_items vi2
+      join public.vocab_decks vd2 on vd2.id = vi2.deck_id
+      where vd2.module_id = l.module_id and vi2.gap_fill is not null
+    )
+  )
 on conflict do nothing;
 
 insert into public.practice_items (lesson_id, kind, sort_order, prompt, options, answer, explanation, grammar_point, difficulty)
@@ -115,11 +123,21 @@ from public.lesson_vocab lv
 join public.vocab_items vi on vi.id = lv.vocab_item_id
 join public.lessons l on l.id = lv.lesson_id
 where lv.sort_order in (7, 8)
+  and (
+    l.module_lesson_number <> 1
+    or vi.gap_fill is null
+  )
   and not exists (select 1 from public.practice_items p where p.lesson_id = lv.lesson_id and p.sort_order = lv.sort_order + 2);
 
 update public.lesson_blocks b
    set content = jsonb_set(jsonb_set(b.content, '{item_count}', '10'::jsonb), '{mix}', '{"grammar":2,"vocabulary":8}'::jsonb)
- where b.block_kind = 'practice';
+ where b.block_kind = 'practice'
+   and not exists (
+     select 1 from public.lessons l
+     join public.vocab_decks vd on vd.module_id = l.module_id
+     join public.vocab_items vi on vi.deck_id = vd.id
+     where l.id = b.lesson_id and l.module_lesson_number = 1 and vi.gap_fill is not null
+   );
 
 -- 5. Summary --------------------------------------------------------------
 select jsonb_build_object(
