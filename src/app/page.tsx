@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Award,
+  BookOpen,
   Compass,
   Flame,
   Headphones,
@@ -82,6 +83,12 @@ export default async function Home() {
                 className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
               >
                 <span>Analytics &amp; Pace</span>
+              </Link>
+              <Link
+                href="/curriculum"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
+              >
+                <span>32-week plan</span>
               </Link>
             </div>
 
@@ -222,6 +229,13 @@ export default async function Home() {
               >
                 <Compass className="h-4 w-4 text-indigo-700" />
                 <span>Placement Check</span>
+              </Link>
+              <Link
+                href="/curriculum"
+                className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:border-stone-400 hover:bg-stone-50"
+              >
+                <BookOpen className="h-4 w-4 text-indigo-700" />
+                <span>See the 32-week syllabus</span>
               </Link>
             </div>
           </div>

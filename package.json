@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "eval:prompts": "node scripts/eval-prompts.mjs",
+    "validate:syllabus": "node supabase-b1-b2/scripts/validate-syllabus.mjs",
+    "validate:details": "node supabase-b1-b2/scripts/validate-details.mjs",
+    "build:details-seed": "node supabase-b1-b2/scripts/build-details-seed.mjs",
+    "build:syllabus-seed": "node supabase-b1-b2/scripts/build-syllabus-seed.mjs",
     "test:rls": "node scripts/test-rls.mjs",
     "test:e2e": "playwright test"
   },

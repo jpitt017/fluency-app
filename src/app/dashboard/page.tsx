@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {
+  BookOpen,
   ArrowRight,
   Award,
   Compass,
@@ -137,6 +138,13 @@ export default async function DashboardPage() {
             >
               <RotateCcw className="h-4 w-4 text-amber-700" />
               <span>Error Review</span>
+            </Link>
+            <Link
+              href="/curriculum"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-2xs transition hover:bg-stone-50"
+            >
+              <BookOpen className="h-4 w-4 text-indigo-700" />
+              <span>32-week plan</span>
             </Link>
           </div>
         </div>

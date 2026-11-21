@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  BookOpen,
+  ClipboardCheck,
   CreditCard,
   LayoutDashboard,
   Menu,
@@ -26,6 +28,8 @@ const BAND_LABEL: Record<string, string> = {
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/curriculum', label: 'Curriculum', icon: BookOpen },
+  { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
   { href: '/review', label: 'Review', icon: RotateCcw },
   { href: '/labs', label: 'Labs', icon: Mic },
   { href: '/pricing', label: 'Pricing', icon: CreditCard },

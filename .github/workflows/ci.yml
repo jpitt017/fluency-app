@@ -35,6 +35,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run validate:syllabus
+      - run: npm run validate:details
       - run: npm run lint
       - run: npm run eval:prompts -- --offline
       - run: npm run build

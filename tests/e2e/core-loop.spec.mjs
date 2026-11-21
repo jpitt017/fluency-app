@@ -27,10 +27,47 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.goto('/teacher');
     await expect(page.getByRole('heading', { name: /Sign in with a teacher account|Teacher Review/i })).toBeVisible();
 
-    for (const removedRoute of ['/curriculum', '/clinic', '/vocabulary', '/checkpoints']) {
+    for (const removedRoute of ['/clinic', '/vocabulary', '/checkpoints']) {
       const res = await page.goto(removedRoute);
       expect(res?.status()).toBe(404);
     }
+  });
+
+  test('two-stage curriculum renders all 32 weeks and week details', async ({ page }) => {
+    const res = await page.goto('/curriculum');
+    expect(res?.status()).toBeLessThan(500);
+    await expect(page.getByRole('heading', { name: /From secure B1 to B2/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Stage 1 · Weeks 1-16/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Stage 2 · Weeks 17-32/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /WEEK 32/ })).toHaveCount(0); // stage 2 is one click away
+
+    await page.getByRole('button', { name: /Stage 2 · Weeks 17-32/i }).click();
+    await expect(page.getByRole('link', { name: /WEEK 32/ })).toBeVisible();
+
+    const weekRes = await page.goto('/curriculum/weeks/31');
+    expect(weekRes?.status()).toBeLessThan(500);
+    await expect(page.getByRole('heading', { name: /Debate and persuasion/i })).toBeVisible();
+    await expect(page.getByText(/Building an argument/i)).toBeVisible();
+    await expect(page.getByText(/Essay and AI debate/i)).toBeVisible();
+
+    const alias = await page.goto('/syllabus');
+    expect(alias?.status()).toBeLessThan(500);
+    expect(new URL(page.url()).pathname).toBe('/curriculum');
+  });
+
+  test('Weeks 1–4 specs and assessment documents render', async ({ page }) => {
+    const weekRes = await page.goto('/curriculum/weeks/1');
+    expect(weekRes?.status()).toBeLessThan(500);
+    await expect(page.getByText(/A change you got used to/i)).toBeVisible();
+    await expect(page.getByText(/Speaking model/i)).toBeVisible();
+    await expect(page.getByText(/Authoring notes for teachers/i)).toBeVisible();
+
+    const assessmentRes = await page.goto('/assessments');
+    expect(assessmentRes?.status()).toBeLessThan(500);
+    await expect(page.getByRole('heading', { name: /Three bands, four criteria/i })).toBeVisible();
+    await expect(page.getByText(/CP1-01/)).toBeVisible();
+    await page.getByRole('button', { name: /Reveal keys/i }).click();
+    await expect(page.getByText(/In 2019' is a finished time/i)).toBeVisible();
   });
 
   test('placement check + stubbed diagnostic writing sample completes deterministically', async ({ page }) => {

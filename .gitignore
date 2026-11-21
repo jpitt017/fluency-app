@@ -33,3 +33,7 @@ lerna-debug.log*
 
 # typescript
 tsconfig.tsbuildinfo
+
+# playwright artifacts
+test-results/
+playwright-report/
