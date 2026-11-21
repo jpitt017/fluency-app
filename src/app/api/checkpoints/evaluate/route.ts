@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
+import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import {
   sanitizeLearnerText,
@@ -155,7 +156,7 @@ ${wrapLearnerSubmission(transcript)}
 
 Return JSON with numeric 0-100 fields taskAchievement, grammarControl, lexicalRange, fluency, targetStructureHitRate; reviewDeck as 3-5 concise targeted practice items; summary as one sentence in clear B1 British English.`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await createGroqJsonCompletion(groq, {
       model: MODEL_ID,
       messages: [
         {
@@ -164,13 +165,14 @@ Return JSON with numeric 0-100 fields taskAchievement, grammarControl, lexicalRa
         },
         { role: 'user', content: prompt },
       ],
-      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      maxCompletionTokens: 4096,
     });
 
-    promptTokens = completion.usage?.prompt_tokens ?? 0;
-    completionTokens = completion.usage?.completion_tokens ?? 0;
+    promptTokens = completion.promptTokens;
+    completionTokens = completion.completionTokens;
 
-    const evaluation = JSON.parse(completion.choices[0]?.message?.content || '{}') as Record<string, unknown>;
+    const evaluation = completion.parsed;
     const score = (name: string) => Math.max(0, Math.min(100, Number(evaluation[name]) || 0));
     const scores = [score('taskAchievement'), score('grammarControl'), score('lexicalRange'), score('fluency')];
     const structureHitRate = score('targetStructureHitRate');
