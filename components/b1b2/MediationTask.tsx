@@ -185,7 +185,7 @@ export default function MediationTask({
           rows={5}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder={`Write your ${task.output.toLowerCase()} here…`}
+          placeholder={`Write your ${(task.output ?? 'response').toLowerCase()} here…`}
           className="w-full rounded-xl border border-stone-300 bg-white p-3.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         />
       )}

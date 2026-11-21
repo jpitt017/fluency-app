@@ -40,6 +40,11 @@ jobs:
       - run: npm run lint
       - run: npm run eval:prompts -- --offline
       - run: npm run test:mediation
+      - run: npm run check:live-schema
+        env:
+          SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+          SUPABASE_LIVE_ANON_KEY: ${{ secrets.SUPABASE_LIVE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
