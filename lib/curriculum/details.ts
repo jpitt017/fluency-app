@@ -78,6 +78,48 @@ export interface SpeakingDetail {
   b2Stretch: string;
 }
 
+export interface InputQuestion {
+  id: string;
+  step: string;
+  question: string;
+  options: string[];
+  key: string;
+}
+
+export interface InputWeek {
+  week: number;
+  title: string;
+  description: string;
+  speakers?: string;
+  length?: string;
+  predict: string;
+  script?: string;
+  text?: string;
+  questions: InputQuestion[];
+  respond: string;
+}
+
+export interface InputSpec {
+  status: string;
+  intro: string;
+  steps: { step: string; what: string; time: string; markedBy: string }[];
+  unlocking: string;
+  support: string;
+  accents?: string;
+  length: string;
+  textTypes?: { week: number; type: string; theme: string }[];
+  extensive: {
+    intro: string;
+    stock: { week: number; themeTag: string; whatToStock: string; amount: string }[];
+    suitable: string;
+    sources: string;
+    logging: string;
+  };
+  productionNotes: string[];
+  reviewChecklist: string[];
+  weeks: InputWeek[];
+}
+
 export interface WeekDetail {
   number: number;
   title: string;
@@ -120,6 +162,8 @@ export interface DetailsDocument {
   weeks: WeekDetail[];
   productionNotes: string[];
   reviewChecklist: string[];
+  listening: InputSpec;
+  reading: InputSpec;
 }
 
 export interface AssessmentItem {

@@ -64,7 +64,7 @@ Two more JSON documents sit alongside the syllabus:
   four criteria, the 24-question placement blueprint, and the 20 + 4 reserve-item
   Checkpoint 1 question bank plus its writing and speaking conditions
 
-Both documents are marked as pilot draft until a second teacher completes the
+All pilot documents are marked as draft until a second teacher completes the
 review checklist. The item bank keeps the IDs from the source document (for
 example `W1-L3`, `W1-C5`, `W4-G5`) and stores accepted variants in their own
 `accepted` list; two-gap items store one key and one variants list per gap.
@@ -79,7 +79,8 @@ npm run build:details-seed
 This writes `supabase-b1-b2/migrations/0020_weeks_1_4_and_assessments.sql`,
 which seeds `syllabus_week_details`, `syllabus_assessments` (now including
 `speaking-descriptors`), `syllabus_vocab_items`, `syllabus_grammar_items` (120
-rows) and `syllabus_checkpoint_items`. Cut scores and thresholds are provisional
+rows), `syllabus_input_items` (80 listening/reading questions) and
+`syllabus_checkpoint_items`. Cut scores and thresholds are provisional
 until the pilot calibrates them.
 
 ## 5. Render in the app
@@ -89,7 +90,7 @@ reads weeks and checkpoints from Supabase (public read policies) and falls back
 to the bundled document when Supabase is not configured or unreachable. Routes:
 
 - `/curriculum` — stage overview, week explorer, weekly rhythm, ladders, checkpoints and policies
-- `/curriculum/weeks/[week]` — one week's grammar, targets, task list and checkpoint
+- `/curriculum/weeks/[week]` — one week's grammar bank, speaking, listening script, reading text, targets and checkpoint
 - `/syllabus` — redirects to `/curriculum`
 - `/assessments` — writing and speaking bands, placement rules, Checkpoint 1 speaking conditions and the filterable quiz bank
 

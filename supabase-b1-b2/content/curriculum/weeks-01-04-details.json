@@ -5,7 +5,9 @@
     "Vocabulary review — Weeks 1–4, syllabus aligned (21 Nov 2026)",
     "Course syllabus (21 Nov 2026)",
     "Fluency Studio: Weeks 1–4 Grammar Practice Item Bank (21 Nov 2026)",
-    "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)"
+    "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)",
+    "Fluency Studio: Weeks 1–4 Listening Content (21 Nov 2026)",
+    "Fluency Studio: Weeks 1–4 Reading Content (21 Nov 2026)"
   ],
   "pilotRules": {
     "grammarTask": {
@@ -2887,5 +2889,1135 @@
     "[ ] Timing checked with 3-5 pilot learners: the set takes 18-22 minutes.",
     "[ ] Items converted to the app's JSON curriculum format and passed the schema validation.",
     "[ ] Checkpoint 1 items are written separately, not copied from this bank, so the checkpoint tests learning rather than memory of the practice items."
-  ]
+  ],
+  "listening": {
+    "status": "pilot draft — pending second-teacher review",
+    "intro": "Nov 21, 2026 · @j",
+    "steps": [
+      {
+        "step": "1. Predict",
+        "what": "Read the title and a picture caption; note two things you expect to hear",
+        "time": "2 min",
+        "markedBy": "Not marked"
+      },
+      {
+        "step": "2. Gist",
+        "what": "Listen once and answer one question about the main topic",
+        "time": "3 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "3. Detail",
+        "what": "Listen again (pause and replay allowed) and answer six questions",
+        "time": "5 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "4. Language",
+        "what": "Hear three short clips from the track and answer one question on each, on the week's grammar or featured words",
+        "time": "3 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "5. Transcript",
+        "what": "Read the transcript while listening; tap words to save as personal vocabulary (these count towards the same limit of 5 personal words a week)",
+        "time": "Optional",
+        "markedBy": "-"
+      },
+      {
+        "step": "6. Respond",
+        "what": "Say or write 2-3 sentences in reaction to the track",
+        "time": "2 min",
+        "markedBy": "AI, light feedback (one correction)"
+      }
+    ],
+    "unlocking": "Completing the listening task (steps 2-4) or the reading task counts towards opening the next week.",
+    "support": "Speed control (0.8 and 1.0) from the second listen; captions only after step 3. Wrong answers show the line of the transcript where the answer is.",
+    "accents": "Across weeks 1-4 learners hear seven British speakers with different regional accents, so they meet the range of British English they will hear in the UK. Each track lists its speakers' accents in the audio metadata.",
+    "length": "Each script is 230-300 words, about 2 minutes at a natural pace (the syllabus range for weeks 1-4).",
+    "extensive": {
+      "intro": "Most of the course's listening comes from the extensive-input library: about 60 minutes a week of graded B1 material with transcripts or captions, tagged to the week's theme (40 minutes recommended). This is the brief for stocking weeks 1-4.",
+      "stock": [
+        {
+          "week": 1,
+          "themeTag": "Personal experiences and change",
+          "whatToStock": "Short B1 podcast episodes or stories about moving, new jobs and life changes, told in the past",
+          "amount": "4-6 items, 5-15 min each"
+        },
+        {
+          "week": 2,
+          "themeTag": "Plans, goals and ambitions",
+          "whatToStock": "Interviews or podcasts about careers, studying and personal goals",
+          "amount": "4-6 items"
+        },
+        {
+          "week": 3,
+          "themeTag": "Daily life and social interaction",
+          "whatToStock": "Everyday conversations: flat-sharing, neighbours, colleagues, making arrangements",
+          "amount": "4-6 items"
+        },
+        {
+          "week": 4,
+          "themeTag": "Travel and cultural experiences",
+          "whatToStock": "Travel guides, short documentaries and audio tours with captions",
+          "amount": "4-6 items"
+        }
+      ],
+      "suitable": null,
+      "sources": null,
+      "logging": null
+    },
+    "productionNotes": [
+      "Voices: seven British speakers (southern English, Scottish, London, northern English, Welsh, West Midlands, Yorkshire). Use real voice actors where possible; if synthetic voices are used for the pilot, label them in the metadata and replace them before launch.",
+      "Pace and quality: natural conversational pace (about 140-160 words a minute), light natural features (fillers, short overlaps) but no background music; studio-quality audio.",
+      "Files: one MP3 per track, a WebVTT caption file timed to the script, and three short clips per track for the language step.",
+      "Metadata: speakers, accents, length, week, theme tag, and the grammar and featured words the script contains.",
+      "[ ] Each question has a single correct answer that is clearly stated in the audio, not only implied.",
+      "[ ] Gist questions can be answered after one listen; detail answers appear in the order of the questions.",
+      "[ ] True/false items quote the audio closely enough that the answer is not a matter of opinion.",
+      "[ ] Facts in the Week 4 script are checked (York Minster finished in 1472; city walls first built by the Romans; the Shambles a former butchers' street).",
+      "[ ] Each script contains the week's main grammar and at least three featured words, as listed under each week.",
+      "[ ] Timing checked with 3-5 pilot learners: the task takes 13-17 minutes.",
+      "[ ] A second teacher listens to every recording against the script."
+    ],
+    "reviewChecklist": [
+      "[ ] Each question has a single correct answer that is clearly stated in the audio, not only implied.",
+      "[ ] Gist questions can be answered after one listen; detail answers appear in the order of the questions.",
+      "[ ] True/false items quote the audio closely enough that the answer is not a matter of opinion.",
+      "[ ] Facts in the Week 4 script are checked (York Minster finished in 1472; city walls first built by the Romans; the Shambles a former butchers' street).",
+      "[ ] Each script contains the week's main grammar and at least three featured words, as listed under each week.",
+      "[ ] Timing checked with 3-5 pilot learners: the task takes 13-17 minutes.",
+      "[ ] A second teacher listens to every recording against the script."
+    ],
+    "weeks": [
+      {
+        "week": 1,
+        "title": "\"Fresh Starts\" podcast",
+        "description": "",
+        "speakers": "Host (southern English accent); Ellie (Scottish accent).",
+        "length": "about 300 words, 2 minutes.",
+        "predict": "Title: \"Starting over\". Caption: \"Ellie left the city for a quiet village.\" What might she find difficult?",
+        "script": "Host: Welcome back to Fresh Starts, the podcast about big changes. Today I'm talking to Ellie, who moved from London to a small village in Scotland three years ago. Ellie, what was your life like before?\n\nEllie: Busy! I used to work in a bank in the city, and I'd leave home at seven every morning. I'd never really thought about living anywhere else.\n\nHost: So what changed?\n\nEllie: Well, I started working from home, and I realised I didn't need to live in London any more. My grandmother had left me a small house near Inverness, so I decided to try it for a year.\n\nHost: Was it difficult at first?\n\nEllie: Very. The biggest challenge I faced was the quiet. In London there was always noise, and at first I couldn't sleep without it. It took me months to get used to the silence. And the nearest supermarket is twenty minutes away by car, so I had to plan everything.\n\nHost: What helped?\n\nEllie: The neighbours, definitely. One evening, while I was trying to fix a broken window, the man from the next house came over to help. Since then, he and his wife have become good friends. They've introduced me to almost everyone in the village.\n\nHost: And how are things now?\n\nEllie: I've been living here for three years now, and I've started a small online business. Gradually, the village has become home. When I look back on that first winter, I can't believe I nearly went back to London!\n\nHost: Ellie, thank you.",
+        "questions": [
+          {
+            "id": "L1-G1",
+            "step": "Gist",
+            "question": "What is the interview mainly about?",
+            "options": [
+              "why Ellie lost her job",
+              "how Ellie adapted to a new life",
+              "how to buy a house in Scotland"
+            ],
+            "key": "how Ellie adapted to a new life"
+          },
+          {
+            "id": "L1-D1",
+            "step": "Detail",
+            "question": "Where did Ellie use to work?",
+            "options": [
+              "in a bank",
+              "in a school",
+              "in a supermarket"
+            ],
+            "key": "in a bank"
+          },
+          {
+            "id": "L1-D2",
+            "step": "Detail",
+            "question": "Why did Ellie realise she could leave London?",
+            "options": [
+              "She started working from home.",
+              "She lost her job.",
+              "Her grandmother was ill."
+            ],
+            "key": "She started working from home."
+          },
+          {
+            "id": "L1-D3",
+            "step": "Detail",
+            "question": "Ellie bought the house in Scotland.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (her grandmother had left it to her)"
+          },
+          {
+            "id": "L1-D4",
+            "step": "Detail",
+            "question": "What was Ellie's biggest challenge?",
+            "options": [
+              "the quiet",
+              "the weather",
+              "the neighbours"
+            ],
+            "key": "the quiet"
+          },
+          {
+            "id": "L1-D5",
+            "step": "Detail",
+            "question": "The nearest supermarket is a twenty-minute walk away.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (twenty minutes by car)"
+          },
+          {
+            "id": "L1-D6",
+            "step": "Detail",
+            "question": "How did Ellie meet her neighbour?",
+            "options": [
+              "He helped her fix a window.",
+              "He sold her a car.",
+              "They met at the supermarket."
+            ],
+            "key": "He helped her fix a window."
+          },
+          {
+            "id": "L1-X1",
+            "step": "Language",
+            "question": "\"I'd leave home at seven every morning.\" What does I'd mean here?",
+            "options": [
+              "I would (a past habit)",
+              "I had"
+            ],
+            "key": "I would (a past habit)"
+          },
+          {
+            "id": "L1-X2",
+            "step": "Language",
+            "question": "\"My grandmother had left me a small house.\" Did she leave it before or after Ellie decided to move?",
+            "options": [
+              "before",
+              "after"
+            ],
+            "key": "before"
+          },
+          {
+            "id": "L1-X3",
+            "step": "Language",
+            "question": "Complete from the clip: \"It took me months to ___ the silence.\"",
+            "options": [],
+            "key": "get used to"
+          }
+        ],
+        "respond": "Would you like to live in a village like Ellie's? Why, or why not?"
+      },
+      {
+        "week": 2,
+        "title": "Plans in the office kitchen",
+        "description": "",
+        "speakers": "Aisha (London accent); Tom (northern English accent).",
+        "length": "about 280 words, 2 minutes.",
+        "predict": "Title: \"Big plans\". Caption: \"Tom has just booked something important.\" What could it be?",
+        "script": "Aisha: Morning, Tom! You look happy.\n\nTom: I am! I've just booked my place on a web design course. It starts on the fifth of March.\n\nAisha: Oh, that's great. Is it something you've wanted to do for a while?\n\nTom: Yeah. My goal is to change career in the next two years. I enjoy this job, but I want to do something more creative.\n\nAisha: So are you going to leave?\n\nTom: Not yet. The course is in the evenings, so I'm going to keep working here. I intend to finish it by the summer, and when I finish, I'll start building a portfolio.\n\nAisha: Sounds like a good plan. What if it's too much with work?\n\nTom: If it gets too busy, I'll ask to change my hours. Actually, I'm meeting Sarah from HR on Thursday to talk about it.\n\nAisha: Good idea. I think it'll be hard work, though.\n\nTom: I know. But I'm really looking forward to learning something new. What about you? Any plans?\n\nAisha: Well, I'd love to do a master's. If I had the money, I'd apply this year. But it's really expensive, so I'm saving first.\n\nTom: You should look for a scholarship. My cousin got one last year.\n\nAisha: Really? Maybe I will. The deadline's probably soon, though.\n\nTom: Then look tonight! As soon as you find one, send it to me. I'll help you with the application.\n\nAisha: Thanks, Tom. You're a star.",
+        "questions": [
+          {
+            "id": "L2-G1",
+            "step": "Gist",
+            "question": "What are Tom and Aisha mainly talking about?",
+            "options": [
+              "their plans for the future",
+              "a problem at work",
+              "a holiday"
+            ],
+            "key": "their plans for the future"
+          },
+          {
+            "id": "L2-D1",
+            "step": "Detail",
+            "question": "When does Tom's course start?",
+            "options": [
+              "5 March",
+              "15 March",
+              "5 May"
+            ],
+            "key": "5 March"
+          },
+          {
+            "id": "L2-D2",
+            "step": "Detail",
+            "question": "Why does Tom want to change career?",
+            "options": [
+              "He wants to do something more creative.",
+              "He doesn't like his job.",
+              "He wants more money."
+            ],
+            "key": "He wants to do something more creative."
+          },
+          {
+            "id": "L2-D3",
+            "step": "Detail",
+            "question": "Tom is going to leave his job before the course starts.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (he's going to keep working)"
+          },
+          {
+            "id": "L2-D4",
+            "step": "Detail",
+            "question": "What will Tom do when he finishes the course?",
+            "options": [
+              "build a portfolio",
+              "move abroad",
+              "start another course"
+            ],
+            "key": "build a portfolio"
+          },
+          {
+            "id": "L2-D5",
+            "step": "Detail",
+            "question": "Who is Tom meeting on Thursday?",
+            "options": [
+              "Sarah from HR",
+              "his cousin",
+              "a web designer"
+            ],
+            "key": "Sarah from HR"
+          },
+          {
+            "id": "L2-D6",
+            "step": "Detail",
+            "question": "Why isn't Aisha applying for a master's this year?",
+            "options": [
+              "It's too expensive.",
+              "She's too busy.",
+              "The deadline has passed."
+            ],
+            "key": "It's too expensive."
+          },
+          {
+            "id": "L2-X1",
+            "step": "Language",
+            "question": "\"I'm meeting Sarah from HR on Thursday.\" Is this an arrangement or a prediction?",
+            "options": [
+              "an arrangement",
+              "a prediction"
+            ],
+            "key": "an arrangement"
+          },
+          {
+            "id": "L2-X2",
+            "step": "Language",
+            "question": "\"If I had the money, I'd apply this year.\" Does Aisha have the money?",
+            "options": [
+              "Yes",
+              "No"
+            ],
+            "key": "No"
+          },
+          {
+            "id": "L2-X3",
+            "step": "Language",
+            "question": "Complete from the clip: \"I'm really ___ learning something new.\"",
+            "options": [],
+            "key": "looking forward to"
+          }
+        ],
+        "respond": "What's one thing you're looking forward to this year, and what will you do to make it happen?"
+      },
+      {
+        "week": 3,
+        "title": "A new flatmate's first day",
+        "description": "",
+        "speakers": "Dan (Welsh accent); Marta (West Midlands accent).",
+        "length": "about 280 words, 2 minutes.",
+        "predict": "Title: \"House rules\". Caption: \"Marta moved in yesterday.\" What questions might she ask?",
+        "script": "Dan: So this is the kitchen. We have to label our food in the fridge, otherwise Jack eats everything!\n\nMarta: Ha! OK. Is there a cleaning rota?\n\nDan: Yes, it's on the fridge door. We take turns every week. When it's your turn, you have to do the bathroom and the kitchen.\n\nMarta: That's fine. What about the bins?\n\nDan: They go out on Wednesday night. Oh, and you mustn't put glass in the green bin. The council won't collect it.\n\nMarta: Good to know. Can I have friends round?\n\nDan: Of course. You don't have to ask, but it's polite to tell us if someone's staying the night.\n\nMarta: Sure. And can I use the washing machine in the evening?\n\nDan: You can use it until ten. After that the neighbours can hear it, so we try not to. If you really need it later, just ask them politely.\n\nMarta: Right. Do you all eat together?\n\nDan: Not really. Everyone has a different routine. I start work early and Jack works late. Apart from that, we all get on with each other really well. We usually go to the pub on Fridays, if you'd like to come.\n\nMarta: I'd love to. Could you tell me how the heating works? I couldn't turn it on last night.\n\nDan: Ah, it's a bit strange. You should ask Jack. He can fix anything. I'll arrange a time for him to show you.\n\nMarta: Perfect. Thanks, Dan.",
+        "questions": [
+          {
+            "id": "L3-G1",
+            "step": "Gist",
+            "question": "What is the conversation mainly about?",
+            "options": [
+              "the flat's rules and routines",
+              "a problem with the neighbours",
+              "looking for a new flat"
+            ],
+            "key": "the flat's rules and routines"
+          },
+          {
+            "id": "L3-D1",
+            "step": "Detail",
+            "question": "Why do they label their food?",
+            "options": [
+              "Jack eats everything.",
+              "The fridge is small.",
+              "The landlord asks them to."
+            ],
+            "key": "Jack eats everything."
+          },
+          {
+            "id": "L3-D2",
+            "step": "Detail",
+            "question": "When do the bins go out?",
+            "options": [
+              "Wednesday night",
+              "Thursday morning",
+              "Friday night"
+            ],
+            "key": "Wednesday night"
+          },
+          {
+            "id": "L3-D3",
+            "step": "Detail",
+            "question": "Marta has to ask before inviting friends round.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (she only needs to tell them if someone stays the night)"
+          },
+          {
+            "id": "L3-D4",
+            "step": "Detail",
+            "question": "Until what time can Marta use the washing machine?",
+            "options": [
+              "10 p.m.",
+              "8 p.m.",
+              "midnight"
+            ],
+            "key": "10 p.m."
+          },
+          {
+            "id": "L3-D5",
+            "step": "Detail",
+            "question": "Why don't they usually eat together?",
+            "options": [
+              "They have different routines.",
+              "They don't get on.",
+              "The kitchen is too small."
+            ],
+            "key": "They have different routines."
+          },
+          {
+            "id": "L3-D6",
+            "step": "Detail",
+            "question": "Who will show Marta how the heating works?",
+            "options": [
+              "Jack",
+              "Dan",
+              "the landlord"
+            ],
+            "key": "Jack"
+          },
+          {
+            "id": "L3-X1",
+            "step": "Language",
+            "question": "\"You mustn't put glass in the green bin.\" Is this not allowed, or not necessary?",
+            "options": [
+              "not allowed",
+              "not necessary"
+            ],
+            "key": "not allowed"
+          },
+          {
+            "id": "L3-X2",
+            "step": "Language",
+            "question": "\"You don't have to ask.\" Is this not allowed, or not necessary?",
+            "options": [
+              "not allowed",
+              "not necessary"
+            ],
+            "key": "not necessary"
+          },
+          {
+            "id": "L3-X3",
+            "step": "Language",
+            "question": "Complete from the clip: \"Apart from that, we all ___ each other really well.\"",
+            "options": [],
+            "key": "get on with"
+          }
+        ],
+        "respond": "Tell a new flatmate one rule in your home and one thing they don't have to do."
+      },
+      {
+        "week": 4,
+        "title": "A walking tour of York",
+        "description": "",
+        "speakers": "Joanne, tour guide (Yorkshire accent).",
+        "length": "about 270 words, 2 minutes.",
+        "predict": "Title: \"Welcome to York\". Caption: \"A group of visitors is about to start a tour.\" What places might they see?",
+        "script": "Joanne: Good morning, everyone, and welcome to York! My name's Joanne, and I'll be your guide this morning. York is one of the oldest cities in England, and it's a really popular destination. It's visited by millions of tourists every year. We'll set off in five minutes, so get your coats on.\n\nOur first stop is York Minster. Work on the cathedral was started in the thirteenth century, and it was finished in 1472, so it took more than two hundred and fifty years to build. It's one of the largest medieval cathedrals in northern Europe.\n\nAfter that, we'll walk along the city walls. They were first built by the Romans, and you get the best views of the city from the top. It's much quieter up there than in the busy streets below.\n\nThen we'll visit the Shambles, a narrow street where butchers used to sell meat. Today the old shops are used as cafés and gift shops, and it's one of the most famous streets in the city.\n\nAnd a local custom you might enjoy: every winter, a Christmas market is held in the city centre. It's become a real tradition, and people travel from all over the country to visit it.\n\nOne more thing. The streets are very old and uneven, so please be careful where you walk. Right, has everyone got their tickets? Let's go!",
+        "questions": [
+          {
+            "id": "L4-G1",
+            "step": "Gist",
+            "question": "What is Joanne doing?",
+            "options": [
+              "introducing a walking tour",
+              "selling tickets for a museum",
+              "talking about her childhood"
+            ],
+            "key": "introducing a walking tour"
+          },
+          {
+            "id": "L4-D1",
+            "step": "Detail",
+            "question": "When was York Minster finished?",
+            "options": [
+              "1472",
+              "1272",
+              "1742"
+            ],
+            "key": "1472"
+          },
+          {
+            "id": "L4-D2",
+            "step": "Detail",
+            "question": "How long did it take to build?",
+            "options": [
+              "more than 250 years",
+              "about 50 years",
+              "about 100 years"
+            ],
+            "key": "more than 250 years"
+          },
+          {
+            "id": "L4-D3",
+            "step": "Detail",
+            "question": "Who first built the city walls?",
+            "options": [
+              "the Romans",
+              "the Vikings",
+              "the Normans"
+            ],
+            "key": "the Romans"
+          },
+          {
+            "id": "L4-D4",
+            "step": "Detail",
+            "question": "It is noisier on the walls than in the streets below.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (it's much quieter)"
+          },
+          {
+            "id": "L4-D5",
+            "step": "Detail",
+            "question": "What did people do in the Shambles in the past?",
+            "options": [
+              "Butchers sold meat there.",
+              "Fishermen sold fish there.",
+              "Soldiers guarded the city there."
+            ],
+            "key": "Butchers sold meat there."
+          },
+          {
+            "id": "L4-D6",
+            "step": "Detail",
+            "question": "When is the Christmas market held?",
+            "options": [
+              "every winter",
+              "every summer",
+              "every spring"
+            ],
+            "key": "every winter"
+          },
+          {
+            "id": "L4-X1",
+            "step": "Language",
+            "question": "\"It's visited by millions of tourists every year.\" Is this present or past?",
+            "options": [
+              "present",
+              "past"
+            ],
+            "key": "present"
+          },
+          {
+            "id": "L4-X2",
+            "step": "Language",
+            "question": "Complete from the clip: \"...a narrow street ___ butchers used to sell meat.\"",
+            "options": [],
+            "key": "where"
+          },
+          {
+            "id": "L4-X3",
+            "step": "Language",
+            "question": "Complete from the clip: \"It's much ___ up there than in the busy streets below.\"",
+            "options": [],
+            "key": "quieter"
+          }
+        ],
+        "respond": "Tell a visitor about one place in your town: when was it built, and why should they go?"
+      }
+    ]
+  },
+  "reading": {
+    "status": "pilot draft — pending second-teacher review",
+    "intro": "Nov 21, 2026 · @j",
+    "steps": [
+      {
+        "step": "1. Predict",
+        "what": "Read the title and first line; note two things you expect the text to say",
+        "time": "1 min",
+        "markedBy": "Not marked"
+      },
+      {
+        "step": "2. Skim for gist",
+        "what": "Read quickly (a 2-minute timer is shown, not enforced) and answer one question about the main idea",
+        "time": "2 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "3. Read for detail",
+        "what": "Read carefully and answer six questions",
+        "time": "6 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "4. Language",
+        "what": "Three questions on the week's grammar or featured words, using sentences from the text",
+        "time": "3 min",
+        "markedBy": "App"
+      },
+      {
+        "step": "5. Vocabulary",
+        "what": "Tap words to hear them and save them as personal vocabulary (these count towards the limit of 5 personal words a week)",
+        "time": "Optional",
+        "markedBy": "-"
+      },
+      {
+        "step": "6. Respond",
+        "what": "Write 2-3 sentences in reaction to the text",
+        "time": "3 min",
+        "markedBy": "AI, light feedback (one correction)"
+      }
+    ],
+    "unlocking": "Completing the reading task (steps 2-4) or the listening task counts towards opening the next week.",
+    "support": "Every text has British-English audio, so learners can read and listen at the same time. Wrong answers highlight the sentence where the answer is.",
+    "length": "200-250 words, within the syllabus range for weeks 1-4 (150-250 words).",
+    "textTypes": [
+      {
+        "week": 1,
+        "type": "Personal blog post",
+        "theme": "A Spanish hotel worker's first year in Manchester"
+      },
+      {
+        "week": 2,
+        "type": "Advice column (letter and reply)",
+        "theme": "Changing career to teaching"
+      },
+      {
+        "week": 3,
+        "type": "Welcome email",
+        "theme": "House rules in a shared house"
+      },
+      {
+        "week": 4,
+        "type": "Short travel guide",
+        "theme": "A weekend in Bath"
+      }
+    ],
+    "extensive": {
+      "intro": "Extra reading shares the extensive-input time with listening: about 60 minutes a week in total (40 minutes recommended), tagged to the week's theme. This is the brief for stocking weeks 1-4.",
+      "stock": [
+        {
+          "week": 1,
+          "themeTag": "Personal experiences and change",
+          "whatToStock": "B1 graded stories and short personal accounts about moving, new jobs and life changes",
+          "amount": "3-4 texts or one graded reader chapter per week"
+        },
+        {
+          "week": 2,
+          "themeTag": "Plans, goals and ambitions",
+          "whatToStock": "Short articles and interviews about careers, studying and goals",
+          "amount": "3-4 texts"
+        },
+        {
+          "week": 3,
+          "themeTag": "Daily life and social interaction",
+          "whatToStock": "Everyday texts: emails, notices, forum posts and short stories about flat-sharing and neighbours",
+          "amount": "3-4 texts"
+        },
+        {
+          "week": 4,
+          "themeTag": "Travel and cultural experiences",
+          "whatToStock": "Short travel guides, blog posts and articles about British places and customs",
+          "amount": "3-4 texts"
+        }
+      ],
+      "suitable": null,
+      "sources": null,
+      "logging": null
+    },
+    "productionNotes": [
+      "Audio: each text read aloud by a British speaker at a natural reading pace, with sentence-level timings so the text can highlight as it is read. Use different regional accents from the listening tracks where possible.",
+      "Layout: title, short paragraphs and headings as in the originals; dyslexia-friendly font option; tap-to-hear and tap-to-save on every word.",
+      "Metadata: week, theme tag, text type, word count, and the grammar and featured words the text contains.",
+      "Answer display: wrong answers highlight the sentence where the answer is.",
+      "[ ] Each question has a single correct answer stated clearly in the text.",
+      "[ ] Detail questions follow the order of the text.",
+      "[ ] Word counts are within 200-250 words, and vocabulary outside the week's featured items stays at B1.",
+      "[ ] British spelling throughout (centre, colour, organise).",
+      "[ ] Facts in the Week 4 text are checked (Roman Baths built by the Romans nearly 2,000 years ago; Bath a World Heritage Site since 1987; Royal Crescent of thirty houses built 1767-1774; Pulteney Bridge with shops along both sides; travel time from London).",
+      "[ ] Timing checked with 3-5 pilot learners: the task takes 13-17 minutes.",
+      "[ ] A second teacher reads every text and question set."
+    ],
+    "reviewChecklist": [
+      "[ ] Each question has a single correct answer stated clearly in the text.",
+      "[ ] Detail questions follow the order of the text.",
+      "[ ] Word counts are within 200-250 words, and vocabulary outside the week's featured items stays at B1.",
+      "[ ] British spelling throughout (centre, colour, organise).",
+      "[ ] Facts in the Week 4 text are checked (Roman Baths built by the Romans nearly 2,000 years ago; Bath a World Heritage Site since 1987; Royal Crescent of thirty houses built 1767-1774; Pulteney Bridge with shops along both sides; travel time from London).",
+      "[ ] Timing checked with 3-5 pilot learners: the task takes 13-17 minutes.",
+      "[ ] A second teacher reads every text and question set."
+    ],
+    "weeks": [
+      {
+        "week": 1,
+        "title": "\"A year in Manchester\" (blog post)",
+        "description": "",
+        "predict": "Title: \"Lucía's blog: A year in Manchester\". First line: \"When I moved from Seville to Manchester last October, I thought I was ready.\" Was she ready?",
+        "text": "Lucía's blog: A year in Manchester\n\nWhen I moved from Seville to Manchester last October, I thought I was ready. I had studied English for years, and I had visited the UK twice on holiday. But living here was very different.\n\nThe first challenge I faced was the weather. In Seville I used to eat outside almost every evening, and my friends and I would sit in the square until midnight. In Manchester it was dark by five o'clock, and it rained nearly every day. It took me a long time to get used to it.\n\nWork was hard too. I was working in a busy hotel, and while I was trying to understand my manager's accent, guests were asking me questions I couldn't answer. Some days I went home and cried.\n\nThen, in January, a colleague invited me to a Spanish–English conversation group in a café. I had never been to anything like it before, but I decided to go. Since then, I've met people from all over the world, and my English has improved a lot. I've been going to the group every Tuesday for nine months now.\n\nGradually, Manchester has started to feel like home. I still miss the sun, but when I look back on that first winter, I'm proud that I didn't give up.",
+        "questions": [
+          {
+            "id": "R1-G1",
+            "step": "Gist",
+            "question": "What is the blog post mainly about?",
+            "options": [
+              "a holiday in the UK",
+              "how Lucía got used to life in Manchester",
+              "the weather in Seville"
+            ],
+            "key": "how Lucía got used to life in Manchester"
+          },
+          {
+            "id": "R1-D1",
+            "step": "Detail",
+            "question": "Before she moved, Lucía had never been to the UK.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (she had visited twice on holiday)"
+          },
+          {
+            "id": "R1-D2",
+            "step": "Detail",
+            "question": "What did Lucía use to do in Seville in the evenings?",
+            "options": [
+              "eat outside with friends",
+              "work in a hotel",
+              "study English"
+            ],
+            "key": "eat outside with friends"
+          },
+          {
+            "id": "R1-D3",
+            "step": "Detail",
+            "question": "What was her first challenge in Manchester?",
+            "options": [
+              "the weather",
+              "the food",
+              "finding a flat"
+            ],
+            "key": "the weather"
+          },
+          {
+            "id": "R1-D4",
+            "step": "Detail",
+            "question": "Why was work difficult at first?",
+            "options": [
+              "It was hard to understand people.",
+              "She worked at night.",
+              "Her colleagues were unfriendly."
+            ],
+            "key": "It was hard to understand people."
+          },
+          {
+            "id": "R1-D5",
+            "step": "Detail",
+            "question": "Who invited her to the conversation group?",
+            "options": [
+              "a colleague",
+              "a hotel guest",
+              "her manager"
+            ],
+            "key": "a colleague"
+          },
+          {
+            "id": "R1-D6",
+            "step": "Detail",
+            "question": "How long has she been going to the group?",
+            "options": [
+              "nine months",
+              "since last October",
+              "two years"
+            ],
+            "key": "nine months"
+          },
+          {
+            "id": "R1-X1",
+            "step": "Language",
+            "question": "\"My friends and I would sit in the square until midnight.\" What does would show?",
+            "options": [
+              "a repeated action in the past",
+              "a future plan"
+            ],
+            "key": "a repeated action in the past"
+          },
+          {
+            "id": "R1-X2",
+            "step": "Language",
+            "question": "\"I've been going to the group every Tuesday for nine months.\" Does she still go?",
+            "options": [
+              "Yes",
+              "No"
+            ],
+            "key": "Yes"
+          },
+          {
+            "id": "R1-X3",
+            "step": "Language",
+            "question": "Find the word in the last paragraph that means \"slowly, over a period of time\".",
+            "options": [],
+            "key": "gradually"
+          }
+        ],
+        "respond": "What would you find hardest about moving to a new country, and what would help you?"
+      },
+      {
+        "week": 2,
+        "title": "\"Ask Sam\" (advice column)",
+        "description": "",
+        "predict": "Title: \"Ask Sam: Is it too late to change career?\" First line: \"I'm 28 and I work in a call centre.\" What job might the writer want?",
+        "text": "Ask Sam: Is it too late to change career?\n\nDear Sam, I'm 28 and I work in a call centre. My goal is to become a primary school teacher, but I'm worried it's too late. I intend to apply for a training course, but the deadline is next month and I haven't decided yet. What should I do? – Daniel\n\nDear Daniel,\n\nIt's definitely not too late! Many people start a new career in their thirties or forties.\n\nFirst, check exactly what the course needs. If you don't have the right qualifications, the college will tell you how to get them.\n\nNext, try to get some experience. Could you volunteer at a local school? Many schools are looking for help with reading. If you volunteer for a few hours a week, you'll find out whether you really enjoy it, and it will look great on your application.\n\nThen apply before the deadline. Even if you don't get a place this year, you'll learn a lot from the process, and you can apply again next year.\n\nIf I were you, I'd also talk to some teachers. Most people are happy to talk about their job.\n\nGood luck! I'm sure you'll make a great teacher, and I'm looking forward to hearing how it goes.\n\nSam",
+        "questions": [
+          {
+            "id": "R2-G1",
+            "step": "Gist",
+            "question": "What does Daniel want?",
+            "options": [
+              "advice about changing career",
+              "help finding a call-centre job",
+              "information about schools for his children"
+            ],
+            "key": "advice about changing career"
+          },
+          {
+            "id": "R2-D1",
+            "step": "Detail",
+            "question": "How old is Daniel?",
+            "options": [
+              "28",
+              "38",
+              "48"
+            ],
+            "key": "28"
+          },
+          {
+            "id": "R2-D2",
+            "step": "Detail",
+            "question": "What job does Daniel want?",
+            "options": [
+              "primary school teacher",
+              "college lecturer",
+              "call-centre manager"
+            ],
+            "key": "primary school teacher"
+          },
+          {
+            "id": "R2-D3",
+            "step": "Detail",
+            "question": "Daniel has already applied for the course.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (he hasn't decided yet)"
+          },
+          {
+            "id": "R2-D4",
+            "step": "Detail",
+            "question": "What does Sam tell him to do first?",
+            "options": [
+              "check what the course needs",
+              "volunteer at a school",
+              "talk to teachers"
+            ],
+            "key": "check what the course needs"
+          },
+          {
+            "id": "R2-D5",
+            "step": "Detail",
+            "question": "Why does Sam suggest volunteering?",
+            "options": [
+              "to find out if he enjoys it",
+              "to earn extra money",
+              "to meet the college staff"
+            ],
+            "key": "to find out if he enjoys it"
+          },
+          {
+            "id": "R2-D6",
+            "step": "Detail",
+            "question": "What can Daniel do if he doesn't get a place this year?",
+            "options": [
+              "apply again next year",
+              "ask for his money back",
+              "choose a different job"
+            ],
+            "key": "apply again next year"
+          },
+          {
+            "id": "R2-X1",
+            "step": "Language",
+            "question": "\"If I were you, I'd also talk to some teachers.\" What is Sam doing?",
+            "options": [
+              "giving advice",
+              "describing a past event"
+            ],
+            "key": "giving advice"
+          },
+          {
+            "id": "R2-X2",
+            "step": "Language",
+            "question": "\"If you volunteer for a few hours a week, you'll find out...\" Which form comes after if?",
+            "options": [
+              "present simple",
+              "will"
+            ],
+            "key": "present simple"
+          },
+          {
+            "id": "R2-X3",
+            "step": "Language",
+            "question": "Find the word in Daniel's letter that means \"the last day you can do something\".",
+            "options": [],
+            "key": "deadline"
+          }
+        ],
+        "respond": "What advice would you give Daniel? Write 2-3 sentences."
+      },
+      {
+        "week": 3,
+        "title": "\"Welcome to 14 Park Road!\" (email)",
+        "description": "",
+        "predict": "Title: \"Subject: Welcome to 14 Park Road!\" First line: \"We're all really looking forward to meeting you on Saturday!\" Who is writing, and why?",
+        "text": "Subject: Welcome to 14 Park Road!\n\nHi Jess,\n\nWe're all really looking forward to meeting you on Saturday! Here are a few things you need to know about the house.\n\nBills: We split the bills equally. You have to pay your share by the first of each month. You can just send it to me.\n\nCleaning: There's a rota on the kitchen wall. Everyone has to clean the kitchen and bathroom once a fortnight. You don't have to clean other people's rooms, of course!\n\nNoise: The walls are thin, so you mustn't play loud music after 11 p.m. on weeknights. On the other hand, nobody minds a bit of noise at weekends.\n\nGuests: You can have friends to stay, but please ask the others politely first if someone is staying more than two nights.\n\nFood: You should label your food, because Sam has a habit of \"borrowing\" things! Apart from that, feel free to use the pans and plates.\n\nWe all have different routines (I work nights twice a week), but we get on with each other really well, and we usually cook together on Sundays. You don't have to join us, but you'd be very welcome.\n\nCould you tell me what time you're arriving? I'll arrange for someone to be in to give you the keys.\n\nSee you soon,\n\nPriya",
+        "questions": [
+          {
+            "id": "R3-G1",
+            "step": "Gist",
+            "question": "Why is Priya writing?",
+            "options": [
+              "to welcome Jess and explain the house rules",
+              "to complain about Sam",
+              "to ask Jess to pay a bill"
+            ],
+            "key": "to welcome Jess and explain the house rules"
+          },
+          {
+            "id": "R3-D1",
+            "step": "Detail",
+            "question": "When does Jess have to pay her share of the bills?",
+            "options": [
+              "by the first of each month",
+              "every Sunday",
+              "when she arrives"
+            ],
+            "key": "by the first of each month"
+          },
+          {
+            "id": "R3-D2",
+            "step": "Detail",
+            "question": "How often does everyone clean the kitchen and bathroom?",
+            "options": [
+              "once a fortnight",
+              "once a week",
+              "once a month"
+            ],
+            "key": "once a fortnight"
+          },
+          {
+            "id": "R3-D3",
+            "step": "Detail",
+            "question": "Loud music is never allowed in the house.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (only not after 11 p.m. on weeknights)"
+          },
+          {
+            "id": "R3-D4",
+            "step": "Detail",
+            "question": "When should Jess ask the others before having a guest?",
+            "options": [
+              "if the guest stays more than two nights",
+              "every time",
+              "never"
+            ],
+            "key": "if the guest stays more than two nights"
+          },
+          {
+            "id": "R3-D5",
+            "step": "Detail",
+            "question": "Why should Jess label her food?",
+            "options": [
+              "Sam sometimes takes things.",
+              "The fridge is very small.",
+              "It's the landlord's rule."
+            ],
+            "key": "Sam sometimes takes things."
+          },
+          {
+            "id": "R3-D6",
+            "step": "Detail",
+            "question": "What does Priya want to know?",
+            "options": [
+              "what time Jess is arriving",
+              "whether Jess can cook",
+              "when Jess works"
+            ],
+            "key": "what time Jess is arriving"
+          },
+          {
+            "id": "R3-X1",
+            "step": "Language",
+            "question": "\"You don't have to clean other people's rooms.\" Is this not allowed, or not necessary?",
+            "options": [
+              "not allowed",
+              "not necessary"
+            ],
+            "key": "not necessary"
+          },
+          {
+            "id": "R3-X2",
+            "step": "Language",
+            "question": "\"You mustn't play loud music after 11 p.m.\" Is this not allowed, or not necessary?",
+            "options": [
+              "not allowed",
+              "not necessary"
+            ],
+            "key": "not allowed"
+          },
+          {
+            "id": "R3-X3",
+            "step": "Language",
+            "question": "Find the phrase that means \"have a friendly relationship\".",
+            "options": [],
+            "key": "get on with"
+          }
+        ],
+        "respond": "Write a short reply to Priya: say what time you're arriving and ask her one question about the house."
+      },
+      {
+        "week": 4,
+        "title": "\"48 hours in Bath\" (travel guide)",
+        "description": "",
+        "predict": "Title: \"48 hours in Bath\". First line: \"Bath is one of the most beautiful cities in England.\" What might a visitor do there?",
+        "text": "48 hours in Bath\n\nBath is one of the most beautiful cities in England, and it's a popular destination for a weekend away. The whole city has been a UNESCO World Heritage Site since 1987.\n\nDay 1. Set off early and start at the Roman Baths. They were built by the Romans nearly 2,000 years ago, and hot water still comes up from the ground today. You can't swim in the Roman Baths, but just round the corner there's a modern spa where you can bathe in the same natural hot water. In the afternoon, walk to the Royal Crescent, a curved row of thirty houses which was built between 1767 and 1774.\n\nDay 2. Cross Pulteney Bridge, one of the few bridges in the world with shops along both sides. Then take a walk by the river. It's quieter than the busy centre, and the views are better. If you visit in November or December, don't miss the Christmas market, which is held in the streets around the Abbey.\n\nLocal tip. Afternoon tea is a popular local custom. Scones are served with cream and jam, but be careful: in some parts of England, people argue about which one goes on first! It's a tradition that visitors love.\n\nGetting there. Bath is about 90 minutes from London by train.",
+        "questions": [
+          {
+            "id": "R4-G1",
+            "step": "Gist",
+            "question": "What kind of text is this?",
+            "options": [
+              "a short travel guide",
+              "a history of the Romans",
+              "a hotel review"
+            ],
+            "key": "a short travel guide"
+          },
+          {
+            "id": "R4-D1",
+            "step": "Detail",
+            "question": "Since when has Bath been a World Heritage Site?",
+            "options": [
+              "1987",
+              "1767",
+              "1774"
+            ],
+            "key": "1987"
+          },
+          {
+            "id": "R4-D2",
+            "step": "Detail",
+            "question": "Who built the Roman Baths?",
+            "options": [
+              "the Romans",
+              "the Victorians",
+              "the Normans"
+            ],
+            "key": "the Romans"
+          },
+          {
+            "id": "R4-D3",
+            "step": "Detail",
+            "question": "Visitors can swim in the Roman Baths.",
+            "options": [
+              "True",
+              "False"
+            ],
+            "key": "False (they can bathe in a modern spa nearby)"
+          },
+          {
+            "id": "R4-D4",
+            "step": "Detail",
+            "question": "How many houses are there in the Royal Crescent?",
+            "options": [
+              "thirty",
+              "thirteen",
+              "three hundred"
+            ],
+            "key": "thirty"
+          },
+          {
+            "id": "R4-D5",
+            "step": "Detail",
+            "question": "What is special about Pulteney Bridge?",
+            "options": [
+              "It has shops along both sides.",
+              "It is the oldest bridge in England.",
+              "It was built by the Romans."
+            ],
+            "key": "It has shops along both sides."
+          },
+          {
+            "id": "R4-D6",
+            "step": "Detail",
+            "question": "Where is the Christmas market held?",
+            "options": [
+              "in the streets around the Abbey",
+              "by the river",
+              "at the Roman Baths"
+            ],
+            "key": "in the streets around the Abbey"
+          },
+          {
+            "id": "R4-X1",
+            "step": "Language",
+            "question": "\"They were built by the Romans nearly 2,000 years ago.\" Present or past?",
+            "options": [
+              "present",
+              "past"
+            ],
+            "key": "past"
+          },
+          {
+            "id": "R4-X2",
+            "step": "Language",
+            "question": "Find the word in the first paragraph that means \"a place people travel to\".",
+            "options": [],
+            "key": "destination"
+          },
+          {
+            "id": "R4-X3",
+            "step": "Language",
+            "question": "Complete from the text: \"It's ___ than the busy centre, and the views are better.\"",
+            "options": [],
+            "key": "quieter"
+          }
+        ],
+        "respond": "Which place in Bath would you like to visit first, and why?"
+      }
+    ]
+  }
 }

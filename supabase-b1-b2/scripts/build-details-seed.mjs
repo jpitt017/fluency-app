@@ -40,6 +40,19 @@ for (const week of details.weeks) {
   );
 }
 
+const inputRows = ['listening', 'reading'].flatMap((mode) =>
+  details[mode].weeks.flatMap((week) =>
+    week.questions.map((question, index) => ({
+      id: question.id,
+      week_number: week.week,
+      mode,
+      step: question.step,
+      payload: question,
+      sort_order: index + 1,
+    })),
+  ),
+);
+
 const grammarRows = details.weeks.flatMap((week) =>
   week.grammar.practice.items.map((item, index) => ({
     id: item.id,
@@ -107,6 +120,15 @@ push(`create table if not exists public.syllabus_grammar_items (
   sort_order int not null
 );`);
 push();
+push(`create table if not exists public.syllabus_input_items (
+  id text primary key,
+  week_number int not null references public.syllabus_weeks(week_number) on delete cascade,
+  mode text not null check (mode in ('listening', 'reading')),
+  step text not null,
+  payload jsonb not null,
+  sort_order int not null
+);`);
+push();
 push(`create table if not exists public.syllabus_checkpoint_items (
   id text primary key,
   week_number int not null references public.syllabus_weeks(week_number) on delete cascade,
@@ -120,7 +142,7 @@ push(`create table if not exists public.syllabus_checkpoint_items (
 );`);
 push();
 
-for (const table of ['syllabus_week_details', 'syllabus_assessments', 'syllabus_vocab_items', 'syllabus_grammar_items', 'syllabus_checkpoint_items']) {
+for (const table of ['syllabus_week_details', 'syllabus_assessments', 'syllabus_vocab_items', 'syllabus_grammar_items', 'syllabus_input_items', 'syllabus_checkpoint_items']) {
   push(`alter table public.${table} enable row level security;`);
   push(`drop policy if exists "${table}_public_read" on public.${table};`);
   push(`create policy "${table}_public_read" on public.${table} for select to anon, authenticated using (true);`);
@@ -153,6 +175,15 @@ on conflict (id) do update set week_number = excluded.week_number, group_kind = 
   example = excluded.example, card = excluded.card, sort_order = excluded.sort_order;`);
 push();
 
+push('insert into public.syllabus_input_items (id, week_number, mode, step, payload, sort_order)');
+push(`select v.id, v.week_number, v.mode, v.step, v.payload, v.sort_order
+from jsonb_to_recordset(${lit(JSON.stringify(inputRows))}::jsonb) as v(
+  id text, week_number int, mode text, step text, payload jsonb, sort_order int
+)
+on conflict (id) do update set week_number = excluded.week_number, mode = excluded.mode,
+  step = excluded.step, payload = excluded.payload, sort_order = excluded.sort_order;`);
+push();
+
 push('insert into public.syllabus_grammar_items (id, week_number, step, target, payload, sort_order)');
 push(`select v.id, v.week_number, v.step, v.target, v.payload, v.sort_order
 from jsonb_to_recordset(${lit(JSON.stringify(grammarRows))}::jsonb) as v(
@@ -175,4 +206,4 @@ on conflict (id) do update set week_number = excluded.week_number, reserve = exc
 const output = join(root, 'migrations', '0020_weeks_1_4_and_assessments.sql');
 const sql = `${lines.join('\n')}\n`;
 writeFileSync(output, sql);
-console.log(`Wrote ${output} (${sql.length} characters, ${vocabRows.length} vocab rows, ${grammarRows.length} grammar rows, ${checkpointRows.length} checkpoint rows).`);
+console.log(`Wrote ${output} (${sql.length} characters, ${vocabRows.length} vocab rows, ${inputRows.length} input rows, ${grammarRows.length} grammar rows, ${checkpointRows.length} checkpoint rows).`);

@@ -62,6 +62,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Full practice set · pilot draft/i)).toBeVisible();
     await expect(page.getByText(/W1-L3/)).toBeVisible();
     await expect(page.getByText(/Shadowing chunks · 3 min warm-up/i)).toBeVisible();
+    await expect(page.getByText(/Full audio script/i)).toBeVisible();
+    await expect(page.getByText(/Full reading text/i)).toBeVisible();
+    await expect(page.getByText(/L1-G1/)).toBeVisible();
+    await expect(page.getByText(/R1-G1/)).toBeVisible();
     await expect(page.getByText(/Authoring notes for teachers/i)).toBeVisible();
 
     const assessmentRes = await page.goto('/assessments');

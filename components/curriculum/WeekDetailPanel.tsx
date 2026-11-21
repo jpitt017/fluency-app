@@ -1,7 +1,8 @@
 import { BookOpen, Flag, PenLine, Sparkles } from 'lucide-react';
-import type { WeekDetail } from '@/lib/curriculum/details';
+import type { InputSpec as InputSpecDoc, InputWeek, WeekDetail } from '@/lib/curriculum/details';
 import GrammarPracticeBank from './GrammarPracticeBank';
 import SpeakingSpec from './SpeakingSpec';
+import InputSpec from './InputSpec';
 
 const USE_LABELS: Record<string, string> = {
   P: 'B1 productive',
@@ -32,9 +33,14 @@ function SectionHeading({
 export default function WeekDetailPanel({
   detail,
   checkpointFocus,
+  inputContent,
 }: {
   detail: WeekDetail;
   checkpointFocus?: string;
+  inputContent: {
+    listening: { spec: Omit<InputSpecDoc, 'weeks'>; content: InputWeek };
+    reading: { spec: Omit<InputSpecDoc, 'weeks'>; content: InputWeek };
+  };
 }) {
   const totalVocab = detail.vocabulary.core.length + detail.vocabulary.collocations.length;
 
@@ -94,6 +100,15 @@ export default function WeekDetailPanel({
       </section>
 
       <SpeakingSpec speaking={detail.speaking} />
+
+      {(['listening', 'reading'] as const).map((mode) => (
+        <InputSpec
+          key={mode}
+          mode={mode}
+          spec={inputContent[mode].spec}
+          content={inputContent[mode].content}
+        />
+      ))}
 
       <section className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">

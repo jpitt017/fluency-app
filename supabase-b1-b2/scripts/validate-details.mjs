@@ -89,6 +89,37 @@ check(
   'Week 3 back-and-forth must live in the conversation task',
 );
 
+const inputIds = new Set();
+for (const mode of ['listening', 'reading']) {
+  const spec = details[mode];
+  check(String(spec?.status).includes('pilot draft'), `${mode} content must be marked as pilot draft`);
+  check(spec?.weeks?.length === 4, `${mode} needs four weeks`);
+  check(spec?.steps?.length === 6, `${mode} needs six task steps`);
+  check(Boolean(spec?.unlocking?.trim()), `${mode} needs an unlocking rule`);
+  check(spec?.extensive?.stock?.length === 4, `${mode} needs an extensive-input stock brief`);
+  check(spec?.extensive?.stock?.every((row) => row.week >= 1 && row.week <= 4), `${mode} stock brief needs all four weeks`);
+  spec?.weeks?.forEach((content, index) => {
+    const week = index + 1;
+    check(content.week === week, `${mode} week ${week} is out of order`);
+    check(Boolean(content.title?.trim()), `${mode} week ${week} needs a title`);
+    check(Boolean(content.predict?.trim()), `${mode} week ${week} needs a prediction prompt`);
+    check(Boolean((mode === 'listening' ? content.script : content.text)?.trim()), `${mode} week ${week} needs the full script/text`);
+    check(Boolean(content.respond?.trim()), `${mode} week ${week} needs a response prompt`);
+    check(content.questions?.length === 10, `${mode} week ${week} needs 10 questions`);
+    const steps = content.questions?.reduce((counts, question) => ({ ...counts, [question.step]: (counts[question.step] ?? 0) + 1 }), {}) ?? {};
+    check(steps.Gist === 1, `${mode} week ${week} needs one gist question`);
+    check(steps.Detail === 6, `${mode} week ${week} needs six detail questions`);
+    check(steps.Language === 3, `${mode} week ${week} needs three language questions`);
+    content.questions?.forEach((question) => {
+      check(!inputIds.has(question.id), `duplicate ${mode} question ID ${question.id}`);
+      inputIds.add(question.id);
+      check(question.id.startsWith(mode === 'listening' ? 'L' : 'R'), `${question.id} has the wrong ID prefix`);
+      check(Boolean(question.question?.trim()) && Boolean(question.key?.trim()), `${question.id} needs a question and key`);
+    });
+  });
+}
+check(inputIds.size === 80, 'listening and reading must contain 80 unique questions');
+
 const grammarSteps = details.pilotRules?.grammarTask?.steps ?? [];
 check(grammarSteps.length === 9, 'grammar task must have a nine-step structure');
 check(grammarSteps.reduce((sum, step) => sum + step.minutes, 0) === 20, 'grammar task steps must total 20 minutes');
@@ -144,5 +175,5 @@ if (errors.length) {
 }
 
 console.log(
-  `Details OK: 4 weeks (${expectedCards.reduce((a, b) => a + b, 0)} cards), 120 grammar items, 4 writing + 4 speaking criteria, 24 placement questions, ${cp.items.length} checkpoint items + ${cp.reserves.length} reserves.`,
+  `Details OK: 4 weeks (${expectedCards.reduce((a, b) => a + b, 0)} cards), 120 grammar items, 80 input questions, 4 writing + 4 speaking criteria, 24 placement questions, ${cp.items.length} checkpoint items + ${cp.reserves.length} reserves.`,
 );

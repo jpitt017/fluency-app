@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import WeekDetailPanel from '@/components/curriculum/WeekDetailPanel';
+import { curriculumDetails } from '@/lib/curriculum/details';
 import { loadDetailedContent } from '@/lib/curriculum/details';
 import {
   checkpointAfterWeek,
@@ -69,6 +70,19 @@ export default async function WeekPage({ params }: PageProps) {
   const stage = getStage(week.stage);
   const phase = phaseForWeek(weekNumber);
   const skills = skillLevelsForWeek(weekNumber);
+  const inputContent = weekNumber <= 4
+    ? Object.fromEntries(
+        (['listening', 'reading'] as const).map((mode) => {
+          const { weeks: _weeks, ...spec } = curriculumDetails[mode];
+          void _weeks;
+          const content = curriculumDetails[mode].weeks.find((item) => item.week === weekNumber);
+          return [mode, { spec, content }];
+        }),
+      ) as {
+        listening: { spec: Omit<(typeof curriculumDetails)['listening'], 'weeks'>; content: (typeof curriculumDetails)['listening']['weeks'][number] };
+        reading: { spec: Omit<(typeof curriculumDetails)['reading'], 'weeks'>; content: (typeof curriculumDetails)['reading']['weeks'][number] };
+      }
+    : undefined;
   const checkpoint = checkpointAfterWeek(weekNumber);
   const previousWeek = weeks.find((item) => item.number === weekNumber - 1);
   const nextWeek = weeks.find((item) => item.number === weekNumber + 1);
@@ -172,11 +186,12 @@ export default async function WeekPage({ params }: PageProps) {
         </div>
       </section>
 
-      {weekDetail && (
-        <WeekDetailPanel
-          detail={weekDetail}
-          checkpointFocus={checkpoint?.number === 1 ? weekDetail.checkpoint1.focus : undefined}
-        />
+      {weekDetail && inputContent?.listening.content && inputContent.reading.content && (
+          <WeekDetailPanel
+            detail={weekDetail}
+            checkpointFocus={checkpoint?.number === 1 ? weekDetail.checkpoint1.focus : undefined}
+            inputContent={inputContent}
+          />
       )}
 
       <section className="space-y-3">
