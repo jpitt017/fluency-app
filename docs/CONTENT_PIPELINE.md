@@ -83,6 +83,15 @@ rows), `syllabus_input_items` (80 listening/reading questions) and
 `syllabus_checkpoint_items`. Cut scores and thresholds are provisional
 until the pilot calibrates them.
 
+### 4.1 Answer isolation
+
+Migration `0021_lock_answer_tables.sql` drops public read from answer-bearing
+tables and grants `select` only to authenticated teachers/admins via
+`is_staff()`. Learner-facing code reads `*_safe` views, which strip `key`,
+`accepted`, `reason`, `model`, `modelAnswer` and `answer_index` recursively.
+Placement answers are checked server-side with `SUPABASE_SERVICE_ROLE_KEY`;
+`npm run test:rls` verifies both the lock and the safe views.
+
 ## 5. Render in the app
 
 `lib/curriculum/syllabus.ts` imports the same JSON. `loadSyllabusContent()`

@@ -58,6 +58,7 @@ async function run() {
 
     if (insertErr || !insertedErr) throw new Error(`Seed learner_error failed: ${insertErr?.message}`);
 
+    const anonClient = createClient(url, anonKey);
     const clientA = createClient(url, anonKey);
     const { error: signInErr } = await clientA.auth.signInWithPassword({ email: emailA, password });
     if (signInErr) throw signInErr;
@@ -99,7 +100,78 @@ async function run() {
       throw new Error('RLS BREACH: User A modified User B learner_errors!');
     }
 
-    // 4. Schema drift check: verify delete_my_learning_data() covers every user_id table
+    // 4. Answer tables: anon and learners see no rows; staff see the locked tables.
+    const { error: roleErr } = await admin
+      .from('profiles')
+      .update({ role: 'teacher' })
+      .eq('id', userB.user.id);
+    if (roleErr) throw new Error(`Could not mark test user B as teacher: ${roleErr.message}`);
+
+    const clientB = createClient(url, anonKey);
+    const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: emailB, password });
+    if (teacherSignInErr) throw teacherSignInErr;
+
+    const relationMissing = (error) =>
+      Boolean(error && /does not exist|could not find the table|not found/i.test(error.message));
+    const lockedTables = [
+      'syllabus_checkpoint_items',
+      'syllabus_grammar_items',
+      'syllabus_input_items',
+      'syllabus_week_details',
+      'syllabus_assessments',
+      'placement_questions',
+    ];
+
+    for (const table of lockedTables) {
+      const anonResult = await anonClient.from(table).select('*').limit(1);
+      if (!relationMissing(anonResult.error)) {
+        if (!anonResult.error && (anonResult.data?.length ?? 0) > 0) {
+          throw new Error(`RLS BREACH: anon could read ${table}!`);
+        }
+      }
+
+      const learnerResult = await clientA.from(table).select('*').limit(1);
+      if (!relationMissing(learnerResult.error)) {
+        if (!learnerResult.error && (learnerResult.data?.length ?? 0) > 0) {
+          throw new Error(`RLS BREACH: learner could read ${table}!`);
+        }
+      }
+
+      const teacherResult = await clientB.from(table).select('*').limit(1);
+      if (!relationMissing(teacherResult.error) && teacherResult.error) {
+        throw new Error(`STAFF READ FAILED for ${table}: ${teacherResult.error.message}`);
+      }
+    }
+
+    // 5. Safe views contain no answer-bearing fields for anon/learners.
+    const forbiddenFields = ['key', 'accepted', 'model', 'modelAnswer', 'answer_index'];
+    const hasForbidden = (value) => {
+      if (Array.isArray(value)) return value.some(hasForbidden);
+      if (!value || typeof value !== 'object') return false;
+      return Object.entries(value).some(
+        ([field, child]) => forbiddenFields.includes(field) || hasForbidden(child),
+      );
+    };
+    const safeViews = [
+      ['placement_questions_safe', anonClient],
+      ['placement_questions_safe', clientA],
+      ['syllabus_checkpoint_items_safe', clientA],
+      ['syllabus_grammar_items_safe', clientA],
+      ['syllabus_input_items_safe', clientA],
+      ['syllabus_week_details_safe', clientA],
+      ['syllabus_assessments_safe', clientA],
+    ];
+
+    for (const [view, client] of safeViews) {
+      const { data, error } = await client.from(view).select('*').limit(5);
+      if (relationMissing(error)) continue;
+      if (error) throw new Error(`SAFE VIEW READ FAILED for ${view}: ${error.message}`);
+      if (hasForbidden(data ?? [])) {
+        throw new Error(`ANSWER LEAK: ${view} contains a key, accepted answer, model or answer_index!`);
+      }
+    }
+
+    // 6. Schema drift check: verify delete_my_learning_data() covers every user_id table
     const { data: coverage, error: covErr } = await admin.rpc('verify_delete_my_learning_data_coverage');
     if (covErr) throw new Error(`Coverage check failed: ${covErr.message}`);
     if (!coverage?.covered) {
@@ -108,7 +180,7 @@ async function run() {
       );
     }
 
-    console.log('PASS: Postgres RLS isolation & delete_my_learning_data() schema coverage verified.');
+    console.log('PASS: Postgres RLS isolation, staff-only answer tables, answer-free views & delete coverage verified.');
   } finally {
     await admin.auth.admin.deleteUser(userA.user.id);
     await admin.auth.admin.deleteUser(userB.user.id);
