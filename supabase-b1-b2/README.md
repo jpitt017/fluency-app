@@ -20,7 +20,43 @@ New Supabase project provisioned from `English fluency Course Architecture.pdf`.
 
 ---
 
+## Two-stage syllabus (November 2026)
+
+The published course is now the 32-week, two-stage *Fluency Studio: B1 to B2*
+syllabus. Migration `0019_two_stage_syllabus.sql` adds public, read-only tables:
+
+| Table | Rows | Purpose |
+|---|---:|---|
+| `syllabus_course` | 1 | Full authored syllabus document (JSONB) |
+| `syllabus_stages` | 2 | 16-week stages, entry level, aims, phase notes |
+| `syllabus_weeks` | 32 | Theme, main grammar, light/recycled grammar, skills focus |
+| `syllabus_checkpoints` | 8 | Checkpoint number, stage, week and assessed tasks |
+| `syllabus_skill_ladders` | 36 | Six skill targets across six phases |
+| `syllabus_weekly_tasks` | 9 | The weekly task template and requirement levels |
+
+It also upserts two stage courses (`b2-preparation-weeks-1-16`,
+`b2-consolidation-weeks-17-32`), 32 week modules and eight checkpoints into the
+core curriculum tables, so learner-state joins see the new structure. All six
+`syllabus_*` tables are readable by `anon` and `authenticated`; only migrations
+write to them. The older `english-b1-b2` course is left in place for historical
+learner rows and is not used by the curriculum routes.
+
+Migration `0020_weeks_1_4_and_assessments.sql` adds `syllabus_week_details`
+(4 payloads with the full grammar, speaking, listening, reading and writing content), `syllabus_assessments` (4 specs:
+writing, speaking, placement and checkpoint 1), `syllabus_vocab_items` (80
+items), `syllabus_grammar_items` (120 items), `syllabus_input_items` (80 listening
+and reading questions) and `syllabus_checkpoint_items` (20 scored + 4 reserves), all with the same public read policy. Regenerate it with `npm run build:details-seed` after
+editing `content/curriculum/weeks-01-04-details.json` or `assessments.json`.
+
+Edit `content/curriculum/two-stage-syllabus.json`, then run
+`npm run validate:syllabus && npm run build:syllabus-seed` before applying the
+regenerated migration. See [`docs/CONTENT_PIPELINE.md`](../docs/CONTENT_PIPELINE.md).
+
 ## What is in it
+
+The original architecture content below (eight modules, 64 lessons and
+practice items) is retained for learner-history compatibility; the curriculum
+UI now reads the two-stage syllabus tables described above.
 
 A complete, queryable implementation of the course architecture: eight modules,
 64 lessons, a five-block daily flow, 640 practice items, 84 curated vocabulary

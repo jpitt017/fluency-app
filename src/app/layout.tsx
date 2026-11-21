@@ -37,6 +37,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 text-xs text-stone-500 sm:px-6">
             <p>Fluency Studio · English B1 → B2 (focused B2 preparation, not an exam guarantee)</p>
             <div className="flex items-center gap-4">
+              <Link href="/curriculum" className="hover:text-stone-800">Curriculum</Link>
+              <Link href="/assessments" className="hover:text-stone-800">Assessments</Link>
               <Link href="/labs" className="hover:text-stone-800">Labs</Link>
               <Link href="/review" className="hover:text-stone-800">Review</Link>
               <Link href="/pricing" className="hover:text-stone-800">Pricing</Link>

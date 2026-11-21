@@ -1,60 +1,98 @@
-# Content Scaling Pipeline (Modules 2–8)
+# Syllabus content pipeline
 
-This repository enforces a repeatable 5-step pipeline for authoring, validating, recording, and releasing B1 → B2 curriculum modules.
+The two-stage B1 → B2 syllabus is authored once and shipped to two places: the
+Next.js curriculum routes and Supabase. The single source of truth is
+[`supabase-b1-b2/content/curriculum/two-stage-syllabus.json`](../supabase-b1-b2/content/curriculum/two-stage-syllabus.json),
+transcribed from the November 2026 course syllabus PDF.
 
-## 1. Author from one strict template
-- Canonical template: `supabase-b1-b2/content/curriculum/session-template.json`
-- Generate a fresh module skeleton:
-  ```bash
-  node scripts/scaffold-module.mjs 2 --out /tmp/module-2.json
-  ```
-- Fixed slots per module:
-  - **2 grammar areas**, each with `explanation`, `keyPoints`, `example`, and ≥ 3 answer-keyed `items`
-  - **8–12 vocabulary collocations** (`example`, `collocations`, `translation`, `audioRef`)
-  - **1+ listening input** (`body` transcript, `accent`, `speaker_accents`, `seconds`, `audioRef`, comprehension `questions`)
-  - **1+ reading input** (`body`, comprehension `questions`)
-  - **3 speaking tasks** (`prompt_card` / `monologue`, `role_play` / `interview`, `shadowing`)
-  - **1 writing task** (`wordMin`–`wordMax`, 5-stage `outline`)
-  - **8 lessons** tying into module checkpoints (`Modules 2, 4, 6, 8` in `course.json`)
+## 1. Edit the JSON
 
-## 2. Draft with an LLM, review as a human
-- Validate every draft JSON immediately against `lib/b1b2/curriculum-schema.ts`:
-  ```bash
-  npm run validate:curriculum
-  ```
-- Before merging any module revision, review prose manually for:
-  - Natural British English phrasing and cultural fit (outside explicitly American-accented scripts)
-  - B1 accessibility in definitions and example sentences
-  - Idiomatic collocations rather than literal translations
+The document holds:
 
-## 3. Automated CI content checks
-`npm run validate:curriculum` runs on every PR in `.github/workflows/ci.yml` (`build-and-offline-evals`) and enforces:
-- Strict Zod schema conformance across `course.json` and `modules-*.json`
-- 100% of vocabulary items have `example`, `collocations`, and `audioRef`
-- 100% of listening inputs have `body` (transcript), `accent`, `speaker_accents`, and `audioRef`
-- 100% of grammar items and input questions have `answer` present in `options`
-- Unedited `REPLACE:` markers and accidental US spellings in British prose fail CI
+- `course` and `placement` — audience, pace, 24-question placement test and outcomes
+- `stages` — two 16-week / 52-hour stages with their phase descriptions
+- `weeks` — all 32 themes, main grammar, light/recycled grammar and skills focus
+- `weeklyTasks` — the nine-row weekly task template with requirement levels
+- `skillLadders` — listening, reading, extra input, speaking, AI conversation and writing targets per phase
+- `checkpoints` / `externalAssessments` — eight four-week checkpoints plus EF SET tests
+- `progression`, `principles`, `adaptation`, `nextSteps`, `aiAndData`, `teachers` — the course policies
 
-Rebuild SQL seeds after any JSON edit:
+Keep week numbering global (1–32), checkpoint weeks at multiples of four, and
+the stage-1/stage-2 boundary at week 17.
+
+## 2. Validate
+
 ```bash
-npm run db:b1b2:build-seed
+npm run validate:syllabus
 ```
 
-## 4. Record accent tracks last
-1. Finalise and human-review scripts first.
-2. Generate TTS audio **for vocabulary items only**:
-   ```bash
-   node scripts/generate-course-audio.mjs --module 2 --vocab-only
-   ```
-3. Export voice-actor recording scripts for multi-accent listening tracks:
-   ```bash
-   node scripts/generate-course-audio.mjs --export-scripts > /tmp/recording-scripts.md
-   ```
-4. Once actors record the `.mp3` files (`<recordings-dir>/module-<N>/<slug>.mp3`), upload audio + generated WebVTT captions to `course-audio` / S3:
-   ```bash
-   node scripts/generate-course-audio.mjs --module 2 --upload-dir ./recordings
-   ```
+The validator checks stage/week counts, unique week numbers, phase membership,
+checkpoint mapping, skill-ladder coverage and required task fields. Add it to
+CI whenever curriculum content is edited.
 
-## 5. Ship module by module
-- Mark modules in `modules-*.json` with `"releaseStage": "beta" | "live" | "draft"`.
-- Release Module 2 to beta learners and inspect error ledger, completion drop-off, and speaking/writing scores before promoting Modules 3–8.
+## 3. Regenerate the Supabase migration
+
+```bash
+npm run build:syllabus-seed
+```
+
+This rewrites `supabase-b1-b2/migrations/0019_two_stage_syllabus.sql`. The
+migration is idempotent: it stores the full document in `syllabus_course`,
+expands it into `syllabus_stages`, `syllabus_weeks`, `syllabus_checkpoints`,
+`syllabus_skill_ladders` and `syllabus_weekly_tasks`, and mirrors the stage/week
+structure into the core `courses`, `modules` and `checkpoints` tables. Re-running
+it never deletes learner rows.
+
+Apply it to a project with the Supabase migration tool or `psql`:
+
+```bash
+supabase link --project-ref ebzmkhrssgnzmixfsuso
+supabase db push
+```
+
+## 4. Author Weeks 1–4 detail and assessments
+
+Two more JSON documents sit alongside the syllabus:
+
+- `weeks-01-04-details.json` — grammar notes, the full 120-item bank (30 per
+  week with keys, separate accepted variants and reasons), notice texts and the
+  nine-step 20-minute task, speaking content (cue cards, phrase banks, model
+  answers, three shadowing chunks, four-turn conversation plans with follow-up
+  questions, delayed recall and B2 stretch), writing tasks,
+  core/collocation/family vocabulary, linkers and checkpoint focus for Weeks 1–4
+- `assessments.json` — writing descriptors, speaking descriptors using the same
+  four criteria, the 24-question placement blueprint, and the 20 + 4 reserve-item
+  Checkpoint 1 question bank plus its writing and speaking conditions
+
+All pilot documents are marked as draft until a second teacher completes the
+review checklist. The item bank keeps the IDs from the source document (for
+example `W1-L3`, `W1-C5`, `W4-G5`) and stores accepted variants in their own
+`accepted` list; two-gap items store one key and one variants list per gap.
+
+Validate and regenerate their migration after edits:
+
+```bash
+npm run validate:details
+npm run build:details-seed
+```
+
+This writes `supabase-b1-b2/migrations/0020_weeks_1_4_and_assessments.sql`,
+which seeds `syllabus_week_details`, `syllabus_assessments` (now including
+`speaking-descriptors`), `syllabus_vocab_items`, `syllabus_grammar_items` (120
+rows), `syllabus_input_items` (80 listening/reading questions) and
+`syllabus_checkpoint_items`. Cut scores and thresholds are provisional
+until the pilot calibrates them.
+
+## 5. Render in the app
+
+`lib/curriculum/syllabus.ts` imports the same JSON. `loadSyllabusContent()`
+reads weeks and checkpoints from Supabase (public read policies) and falls back
+to the bundled document when Supabase is not configured or unreachable. Routes:
+
+- `/curriculum` — stage overview, week explorer, weekly rhythm, ladders, checkpoints and policies
+- `/curriculum/weeks/[week]` — one week's grammar bank, speaking, listening script, reading text, full writing task, targets and checkpoint
+- `/syllabus` — redirects to `/curriculum`
+- `/assessments` — writing and speaking bands, placement rules, Checkpoint 1 speaking conditions and the filterable quiz bank
+
+The legacy `english-b1-b2` course and its learner rows are deliberately left
+untouched; the new routes read the `syllabus_*` tables instead.
