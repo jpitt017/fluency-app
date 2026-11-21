@@ -37,6 +37,32 @@ details.weeks?.forEach((week, index) => {
   check(week.checkpoint1?.mainItems === 4 && week.checkpoint1?.lightItems === 1, `week ${position} checkpoint blueprint is wrong`);
 });
 
+const grammarSteps = details.pilotRules?.grammarTask?.steps ?? [];
+check(grammarSteps.length === 9, 'grammar task must have a nine-step structure');
+check(
+  grammarSteps.reduce((sum, step) => sum + step.minutes, 0) === 20,
+  'grammar task steps must total 20 minutes',
+);
+check(
+  grammarSteps.reduce((sum, step) => sum + (step.items ?? 0), 0) === 25,
+  'grammar task steps must total 25 auto-marked items',
+);
+const week1Item = details.weeks?.[0]?.grammar?.sampleItems?.find((item) => item.prompt.startsWith("I'm tired because"));
+check(week1Item?.options?.join('/') === "'ve been studying/study", "Week 1 'I'm tired' item must offer 've been studying / study'");
+check(
+  details.weeks?.[2]?.speaking?.prompt?.includes('flatmate back-and-forth is the conversation task'),
+  'Week 3 recording must be distinguished from the flatmate conversation',
+);
+
+const progression = String(details.pilotRules?.progression ?? '');
+for (const phrase of ['speaking', 'writing', 'either listening or reading']) {
+  check(progression.includes(phrase), `progression rule must mention ${phrase}`);
+}
+const checkpointConditions = JSON.stringify(assessments.checkpoint1?.writing?.conditions ?? []);
+for (const phrase of ['30 minutes', 'pasting disabled', 'One submission']) {
+  check(checkpointConditions.includes(phrase), `checkpoint writing conditions must include ${phrase}`);
+}
+
 const wd = assessments.writingDescriptors;
 check(wd?.criteria?.length === 4, 'writing descriptors need four criteria');
 check(wd?.wordRanges?.length === 5, 'writing descriptors need five word-range rows');

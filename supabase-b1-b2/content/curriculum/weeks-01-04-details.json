@@ -10,18 +10,94 @@
       "minutes": 20,
       "autoMarkedItems": 25,
       "breakdown": [
-        { "type": "meaning checks", "count": 3 },
-        { "type": "choose", "count": 6 },
-        { "type": "complete", "count": 5 },
-        { "type": "fix", "count": 3 },
-        { "type": "rewrite", "count": 3 },
-        { "type": "light items", "count": 3 },
-        { "type": "review items", "count": 2 }
+        {
+          "type": "meaning checks",
+          "count": 3
+        },
+        {
+          "type": "choose",
+          "count": 6
+        },
+        {
+          "type": "complete",
+          "count": 5
+        },
+        {
+          "type": "fix",
+          "count": 3
+        },
+        {
+          "type": "rewrite",
+          "count": 3
+        },
+        {
+          "type": "light items",
+          "count": 3
+        },
+        {
+          "type": "review items",
+          "count": 2
+        }
       ],
       "personalSentences": 2,
       "extraItemsBelow60": 3,
       "skipRewriteAt90Plus": true,
-      "order": "notice forms (2 min), meaning checks (2), choose (3), complete (3), fix (2), rewrite (2), light (2), own sentences with AI feedback (3), review (1)"
+      "steps": [
+        {
+          "step": 1,
+          "name": "Notice the forms in a short text",
+          "minutes": 2,
+          "items": null
+        },
+        {
+          "step": 2,
+          "name": "Meaning checks",
+          "minutes": 2,
+          "items": 3
+        },
+        {
+          "step": 3,
+          "name": "Choose",
+          "minutes": 3,
+          "items": 6
+        },
+        {
+          "step": 4,
+          "name": "Complete",
+          "minutes": 3,
+          "items": 5
+        },
+        {
+          "step": 5,
+          "name": "Fix",
+          "minutes": 2,
+          "items": 3
+        },
+        {
+          "step": 6,
+          "name": "Rewrite",
+          "minutes": 2,
+          "items": 3
+        },
+        {
+          "step": 7,
+          "name": "Light items",
+          "minutes": 2,
+          "items": 3
+        },
+        {
+          "step": 8,
+          "name": "Sentences of your own with AI feedback",
+          "minutes": 3,
+          "items": null
+        },
+        {
+          "step": 9,
+          "name": "Review items",
+          "minutes": 1,
+          "items": 2
+        }
+      ]
     },
     "speaking": "Record 60–90 seconds. Hide the model before the first take. One specific AI correction, then record again straight away.",
     "writing": "30 minutes, 120–150 words, instant AI feedback and revise-and-retry. A few days later a new speaking prompt without the phrase bank.",
@@ -44,23 +120,45 @@
       "number": 1,
       "title": "A change you got used to",
       "canDo": "Tell a story about a change: set the scene, sequence events and connect them to now.",
-      "featuredVocabulary": ["face a challenge", "get used to + noun or -ing", "since then"],
-      "stretchPhrases": ["gradually", "look back on"],
+      "featuredVocabulary": [
+        "face a challenge",
+        "get used to + noun or -ing",
+        "since then"
+      ],
+      "stretchPhrases": [
+        "gradually",
+        "look back on"
+      ],
       "grammar": {
         "main": "Use the past simple for finished events ('I moved last year'), the past continuous for background ('while I was walking home') and the past perfect for an earlier event ('I'd never run with a group before'). Use the present perfect for a change up to now ('Since then, I've made a few friends').",
         "light": "used to + infinitive for past habits and states; would + infinitive for repeated past actions only ('We would cook together on Sundays', not 'I would live in Leeds'). Present perfect continuous for an activity continuing up to now ('I've been running with the group for six months').",
         "sampleItems": [
           {
             "prompt": "I ___ here last year. Since then, I've made a few friends.",
-            "options": ["moved", "have moved"],
+            "options": [
+              "moved",
+              "have moved"
+            ],
             "key": "moved",
             "reason": "'Last year' is finished time."
           },
           {
             "prompt": "When I was a child, we ___ in a small flat.",
-            "options": ["used to live", "would live"],
+            "options": [
+              "used to live",
+              "would live"
+            ],
             "key": "used to live",
             "reason": "'Live' is a state, so would is not possible."
+          },
+          {
+            "prompt": "I'm tired because I ___ all morning.",
+            "options": [
+              "'ve been studying",
+              "study"
+            ],
+            "key": "'ve been studying",
+            "reason": "Present perfect continuous for an activity continuing up to now. The older distractor 'studied' left two correct answers, so it is not used."
           }
         ],
         "authoringNote": "Would for past habits is not normally used in negatives, questions or states; accept used to or the past simple there, and don't flag the past simple where used to is possible. Contrast result ('I've made a few friends') and activity ('I've been running')."
@@ -71,7 +169,10 @@
         "b2Stretch": "Explain why the change mattered and how you feel about it now, without the cue card."
       },
       "writing": {
-        "words": [120, 150],
+        "words": [
+          120,
+          150
+        ],
         "prompt": "Write a personal narrative about a change. Set the scene, use since then or eventually to move the story on, and close with one sentence about how things are now.",
         "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?"
       },
@@ -83,43 +184,150 @@
       },
       "vocabulary": {
         "core": [
-          { "target": "adapt", "type": "v.", "cefr": "B2", "use": "B", "example": "I had to adapt to living abroad." },
-          { "target": "turning point", "type": "n. phr.", "cefr": "B2*", "use": "B", "example": "Moving to Leeds was a turning point in my life." },
-          { "target": "challenge", "type": "n.", "cefr": "B1", "use": "P", "example": "I faced several challenges while I was studying abroad." },
-          { "target": "get used to", "type": "v. phr.", "cefr": "B1", "use": "P", "example": "It took me a month to get used to living alone." },
-          { "target": "look back on", "type": "mw. v.", "cefr": "B2*", "use": "B", "example": "When I look back on my first year abroad, I remember the people I met." },
-          { "target": "regret", "type": "v.", "cefr": "B1", "use": "P", "example": "I've never regretted leaving my old job." },
-          { "target": "gradually", "type": "adv.", "cefr": "B2*", "use": "B", "example": "My English gradually improved while I was living in York." },
-          { "target": "memorable", "type": "adj.", "cefr": "B2*", "use": "B", "example": "Travelling alone was a memorable experience." }
+          {
+            "target": "adapt",
+            "type": "v.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "I had to adapt to living abroad."
+          },
+          {
+            "target": "turning point",
+            "type": "n. phr.",
+            "cefr": "B2*",
+            "use": "B",
+            "example": "Moving to Leeds was a turning point in my life."
+          },
+          {
+            "target": "challenge",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "I faced several challenges while I was studying abroad."
+          },
+          {
+            "target": "get used to",
+            "type": "v. phr.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "It took me a month to get used to living alone."
+          },
+          {
+            "target": "look back on",
+            "type": "mw. v.",
+            "cefr": "B2*",
+            "use": "B",
+            "example": "When I look back on my first year abroad, I remember the people I met."
+          },
+          {
+            "target": "regret",
+            "type": "v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "I've never regretted leaving my old job."
+          },
+          {
+            "target": "gradually",
+            "type": "adv.",
+            "cefr": "B2*",
+            "use": "B",
+            "example": "My English gradually improved while I was living in York."
+          },
+          {
+            "target": "memorable",
+            "type": "adj.",
+            "cefr": "B2*",
+            "use": "B",
+            "example": "Travelling alone was a memorable experience."
+          }
         ],
         "collocations": [
-          { "target": "make a big decision", "example": "I made a big decision about my future." },
-          { "target": "take a risk", "example": "I took a risk and applied for a job abroad." },
-          { "target": "make a change", "example": "I decided to make a change and cycle to work." },
-          { "target": "keep in touch", "example": "I've kept in touch with my old school friends." },
-          { "target": "make progress", "example": "I've been making good progress since September." },
-          { "target": "take up", "example": "I took up photography after I moved." }
+          {
+            "target": "make a big decision",
+            "example": "I made a big decision about my future."
+          },
+          {
+            "target": "take a risk",
+            "example": "I took a risk and applied for a job abroad."
+          },
+          {
+            "target": "make a change",
+            "example": "I decided to make a change and cycle to work."
+          },
+          {
+            "target": "keep in touch",
+            "example": "I've kept in touch with my old school friends."
+          },
+          {
+            "target": "make progress",
+            "example": "I've been making good progress since September."
+          },
+          {
+            "target": "take up",
+            "example": "I took up photography after I moved."
+          }
         ],
         "families": [
-          { "base": "make a big decision", "forms": ["decision", "decisive", "indecisive"], "card": "decision is productive on the collocation card; decisive and indecisive recognition only" },
-          { "base": "adapt", "forms": ["adaptable"], "card": "recognition only" },
-          { "base": "make a change", "forms": ["unchanged"], "card": "recognition only" }
+          {
+            "base": "make a big decision",
+            "forms": [
+              "decision",
+              "decisive",
+              "indecisive"
+            ],
+            "card": "decision is productive on the collocation card; decisive and indecisive recognition only"
+          },
+          {
+            "base": "adapt",
+            "forms": [
+              "adaptable"
+            ],
+            "card": "recognition only"
+          },
+          {
+            "base": "make a change",
+            "forms": [
+              "unchanged"
+            ],
+            "card": "recognition only"
+          }
         ],
         "optional": [],
         "newCards": 14,
         "note": "Teach get used to + noun or -ing for B1 production; contrast used to + infinitive on the same card. Keep adapt to as guided B2."
       },
       "linkers": [
-        { "target": "eventually", "cefr": "B2", "function": "time", "taughtIn": "writing task", "example": "Eventually, I got used to it." },
-        { "target": "since then", "cefr": "B1*", "function": "time", "taughtIn": "writing task", "example": "I moved in September. Since then, I've made some good friends." }
+        {
+          "target": "eventually",
+          "cefr": "B2",
+          "function": "time",
+          "taughtIn": "writing task",
+          "example": "Eventually, I got used to it."
+        },
+        {
+          "target": "since then",
+          "cefr": "B1*",
+          "function": "time",
+          "taughtIn": "writing task",
+          "example": "I moved in September. Since then, I've made some good friends."
+        }
       ],
-      "checkpoint1": { "mainItems": 4, "lightItems": 1, "focus": "Finished time, past-to-now, past continuous background, past perfect sequence; Light: used to / would" }
+      "checkpoint1": {
+        "mainItems": 4,
+        "lightItems": 1,
+        "focus": "Finished time, past-to-now, past continuous background, past perfect sequence; Light: used to / would"
+      }
     },
     {
       "number": 2,
       "title": "A goal and the next step",
       "canDo": "Describe an intention, name an arrangement, say what happens next and what you'll do if plans change.",
-      "featuredVocabulary": ["goal", "intend to", "career", "look forward to + noun or -ing"],
+      "featuredVocabulary": [
+        "goal",
+        "intend to",
+        "career",
+        "look forward to + noun or -ing"
+      ],
       "stretchPhrases": [],
       "grammar": {
         "main": "going to for an intention; present continuous for a confirmed arrangement; will for a prediction or a decision made while speaking; present simple for timetables and ordinary future time clauses ('I'll apply when I finish'). An indirect question is different: 'I don't know when I'll finish'.",
@@ -127,13 +335,19 @@
         "sampleItems": [
           {
             "prompt": "I'll apply as soon as I ___ the course.",
-            "options": ["finish", "will finish"],
+            "options": [
+              "finish",
+              "will finish"
+            ],
             "key": "finish",
             "reason": "'As soon as' is a grammar cue here, not a vocabulary target."
           },
           {
             "prompt": "I can't leave my job, but if I ___ more free time, I'd study full-time.",
-            "options": ["have", "had"],
+            "options": [
+              "have",
+              "had"
+            ],
             "key": "had",
             "reason": "The situation is imagined."
           }
@@ -146,7 +360,10 @@
         "b2Stretch": "Explain why the goal matters and weigh two alternatives, without the cue card."
       },
       "writing": {
-        "words": [120, 150],
+        "words": [
+          120,
+          150
+        ],
         "prompt": "Write a message to a friend about a goal, a confirmed arrangement, your next step and a back-up plan. Use in order to once to explain a purpose.",
         "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?"
       },
@@ -158,43 +375,152 @@
       },
       "vocabulary": {
         "core": [
-          { "target": "ambition", "type": "n.", "cefr": "B1", "use": "P", "example": "Her ambition is to run her own restaurant." },
-          { "target": "goal", "type": "n.", "cefr": "B1", "use": "P", "example": "My goal is to start a career in design." },
-          { "target": "achieve", "type": "v.", "cefr": "B1", "use": "P", "example": "If you practise regularly, you'll achieve your goal." },
-          { "target": "intend", "type": "v.", "cefr": "B1", "use": "P", "example": "We intend to move to the coast next year." },
-          { "target": "career", "type": "n.", "cefr": "B1", "use": "P", "example": "She's going to start a career in engineering." },
-          { "target": "deadline", "type": "n.", "cefr": "B2", "use": "B", "example": "The deadline for applications is 30 April." },
-          { "target": "apply", "type": "v.", "cefr": "B1", "use": "P", "example": "She's going to apply for a job at the museum." },
-          { "target": "look forward to", "type": "mw. v.", "cefr": "B1", "use": "P", "example": "I'm looking forward to starting my new course." },
-          { "target": "determined", "type": "adj.", "cefr": "B1", "use": "B", "example": "He's determined to pass, so he's going to practise every day." }
+          {
+            "target": "ambition",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "Her ambition is to run her own restaurant."
+          },
+          {
+            "target": "goal",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "My goal is to start a career in design."
+          },
+          {
+            "target": "achieve",
+            "type": "v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "If you practise regularly, you'll achieve your goal."
+          },
+          {
+            "target": "intend",
+            "type": "v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "We intend to move to the coast next year."
+          },
+          {
+            "target": "career",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "She's going to start a career in engineering."
+          },
+          {
+            "target": "deadline",
+            "type": "n.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "The deadline for applications is 30 April."
+          },
+          {
+            "target": "apply",
+            "type": "v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "She's going to apply for a job at the museum."
+          },
+          {
+            "target": "look forward to",
+            "type": "mw. v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "I'm looking forward to starting my new course."
+          },
+          {
+            "target": "determined",
+            "type": "adj.",
+            "cefr": "B1",
+            "use": "B",
+            "example": "He's determined to pass, so he's going to practise every day."
+          }
         ],
         "collocations": [
-          { "target": "work towards", "example": "I'm working towards a degree in nursing." },
-          { "target": "take the first step", "example": "I'll take the first step and contact the college." },
-          { "target": "improve your skills", "example": "This course will help you improve your skills." },
-          { "target": "put (something) off", "example": "Don't put off booking the course. With a pronoun: put it off." },
-          { "target": "set a goal", "example": "I'm going to set myself a goal of reading one book a month." },
-          { "target": "meet a deadline", "example": "We'll need to finish on Thursday to meet Friday's deadline." }
+          {
+            "target": "work towards",
+            "example": "I'm working towards a degree in nursing."
+          },
+          {
+            "target": "take the first step",
+            "example": "I'll take the first step and contact the college."
+          },
+          {
+            "target": "improve your skills",
+            "example": "This course will help you improve your skills."
+          },
+          {
+            "target": "put (something) off",
+            "example": "Don't put off booking the course. With a pronoun: put it off."
+          },
+          {
+            "target": "set a goal",
+            "example": "I'm going to set myself a goal of reading one book a month."
+          },
+          {
+            "target": "meet a deadline",
+            "example": "We'll need to finish on Thursday to meet Friday's deadline."
+          }
         ],
         "families": [
-          { "base": "ambition", "forms": ["ambitious"], "card": "ambitious on ambition; achievable recognition on achieve" },
-          { "base": "achieve", "forms": ["achievement", "achievable"], "card": "achievement on achieve; achievable recognition only" },
-          { "base": "success", "forms": ["succeed", "success", "successful", "successfully"], "card": "one shared family card; successfully guided B2" }
+          {
+            "base": "ambition",
+            "forms": [
+              "ambitious"
+            ],
+            "card": "ambitious on ambition; achievable recognition on achieve"
+          },
+          {
+            "base": "achieve",
+            "forms": [
+              "achievement",
+              "achievable"
+            ],
+            "card": "achievement on achieve; achievable recognition only"
+          },
+          {
+            "base": "success",
+            "forms": [
+              "succeed",
+              "success",
+              "successful",
+              "successfully"
+            ],
+            "card": "one shared family card; successfully guided B2"
+          }
         ],
         "optional": [],
         "newCards": 16,
         "note": "Separate apply for a job from apply to an organisation. In look forward to, to is a preposition: use a noun or an -ing form. No future continuous (Week 14)."
       },
       "linkers": [
-        { "target": "in order to", "cefr": "B1", "function": "purpose", "taughtIn": "writing task", "example": "In order to save money, I'll cook at home." }
+        {
+          "target": "in order to",
+          "cefr": "B1",
+          "function": "purpose",
+          "taughtIn": "writing task",
+          "example": "In order to save money, I'll cook at home."
+        }
       ],
-      "checkpoint1": { "mainItems": 4, "lightItems": 1, "focus": "Intention, arrangement, two ordinary future time clauses; Light: first vs second conditional" }
+      "checkpoint1": {
+        "mainItems": 4,
+        "lightItems": 1,
+        "focus": "Intention, arrangement, two ordinary future time clauses; Light: first vs second conditional"
+      }
     },
     {
       "number": 3,
       "title": "Agree on house rules",
       "canDo": "Say what is required, forbidden, optional or possible, ask and give permission, and offer advice.",
-      "featuredVocabulary": ["get on with", "arrange", "routine", "politely"],
+      "featuredVocabulary": [
+        "get on with",
+        "arrange",
+        "routine",
+        "politely"
+      ],
       "stretchPhrases": [],
       "grammar": {
         "main": "have to for a requirement, mustn't for something forbidden, don't have to for optional; should for advice; can/can't now and could/couldn't for general past ability; 'Can/Could I...?' to ask permission and 'Yes, you can' / 'Sorry, you can't' to answer.",
@@ -202,13 +528,19 @@
         "sampleItems": [
           {
             "prompt": "Taking turns cooking is optional. You ___ cook on Mondays.",
-            "options": ["mustn't", "don't have to"],
+            "options": [
+              "mustn't",
+              "don't have to"
+            ],
             "key": "don't have to",
             "reason": "Cooking is allowed, not required."
           },
           {
             "prompt": "___ the bins out on Thursdays?",
-            "options": ["Who takes", "Who does take"],
+            "options": [
+              "Who takes",
+              "Who does take"
+            ],
             "key": "Who takes",
             "reason": "Who is the subject."
           }
@@ -216,12 +548,15 @@
         "authoringNote": "For a specific past success use was able to or managed to, not could; couldn't works for a specific failure. Keep this contrast as a B2 note, not a scored item."
       },
       "speaking": {
-        "prompt": "Welcome a new flatmate who arrives tomorrow: explain one shared responsibility, one rule and one optional routine, give one piece of advice, and end with a question for them. The live flatmate exchange is the conversation task.",
+        "prompt": "Record a 60–90 second welcome to a new flatmate who arrives tomorrow: explain one shared responsibility, one rule and one optional routine, give one piece of advice, and end with a question for them. The flatmate back-and-forth is the conversation task, not this recording.",
         "model": "Welcome to the flat! There are a few things you need to know. We have to clean up after cooking, and we mustn't leave the cooker on when we go out. You don't have to cook for everyone, but we usually eat together on Fridays. You can use the washing machine until ten. The neighbours can hear it through the wall, so if you need it later, please ask them politely first. I couldn't cook at all when I moved in, so don't worry if you're still learning. I think we should arrange a cleaning rota around our work hours. Apart from that, there's no fixed routine. We all get on with each other really well, so if you're not sure about something, just ask. What time do you usually get home, by the way?",
         "b2Stretch": "Add a likely problem (noise, guests, bills) and suggest a compromise, without the cue card."
       },
       "writing": {
-        "words": [120, 150],
+        "words": [
+          120,
+          150
+        ],
         "prompt": "Write a welcome message for a new flatmate: one requirement, one rule, one optional thing and one piece of advice. Use at least one of the week's linkers (on the other hand, in fact, apart from that).",
         "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional."
       },
@@ -233,44 +568,168 @@
       },
       "vocabulary": {
         "core": [
-          { "target": "get on with", "type": "mw. v.", "cefr": "B1", "use": "P", "example": "You don't have to be close friends to get on with your colleagues." },
-          { "target": "catch up (with)", "type": "phr. v.", "cefr": "B2", "use": "B", "example": "Can we meet after work and catch up? Here: exchange news." },
-          { "target": "arrange", "type": "v.", "cefr": "B1", "use": "P", "example": "We should arrange to meet outside the station." },
-          { "target": "routine", "type": "n.", "cefr": "B1", "use": "P", "example": "Try to stick to a routine during busy weeks." },
-          { "target": "rely on", "type": "mw. v.", "cefr": "B2", "use": "B", "example": "You can rely on Maria to help if there's a problem." },
-          { "target": "misunderstanding", "type": "n.", "cefr": "B2", "use": "B", "example": "We should talk and clear up the misunderstanding." },
-          { "target": "invite (someone) round", "type": "phr. v.", "cefr": "B1*", "use": "P", "example": "Can I invite some friends round on Saturday? BrE." },
-          { "target": "awkward (situation)", "type": "adj.", "cefr": "B2", "use": "B", "example": "It was an awkward situation, but we managed to talk it through." },
-          { "target": "politely", "type": "adv.", "cefr": "B1", "use": "P", "example": "You can disagree politely." }
+          {
+            "target": "get on with",
+            "type": "mw. v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "You don't have to be close friends to get on with your colleagues."
+          },
+          {
+            "target": "catch up (with)",
+            "type": "phr. v.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "Can we meet after work and catch up? Here: exchange news."
+          },
+          {
+            "target": "arrange",
+            "type": "v.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "We should arrange to meet outside the station."
+          },
+          {
+            "target": "routine",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "Try to stick to a routine during busy weeks."
+          },
+          {
+            "target": "rely on",
+            "type": "mw. v.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "You can rely on Maria to help if there's a problem."
+          },
+          {
+            "target": "misunderstanding",
+            "type": "n.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "We should talk and clear up the misunderstanding."
+          },
+          {
+            "target": "invite (someone) round",
+            "type": "phr. v.",
+            "cefr": "B1*",
+            "use": "P",
+            "example": "Can I invite some friends round on Saturday? BrE."
+          },
+          {
+            "target": "awkward (situation)",
+            "type": "adj.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "It was an awkward situation, but we managed to talk it through."
+          },
+          {
+            "target": "politely",
+            "type": "adv.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "You can disagree politely."
+          }
         ],
         "collocations": [
-          { "target": "make an effort", "example": "We should make an effort to welcome new colleagues." },
-          { "target": "have a lot in common", "example": "We have a lot in common: we both love cycling." },
-          { "target": "get in touch", "example": "You should get in touch with the organiser." },
-          { "target": "come over", "example": "Can you come over for coffee on Saturday?" },
-          { "target": "keep a promise", "example": "You should keep a promise even if it's difficult." }
+          {
+            "target": "make an effort",
+            "example": "We should make an effort to welcome new colleagues."
+          },
+          {
+            "target": "have a lot in common",
+            "example": "We have a lot in common: we both love cycling."
+          },
+          {
+            "target": "get in touch",
+            "example": "You should get in touch with the organiser."
+          },
+          {
+            "target": "come over",
+            "example": "Can you come over for coffee on Saturday?"
+          },
+          {
+            "target": "keep a promise",
+            "example": "You should keep a promise even if it's difficult."
+          }
         ],
         "families": [
-          { "base": "friend", "forms": ["unfriendly", "friendship"], "card": "shared family card" },
-          { "base": "politely", "forms": ["politeness", "impolite"], "card": "recognition only on politely" },
-          { "base": "rely on", "forms": ["reliable", "unreliable", "reliably"], "card": "reliable and unreliable on rely on; reliably recognition only" }
+          {
+            "base": "friend",
+            "forms": [
+              "unfriendly",
+              "friendship"
+            ],
+            "card": "shared family card"
+          },
+          {
+            "base": "politely",
+            "forms": [
+              "politeness",
+              "impolite"
+            ],
+            "card": "recognition only on politely"
+          },
+          {
+            "base": "rely on",
+            "forms": [
+              "reliable",
+              "unreliable",
+              "reliably"
+            ],
+            "card": "reliable and unreliable on rely on; reliably recognition only"
+          }
         ],
-        "optional": [{ "target": "pop round", "example": "Can I pop round after work? Informal BrE; short visit." }],
+        "optional": [
+          {
+            "target": "pop round",
+            "example": "Can I pop round after work? Informal BrE; short visit."
+          }
+        ],
         "newCards": 15,
         "note": "Pair get on with (relationship), catch up with (exchange news) and get in touch with (initiate contact). Week 3 linkers are the Light grammar point and required in the welcome-message writing task."
       },
       "linkers": [
-        { "target": "on the other hand", "cefr": "B1", "function": "contrast", "taughtIn": "grammar task", "example": "Living with friends can be fun. On the other hand, you have to share the housework." },
-        { "target": "in fact", "cefr": "B1", "function": "emphasis", "taughtIn": "grammar task", "example": "We get on really well. In fact, we talk almost every day." },
-        { "target": "apart from that", "cefr": "B1*", "function": "exception", "taughtIn": "grammar task", "example": "The bus was late. Apart from that, the day went well." }
+        {
+          "target": "on the other hand",
+          "cefr": "B1",
+          "function": "contrast",
+          "taughtIn": "grammar task",
+          "example": "Living with friends can be fun. On the other hand, you have to share the housework."
+        },
+        {
+          "target": "in fact",
+          "cefr": "B1",
+          "function": "emphasis",
+          "taughtIn": "grammar task",
+          "example": "We get on really well. In fact, we talk almost every day."
+        },
+        {
+          "target": "apart from that",
+          "cefr": "B1*",
+          "function": "exception",
+          "taughtIn": "grammar task",
+          "example": "The bus was late. Apart from that, the day went well."
+        }
       ],
-      "checkpoint1": { "mainItems": 4, "lightItems": 1, "focus": "One item each for obligation, advice, ability and permission; Light: one question form" }
+      "checkpoint1": {
+        "mainItems": 4,
+        "lightItems": 1,
+        "focus": "One item each for obligation, advice, ability and permission; Light: one question form"
+      }
     },
     {
       "number": 4,
       "title": "Give a short visitor guide",
       "canDo": "Describe customs and past facts with the passive, identify places and compare them.",
-      "featuredVocabulary": ["local", "custom", "destination", "tradition", "set off"],
+      "featuredVocabulary": [
+        "local",
+        "custom",
+        "destination",
+        "tradition",
+        "set off"
+      ],
       "stretchPhrases": [],
       "grammar": {
         "main": "be + past participle in present and past simple. Use the passive to focus on the place, event or result; add by + agent only if it matters. Contrast 'is held' with 'was built', and keep 'It happened' active.",
@@ -278,13 +737,21 @@
         "sampleItems": [
           {
             "prompt": "The craft market ___ in the main square every Sunday.",
-            "options": ["is held", "was held", "is hold"],
+            "options": [
+              "is held",
+              "was held",
+              "is hold"
+            ],
             "key": "is held",
             "reason": "Present passive for a regular event."
           },
           {
             "prompt": "It's ___ market in the region.",
-            "options": ["the biggest", "the bigger", "the most big"],
+            "options": [
+              "the biggest",
+              "the bigger",
+              "the most big"
+            ],
             "key": "the biggest",
             "reason": "Superlative with the."
           }
@@ -297,7 +764,10 @@
         "b2Stretch": "Add extra information with a non-defining clause, such as 'The market hall, which was built in 1890, ...'. Accept it, but don't require it."
       },
       "writing": {
-        "words": [120, 150],
+        "words": [
+          120,
+          150
+        ],
         "prompt": "Write a visitor recommendation or trip note. Separate a place fact from what you personally did, and organise it with to begin with and all in all.",
         "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place."
       },
@@ -309,38 +779,156 @@
       },
       "vocabulary": {
         "core": [
-          { "target": "tradition", "type": "n.", "cefr": "B2", "use": "B", "example": "Visitors are invited to take part in a local tradition." },
-          { "target": "custom", "type": "n.", "cefr": "B1", "use": "P", "example": "The guide explained a local custom: visitors are asked to take off their shoes before they go inside." },
-          { "target": "destination", "type": "n.", "cefr": "B1", "use": "P", "example": "It's one of the most popular holiday destinations on the coast." },
-          { "target": "set off", "type": "phr. v.", "cefr": "B2", "use": "B", "example": "We set off early to avoid the heavy traffic." },
-          { "target": "get around", "type": "phr. v.", "cefr": "B1*", "use": "P", "example": "We were given a map to help us get around the city." },
-          { "target": "unfamiliar", "type": "adj.", "cefr": "B2", "use": "B", "example": "We were unfamiliar with the ticket system." },
-          { "target": "welcoming", "type": "adj.", "cefr": "B2*", "use": "B", "example": "The hotel where we stayed had a welcoming atmosphere." },
-          { "target": "local", "type": "adj.", "cefr": "B1", "use": "P", "example": "Local food is served in the hotel restaurant." }
+          {
+            "target": "tradition",
+            "type": "n.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "Visitors are invited to take part in a local tradition."
+          },
+          {
+            "target": "custom",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "The guide explained a local custom: visitors are asked to take off their shoes before they go inside."
+          },
+          {
+            "target": "destination",
+            "type": "n.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "It's one of the most popular holiday destinations on the coast."
+          },
+          {
+            "target": "set off",
+            "type": "phr. v.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "We set off early to avoid the heavy traffic."
+          },
+          {
+            "target": "get around",
+            "type": "phr. v.",
+            "cefr": "B1*",
+            "use": "P",
+            "example": "We were given a map to help us get around the city."
+          },
+          {
+            "target": "unfamiliar",
+            "type": "adj.",
+            "cefr": "B2",
+            "use": "B",
+            "example": "We were unfamiliar with the ticket system."
+          },
+          {
+            "target": "welcoming",
+            "type": "adj.",
+            "cefr": "B2*",
+            "use": "B",
+            "example": "The hotel where we stayed had a welcoming atmosphere."
+          },
+          {
+            "target": "local",
+            "type": "adj.",
+            "cefr": "B1",
+            "use": "P",
+            "example": "Local food is served in the hotel restaurant."
+          }
         ],
         "collocations": [
-          { "target": "take a guided tour", "example": "We took a guided tour of the old town." },
-          { "target": "try the local food", "example": "We were encouraged to try the local food." },
-          { "target": "travel light", "example": "We travelled light because there wasn't much room for luggage." },
-          { "target": "stop overnight", "example": "We stopped overnight in York before driving on." },
-          { "target": "miss a connection", "example": "Our flight was delayed, so we missed our connection." }
+          {
+            "target": "take a guided tour",
+            "example": "We took a guided tour of the old town."
+          },
+          {
+            "target": "try the local food",
+            "example": "We were encouraged to try the local food."
+          },
+          {
+            "target": "travel light",
+            "example": "We travelled light because there wasn't much room for luggage."
+          },
+          {
+            "target": "stop overnight",
+            "example": "We stopped overnight in York before driving on."
+          },
+          {
+            "target": "miss a connection",
+            "example": "Our flight was delayed, so we missed our connection."
+          }
         ],
         "families": [
-          { "base": "culture", "forms": ["culture", "cultural", "culturally"], "card": "one productive family card; culturally recognition only" },
-          { "base": "tradition", "forms": ["traditional", "traditionally"], "card": "on tradition" },
-          { "base": "tourism", "forms": ["tourism", "touristy"], "card": "recognition only" }
+          {
+            "base": "culture",
+            "forms": [
+              "culture",
+              "cultural",
+              "culturally"
+            ],
+            "card": "one productive family card; culturally recognition only"
+          },
+          {
+            "base": "tradition",
+            "forms": [
+              "traditional",
+              "traditionally"
+            ],
+            "card": "on tradition"
+          },
+          {
+            "base": "tourism",
+            "forms": [
+              "tourism",
+              "touristy"
+            ],
+            "card": "recognition only"
+          }
         ],
-        "optional": [{ "target": "break your journey", "example": "We broke our journey with an overnight stay in York. Mainly BrE." }],
+        "optional": [
+          {
+            "target": "break your journey",
+            "example": "We broke our journey with an overnight stay in York. Mainly BrE."
+          }
+        ],
         "newCards": 14,
         "note": "Keep passive models in present and past simple. Destination models a superlative and welcoming a defining relative clause. Local means 'from the area'; touristy is often disapproving."
       },
       "linkers": [
-        { "target": "to begin with", "cefr": "B1", "function": "sequence", "taughtIn": "writing task", "example": "To begin with, we were shown around the old town." },
-        { "target": "what's more", "cefr": "B2", "function": "addition", "taughtIn": "writing task", "example": "The hotel was comfortable. What's more, breakfast was included." },
-        { "target": "despite", "cefr": "B1", "function": "concession", "taughtIn": "writing task", "example": "Despite the rain, the outdoor tour went ahead." },
-        { "target": "all in all", "cefr": "B2*", "function": "summary", "taughtIn": "writing task", "example": "All in all, we had an excellent trip." }
+        {
+          "target": "to begin with",
+          "cefr": "B1",
+          "function": "sequence",
+          "taughtIn": "writing task",
+          "example": "To begin with, we were shown around the old town."
+        },
+        {
+          "target": "what's more",
+          "cefr": "B2",
+          "function": "addition",
+          "taughtIn": "writing task",
+          "example": "The hotel was comfortable. What's more, breakfast was included."
+        },
+        {
+          "target": "despite",
+          "cefr": "B1",
+          "function": "concession",
+          "taughtIn": "writing task",
+          "example": "Despite the rain, the outdoor tour went ahead."
+        },
+        {
+          "target": "all in all",
+          "cefr": "B2*",
+          "function": "summary",
+          "taughtIn": "writing task",
+          "example": "All in all, we had an excellent trip."
+        }
       ],
-      "checkpoint1": { "mainItems": 4, "lightItems": 1, "focus": "Two present passives and two past passives; Light: one relative clause or comparative/superlative" }
+      "checkpoint1": {
+        "mainItems": 4,
+        "lightItems": 1,
+        "focus": "Two present passives and two past passives; Light: one relative clause or comparative/superlative"
+      }
     }
   ]
 }

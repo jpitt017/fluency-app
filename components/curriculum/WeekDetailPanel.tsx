@@ -1,5 +1,5 @@
 import { BookOpen, Flag, MessageCircle, Mic, PenLine, Sparkles } from 'lucide-react';
-import type { WeekDetail } from '@/lib/curriculum/details';
+import { curriculumDetails, type WeekDetail } from '@/lib/curriculum/details';
 
 const USE_LABELS: Record<string, string> = {
   P: 'B1 productive',
@@ -81,6 +81,24 @@ export default function WeekDetailPanel({
             <p className="mt-2 text-xs leading-6 text-stone-700">{detail.grammar.light}</p>
           </div>
         </div>
+        <details className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs">
+          <summary className="cursor-pointer font-semibold text-stone-800">
+            Nine-step, 20-minute grammar task
+          </summary>
+          <ol className="mt-3 grid gap-1.5 sm:grid-cols-2">
+            {(curriculumDetails.pilotRules.grammarTask as { steps: { step: number; name: string; minutes: number; items: number | null }[] }).steps.map(
+              (step) => (
+                <li key={step.step} className="flex items-baseline gap-2 leading-5 text-stone-600">
+                  <span className="font-mono text-[10px] font-bold text-indigo-700">{String(step.step).padStart(2, '0')}</span>
+                  <span>{step.name}</span>
+                  <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-stone-400">
+                    {step.minutes} min{step.items ? ` · ${step.items}` : ''}
+                  </span>
+                </li>
+              ),
+            )}
+          </ol>
+        </details>
         <div className="grid gap-2 sm:grid-cols-2">
           {detail.grammar.sampleItems.map((item) => (
             <div key={item.prompt} className="rounded-xl border border-stone-200 bg-white p-3.5">
