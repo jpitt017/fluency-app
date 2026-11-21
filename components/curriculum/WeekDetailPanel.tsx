@@ -1,5 +1,7 @@
-import { BookOpen, Flag, MessageCircle, Mic, PenLine, Sparkles } from 'lucide-react';
-import { curriculumDetails, type WeekDetail } from '@/lib/curriculum/details';
+import { BookOpen, Flag, PenLine, Sparkles } from 'lucide-react';
+import type { WeekDetail } from '@/lib/curriculum/details';
+import GrammarPracticeBank from './GrammarPracticeBank';
+import SpeakingSpec from './SpeakingSpec';
 
 const USE_LABELS: Record<string, string> = {
   P: 'B1 productive',
@@ -43,6 +45,9 @@ export default function WeekDetailPanel({
           <span className="rounded-full bg-indigo-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
             Week {detail.number} authoring spec
           </span>
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-900">
+            Pilot draft · teacher review pending
+          </span>
           <span className="text-[11px] text-stone-500">
             {totalVocab} target items · {detail.vocabulary.newCards} FSRS cards
           </span>
@@ -81,53 +86,14 @@ export default function WeekDetailPanel({
             <p className="mt-2 text-xs leading-6 text-stone-700">{detail.grammar.light}</p>
           </div>
         </div>
-        <details className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs">
-          <summary className="cursor-pointer font-semibold text-stone-800">
-            Nine-step, 20-minute grammar task
-          </summary>
-          <ol className="mt-3 grid gap-1.5 sm:grid-cols-2">
-            {(curriculumDetails.pilotRules.grammarTask as { steps: { step: number; name: string; minutes: number; items: number | null }[] }).steps.map(
-              (step) => (
-                <li key={step.step} className="flex items-baseline gap-2 leading-5 text-stone-600">
-                  <span className="font-mono text-[10px] font-bold text-indigo-700">{String(step.step).padStart(2, '0')}</span>
-                  <span>{step.name}</span>
-                  <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-stone-400">
-                    {step.minutes} min{step.items ? ` · ${step.items}` : ''}
-                  </span>
-                </li>
-              ),
-            )}
-          </ol>
-        </details>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {detail.grammar.sampleItems.map((item) => (
-            <div key={item.prompt} className="rounded-xl border border-stone-200 bg-white p-3.5">
-              <p className="text-xs font-semibold leading-5 text-stone-800">{item.prompt}</p>
-              {item.options.length > 0 && (
-                <p className="mt-1 font-mono text-[11px] text-stone-500">{item.options.join(' / ')}</p>
-              )}
-              <p className="mt-2 text-[11px] text-stone-700">
-                <strong className="font-semibold text-emerald-800">Key:</strong> {item.key} — {item.reason}
-              </p>
-            </div>
-          ))}
-        </div>
+        <GrammarPracticeBank practice={detail.grammar.practice} />
         <details className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs">
           <summary className="cursor-pointer font-semibold text-stone-800">Authoring notes for teachers</summary>
           <p className="mt-2 leading-6 text-stone-600">{detail.grammar.authoringNote}</p>
         </details>
       </section>
 
-      <section className="space-y-3">
-        <SectionHeading icon={Mic} title="Speaking model" note="record 60–90 seconds · model hidden on the first try" />
-        <p className="text-xs leading-6 text-stone-700">{detail.speaking.prompt}</p>
-        <blockquote className="rounded-xl border-l-4 border-indigo-300 bg-white p-4 font-serif text-sm italic leading-7 text-stone-800">
-          “{detail.speaking.model}”
-        </blockquote>
-        <p className="text-[11px] leading-5 text-stone-600">
-          <strong className="font-semibold text-stone-800">B2 stretch:</strong> {detail.speaking.b2Stretch}
-        </p>
-      </section>
+      <SpeakingSpec speaking={detail.speaking} />
 
       <section className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
@@ -135,15 +101,6 @@ export default function WeekDetailPanel({
           <p className="text-xs leading-6 text-stone-700">{detail.writing.prompt}</p>
           <p className="border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">
             <strong className="font-semibold text-stone-800">Delayed recall:</strong> {detail.writing.delayedRecall}
-          </p>
-        </div>
-        <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
-          <SectionHeading icon={MessageCircle} title="AI conversation" note="15 min · recommended · 3–4 turns" />
-          <p className="text-xs font-semibold text-stone-800">{detail.conversation.scenario}</p>
-          <p className="text-xs italic leading-6 text-stone-600">“{detail.conversation.openingLine}”</p>
-          <p className="text-[11px] leading-5 text-stone-700">{detail.conversation.learnerMoves}</p>
-          <p className="border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">
-            <strong className="font-semibold text-stone-800">Target language:</strong> {detail.conversation.targetLanguage}
           </p>
         </div>
       </section>

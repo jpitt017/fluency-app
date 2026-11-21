@@ -32,6 +32,52 @@ export interface SampleItem {
   reason: string;
 }
 
+export interface GrammarItem {
+  id: string;
+  step: string;
+  target: string;
+  prompt: string;
+  options: string[];
+  key: string | string[];
+  accepted: string[] | string[][];
+  reason: string;
+}
+
+export interface GrammarPractice {
+  status: string;
+  durationMinutes: number;
+  notice: { text: string; targetForms: string; markedBy: string };
+  steps: { step: number; exercise: string; items: number | string; time: string; markedBy: string }[];
+  extraPractice: string;
+  feedback: string;
+  itemFormat: string;
+  week1Review?: string;
+  items: GrammarItem[];
+}
+
+export interface SpeakingDetail {
+  status: string;
+  main: string;
+  light: string;
+  featured: string[];
+  flow: Record<string, string>;
+  prompt: string;
+  cueCard: string;
+  phraseBank: string[];
+  model: string;
+  onTarget: string;
+  correctionPriority: string;
+  shadowingChunks: { chunk: string; listenFor: string }[];
+  conversation: {
+    title: string;
+    turns: { partner: string; learner: string; followUp: string }[];
+    closingLine: string;
+    naturalRecastExample: string;
+  };
+  delayedRecall: string;
+  b2Stretch: string;
+}
+
 export interface WeekDetail {
   number: number;
   title: string;
@@ -43,8 +89,9 @@ export interface WeekDetail {
     light: string;
     sampleItems: SampleItem[];
     authoringNote: string;
+    practice: GrammarPractice;
   };
-  speaking: { prompt: string; model: string; b2Stretch: string };
+  speaking: SpeakingDetail;
   writing: { words: number[]; prompt: string; delayedRecall: string };
   conversation: {
     scenario: string;
@@ -66,10 +113,13 @@ export interface WeekDetail {
 
 export interface DetailsDocument {
   version: string;
+  status: string;
   sources: string[];
   pilotRules: Record<string, unknown>;
   conversationRules: Record<string, string>;
   weeks: WeekDetail[];
+  productionNotes: string[];
+  reviewChecklist: string[];
 }
 
 export interface AssessmentItem {
@@ -82,9 +132,27 @@ export interface AssessmentItem {
   reason: string;
 }
 
+export interface DescriptorSet {
+  intro: string;
+  criteria: {
+    key: string;
+    label: string;
+    gettingThere: string;
+    onTarget: string;
+    beyondTarget: string;
+  }[];
+  rules?: string[];
+  notes?: string[];
+  learnerFeedback?: string | string[];
+  wordRanges?: { weeks: string; range: string; targetBand: string }[];
+  recordings?: string;
+}
+
 export interface AssessmentsDocument {
   version: string;
+  status: string;
   note: string;
+  sources: string[];
   writingDescriptors: {
     intro: string;
     criteria: {
@@ -98,6 +166,7 @@ export interface AssessmentsDocument {
     learnerFeedback: string;
     wordRanges: { weeks: string; range: string; targetBand: string }[];
   };
+  speakingDescriptors: DescriptorSet;
   placement: {
     durationMinutes: number;
     intro: string;
@@ -115,7 +184,13 @@ export interface AssessmentsDocument {
     items: AssessmentItem[];
     reserves: AssessmentItem[];
     reserveUse: string;
-    speakingTask: string;
+    speaking: {
+      status: string;
+      intro: string;
+      prompt: string;
+      conditions: { setting: string; value: string }[];
+      transferNote: string;
+    };
     writing: {
       prompts: { label: string; text: string }[];
       conditions: { id: string; setting: string; value: string }[];
@@ -164,7 +239,7 @@ export async function loadDetailedContent(): Promise<DetailedContent> {
       weeksRes.error ||
       assessmentsRes.error ||
       weeksRes.data?.length !== curriculumDetails.weeks.length ||
-      assessmentsRes.data?.length !== 3
+      assessmentsRes.data?.length !== 4
     ) {
       return bundled();
     }
@@ -175,6 +250,7 @@ export async function loadDetailedContent(): Promise<DetailedContent> {
       assessments: {
         ...assessments,
         writingDescriptors: (byCode['writing-descriptors'] ?? assessments.writingDescriptors) as AssessmentsDocument['writingDescriptors'],
+        speakingDescriptors: (byCode['speaking-descriptors'] ?? assessments.speakingDescriptors) as DescriptorSet,
         placement: (byCode.placement ?? assessments.placement) as AssessmentsDocument['placement'],
         checkpoint1: (byCode['checkpoint-1'] ?? assessments.checkpoint1) as AssessmentsDocument['checkpoint1'],
       },

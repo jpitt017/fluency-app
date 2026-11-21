@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpenCheck, ClipboardCheck, Compass, FileText, Flag, Info, PenLine } from 'lucide-react';
 import CheckpointBank from '@/components/curriculum/CheckpointBank';
+import { SpeakingDescriptors } from '@/components/curriculum/SpeakingSpec';
 import { allCheckpointItems, loadDetailedContent } from '@/lib/curriculum/details';
 
 export const metadata = {
-  title: 'Assessment specs · Writing, placement & Checkpoint 1 | Fluency Studio',
+  title: 'Assessment specs · Writing, speaking, placement & Checkpoint 1 | Fluency Studio',
   description:
-    'Writing bands, the 24-question placement blueprint and the full Checkpoint 1 question bank for the B1 → B2 course.',
+    'Writing and speaking bands, the 24-question placement blueprint and the full Checkpoint 1 question bank for the B1 → B2 course.',
 };
 
 function Card({
@@ -48,7 +49,7 @@ export default async function AssessmentsPage() {
             How writing is marked, where learners start, and what Checkpoint 1 tests.
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600">
-            Three specifications for the B1 → B2 build: four writing descriptors with visible bands, a 35-minute placement flow that decides between the foundation course, Stage 1 and Stage 2, and the 20-item Checkpoint 1 question bank plus four reserves.
+            Four specifications for the B1 → B2 build: writing descriptors, the matching speaking descriptors, a 35-minute placement flow that decides between the foundation course, Stage 1 and Stage 2, and the 20-item Checkpoint 1 question bank plus four reserves. All content is pilot draft pending second-teacher review.
           </p>
           <div className="mt-5 flex flex-wrap gap-2.5">
             <Link
@@ -56,6 +57,12 @@ export default async function AssessmentsPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800"
             >
               Writing bands <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="#speaking-descriptors"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:bg-stone-50"
+            >
+              Speaking bands
             </Link>
             <Link
               href="#placement"
@@ -144,6 +151,10 @@ export default async function AssessmentsPage() {
         </div>
       </section>
 
+      <section id="speaking-descriptors" className="scroll-mt-28 space-y-4">
+        <SpeakingDescriptors descriptors={doc.speakingDescriptors} />
+      </section>
+
       <section id="placement" className="scroll-mt-28 space-y-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-700">Placement</p>
@@ -216,8 +227,17 @@ export default async function AssessmentsPage() {
             <p className="mt-2 text-[11px] leading-5 text-stone-600">{doc.checkpoint1.quiz.reporting}</p>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white p-4">
-            <p className="text-xs font-bold text-stone-900">Speaking transfer</p>
-            <p className="mt-1.5 text-[11px] leading-5 text-stone-600">{doc.checkpoint1.speakingTask}</p>
+            <p className="text-xs font-bold text-stone-900">Checkpoint 1 speaking</p>
+            <p className="mt-1.5 text-[11px] leading-5 text-stone-600">{doc.checkpoint1.speaking.intro}</p>
+            <p className="mt-2 rounded-lg bg-stone-50 p-2.5 font-serif text-[11px] italic leading-5 text-stone-800">
+              “{doc.checkpoint1.speaking.prompt}”
+            </p>
+            <ul className="mt-2 space-y-1 text-[11px] leading-5 text-stone-600">
+              {doc.checkpoint1.speaking.conditions.map((condition) => (
+                <li key={condition.setting}><strong className="font-semibold text-stone-800">{condition.setting}:</strong> {condition.value}</li>
+              ))}
+            </ul>
+            <p className="mt-2 border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">{doc.checkpoint1.speaking.transferNote}</p>
             <p className="mt-2 border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">
               <strong className="font-semibold text-stone-900">Writing:</strong>{' '}
               {doc.checkpoint1.writing.prompts.map((prompt) => prompt.label).join(' / ')}

@@ -3,7 +3,9 @@
   "sources": [
     "Revised grammar plan — Weeks 1–4, syllabus aligned (21 Nov 2026)",
     "Vocabulary review — Weeks 1–4, syllabus aligned (21 Nov 2026)",
-    "Course syllabus (21 Nov 2026)"
+    "Course syllabus (21 Nov 2026)",
+    "Fluency Studio: Weeks 1–4 Grammar Practice Item Bank (21 Nov 2026)",
+    "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)"
   ],
   "pilotRules": {
     "grammarTask": {
@@ -130,43 +132,527 @@
         "look back on"
       ],
       "grammar": {
-        "main": "Use the past simple for finished events ('I moved last year'), the past continuous for background ('while I was walking home') and the past perfect for an earlier event ('I'd never run with a group before'). Use the present perfect for a change up to now ('Since then, I've made a few friends').",
-        "light": "used to + infinitive for past habits and states; would + infinitive for repeated past actions only ('We would cook together on Sundays', not 'I would live in Leeds'). Present perfect continuous for an activity continuing up to now ('I've been running with the group for six months').",
-        "sampleItems": [
-          {
-            "prompt": "I ___ here last year. Since then, I've made a few friends.",
-            "options": [
-              "moved",
-              "have moved"
-            ],
-            "key": "moved",
-            "reason": "'Last year' is finished time."
+        "main": "narrative tenses; present perfect vs past simple.",
+        "light": "used to / would; present perfect continuous.",
+        "sampleItems": [],
+        "authoringNote": "Would for past habits is not normally used in negatives, questions or states; accept used to or the past simple there, and don't flag the past simple where used to is possible. Contrast result ('I've made a few friends') and activity ('I've been running').",
+        "practice": {
+          "status": "pilot draft — pending second-teacher review",
+          "durationMinutes": 20,
+          "notice": {
+            "text": "Three years ago, I moved to Bristol for work. I had never lived abroad before, so the first months were hard. One morning, while I was waiting for the bus, I started chatting to a neighbour. She invited me to a book club. We used to meet every Thursday, and we would always argue about the ending! I have lived here for three years now, and I've been going to that club ever since.",
+            "targetForms": "six",
+            "markedBy": "App"
           },
-          {
-            "prompt": "When I was a child, we ___ in a small flat.",
-            "options": [
-              "used to live",
-              "would live"
-            ],
-            "key": "used to live",
-            "reason": "'Live' is a state, so would is not possible."
-          },
-          {
-            "prompt": "I'm tired because I ___ all morning.",
-            "options": [
-              "'ve been studying",
-              "study"
-            ],
-            "key": "'ve been studying",
-            "reason": "Present perfect continuous for an activity continuing up to now. The older distractor 'studied' left two correct answers, so it is not used."
-          }
-        ],
-        "authoringNote": "Would for past habits is not normally used in negatives, questions or states; accept used to or the past simple there, and don't flag the past simple where used to is possible. Contrast result ('I've made a few friends') and activity ('I've been running')."
+          "steps": [
+            {
+              "step": 1,
+              "exercise": "Notice: listen to and read a short text, tap the target forms",
+              "items": "1 text",
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 2,
+              "exercise": "Check the meaning: short questions about what the form means",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 3,
+              "exercise": "Choose in context: two options",
+              "items": 6,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 4,
+              "exercise": "Complete: verb or prompt in brackets",
+              "items": 5,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 5,
+              "exercise": "Find and fix the mistake",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 6,
+              "exercise": "Rewrite with the target form",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App, with AI checking other correct answers"
+            },
+            {
+              "step": 7,
+              "exercise": "Light point: choose or reorder",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 8,
+              "exercise": "Use it yourself: two sentences about your own life, spoken or typed",
+              "items": 2,
+              "time": "3 min",
+              "markedBy": "AI, instant feedback and one retry"
+            },
+            {
+              "step": 9,
+              "exercise": "Spaced review: earlier grammar",
+              "items": 2,
+              "time": "1 min",
+              "markedBy": "App"
+            }
+          ],
+          "extraPractice": "Each week has 3 extra items. A learner who scores below 60% on steps 3-4 gets them before moving on; a learner who scores 90% or more on steps 3-4 skips step 6.",
+          "feedback": "Every item has a one-line reason, shown straight after the answer. Wrong answers become review cards. In steps 6 and 8 the AI accepts any correct answer that uses the target form, not only the key.",
+          "itemFormat": "Each item has an id, a step, a target (Main, Light or Review), the prompt, the options where there are any, the key, accepted variants, and the reason.",
+          "week1Review": "There is no earlier course grammar in Week 1, so its review items come from the grammar clinic (present simple vs continuous, articles).",
+          "items": [
+            {
+              "id": "W1-M1",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"I had never lived abroad before.\" Had the speaker lived abroad before moving to Bristol?",
+              "options": [
+                "Yes",
+                "No"
+              ],
+              "key": "No",
+              "accepted": [],
+              "reason": "The past perfect describes the situation before the move."
+            },
+            {
+              "id": "W1-M2",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"While I was waiting for the bus, I started chatting.\" Which action was in the background?",
+              "options": [
+                "waiting",
+                "chatting"
+              ],
+              "key": "waiting",
+              "accepted": [],
+              "reason": "The past continuous sets the scene; the past simple is the event."
+            },
+            {
+              "id": "W1-M3",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"I have lived here for three years.\" Does the speaker still live in Bristol?",
+              "options": [
+                "Yes",
+                "No"
+              ],
+              "key": "Yes",
+              "accepted": [],
+              "reason": "The present perfect connects the past to now."
+            },
+            {
+              "id": "W1-C1",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I ___ to Bristol three years ago.",
+              "options": [
+                "moved",
+                "have moved"
+              ],
+              "key": "moved",
+              "accepted": [],
+              "reason": "\"Three years ago\" is a finished time."
+            },
+            {
+              "id": "W1-C2",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I ___ a lot of new friends since then.",
+              "options": [
+                "made",
+                "have made"
+              ],
+              "key": "have made",
+              "accepted": [],
+              "reason": "\"Since then\" means up to now."
+            },
+            {
+              "id": "W1-C3",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "When I arrived at the station, the train ___.",
+              "options": [
+                "left",
+                "had left"
+              ],
+              "key": "had left",
+              "accepted": [],
+              "reason": "It left before I arrived."
+            },
+            {
+              "id": "W1-C4",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I ___ dinner when my phone rang.",
+              "options": [
+                "was cooking",
+                "cooked"
+              ],
+              "key": "was cooking",
+              "accepted": [],
+              "reason": "A longer action interrupted by a short one."
+            },
+            {
+              "id": "W1-C5",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "___ you ever ___ in another country?",
+              "options": [
+                "Did ... live",
+                "Have ... lived"
+              ],
+              "key": [
+                "Have",
+                "lived"
+              ],
+              "accepted": [
+                [],
+                []
+              ],
+              "reason": "\"Ever\" asks about life experience up to now."
+            },
+            {
+              "id": "W1-C6",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "She ___ her job last month and is now looking for a new one.",
+              "options": [
+                "has left",
+                "left"
+              ],
+              "key": "left",
+              "accepted": [],
+              "reason": "\"Last month\" is a finished time."
+            },
+            {
+              "id": "W1-G1",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "While we ___ (drive) to the coast, it started to rain.",
+              "options": [],
+              "key": "were driving",
+              "accepted": [],
+              "reason": "Background action."
+            },
+            {
+              "id": "W1-G2",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "By the time I got to the party, most people ___ (go) home.",
+              "options": [],
+              "key": "had gone",
+              "accepted": [],
+              "reason": "They left before I arrived."
+            },
+            {
+              "id": "W1-G3",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "I ___ (know) Maria since we were at school.",
+              "options": [],
+              "key": "have known",
+              "accepted": [],
+              "reason": "Up to now with \"since\"; know is not used in the continuous."
+            },
+            {
+              "id": "W1-G4",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Last summer I ___ (spend) two weeks in Scotland.",
+              "options": [],
+              "key": "spent",
+              "accepted": [],
+              "reason": "Finished time."
+            },
+            {
+              "id": "W1-G5",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "She was tired because she ___ (not sleep) the night before.",
+              "options": [],
+              "key": "hadn't slept",
+              "accepted": [
+                "had not slept"
+              ],
+              "reason": "Earlier than the moment she was tired."
+            },
+            {
+              "id": "W1-F1",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "I have moved to Leeds in 2023.",
+              "options": [],
+              "key": "I moved to Leeds in 2023.",
+              "accepted": [],
+              "reason": "\"In 2023\" is a finished time, so use the past simple."
+            },
+            {
+              "id": "W1-F2",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "When I got home, my flatmate already cooked dinner.",
+              "options": [],
+              "key": "When I got home, my flatmate had already cooked dinner.",
+              "accepted": [],
+              "reason": "Cooking happened before I got home."
+            },
+            {
+              "id": "W1-F3",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "I was knowing her for years before we worked together.",
+              "options": [],
+              "key": "I had known her for years before we worked together.",
+              "accepted": [],
+              "reason": "Know is a state verb, and this happened before the other past event."
+            },
+            {
+              "id": "W1-R1",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "I started learning English in 2020. I'm still learning it. (since)",
+              "options": [],
+              "key": "I've been learning English since 2020.",
+              "accepted": [
+                "I have been learning English since 2020."
+              ],
+              "reason": "An activity that continues up to now."
+            },
+            {
+              "id": "W1-R2",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "First the film started. Then we arrived. (When ... already)",
+              "options": [],
+              "key": "When we arrived, the film had already started.",
+              "accepted": [
+                "The film had already started when we arrived."
+              ],
+              "reason": "The past perfect shows which happened first."
+            },
+            {
+              "id": "W1-R3",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "I was walking home. I saw an accident. (While)",
+              "options": [],
+              "key": "While I was walking home, I saw an accident.",
+              "accepted": [
+                "I saw an accident while I was walking home."
+              ],
+              "reason": "Background plus event."
+            },
+            {
+              "id": "W1-L1",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "When I was a child, we ___ in a small flat.",
+              "options": [
+                "used to live",
+                "would live"
+              ],
+              "key": "used to live",
+              "accepted": [],
+              "reason": "Live is a state, so would is not possible."
+            },
+            {
+              "id": "W1-L2",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "Every summer, my grandfather ___ us fishing.",
+              "options": [
+                "would take",
+                "has taken"
+              ],
+              "key": "would take",
+              "accepted": [
+                "used to take"
+              ],
+              "reason": "A repeated action in the past."
+            },
+            {
+              "id": "W1-L3",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "I'm tired because I ___ all morning.",
+              "options": [
+                "'ve been studying",
+                "study"
+              ],
+              "key": "'ve been studying",
+              "accepted": [],
+              "reason": "An activity up to now with a result you can see."
+            },
+            {
+              "id": "W1-U1",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Tell me about something you used to do as a child that you don't do now.",
+              "options": [],
+              "key": "Any correct sentence with used to or would",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W1-U2",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "What has changed in your life since you started your current job or studies?",
+              "options": [],
+              "key": "Any correct sentence with the present perfect and since",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W1-V1",
+              "step": "Review (clinic)",
+              "target": "Review",
+              "prompt": "I usually ___ to work, but this week I'm working from home.",
+              "options": [
+                "walk",
+                "am walking"
+              ],
+              "key": "walk",
+              "accepted": [],
+              "reason": "A usual habit uses the present simple."
+            },
+            {
+              "id": "W1-V2",
+              "step": "Review (clinic)",
+              "target": "Review",
+              "prompt": "She's ___ engineer.",
+              "options": [
+                "a",
+                "an"
+              ],
+              "key": "an",
+              "accepted": [],
+              "reason": "Use an before a vowel sound."
+            },
+            {
+              "id": "W1-E1",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "We ___ (watch) TV when the lights went out.",
+              "options": [],
+              "key": "were watching",
+              "accepted": [],
+              "reason": "Background action interrupted."
+            },
+            {
+              "id": "W1-E2",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "I ___ (never / see) snow until I moved to Canada.",
+              "options": [],
+              "key": "had never seen",
+              "accepted": [],
+              "reason": "Before another past event."
+            },
+            {
+              "id": "W1-E3",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "She ___ (work) here since 2019.",
+              "options": [],
+              "key": "has worked",
+              "accepted": [
+                "has been working"
+              ],
+              "reason": "Up to now with \"since\"; both forms are correct."
+            }
+          ]
+        }
       },
       "speaking": {
-        "prompt": "What was life like before? What changed, what was difficult, what helped, and what is different now? Listen to the model first, then hide it before recording.",
-        "model": "When I moved to a new city last year, I didn't know anyone. In my old town, I used to see my friends every weekend, and we would often cook together on Sunday evenings. So the biggest challenge I faced was meeting people outside work. It took me a few weeks to get used to spending my evenings alone. One evening, while I was walking home, I saw a poster for a running group. I'd never run with a group before, so I was nervous at the first session, but I gradually got to know the other runners. Since then, I've made a few friends, and the city feels more like home. I've been running with the group for about six months now. When I look back on those first few weeks, I'm really glad I went to that first session.",
-        "b2Stretch": "Explain why the change mattered and how you feel about it now, without the cue card."
+        "status": "pilot draft — pending second-teacher review",
+        "main": "narrative tenses; present perfect vs past simple.",
+        "light": "used to / would; present perfect continuous.",
+        "featured": [
+          "face a challenge",
+          "get used to",
+          "since then (stretch: gradually",
+          "look back on)."
+        ],
+        "flow": {
+          "shadowingWarmup": "3 min; listen to three short chunks from the model answer at normal and slower speed, repeat each, then compare your recording with the model. Self-check against a short prosody checklist; never scored.",
+          "plan": "2 min; read the cue card, note key words if you like; the model answer is hidden.",
+          "record": "60-90 s; one recording covering every cue point; AI marked against the descriptors.",
+          "feedbackAndRetry": "5 min; a band for each criterion, one strength, one specific correction; then record again, with the model available to compare. AI; a teacher confirms flagged recordings.",
+          "conversation": "Any time in the week (recommended); 15 min; 3-4 learner turns with the AI partner, then feedback and one retried turn; AI.",
+          "unlocking": "The speaking task counts once the first recording is submitted; the retry is encouraged, not required."
+        },
+        "prompt": "Tell me about a change in your life. What was life like before? What changed, what was difficult, what helped, and what is different now?",
+        "cueCard": "Before · The change · What was hard · What helped · Now",
+        "phraseBank": [
+          "In my old town, I used to... / we would...",
+          "The biggest challenge I faced was...",
+          "It took me a while to get used to...",
+          "I'd never... before",
+          "While I was..., I...",
+          "Since then, I've...",
+          "I've been ...ing for...",
+          "When I look back on..., I..."
+        ],
+        "model": "> When I moved to a new city last year, I didn't know anyone. In my old town, I used to see my friends every weekend, and we would often cook together on Sunday evenings. So the biggest challenge I faced was meeting people outside work. It took me a few weeks to get used to spending my evenings alone. One evening, while I was walking home, I saw a poster for a running group. I'd never run with a group before, so I was nervous at the first session, but I gradually got to know the other runners. Since then, I've made a few friends, and the city feels more like home. I've been running with the group for about six months now. When I look back on those first few weeks, I'm really glad I went to that first session.",
+        "onTarget": "covers all five cue points; uses the past perfect or past continuous at least once and the present perfect at least once; uses two featured items.",
+        "correctionPriority": "1) past simple vs present perfect with time words (last year, since); 2) would with states (would live); 3) the -ing form after get used to.",
+        "shadowingChunks": [
+          {
+            "chunk": "It took me a few weeks to get used to it.",
+            "listenFor": "used to sounds like \"yoosta\"; stress on weeks and used"
+          },
+          {
+            "chunk": "I'd never run with a group before.",
+            "listenFor": "the short I'd; stress on never, run and group"
+          },
+          {
+            "chunk": "Since then, I've made a few friends.",
+            "listenFor": "I've is short; made_a links together"
+          }
+        ],
+        "conversation": {
+          "title": "catching up with an old friend",
+          "turns": [
+            {
+              "partner": "It's been ages! What's changed since I last saw you?",
+              "learner": "Name a change (past simple, present perfect)",
+              "followUp": "Oh really? When did that happen?"
+            },
+            {
+              "partner": "Wow. Was it hard at first?",
+              "learner": "Describe a challenge (past continuous or past perfect; face a challenge)",
+              "followUp": "What was the hardest part?"
+            },
+            {
+              "partner": "So how are things now?",
+              "learner": "Say what is different now (present perfect, since then, present perfect continuous)",
+              "followUp": "How long have you been doing that?"
+            },
+            {
+              "partner": "Do you miss anything about your old life?",
+              "learner": "Describe old habits (used to, would)",
+              "followUp": "What did you use to do at weekends?"
+            }
+          ],
+          "closingLine": "It's great to hear you're doing well. Let's not leave it so long next time!",
+          "naturalRecastExample": "learner \"I have moved here last year.\" Partner: \"Oh, you moved here last year? I didn't know!\""
+        },
+        "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?",
+        "b2Stretch": "explain why the change mattered and how you feel about it now, without the cue card."
       },
       "writing": {
         "words": [
@@ -330,34 +816,525 @@
       ],
       "stretchPhrases": [],
       "grammar": {
-        "main": "going to for an intention; present continuous for a confirmed arrangement; will for a prediction or a decision made while speaking; present simple for timetables and ordinary future time clauses ('I'll apply when I finish'). An indirect question is different: 'I don't know when I'll finish'.",
-        "light": "Conditionals 0–2 review. Zero for general truth, first for a real possibility, second for an unlikely or imagined situation.",
-        "sampleItems": [
-          {
-            "prompt": "I'll apply as soon as I ___ the course.",
-            "options": [
-              "finish",
-              "will finish"
-            ],
-            "key": "finish",
-            "reason": "'As soon as' is a grammar cue here, not a vocabulary target."
+        "main": "future forms.",
+        "light": "conditionals 0-2 (review).",
+        "sampleItems": [],
+        "authoringNote": "'I will see my dentist tomorrow' is grammatical; don't flag it just because the visit is booked. Accept will or going to for predictions with present evidence. Conditional labels are teaching aids: accept natural variants such as 'when' in a zero conditional.",
+        "practice": {
+          "status": "pilot draft — pending second-teacher review",
+          "durationMinutes": 20,
+          "notice": {
+            "text": "My goal this year is to get a better job. I'm going to update my CV this weekend, and I'm meeting a careers adviser on Tuesday. The course I want starts on 3 March. I think it'll be hard, but when I finish it, I'll apply for jobs in marketing. If I don't get an interview, I'll ask for feedback. And if I had more time, I'd study full-time!",
+            "targetForms": "seven",
+            "markedBy": "App"
           },
-          {
-            "prompt": "I can't leave my job, but if I ___ more free time, I'd study full-time.",
-            "options": [
-              "have",
-              "had"
-            ],
-            "key": "had",
-            "reason": "The situation is imagined."
-          }
-        ],
-        "authoringNote": "'I will see my dentist tomorrow' is grammatical; don't flag it just because the visit is booked. Accept will or going to for predictions with present evidence. Conditional labels are teaching aids: accept natural variants such as 'when' in a zero conditional."
+          "steps": [
+            {
+              "step": 1,
+              "exercise": "Notice: listen to and read a short text, tap the target forms",
+              "items": "1 text",
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 2,
+              "exercise": "Check the meaning: short questions about what the form means",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 3,
+              "exercise": "Choose in context: two options",
+              "items": 6,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 4,
+              "exercise": "Complete: verb or prompt in brackets",
+              "items": 5,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 5,
+              "exercise": "Find and fix the mistake",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 6,
+              "exercise": "Rewrite with the target form",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App, with AI checking other correct answers"
+            },
+            {
+              "step": 7,
+              "exercise": "Light point: choose or reorder",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 8,
+              "exercise": "Use it yourself: two sentences about your own life, spoken or typed",
+              "items": 2,
+              "time": "3 min",
+              "markedBy": "AI, instant feedback and one retry"
+            },
+            {
+              "step": 9,
+              "exercise": "Spaced review: earlier grammar",
+              "items": 2,
+              "time": "1 min",
+              "markedBy": "App"
+            }
+          ],
+          "extraPractice": "Each week has 3 extra items. A learner who scores below 60% on steps 3-4 gets them before moving on; a learner who scores 90% or more on steps 3-4 skips step 6.",
+          "feedback": "Every item has a one-line reason, shown straight after the answer. Wrong answers become review cards. In steps 6 and 8 the AI accepts any correct answer that uses the target form, not only the key.",
+          "itemFormat": "Each item has an id, a step, a target (Main, Light or Review), the prompt, the options where there are any, the key, accepted variants, and the reason.",
+          "items": [
+            {
+              "id": "W2-M1",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"I'm meeting a careers adviser on Tuesday.\" Is this an arrangement already made, or a decision made now?",
+              "options": [
+                "arrangement",
+                "decision now"
+              ],
+              "key": "arrangement",
+              "accepted": [],
+              "reason": "The present continuous is used for fixed arrangements."
+            },
+            {
+              "id": "W2-M2",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"When I finish it, I'll apply.\" Is finishing the course in the present or the future?",
+              "options": [
+                "present",
+                "future"
+              ],
+              "key": "future",
+              "accepted": [],
+              "reason": "After when, use the present simple for the future."
+            },
+            {
+              "id": "W2-M3",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"If I had more time, I'd study full-time.\" Does the speaker have more time?",
+              "options": [
+                "Yes",
+                "No"
+              ],
+              "key": "No",
+              "accepted": [],
+              "reason": "The second conditional describes an imagined situation."
+            },
+            {
+              "id": "W2-C1",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "Look at those clouds! It ___ rain.",
+              "options": [
+                "'s going to",
+                "'s raining"
+              ],
+              "key": "'s going to",
+              "accepted": [],
+              "reason": "A prediction based on what you can see now."
+            },
+            {
+              "id": "W2-C2",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I ___ lunch with my sister tomorrow. We've booked a table.",
+              "options": [
+                "'m having",
+                "have"
+              ],
+              "key": "'m having",
+              "accepted": [],
+              "reason": "A fixed arrangement."
+            },
+            {
+              "id": "W2-C3",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "My flight ___ at 6 a.m., so I need to leave home at 4.",
+              "options": [
+                "leaves",
+                "is leave"
+              ],
+              "key": "leaves",
+              "accepted": [],
+              "reason": "Timetables use the present simple."
+            },
+            {
+              "id": "W2-C4",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "A: I've left my wallet at home. B: Don't worry, I ___ for the coffees.",
+              "options": [
+                "'ll pay",
+                "pay"
+              ],
+              "key": "'ll pay",
+              "accepted": [],
+              "reason": "An offer or decision made while speaking."
+            },
+            {
+              "id": "W2-C5",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I'll call you as soon as I ___ home.",
+              "options": [
+                "get",
+                "will get"
+              ],
+              "key": "get",
+              "accepted": [],
+              "reason": "After as soon as, use the present simple for the future."
+            },
+            {
+              "id": "W2-C6",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "I ___ start my own business one day. That's my plan.",
+              "options": [
+                "'m going to",
+                "'m starting"
+              ],
+              "key": "'m going to",
+              "accepted": [],
+              "reason": "An intention with no fixed arrangement yet."
+            },
+            {
+              "id": "W2-G1",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "We ___ (move) to Valencia next month. We've already signed the contract.",
+              "options": [],
+              "key": "'re moving",
+              "accepted": [
+                "are moving"
+              ],
+              "reason": "A fixed arrangement."
+            },
+            {
+              "id": "W2-G2",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "I'm sure you ___ (enjoy) the course.",
+              "options": [],
+              "key": "'ll enjoy",
+              "accepted": [
+                "will enjoy"
+              ],
+              "reason": "A prediction based on opinion."
+            },
+            {
+              "id": "W2-G3",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Before I ___ (start) my new job, I'm going to take a holiday.",
+              "options": [],
+              "key": "start",
+              "accepted": [],
+              "reason": "After before, use the present simple for the future."
+            },
+            {
+              "id": "W2-G4",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "I ___ (not / come) to the meeting on Friday. I've got a dentist's appointment.",
+              "options": [],
+              "key": "'m not coming",
+              "accepted": [
+                "am not coming"
+              ],
+              "reason": "A fixed arrangement."
+            },
+            {
+              "id": "W2-G5",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Wait, I ___ (help) you carry that.",
+              "options": [],
+              "key": "'ll help",
+              "accepted": [
+                "will help"
+              ],
+              "reason": "An offer made while speaking."
+            },
+            {
+              "id": "W2-F1",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "I'll tell you when I will know the results.",
+              "options": [],
+              "key": "I'll tell you when I know the results.",
+              "accepted": [],
+              "reason": "After when, use the present simple for the future."
+            },
+            {
+              "id": "W2-F2",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "I can't come on Saturday. I will visit my parents. We arranged it last week.",
+              "options": [],
+              "key": "I'm visiting my parents.",
+              "accepted": [],
+              "reason": "It was arranged, so use the present continuous."
+            },
+            {
+              "id": "W2-F3",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "We're go to the cinema tonight.",
+              "options": [],
+              "key": "We're going to the cinema tonight.",
+              "accepted": [],
+              "reason": "The present continuous needs the -ing form."
+            },
+            {
+              "id": "W2-R1",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "My plan: find a new flat. (going to)",
+              "options": [],
+              "key": "I'm going to find a new flat.",
+              "accepted": [],
+              "reason": "An intention."
+            },
+            {
+              "id": "W2-R2",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "Finish work, then phone you. (as soon as)",
+              "options": [],
+              "key": "I'll phone you as soon as I finish work.",
+              "accepted": [
+                "As soon as I finish work, I'll phone you."
+              ],
+              "reason": "Will in the main clause, present simple after as soon as."
+            },
+            {
+              "id": "W2-R3",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "Meeting with Ana, Thursday 3 p.m., booked. (present continuous)",
+              "options": [],
+              "key": "I'm meeting Ana on Thursday at 3 p.m.",
+              "accepted": [],
+              "reason": "A fixed arrangement."
+            },
+            {
+              "id": "W2-L1",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "If you heat ice, it ___.",
+              "options": [
+                "melts",
+                "would melt"
+              ],
+              "key": "melts",
+              "accepted": [],
+              "reason": "Zero conditional: always true."
+            },
+            {
+              "id": "W2-L2",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "If it ___ tomorrow, we'll stay at home.",
+              "options": [
+                "rains",
+                "will rain"
+              ],
+              "key": "rains",
+              "accepted": [],
+              "reason": "First conditional: present simple after if."
+            },
+            {
+              "id": "W2-L3",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "If I ___ you, I'd take the job.",
+              "options": [
+                "were",
+                "am"
+              ],
+              "key": "were",
+              "accepted": [
+                "was"
+              ],
+              "reason": "Second conditional: an imagined situation."
+            },
+            {
+              "id": "W2-U1",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Tell me one plan you have for next month and one thing you've already arranged.",
+              "options": [],
+              "key": "Correct sentences with going to and the present continuous",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W2-U2",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "What would you do if you had a free year with no work or study?",
+              "options": [],
+              "key": "A correct second conditional",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W2-V1",
+              "step": "Review (Week 1)",
+              "target": "Review",
+              "prompt": "I ___ in this city since 2021.",
+              "options": [
+                "'ve lived",
+                "lived"
+              ],
+              "key": "'ve lived",
+              "accepted": [],
+              "reason": "Up to now with since."
+            },
+            {
+              "id": "W2-V2",
+              "step": "Review (Week 1)",
+              "target": "Review",
+              "prompt": "When I was young, I ___ love cartoons.",
+              "options": [
+                "used to",
+                "would"
+              ],
+              "key": "used to",
+              "accepted": [],
+              "reason": "Love is a state, so would is not possible."
+            },
+            {
+              "id": "W2-E1",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "I ___ (see) the doctor at 10 tomorrow. It's booked.",
+              "options": [],
+              "key": "'m seeing",
+              "accepted": [
+                "am seeing"
+              ],
+              "reason": "A fixed arrangement."
+            },
+            {
+              "id": "W2-E2",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "I think it ___ (be) sunny at the weekend.",
+              "options": [],
+              "key": "'ll be",
+              "accepted": [
+                "will be"
+              ],
+              "reason": "A prediction based on opinion."
+            },
+            {
+              "id": "W2-E3",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "Call me after you ___ (land).",
+              "options": [],
+              "key": "land",
+              "accepted": [],
+              "reason": "After after, use the present simple for the future."
+            }
+          ]
+        }
       },
       "speaking": {
-        "prompt": "Share one goal, one step already arranged, what you'll do when that step is complete, and what you'll do if the plan changes.",
-        "model": "My goal is to start a career in design. I intend to take a short course this spring, and I'm meeting someone from the college on Thursday. I'm looking forward to seeing some of the students' work. A friend who did the course has offered to help me choose a project. I think it'll be hard work, but it'll be worth it. When I finish the course, I'll apply for a few junior roles and use my project to show what I can do. If I don't get a place this spring, I'll take an evening class instead. And if I had more free time, I'd study full-time, but I need to keep working for now.",
-        "b2Stretch": "Explain why the goal matters and weigh two alternatives, without the cue card."
+        "status": "pilot draft — pending second-teacher review",
+        "main": "future forms.",
+        "light": "conditionals 0-2 (review).",
+        "featured": [
+          "goal",
+          "intend to",
+          "career",
+          "look forward to."
+        ],
+        "flow": {
+          "shadowingWarmup": "3 min; listen to three short chunks from the model answer at normal and slower speed, repeat each, then compare your recording with the model. Self-check against a short prosody checklist; never scored.",
+          "plan": "2 min; read the cue card, note key words if you like; the model answer is hidden.",
+          "record": "60-90 s; one recording covering every cue point; AI marked against the descriptors.",
+          "feedbackAndRetry": "5 min; a band for each criterion, one strength, one specific correction; then record again, with the model available to compare. AI; a teacher confirms flagged recordings.",
+          "conversation": "Any time in the week (recommended); 15 min; 3-4 learner turns with the AI partner, then feedback and one retried turn; AI.",
+          "unlocking": "The speaking task counts once the first recording is submitted; the retry is encouraged, not required."
+        },
+        "prompt": "Tell me about a goal you have. What have you already arranged, what will you do when that step is complete, and what will you do if the plan changes?",
+        "cueCard": "My goal · Already arranged · When it's done... · If it doesn't work out...",
+        "phraseBank": [
+          "My goal is to...",
+          "I intend to...",
+          "I'm going to...",
+          "I'm meeting / starting... on...",
+          "I'm really looking forward to...",
+          "When I finish..., I'll...",
+          "As soon as..., I'll...",
+          "If it doesn't work out, I'll...",
+          "If I had..., I'd..."
+        ],
+        "model": "> My goal is to start a career in design. I intend to take a short course this spring, and I'm meeting someone from the college on Thursday. I'm looking forward to seeing some of the students' work. A friend who did the course has offered to help me choose a project. I think it'll be hard work, but it'll be worth it. When I finish the course, I'll apply for a few junior roles and use my project to show what I can do. If I don't get a place this spring, I'll take an evening class instead. And if I had more free time, I'd study full-time, but I need to keep working for now.",
+        "onTarget": "covers all four cue points; uses at least two different future forms correctly; uses a first or second conditional; uses two featured items.",
+        "correctionPriority": "1) will after when, as soon as or if (when I will finish); 2) going to vs present continuous for arrangements; 3) look forward to + -ing.",
+        "shadowingChunks": [
+          {
+            "chunk": "I'm looking forward to seeing their work.",
+            "listenFor": "to is weak (\"tuh\"); stress on look, for and see"
+          },
+          {
+            "chunk": "When I finish the course, I'll apply.",
+            "listenFor": "the short I'll; a small pause after course"
+          },
+          {
+            "chunk": "If I had more free time, I'd study full-time.",
+            "listenFor": "the short I'd; rising tone after time, falling at the end"
+          }
+        ],
+        "conversation": {
+          "title": "a colleague asks about plans",
+          "turns": [
+            {
+              "partner": "So, any plans for the next few months?",
+              "learner": "Give a goal (going to, intend to)",
+              "followUp": "Oh nice. Why that?"
+            },
+            {
+              "partner": "That sounds great. Have you arranged anything yet?",
+              "learner": "Describe an arrangement (present continuous)",
+              "followUp": "When is that happening?"
+            },
+            {
+              "partner": "And what happens after that?",
+              "learner": "Say the next step (when / as soon as + will)",
+              "followUp": "What will you do first?"
+            },
+            {
+              "partner": "What if it doesn't work out?",
+              "learner": "Give a back-up plan (first conditional)",
+              "followUp": "And if you could do anything at all? (second conditional)"
+            }
+          ],
+          "closingLine": "Good luck with it. Let me know how Thursday goes!",
+          "naturalRecastExample": "learner \"When I will finish, I start looking for work.\" Partner: \"Ah, so when you finish, you'll start looking for work?\""
+        },
+        "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?",
+        "b2Stretch": "explain why the goal matters and weigh two alternatives, without the cue card."
       },
       "writing": {
         "words": [
@@ -523,34 +1500,511 @@
       ],
       "stretchPhrases": [],
       "grammar": {
-        "main": "have to for a requirement, mustn't for something forbidden, don't have to for optional; should for advice; can/can't now and could/couldn't for general past ability; 'Can/Could I...?' to ask permission and 'Yes, you can' / 'Sorry, you can't' to answer.",
-        "light": "Question forms: auxiliary before subject ('What time do you usually get home?'), no do in subject questions ('Who takes the bins out?'), statement word order after 'Could you tell me...?'. Basic linkers: on the other hand, in fact, apart from that.",
-        "sampleItems": [
-          {
-            "prompt": "Taking turns cooking is optional. You ___ cook on Mondays.",
-            "options": [
-              "mustn't",
-              "don't have to"
-            ],
-            "key": "don't have to",
-            "reason": "Cooking is allowed, not required."
+        "main": "modals of obligation, advice, ability, permission.",
+        "light": "question forms; basic linkers.",
+        "sampleItems": [],
+        "authoringNote": "For a specific past success use was able to or managed to, not could; couldn't works for a specific failure. Keep this contrast as a B2 note, not a scored item.",
+        "practice": {
+          "status": "pilot draft — pending second-teacher review",
+          "durationMinutes": 20,
+          "notice": {
+            "text": "Welcome to the flat! A few things: we have to put the bins out on Thursdays, and you mustn't smoke inside. You don't have to join us for dinner, but you're always welcome. You can use the washing machine until 10 p.m. If anything breaks, you should ask Tom. He can fix almost anything! Could you tell me when you're arriving? Apart from that, just make yourself at home.",
+            "targetForms": "eight",
+            "markedBy": "App"
           },
-          {
-            "prompt": "___ the bins out on Thursdays?",
-            "options": [
-              "Who takes",
-              "Who does take"
-            ],
-            "key": "Who takes",
-            "reason": "Who is the subject."
-          }
-        ],
-        "authoringNote": "For a specific past success use was able to or managed to, not could; couldn't works for a specific failure. Keep this contrast as a B2 note, not a scored item."
+          "steps": [
+            {
+              "step": 1,
+              "exercise": "Notice: listen to and read a short text, tap the target forms",
+              "items": "1 text",
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 2,
+              "exercise": "Check the meaning: short questions about what the form means",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 3,
+              "exercise": "Choose in context: two options",
+              "items": 6,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 4,
+              "exercise": "Complete: verb or prompt in brackets",
+              "items": 5,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 5,
+              "exercise": "Find and fix the mistake",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 6,
+              "exercise": "Rewrite with the target form",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App, with AI checking other correct answers"
+            },
+            {
+              "step": 7,
+              "exercise": "Light point: choose or reorder",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 8,
+              "exercise": "Use it yourself: two sentences about your own life, spoken or typed",
+              "items": 2,
+              "time": "3 min",
+              "markedBy": "AI, instant feedback and one retry"
+            },
+            {
+              "step": 9,
+              "exercise": "Spaced review: earlier grammar",
+              "items": 2,
+              "time": "1 min",
+              "markedBy": "App"
+            }
+          ],
+          "extraPractice": "Each week has 3 extra items. A learner who scores below 60% on steps 3-4 gets them before moving on; a learner who scores 90% or more on steps 3-4 skips step 6.",
+          "feedback": "Every item has a one-line reason, shown straight after the answer. Wrong answers become review cards. In steps 6 and 8 the AI accepts any correct answer that uses the target form, not only the key.",
+          "itemFormat": "Each item has an id, a step, a target (Main, Light or Review), the prompt, the options where there are any, the key, accepted variants, and the reason.",
+          "items": [
+            {
+              "id": "W3-M1",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"You don't have to join us for dinner.\" Is dinner required, optional or not allowed?",
+              "options": [
+                "required",
+                "optional",
+                "not allowed"
+              ],
+              "key": "optional",
+              "accepted": [],
+              "reason": "Don't have to means it isn't necessary."
+            },
+            {
+              "id": "W3-M2",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"You mustn't smoke inside.\" Is smoking inside optional or not allowed?",
+              "options": [
+                "optional",
+                "not allowed"
+              ],
+              "key": "not allowed",
+              "accepted": [],
+              "reason": "Mustn't means it is forbidden."
+            },
+            {
+              "id": "W3-M3",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"He can fix almost anything.\" Is this about ability or permission?",
+              "options": [
+                "ability",
+                "permission"
+              ],
+              "key": "ability",
+              "accepted": [],
+              "reason": "Here can describes what Tom is able to do."
+            },
+            {
+              "id": "W3-C1",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "You ___ wear a seatbelt in a car. It's the law.",
+              "options": [
+                "have to",
+                "should"
+              ],
+              "key": "have to",
+              "accepted": [],
+              "reason": "A rule, not just advice."
+            },
+            {
+              "id": "W3-C2",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "It's a free museum, so you ___ pay.",
+              "options": [
+                "don't have to",
+                "mustn't"
+              ],
+              "key": "don't have to",
+              "accepted": [],
+              "reason": "Paying isn't necessary, but it isn't forbidden."
+            },
+            {
+              "id": "W3-C3",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "You look tired. You ___ go to bed early.",
+              "options": [
+                "should",
+                "have to"
+              ],
+              "key": "should",
+              "accepted": [],
+              "reason": "Advice, not a rule."
+            },
+            {
+              "id": "W3-C4",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "___ I use your phone? Mine's dead.",
+              "options": [
+                "Could",
+                "Must"
+              ],
+              "key": "Could",
+              "accepted": [],
+              "reason": "Asking for permission."
+            },
+            {
+              "id": "W3-C5",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "When I was ten, I ___ swim very well.",
+              "options": [
+                "could",
+                "can"
+              ],
+              "key": "could",
+              "accepted": [],
+              "reason": "General ability in the past."
+            },
+            {
+              "id": "W3-C6",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "Passengers ___ use their phones during take-off.",
+              "options": [
+                "mustn't",
+                "don't have to"
+              ],
+              "key": "mustn't",
+              "accepted": [],
+              "reason": "It is forbidden."
+            },
+            {
+              "id": "W3-G1",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "I ___ (have to / work) late tomorrow, so I can't come.",
+              "options": [],
+              "key": "have to work",
+              "accepted": [],
+              "reason": "A requirement."
+            },
+            {
+              "id": "W3-G2",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "You ___ (not / have to / bring) anything. We've got plenty of food.",
+              "options": [],
+              "key": "don't have to bring",
+              "accepted": [],
+              "reason": "Not necessary."
+            },
+            {
+              "id": "W3-G3",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Sorry, I ___ (can / not / hear) you. Can you speak up?",
+              "options": [],
+              "key": "can't hear",
+              "accepted": [
+                "cannot hear"
+              ],
+              "reason": "Ability, negative."
+            },
+            {
+              "id": "W3-G4",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "I think you ___ (should / talk) to your manager about it.",
+              "options": [],
+              "key": "should talk",
+              "accepted": [],
+              "reason": "Advice."
+            },
+            {
+              "id": "W3-G5",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "___ I ___ (can / borrow) your charger?",
+              "options": [],
+              "key": "Can I borrow",
+              "accepted": [],
+              "reason": "A permission question: can before the subject."
+            },
+            {
+              "id": "W3-F1",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "You must to show your ticket.",
+              "options": [],
+              "key": "You must show your ticket.",
+              "accepted": [],
+              "reason": "Modals are followed by the verb without to."
+            },
+            {
+              "id": "W3-F2",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "She can speaks three languages.",
+              "options": [],
+              "key": "She can speak three languages.",
+              "accepted": [],
+              "reason": "No -s after a modal."
+            },
+            {
+              "id": "W3-F3",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "Do I can leave early today?",
+              "options": [],
+              "key": "Can I leave early today?",
+              "accepted": [],
+              "reason": "Modals make questions without do."
+            },
+            {
+              "id": "W3-R1",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "It isn't necessary to book a table. (don't have to)",
+              "options": [],
+              "key": "You don't have to book a table.",
+              "accepted": [
+                "We don't have to book a table."
+              ],
+              "reason": "Not necessary."
+            },
+            {
+              "id": "W3-R2",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "Smoking is not allowed here. (mustn't)",
+              "options": [],
+              "key": "You mustn't smoke here.",
+              "accepted": [],
+              "reason": "Forbidden."
+            },
+            {
+              "id": "W3-R3",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "Is it OK if I sit here? (Could)",
+              "options": [],
+              "key": "Could I sit here?",
+              "accepted": [],
+              "reason": "A polite permission question."
+            },
+            {
+              "id": "W3-L1",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "Put the words in order: What time / you / usually / do / get home?",
+              "options": [],
+              "key": "What time do you usually get home?",
+              "accepted": [],
+              "reason": "Auxiliary before the subject in questions."
+            },
+            {
+              "id": "W3-L2",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "___ the bins out on Thursdays?",
+              "options": [
+                "Who takes",
+                "Who does take"
+              ],
+              "key": "Who takes",
+              "accepted": [],
+              "reason": "Who is the subject, so no do."
+            },
+            {
+              "id": "W3-L3",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "The flat is small. ___, it's very close to the station.",
+              "options": [
+                "On the other hand",
+                "Apart from that"
+              ],
+              "key": "On the other hand",
+              "accepted": [],
+              "reason": "It introduces a contrasting point."
+            },
+            {
+              "id": "W3-U1",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Tell a new flatmate one thing they have to do, one thing they mustn't do and one thing they don't have to do.",
+              "options": [],
+              "key": "Correct sentences with have to, mustn't and don't have to",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W3-U2",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Ask your new flatmate two questions about their routine.",
+              "options": [],
+              "key": "Two correctly formed questions",
+              "accepted": [],
+              "reason": "AI checks word order and gives one correction."
+            },
+            {
+              "id": "W3-V1",
+              "step": "Review (Week 2)",
+              "target": "Review",
+              "prompt": "I'll text you when I ___ at the station.",
+              "options": [
+                "arrive",
+                "will arrive"
+              ],
+              "key": "arrive",
+              "accepted": [],
+              "reason": "After when, use the present simple for the future."
+            },
+            {
+              "id": "W3-V2",
+              "step": "Review (Week 1)",
+              "target": "Review",
+              "prompt": "By the time we got there, the shop ___.",
+              "options": [
+                "had closed",
+                "has closed"
+              ],
+              "key": "had closed",
+              "accepted": [],
+              "reason": "It closed before we arrived."
+            },
+            {
+              "id": "W3-E1",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "Students ___ (not / have to) wear a uniform at this school.",
+              "options": [],
+              "key": "don't have to",
+              "accepted": [],
+              "reason": "It isn't required."
+            },
+            {
+              "id": "W3-E2",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "You ___ (mustn't / touch) the paintings.",
+              "options": [],
+              "key": "mustn't touch",
+              "accepted": [],
+              "reason": "It is forbidden."
+            },
+            {
+              "id": "W3-E3",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "___ I ___ (could / ask) you a question?",
+              "options": [],
+              "key": "Could I ask",
+              "accepted": [],
+              "reason": "A polite permission question."
+            }
+          ]
+        }
       },
       "speaking": {
-        "prompt": "Record a 60–90 second welcome to a new flatmate who arrives tomorrow: explain one shared responsibility, one rule and one optional routine, give one piece of advice, and end with a question for them. The flatmate back-and-forth is the conversation task, not this recording.",
-        "model": "Welcome to the flat! There are a few things you need to know. We have to clean up after cooking, and we mustn't leave the cooker on when we go out. You don't have to cook for everyone, but we usually eat together on Fridays. You can use the washing machine until ten. The neighbours can hear it through the wall, so if you need it later, please ask them politely first. I couldn't cook at all when I moved in, so don't worry if you're still learning. I think we should arrange a cleaning rota around our work hours. Apart from that, there's no fixed routine. We all get on with each other really well, so if you're not sure about something, just ask. What time do you usually get home, by the way?",
-        "b2Stretch": "Add a likely problem (noise, guests, bills) and suggest a compromise, without the cue card."
+        "status": "pilot draft — pending second-teacher review",
+        "main": "modals of obligation, advice, ability, permission.",
+        "light": "question forms; basic linkers.",
+        "featured": [
+          "get on with",
+          "arrange",
+          "routine",
+          "politely."
+        ],
+        "flow": {
+          "shadowingWarmup": "3 min; listen to three short chunks from the model answer at normal and slower speed, repeat each, then compare your recording with the model. Self-check against a short prosody checklist; never scored.",
+          "plan": "2 min; read the cue card, note key words if you like; the model answer is hidden.",
+          "record": "60-90 s; one recording covering every cue point; AI marked against the descriptors.",
+          "feedbackAndRetry": "5 min; a band for each criterion, one strength, one specific correction; then record again, with the model available to compare. AI; a teacher confirms flagged recordings.",
+          "conversation": "Any time in the week (recommended); 15 min; 3-4 learner turns with the AI partner, then feedback and one retried turn; AI.",
+          "unlocking": "The speaking task counts once the first recording is submitted; the retry is encouraged, not required."
+        },
+        "prompt": "A new flatmate arrives tomorrow. Record a welcome: explain one shared responsibility, one rule and one optional routine, give one piece of advice, and end with a question for them.",
+        "cueCard": "A shared job · A rule · Something optional · Advice · A question for them",
+        "phraseBank": [
+          "We have to...",
+          "You mustn't...",
+          "You don't have to..., but...",
+          "You can... until...",
+          "You should...",
+          "If you need..., just ask politely",
+          "Apart from that,...",
+          "What time do you usually...?",
+          "Could you tell me...?"
+        ],
+        "model": "> Welcome to the flat! There are a few things you need to know. We have to clean up after cooking, and we mustn't leave the cooker on when we go out. You don't have to cook for everyone, but we usually eat together on Fridays. You can use the washing machine until ten. The neighbours can hear it through the wall, so if you need it later, please ask them politely first. I couldn't cook at all when I moved in, so don't worry if you're still learning. I think we should arrange a cleaning rota around our work hours. Apart from that, there's no fixed routine. We all get on with each other really well, so if you're not sure about something, just ask. What time do you usually get home, by the way?",
+        "onTarget": "covers all five cue points; uses have to, mustn't and don't have to correctly at least once between them; gives advice with should; ends with a correctly formed question; uses two featured items.",
+        "correctionPriority": "1) mustn't vs don't have to; 2) to after a modal (must to); 3) question word order.",
+        "shadowingChunks": [
+          {
+            "chunk": "You don't have to cook for everyone.",
+            "listenFor": "stress on don't and cook; to is weak (\"tuh\")"
+          },
+          {
+            "chunk": "We mustn't leave the cooker on.",
+            "listenFor": "the first t in mustn't is silent (\"mussnt\")"
+          },
+          {
+            "chunk": "What time do you usually get home?",
+            "listenFor": "do you runs together (\"dyuh\"); the voice falls at the end"
+          }
+        ],
+        "conversation": {
+          "title": "a new flatmate's first evening",
+          "turns": [
+            {
+              "partner": "Hi! Is there anything I need to know about the kitchen?",
+              "learner": "Explain a rule or a shared job (have to, mustn't)",
+              "followUp": "Anything else, like the bins?"
+            },
+            {
+              "partner": "I sometimes work late. Could I use the washing machine tonight?",
+              "learner": "Answer the permission request with a reason (can, can't, can hear)",
+              "followUp": "Is there a time when it's a problem?"
+            },
+            {
+              "partner": "Great. Is there anything I don't need to worry about?",
+              "learner": "Mention something optional (don't have to; apart from that)",
+              "followUp": "What about cooking?"
+            },
+            {
+              "partner": "Do you want to ask me anything?",
+              "learner": "Ask a correctly formed question about their routine",
+              "followUp": "(answers, e.g. \"About nine, most days\") So how should we organise the cleaning?"
+            }
+          ],
+          "closingLine": "Thanks, that's really helpful. I think I'm going to like it here!",
+          "naturalRecastExample": "learner \"You must to clean the kitchen.\" Partner: \"Right, so I must clean the kitchen after cooking. No problem.\""
+        },
+        "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional.",
+        "b2Stretch": "add a likely problem (noise, guests or bills) and suggest a compromise, without the cue card."
       },
       "writing": {
         "words": [
@@ -732,36 +2186,519 @@
       ],
       "stretchPhrases": [],
       "grammar": {
-        "main": "be + past participle in present and past simple. Use the passive to focus on the place, event or result; add by + agent only if it matters. Contrast 'is held' with 'was built', and keep 'It happened' active.",
-        "light": "Defining relative clauses with who, which, that and where; comparatives and superlatives including irregular better/best and worse/worst. Non-defining clauses are recognition only for now.",
-        "sampleItems": [
-          {
-            "prompt": "The craft market ___ in the main square every Sunday.",
-            "options": [
-              "is held",
-              "was held",
-              "is hold"
-            ],
-            "key": "is held",
-            "reason": "Present passive for a regular event."
+        "main": "passive voice (present and past simple).",
+        "light": "relative clauses; comparatives and superlatives.",
+        "sampleItems": [],
+        "authoringNote": "Use a guide-card cue such as 'Market hall / build / 1890' in controlled practice. In free speech accept natural active wording; don't require a set number of passives.",
+        "practice": {
+          "status": "pilot draft — pending second-teacher review",
+          "durationMinutes": 20,
+          "notice": {
+            "text": "Toledo is one of the oldest cities in Spain. Work on its cathedral was started in 1226, and today the city is visited by thousands of tourists every year. Marzipan is made in local convents and bakeries, and it is sold in shops all over the old town. The best time to go is spring, when it's quieter than in summer. There's a viewpoint where you can see the whole city.",
+            "targetForms": "eight",
+            "markedBy": "App"
           },
-          {
-            "prompt": "It's ___ market in the region.",
-            "options": [
-              "the biggest",
-              "the bigger",
-              "the most big"
-            ],
-            "key": "the biggest",
-            "reason": "Superlative with the."
-          }
-        ],
-        "authoringNote": "Use a guide-card cue such as 'Market hall / build / 1890' in controlled practice. In free speech accept natural active wording; don't require a set number of passives."
+          "steps": [
+            {
+              "step": 1,
+              "exercise": "Notice: listen to and read a short text, tap the target forms",
+              "items": "1 text",
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 2,
+              "exercise": "Check the meaning: short questions about what the form means",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 3,
+              "exercise": "Choose in context: two options",
+              "items": 6,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 4,
+              "exercise": "Complete: verb or prompt in brackets",
+              "items": 5,
+              "time": "3 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 5,
+              "exercise": "Find and fix the mistake",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 6,
+              "exercise": "Rewrite with the target form",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App, with AI checking other correct answers"
+            },
+            {
+              "step": 7,
+              "exercise": "Light point: choose or reorder",
+              "items": 3,
+              "time": "2 min",
+              "markedBy": "App"
+            },
+            {
+              "step": 8,
+              "exercise": "Use it yourself: two sentences about your own life, spoken or typed",
+              "items": 2,
+              "time": "3 min",
+              "markedBy": "AI, instant feedback and one retry"
+            },
+            {
+              "step": 9,
+              "exercise": "Spaced review: earlier grammar",
+              "items": 2,
+              "time": "1 min",
+              "markedBy": "App"
+            }
+          ],
+          "extraPractice": "Each week has 3 extra items. A learner who scores below 60% on steps 3-4 gets them before moving on; a learner who scores 90% or more on steps 3-4 skips step 6.",
+          "feedback": "Every item has a one-line reason, shown straight after the answer. Wrong answers become review cards. In steps 6 and 8 the AI accepts any correct answer that uses the target form, not only the key.",
+          "itemFormat": "Each item has an id, a step, a target (Main, Light or Review), the prompt, the options where there are any, the key, accepted variants, and the reason.",
+          "items": [
+            {
+              "id": "W4-M1",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"Marzipan is made in local convents and bakeries.\" What is the sentence mainly about?",
+              "options": [
+                "the marzipan",
+                "the people who make it"
+              ],
+              "key": "the marzipan",
+              "accepted": [],
+              "reason": "The passive puts the focus on the thing, not the person doing the action."
+            },
+            {
+              "id": "W4-M2",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"Work on its cathedral was started in 1226.\" Present or past?",
+              "options": [
+                "present",
+                "past"
+              ],
+              "key": "past",
+              "accepted": [],
+              "reason": "Was + past participle is the past simple passive."
+            },
+            {
+              "id": "W4-M3",
+              "step": "Meaning",
+              "target": "Main",
+              "prompt": "\"There's a viewpoint where you can see the whole city.\" What does where refer to?",
+              "options": [
+                "the city",
+                "the viewpoint"
+              ],
+              "key": "the viewpoint",
+              "accepted": [],
+              "reason": "Where introduces information about a place."
+            },
+            {
+              "id": "W4-C1",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "English ___ in many countries.",
+              "options": [
+                "is spoken",
+                "speaks"
+              ],
+              "key": "is spoken",
+              "accepted": [],
+              "reason": "The language is the focus; people speak it."
+            },
+            {
+              "id": "W4-C2",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "This bridge ___ in 1890.",
+              "options": [
+                "was built",
+                "is built"
+              ],
+              "key": "was built",
+              "accepted": [],
+              "reason": "Past time, passive."
+            },
+            {
+              "id": "W4-C3",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "The rooms ___ every morning.",
+              "options": [
+                "are cleaned",
+                "are cleaning"
+              ],
+              "key": "are cleaned",
+              "accepted": [],
+              "reason": "Rooms don't clean; someone cleans them."
+            },
+            {
+              "id": "W4-C4",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "The thieves ___ by the police yesterday.",
+              "options": [
+                "were caught",
+                "caught"
+              ],
+              "key": "were caught",
+              "accepted": [],
+              "reason": "The police did the action; the thieves received it."
+            },
+            {
+              "id": "W4-C5",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "My bike ___ last night!",
+              "options": [
+                "was stolen",
+                "stole"
+              ],
+              "key": "was stolen",
+              "accepted": [],
+              "reason": "Someone stole it; we don't know who."
+            },
+            {
+              "id": "W4-C6",
+              "step": "Choose",
+              "target": "Main",
+              "prompt": "Paella ___ in the pan it is cooked in.",
+              "options": [
+                "is usually served",
+                "usually serves"
+              ],
+              "key": "is usually served",
+              "accepted": [],
+              "reason": "Someone serves the paella."
+            },
+            {
+              "id": "W4-G1",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "The festival ___ (hold) every August.",
+              "options": [],
+              "key": "is held",
+              "accepted": [],
+              "reason": "Present passive; hold, held, held."
+            },
+            {
+              "id": "W4-G2",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "The letters ___ (deliver) yesterday afternoon.",
+              "options": [],
+              "key": "were delivered",
+              "accepted": [],
+              "reason": "Past passive, plural subject."
+            },
+            {
+              "id": "W4-G3",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "These photos ___ (take) by my grandfather in 1975.",
+              "options": [],
+              "key": "were taken",
+              "accepted": [],
+              "reason": "Past passive; take, took, taken."
+            },
+            {
+              "id": "W4-G4",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Breakfast ___ (not / include) in the price.",
+              "options": [],
+              "key": "isn't included",
+              "accepted": [
+                "is not included"
+              ],
+              "reason": "Present passive, negative."
+            },
+            {
+              "id": "W4-G5",
+              "step": "Complete",
+              "target": "Main",
+              "prompt": "Where ___ your car ___ (make)?",
+              "options": [],
+              "key": [
+                "was",
+                "made"
+              ],
+              "accepted": [
+                [],
+                []
+              ],
+              "reason": "Past passive question."
+            },
+            {
+              "id": "W4-F1",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "The museum was build in 1920.",
+              "options": [],
+              "key": "The museum was built in 1920.",
+              "accepted": [],
+              "reason": "The passive needs the past participle."
+            },
+            {
+              "id": "W4-F2",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "The windows are clean every week.",
+              "options": [],
+              "key": "The windows are cleaned every week.",
+              "accepted": [],
+              "reason": "Someone cleans them: use the past participle."
+            },
+            {
+              "id": "W4-F3",
+              "step": "Fix",
+              "target": "Main",
+              "prompt": "The castle visited by thousands of tourists every year.",
+              "options": [],
+              "key": "The castle is visited by thousands of tourists every year.",
+              "accepted": [],
+              "reason": "The passive needs be."
+            },
+            {
+              "id": "W4-R1",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "They built the castle in the 12th century. (passive)",
+              "options": [],
+              "key": "The castle was built in the 12th century.",
+              "accepted": [],
+              "reason": "The castle is the focus."
+            },
+            {
+              "id": "W4-R2",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "People grow oranges in this region. (passive)",
+              "options": [],
+              "key": "Oranges are grown in this region.",
+              "accepted": [],
+              "reason": "\"People\" adds nothing, so leave it out."
+            },
+            {
+              "id": "W4-R3",
+              "step": "Rewrite",
+              "target": "Main",
+              "prompt": "Someone stole my wallet on the train. (passive)",
+              "options": [],
+              "key": "My wallet was stolen on the train.",
+              "accepted": [],
+              "reason": "We don't know who did it."
+            },
+            {
+              "id": "W4-L1",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "That's the restaurant ___ we had our first date.",
+              "options": [
+                "where",
+                "which"
+              ],
+              "key": "where",
+              "accepted": [],
+              "reason": "Where for a place followed by a full clause."
+            },
+            {
+              "id": "W4-L2",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "The woman ___ lives next door is a doctor.",
+              "options": [
+                "who",
+                "which"
+              ],
+              "key": "who",
+              "accepted": [
+                "that"
+              ],
+              "reason": "Who for people."
+            },
+            {
+              "id": "W4-L3",
+              "step": "Light",
+              "target": "Light",
+              "prompt": "The old town is ___ the new town.",
+              "options": [
+                "more beautiful than",
+                "the most beautiful"
+              ],
+              "key": "more beautiful than",
+              "accepted": [],
+              "reason": "Comparing two places."
+            },
+            {
+              "id": "W4-U1",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Describe a famous building or place in your town: when was it built, and what happens there now?",
+              "options": [],
+              "key": "Correct present and past passive sentences",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W4-U2",
+              "step": "Use it",
+              "target": "Main",
+              "prompt": "Compare your town with another place you know. Which do you like best?",
+              "options": [],
+              "key": "A correct comparative and superlative",
+              "accepted": [],
+              "reason": "AI checks the form and gives one correction."
+            },
+            {
+              "id": "W4-V1",
+              "step": "Review (Week 3)",
+              "target": "Review",
+              "prompt": "You ___ pay for the museum on Sundays. It's free.",
+              "options": [
+                "don't have to",
+                "mustn't"
+              ],
+              "key": "don't have to",
+              "accepted": [],
+              "reason": "Not necessary, but not forbidden."
+            },
+            {
+              "id": "W4-V2",
+              "step": "Review (Week 2)",
+              "target": "Review",
+              "prompt": "If I ___ more money, I'd travel more.",
+              "options": [
+                "had",
+                "have"
+              ],
+              "key": "had",
+              "accepted": [],
+              "reason": "Second conditional."
+            },
+            {
+              "id": "W4-E1",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "Coffee ___ (grow) in Colombia.",
+              "options": [],
+              "key": "is grown",
+              "accepted": [],
+              "reason": "Present passive for a general fact."
+            },
+            {
+              "id": "W4-E2",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "The film ___ (direct) by a young Spanish director.",
+              "options": [],
+              "key": "was directed",
+              "accepted": [],
+              "reason": "Past passive with by."
+            },
+            {
+              "id": "W4-E3",
+              "step": "Extra",
+              "target": "Extra",
+              "prompt": "The old station ___ (turn) into a museum in 2005.",
+              "options": [],
+              "key": "was turned",
+              "accepted": [],
+              "reason": "Past passive."
+            }
+          ]
+        }
       },
       "speaking": {
-        "prompt": "Record a 60–90 second guide for a first-time visitor. Include a regular event or custom, one fact about the past, one comparison and a recommendation. Don't require a set number of passives.",
-        "model": "If you visit this town, start at the market hall. It was built in 1890, and the food market is held there every Saturday. It's a local tradition, and you can try food from nearby farms. It's the busiest place in town on a Saturday morning, so I'd set off early. There's also a local custom that surprises visitors: most shops are closed on Wednesday afternoons, so plan your shopping for another day. Afterwards, take a walk by the river. It's quieter than the centre, and it's the spot where I go to relax. The town isn't a famous destination, but it's one of the friendliest places I know.",
-        "b2Stretch": "Add extra information with a non-defining clause, such as 'The market hall, which was built in 1890, ...'. Accept it, but don't require it."
+        "status": "pilot draft — pending second-teacher review",
+        "main": "passive voice (present and past simple).",
+        "light": "relative clauses; comparatives and superlatives.",
+        "featured": [
+          "local",
+          "custom",
+          "destination",
+          "tradition",
+          "set off."
+        ],
+        "flow": {
+          "shadowingWarmup": "3 min; listen to three short chunks from the model answer at normal and slower speed, repeat each, then compare your recording with the model. Self-check against a short prosody checklist; never scored.",
+          "plan": "2 min; read the cue card, note key words if you like; the model answer is hidden.",
+          "record": "60-90 s; one recording covering every cue point; AI marked against the descriptors.",
+          "feedbackAndRetry": "5 min; a band for each criterion, one strength, one specific correction; then record again, with the model available to compare. AI; a teacher confirms flagged recordings.",
+          "conversation": "Any time in the week (recommended); 15 min; 3-4 learner turns with the AI partner, then feedback and one retried turn; AI.",
+          "unlocking": "The speaking task counts once the first recording is submitted; the retry is encouraged, not required."
+        },
+        "prompt": "Record a short guide for someone visiting your town for the first time. Include a regular event or custom, one fact about the past, one comparison, and a recommendation.",
+        "cueCard": "An event or custom · A fact about the past · A comparison · My recommendation",
+        "phraseBank": [
+          "It was built in...",
+          "... is held every...",
+          "It's a local tradition / custom to...",
+          "It's one of the ...est places in...",
+          "It's quieter / busier than...",
+          "There's a place where...",
+          "If you visit, I'd recommend...",
+          "I'd set off early to..."
+        ],
+        "model": "> If you visit this town, start at the market hall. It was built in 1890, and the food market is held there every Saturday. It's a local tradition, and you can try food from nearby farms. It's the busiest place in town on a Saturday morning, so I'd set off early. There's also a local custom that surprises visitors: most shops are closed on Wednesday afternoons, so plan your shopping for another day. Afterwards, take a walk by the river. It's quieter than the centre, and it's the spot where I go to relax. The town isn't a famous destination, but it's one of the friendliest places I know.",
+        "onTarget": "covers all four cue points; uses at least one present passive and one past passive correctly; uses a comparative or superlative; uses two featured items. Do not require a set number of passives.",
+        "correctionPriority": "1) be + past participle (was build, is visit); 2) irregular participles (held, built, taken); 3) comparative forms (more quiet, the most big).",
+        "shadowingChunks": [
+          {
+            "chunk": "It was built in eighteen ninety.",
+            "listenFor": "was is weak (\"wuz\"); built_in links together"
+          },
+          {
+            "chunk": "It's the busiest place in town.",
+            "listenFor": "stress on BUS-iest and town"
+          },
+          {
+            "chunk": "It's quieter than the centre.",
+            "listenFor": "than is weak (\"thun\"); stress on qui- and cen-"
+          }
+        ],
+        "conversation": {
+          "title": "a weekend visitor asks for tips",
+          "turns": [
+            {
+              "partner": "I'm here for the weekend. What should I see?",
+              "learner": "Recommend a place (relative clause: a place where...)",
+              "followUp": "What's special about it?"
+            },
+            {
+              "partner": "Sounds interesting! Is it old?",
+              "learner": "Give a fact about the past (past passive)",
+              "followUp": "Do you know when it was built?"
+            },
+            {
+              "partner": "Is it better than the beach?",
+              "learner": "Compare two places (comparative or superlative)",
+              "followUp": "Which is the best place for a quiet walk?"
+            },
+            {
+              "partner": "Is there anything I should know about local customs?",
+              "learner": "Describe a custom or event (present passive; custom, tradition)",
+              "followUp": "Is there a festival or market?"
+            }
+          ],
+          "closingLine": "Perfect, thanks! I'll set off early on Saturday, then.",
+          "naturalRecastExample": "learner \"It was build in the 1800s.\" Partner: \"Oh, it was built in the 1800s? I'd love to see it.\""
+        },
+        "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place.",
+        "b2Stretch": "add extra information with a non-defining clause (\"The market hall, which was built in 1890, ...\"), without the cue card."
       },
       "writing": {
         "words": [
@@ -930,5 +2867,25 @@
         "focus": "Two present passives and two past passives; Light: one relative clause or comparative/superlative"
       }
     }
+  ],
+  "status": "pilot draft — pending second-teacher review",
+  "productionNotes": [
+    "Model answers: four recordings (one per week), British English, natural pace (about 130-150 words a minute), with transcripts. Use at least two different speakers across the four weeks and record each speaker's accent in the audio metadata.",
+    "Shadowing chunks: 12 short clips cut from the model recordings, each at normal speed and at 0.8 speed, with transcripts.",
+    "Conversation partner: a British synthetic voice labelled as AI, with a 0.9-speed option and live captions; scripts follow the turn maps above, and the partner may vary its wording but stays on the week's theme and level.",
+    "Delayed-recall prompts: text and audio, scheduled 3-5 days after the speaking task.",
+    "Checkpoint 1 prompt: text and audio; never shown before the checkpoint.",
+    "Safety: conversation transcripts are moderated in both directions, kept under the privacy policy, and every exchange has a report button.",
+    "Review before launch: a second teacher checks every model answer, cue card and turn map against the grammar plan and vocabulary list, and listens to every recording."
+  ],
+  "reviewChecklist": [
+    "[ ] Each wrong option is clearly wrong in its context (no second correct answer).",
+    "[ ] Accepted variants cover the common correct answers for rewrite and complete items, including contractions.",
+    "[ ] Each reason is one short line a B1 learner can understand.",
+    "[ ] Notice-text facts are correct (Week 4: Toledo cathedral begun in 1226; marzipan made in local convents and bakeries).",
+    "[ ] Vocabulary in the prompts stays at B1 or uses that week's featured words.",
+    "[ ] Timing checked with 3-5 pilot learners: the set takes 18-22 minutes.",
+    "[ ] Items converted to the app's JSON curriculum format and passed the schema validation.",
+    "[ ] Checkpoint 1 items are written separately, not copied from this bank, so the checkpoint tests learning rather than memory of the practice items."
   ]
 }

@@ -19,40 +19,80 @@ const expectedCollocations = [6, 6, 5, 5];
 const expectedCards = [14, 16, 15, 14];
 const expectedLinkers = [2, 1, 3, 4];
 
+check(String(details.status).includes('pilot draft'), 'detail specs must be marked as pilot draft');
+check(String(assessments.status).includes('pilot draft'), 'assessment specs must be marked as pilot draft');
 check(details.weeks?.length === 4, 'Weeks 1–4 details must contain exactly four weeks');
+
+const allGrammarIds = new Set();
 details.weeks?.forEach((week, index) => {
-  const position = index + 1;
-  check(week.number === position, `detail week ${week.number} is out of order`);
+  const position = week.number;
+  check(position === index + 1, `detail week ${position} is out of order`);
   check(Boolean(week.canDo?.trim()), `week ${position} needs a can-do statement`);
   check(Boolean(week.grammar?.main?.trim()), `week ${position} needs main grammar notes`);
   check(Boolean(week.grammar?.light?.trim()), `week ${position} needs light grammar notes`);
-  check(week.grammar?.sampleItems?.length >= 2, `week ${position} needs sample grammar items`);
-  check(Boolean(week.speaking?.model?.trim()), `week ${position} needs a speaking model`);
-  check(week.writing?.words?.[0] === 120 && week.writing?.words?.[1] === 150, `week ${position} writing must be 120–150 words`);
+  check(Boolean(week.writing?.words?.[0] === 120 && week.writing?.words?.[1] === 150), `week ${position} writing must be 120–150 words`);
   check(Boolean(week.conversation?.openingLine?.trim()), `week ${position} needs a conversation scenario`);
   check(week.vocabulary?.core?.length === expectedCore[index], `week ${position} core count is wrong`);
   check(week.vocabulary?.collocations?.length === expectedCollocations[index], `week ${position} collocation count is wrong`);
   check(week.vocabulary?.newCards === expectedCards[index], `week ${position} card count is wrong`);
   check(week.linkers?.length === expectedLinkers[index], `week ${position} linker count is wrong`);
   check(week.checkpoint1?.mainItems === 4 && week.checkpoint1?.lightItems === 1, `week ${position} checkpoint blueprint is wrong`);
+
+  const practice = week.grammar?.practice;
+  check(practice?.steps?.length === 9, `week ${position} needs the nine-step grammar task`);
+  check(Boolean(practice?.notice?.text?.trim()), `week ${position} needs the notice text`);
+  check(practice?.items?.length === 30, `week ${position} needs 30 grammar practice items`);
+  practice?.items?.forEach((item) => {
+    check(!allGrammarIds.has(item.id), `duplicate grammar item ID ${item.id}`);
+    allGrammarIds.add(item.id);
+    check(Boolean(item.prompt?.trim()), `${item.id} needs a prompt`);
+    check(Boolean(item.reason?.trim()), `${item.id} needs a reason`);
+    check(item.key?.length > 0, `${item.id} needs a key`);
+    check(Array.isArray(item.accepted), `${item.id} needs a separate accepted-answers list`);
+    if (item.step === 'Choose') check(item.options?.length === 2, `${item.id} needs two options`);
+    if (Array.isArray(item.key)) {
+      check(item.accepted.length === item.key.length, `${item.id} needs one accepted list per gap`);
+      item.accepted.forEach((list) => check(Array.isArray(list), `${item.id} accepted variants must be lists per gap`));
+    } else {
+      check(item.accepted.every((variant) => typeof variant === 'string'), `${item.id} accepted variants must be strings`);
+    }
+  });
+
+  const speaking = week.speaking;
+  check(Boolean(speaking?.prompt?.trim()), `week ${position} needs a speaking prompt`);
+  check(Boolean(speaking?.cueCard?.trim()), `week ${position} needs a cue card`);
+  check(speaking?.phraseBank?.length >= 5, `week ${position} needs a phrase bank`);
+  check(Boolean(speaking?.model?.trim()), `week ${position} needs a speaking model`);
+  check(Boolean(speaking?.onTarget?.trim()), `week ${position} needs on-target criteria`);
+  check(Boolean(speaking?.correctionPriority?.trim()), `week ${position} needs correction priorities`);
+  check(speaking?.shadowingChunks?.length === 3, `week ${position} needs three shadowing chunks`);
+  check(speaking?.conversation?.turns?.length === 4, `week ${position} needs a four-turn conversation`);
+  check(Boolean(speaking?.conversation?.closingLine?.trim()), `week ${position} needs a conversation closing line`);
+  check(Boolean(speaking?.delayedRecall?.trim()), `week ${position} needs a delayed-recall prompt`);
+  check(Boolean(speaking?.b2Stretch?.trim()), `week ${position} needs a B2 stretch`);
 });
+check(allGrammarIds.size === 120, 'the item bank must contain 120 unique items');
+
+const week1Item = details.weeks?.[0]?.grammar?.practice?.items?.find((item) => item.id === 'W1-L3');
+check(week1Item?.options?.join('/') === "'ve been studying/study", "W1-L3 must offer 've been studying / study'");
+check(week1Item?.key === "'ve been studying", "W1-L3 key must be 've been studying'");
+const week1Gap = details.weeks?.[0]?.grammar?.practice?.items?.find((item) => item.id === 'W1-C5');
+check(JSON.stringify(week1Gap?.key) === '["Have","lived"]', 'W1-C5 needs one key per gap');
+const week4Gap = details.weeks?.[3]?.grammar?.practice?.items?.find((item) => item.id === 'W4-G5');
+check(JSON.stringify(week4Gap?.key) === '["was","made"]', 'W4-G5 needs one key per gap');
+check(
+  details.weeks?.[2]?.speaking?.prompt?.includes('A new flatmate arrives tomorrow. Record a welcome'),
+  'Week 3 speaking must be the recorded flatmate welcome',
+);
+check(
+  details.weeks?.[2]?.speaking?.conversation?.title === "a new flatmate's first evening",
+  'Week 3 back-and-forth must live in the conversation task',
+);
 
 const grammarSteps = details.pilotRules?.grammarTask?.steps ?? [];
 check(grammarSteps.length === 9, 'grammar task must have a nine-step structure');
-check(
-  grammarSteps.reduce((sum, step) => sum + step.minutes, 0) === 20,
-  'grammar task steps must total 20 minutes',
-);
-check(
-  grammarSteps.reduce((sum, step) => sum + (step.items ?? 0), 0) === 25,
-  'grammar task steps must total 25 auto-marked items',
-);
-const week1Item = details.weeks?.[0]?.grammar?.sampleItems?.find((item) => item.prompt.startsWith("I'm tired because"));
-check(week1Item?.options?.join('/') === "'ve been studying/study", "Week 1 'I'm tired' item must offer 've been studying / study'");
-check(
-  details.weeks?.[2]?.speaking?.prompt?.includes('flatmate back-and-forth is the conversation task'),
-  'Week 3 recording must be distinguished from the flatmate conversation',
-);
+check(grammarSteps.reduce((sum, step) => sum + step.minutes, 0) === 20, 'grammar task steps must total 20 minutes');
+check(grammarSteps.reduce((sum, step) => sum + (step.items ?? 0), 0) === 25, 'grammar task steps must total 25 auto-marked items');
 
 const progression = String(details.pilotRules?.progression ?? '');
 for (const phrase of ['speaking', 'writing', 'either listening or reading']) {
@@ -63,20 +103,28 @@ for (const phrase of ['30 minutes', 'pasting disabled', 'One submission']) {
   check(checkpointConditions.includes(phrase), `checkpoint writing conditions must include ${phrase}`);
 }
 
-const wd = assessments.writingDescriptors;
-check(wd?.criteria?.length === 4, 'writing descriptors need four criteria');
-check(wd?.wordRanges?.length === 5, 'writing descriptors need five word-range rows');
-wd?.criteria?.forEach((criterion) => {
-  for (const band of ['gettingThere', 'onTarget', 'beyondTarget']) {
-    check(Boolean(criterion[band]?.trim()), `${criterion.key} needs a ${band} descriptor`);
-  }
-});
+for (const set of [assessments.writingDescriptors, assessments.speakingDescriptors]) {
+  check(set?.criteria?.length === 4, 'descriptor sets need four criteria');
+  set?.criteria?.forEach((criterion) => {
+    for (const band of ['gettingThere', 'onTarget', 'beyondTarget']) {
+      check(Boolean(criterion[band]?.trim()), `${criterion.key} needs a ${band} descriptor`);
+    }
+  });
+}
+check(
+  assessments.speakingDescriptors?.criteria?.some((criterion) => criterion.key === 'coherence'),
+  'speaking descriptors need the coherence criterion',
+);
+check(assessments.writingDescriptors?.wordRanges?.length === 5, 'writing descriptors need five word-range rows');
 
 const questionTotal = assessments.placement?.questionBlueprint?.reduce((sum, row) => sum + row.questions, 0) ?? 0;
 check(questionTotal === 24, 'placement blueprint must total 24 questions');
 check(assessments.placement?.decisionRules?.length === 3, 'placement needs three decision outcomes');
 
 const cp = assessments.checkpoint1;
+check(!('speakingTask' in cp), 'checkpoint speakingTask must be replaced by the full speaking spec');
+check(Boolean(cp?.speaking?.prompt?.trim()), 'checkpoint speaking needs its prompt');
+check(cp?.speaking?.conditions?.length === 6, 'checkpoint speaking needs six conditions');
 const allItems = [...(cp?.items ?? []), ...(cp?.reserves ?? [])];
 check(cp?.items?.length === 20, 'Checkpoint 1 needs 20 scored items');
 check(cp?.reserves?.length === 4, 'Checkpoint 1 needs 4 reserves');
@@ -96,5 +144,5 @@ if (errors.length) {
 }
 
 console.log(
-  `Details OK: 4 weeks (${expectedCards.reduce((a, b) => a + b, 0)} cards), 4 writing criteria, 24 placement questions, ${cp.items.length} checkpoint items + ${cp.reserves.length} reserves.`,
+  `Details OK: 4 weeks (${expectedCards.reduce((a, b) => a + b, 0)} cards), 120 grammar items, 4 writing + 4 speaking criteria, 24 placement questions, ${cp.items.length} checkpoint items + ${cp.reserves.length} reserves.`,
 );

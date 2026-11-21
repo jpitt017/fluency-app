@@ -41,12 +41,76 @@
     ],
     "learnerFeedback": "A band for each criterion; one strength quoting the learner's words; up to two corrections, prioritising the week's grammar, each with the corrected sentence; then revise-and-retry with a word-by-word comparison of the two drafts.",
     "wordRanges": [
-      { "weeks": "1-4", "range": "120–150 words", "targetBand": "B1" },
-      { "weeks": "5-8", "range": "150–180 words", "targetBand": "B1" },
-      { "weeks": "9-12", "range": "180–200 words", "targetBand": "B1+" },
-      { "weeks": "13-16", "range": "200–220 words", "targetBand": "B1+" },
-      { "weeks": "Stage 2", "range": "220–260 words", "targetBand": "B2" }
+      {
+        "weeks": "1-4",
+        "range": "120–150 words",
+        "targetBand": "B1"
+      },
+      {
+        "weeks": "5-8",
+        "range": "150–180 words",
+        "targetBand": "B1"
+      },
+      {
+        "weeks": "9-12",
+        "range": "180–200 words",
+        "targetBand": "B1+"
+      },
+      {
+        "weeks": "13-16",
+        "range": "200–220 words",
+        "targetBand": "B1+"
+      },
+      {
+        "weeks": "Stage 2",
+        "range": "220–260 words",
+        "targetBand": "B2"
+      }
     ]
+  },
+  "speakingDescriptors": {
+    "intro": "The AI gives a band for each of the syllabus's four criteria; the target for weeks 1-4 is B1. Learners see the bands as \"Getting there\", \"On target\" and \"Beyond target\", never as a number.",
+    "criteria": [
+      {
+        "key": "task_achievement",
+        "label": "Task achievement",
+        "gettingThere": "Covers fewer than three cue points, or under 45 seconds; some content off-task",
+        "onTarget": "Covers every cue point in 60-90 seconds; content is relevant and easy to follow",
+        "beyondTarget": "Covers every cue point and adds reasons, examples or a personal reaction"
+      },
+      {
+        "key": "vocabulary",
+        "label": "Vocabulary",
+        "gettingThere": "Basic words only; gaps sometimes stop the meaning",
+        "onTarget": "Enough everyday vocabulary for the topic; at least two of the week's featured items used correctly",
+        "beyondTarget": "A wider range, accurate collocations, and paraphrase when a word is missing"
+      },
+      {
+        "key": "grammar",
+        "label": "Grammar",
+        "gettingThere": "Frequent errors in the week's main form; meaning sometimes unclear",
+        "onTarget": "The week's main form used correctly at least once; errors do not block meaning",
+        "beyondTarget": "Main and light forms used accurately and flexibly; some longer, linked sentences"
+      },
+      {
+        "key": "coherence",
+        "label": "Coherence",
+        "gettingThere": "Isolated sentences; few or no linking words",
+        "onTarget": "A clear order with basic linkers (then, so, because, since then, apart from that)",
+        "beyondTarget": "Ideas develop logically with varied linkers and clear signposting"
+      }
+    ],
+    "notes": [
+      "Not marked automatically: pronunciation and accent. The AI never treats an accent, or a word its speech recognition misheard, as a grammar or vocabulary error. Long pauses are not penalised; where a teacher reviews a recording, they may comment on fluency and pronunciation.",
+      "Confidence. If the AI's bands are uncertain, or the transcript quality is poor, the recording is flagged for teacher review where a teacher is available, and the learner sees \"Feedback may be less accurate for this recording\"."
+    ],
+    "learnerFeedback": [
+      "1. A band for each criterion.",
+      "2. One strength, quoting the learner's own words.",
+      "3. One specific correction, prioritising the week's main grammar point, with the corrected sentence.",
+      "4. A prompt to record again."
+    ],
+    "recordings": "Four model answers, British English, natural pace (about 130-150 words a minute), with transcripts; 12 shadowing clips at normal and 0.8 speed with transcripts."
   },
   "placement": {
     "durationMinutes": 35,
@@ -72,21 +136,61 @@
       }
     ],
     "questionBlueprint": [
-      { "level": "A2", "questions": 6, "focus": "Past simple, comparatives, can / have to, everyday vocabulary" },
-      { "level": "B1", "questions": 8, "focus": "Present perfect vs past simple, future forms, first conditional, modals, B1 vocabulary" },
-      { "level": "B1+", "questions": 6, "focus": "Past perfect, passive, second conditional, relative clauses, collocations" },
-      { "level": "B2", "questions": 4, "focus": "Reported speech, third conditional, modals of deduction, B2 vocabulary" }
+      {
+        "level": "A2",
+        "questions": 6,
+        "focus": "Past simple, comparatives, can / have to, everyday vocabulary"
+      },
+      {
+        "level": "B1",
+        "questions": 8,
+        "focus": "Present perfect vs past simple, future forms, first conditional, modals, B1 vocabulary"
+      },
+      {
+        "level": "B1+",
+        "questions": 6,
+        "focus": "Past perfect, passive, second conditional, relative clauses, collocations"
+      },
+      {
+        "level": "B2",
+        "questions": 4,
+        "focus": "Reported speech, third conditional, modals of deduction, B2 vocabulary"
+      }
     ],
     "bands": [
-      { "band": "A2", "description": "'Getting there' on most criteria: short, simple sentences; frequent errors that sometimes block meaning." },
-      { "band": "B1", "description": "'On target' on most criteria: the task is done clearly; errors do not block meaning." },
-      { "band": "B1+", "description": "'Beyond target' on most criteria: some range and longer, linked sentences." },
-      { "band": "B2", "description": "'Beyond target' on all criteria: wide range, accurate complex sentences, well organised." }
+      {
+        "band": "A2",
+        "description": "'Getting there' on most criteria: short, simple sentences; frequent errors that sometimes block meaning."
+      },
+      {
+        "band": "B1",
+        "description": "'On target' on most criteria: the task is done clearly; errors do not block meaning."
+      },
+      {
+        "band": "B1+",
+        "description": "'Beyond target' on most criteria: some range and longer, linked sentences."
+      },
+      {
+        "band": "B2",
+        "description": "'Beyond target' on all criteria: wide range, accurate complex sentences, well organised."
+      }
     ],
     "decisionRules": [
-      { "outcome": "Foundation course", "testScore": "0–11", "samples": "Or both samples at A2, whatever the test score." },
-      { "outcome": "Stage 1", "testScore": "12–18", "samples": "At least one sample at B1 or above." },
-      { "outcome": "Stage 2", "testScore": "19–24", "samples": "Both samples at B1+ or above." }
+      {
+        "outcome": "Foundation course",
+        "testScore": "0–11",
+        "samples": "Or both samples at A2, whatever the test score."
+      },
+      {
+        "outcome": "Stage 1",
+        "testScore": "12–18",
+        "samples": "At least one sample at B1 or above."
+      },
+      {
+        "outcome": "Stage 2",
+        "testScore": "19–24",
+        "samples": "Both samples at B1+ or above."
+      }
     ],
     "borderline": "If the score is within one point of a boundary, or the test and samples point to different results, place the learner in the lower option and tell them they can take a short move-up check after week 2. Where a teacher is involved, they review borderline cases first.",
     "learnerChoice": "A learner placed in Stage 2 may choose to start at Stage 1. A learner placed in the foundation course is shown why, with links to suitable A2 material.",
@@ -102,54 +206,316 @@
       "reporting": "Report results by skill and recommend a specific practice item."
     },
     "items": [
-      { "id": "CP1-01", "week": 1, "target": "Main: finished time", "prompt": "We ___ the Colosseum when we were in Rome in 2019.", "options": ["visited", "have visited"], "key": "visited", "reason": "'In 2019' is a finished time." },
-      { "id": "CP1-02", "week": 1, "target": "Main: past to now", "prompt": "My brother ___ three different jobs since he left university.", "options": ["had", "has had"], "key": "has had", "reason": "'Since he left' connects the past to now." },
-      { "id": "CP1-03", "week": 1, "target": "Main: background", "prompt": "The sun ___ (shine) when we left the hotel.", "options": [], "key": "was shining", "reason": "Background to the main event." },
-      { "id": "CP1-04", "week": 1, "target": "Main: sequence", "prompt": "When I opened the fridge, I realised someone ___ (eat) my cake.", "options": [], "key": "had eaten", "reason": "It happened before I opened the fridge." },
-      { "id": "CP1-05", "week": 1, "target": "Light", "prompt": "As a teenager, I ___ have very long hair.", "options": ["used to", "would"], "key": "used to", "reason": "'Have' (possession) is a state, so would is not possible." },
-      { "id": "CP1-06", "week": 2, "target": "Main: intention", "prompt": "A: Any plans for the summer? B: I ___ visit my cousins in Ireland, but I haven't booked anything yet.", "options": ["'m going to", "'m visiting"], "key": "'m going to", "reason": "An intention with nothing arranged yet." },
-      { "id": "CP1-07", "week": 2, "target": "Main: arrangement", "prompt": "We ___ (fly) to Lisbon on Friday. The tickets are in my bag.", "options": [], "key": "'re flying (are flying)", "reason": "A fixed arrangement." },
-      { "id": "CP1-08", "week": 2, "target": "Main: time clause", "prompt": "I'll send you the photos when I ___ home.", "options": ["get", "'ll get"], "key": "get", "reason": "After 'when', use the present simple for the future." },
-      { "id": "CP1-09", "week": 2, "target": "Main: time clause", "prompt": "As soon as the film ___ (finish), we'll go for dinner.", "options": [], "key": "finishes", "reason": "After 'as soon as', use the present simple for the future." },
-      { "id": "CP1-10", "week": 2, "target": "Light", "prompt": "If I ___ the lottery, I'd buy a house by the sea.", "options": ["won", "win"], "key": "won", "reason": "Second conditional: an imagined situation." },
-      { "id": "CP1-11", "week": 3, "target": "Main: obligation", "prompt": "In the UK, you ___ drive on the left.", "options": ["have to", "don't have to"], "key": "have to", "reason": "It is a rule." },
-      { "id": "CP1-12", "week": 3, "target": "Main: advice", "prompt": "If you want to improve your English, you ___ read a little every day.", "options": ["should", "mustn't"], "key": "should", "reason": "Advice." },
-      { "id": "CP1-13", "week": 3, "target": "Main: ability", "prompt": "My grandmother ___ (can / not / use) a smartphone, so we phone her.", "options": [], "key": "can't use (cannot use)", "reason": "Ability, negative." },
-      { "id": "CP1-14", "week": 3, "target": "Main: permission", "prompt": "___ I leave my bag here while I go to the toilet?", "options": ["Can", "Must"], "key": "Can (Could)", "reason": "Asking for permission." },
-      { "id": "CP1-15", "week": 3, "target": "Light", "prompt": "Put the words in order: Where / you / do / work?", "options": [], "key": "Where do you work?", "reason": "Auxiliary before the subject." },
-      { "id": "CP1-16", "week": 4, "target": "Main: present passive", "prompt": "Cheese ___ (make) from milk.", "options": [], "key": "is made", "reason": "A general fact; the cheese is the focus." },
-      { "id": "CP1-17", "week": 4, "target": "Main: present passive", "prompt": "Most of the city's buses ___ by electricity now.", "options": ["are powered", "power"], "key": "are powered", "reason": "Something powers the buses." },
-      { "id": "CP1-18", "week": 4, "target": "Main: past passive", "prompt": "The first email ___ (send) in 1971.", "options": [], "key": "was sent", "reason": "Past passive." },
-      { "id": "CP1-19", "week": 4, "target": "Main: past passive", "prompt": "Our flight ___ because of the snow.", "options": ["was cancelled", "cancelled"], "key": "was cancelled", "reason": "The airline cancelled it." },
-      { "id": "CP1-20", "week": 4, "target": "Light", "prompt": "This is the hotel ___ we stayed last summer.", "options": ["where", "who"], "key": "where", "reason": "'Where' for a place followed by a full clause." }
+      {
+        "id": "CP1-01",
+        "week": 1,
+        "target": "Main: finished time",
+        "prompt": "We ___ the Colosseum when we were in Rome in 2019.",
+        "options": [
+          "visited",
+          "have visited"
+        ],
+        "key": "visited",
+        "reason": "'In 2019' is a finished time."
+      },
+      {
+        "id": "CP1-02",
+        "week": 1,
+        "target": "Main: past to now",
+        "prompt": "My brother ___ three different jobs since he left university.",
+        "options": [
+          "had",
+          "has had"
+        ],
+        "key": "has had",
+        "reason": "'Since he left' connects the past to now."
+      },
+      {
+        "id": "CP1-03",
+        "week": 1,
+        "target": "Main: background",
+        "prompt": "The sun ___ (shine) when we left the hotel.",
+        "options": [],
+        "key": "was shining",
+        "reason": "Background to the main event."
+      },
+      {
+        "id": "CP1-04",
+        "week": 1,
+        "target": "Main: sequence",
+        "prompt": "When I opened the fridge, I realised someone ___ (eat) my cake.",
+        "options": [],
+        "key": "had eaten",
+        "reason": "It happened before I opened the fridge."
+      },
+      {
+        "id": "CP1-05",
+        "week": 1,
+        "target": "Light",
+        "prompt": "As a teenager, I ___ have very long hair.",
+        "options": [
+          "used to",
+          "would"
+        ],
+        "key": "used to",
+        "reason": "'Have' (possession) is a state, so would is not possible."
+      },
+      {
+        "id": "CP1-06",
+        "week": 2,
+        "target": "Main: intention",
+        "prompt": "A: Any plans for the summer? B: I ___ visit my cousins in Ireland, but I haven't booked anything yet.",
+        "options": [
+          "'m going to",
+          "'m visiting"
+        ],
+        "key": "'m going to",
+        "reason": "An intention with nothing arranged yet."
+      },
+      {
+        "id": "CP1-07",
+        "week": 2,
+        "target": "Main: arrangement",
+        "prompt": "We ___ (fly) to Lisbon on Friday. The tickets are in my bag.",
+        "options": [],
+        "key": "'re flying (are flying)",
+        "reason": "A fixed arrangement."
+      },
+      {
+        "id": "CP1-08",
+        "week": 2,
+        "target": "Main: time clause",
+        "prompt": "I'll send you the photos when I ___ home.",
+        "options": [
+          "get",
+          "'ll get"
+        ],
+        "key": "get",
+        "reason": "After 'when', use the present simple for the future."
+      },
+      {
+        "id": "CP1-09",
+        "week": 2,
+        "target": "Main: time clause",
+        "prompt": "As soon as the film ___ (finish), we'll go for dinner.",
+        "options": [],
+        "key": "finishes",
+        "reason": "After 'as soon as', use the present simple for the future."
+      },
+      {
+        "id": "CP1-10",
+        "week": 2,
+        "target": "Light",
+        "prompt": "If I ___ the lottery, I'd buy a house by the sea.",
+        "options": [
+          "won",
+          "win"
+        ],
+        "key": "won",
+        "reason": "Second conditional: an imagined situation."
+      },
+      {
+        "id": "CP1-11",
+        "week": 3,
+        "target": "Main: obligation",
+        "prompt": "In the UK, you ___ drive on the left.",
+        "options": [
+          "have to",
+          "don't have to"
+        ],
+        "key": "have to",
+        "reason": "It is a rule."
+      },
+      {
+        "id": "CP1-12",
+        "week": 3,
+        "target": "Main: advice",
+        "prompt": "If you want to improve your English, you ___ read a little every day.",
+        "options": [
+          "should",
+          "mustn't"
+        ],
+        "key": "should",
+        "reason": "Advice."
+      },
+      {
+        "id": "CP1-13",
+        "week": 3,
+        "target": "Main: ability",
+        "prompt": "My grandmother ___ (can / not / use) a smartphone, so we phone her.",
+        "options": [],
+        "key": "can't use (cannot use)",
+        "reason": "Ability, negative."
+      },
+      {
+        "id": "CP1-14",
+        "week": 3,
+        "target": "Main: permission",
+        "prompt": "___ I leave my bag here while I go to the toilet?",
+        "options": [
+          "Can",
+          "Must"
+        ],
+        "key": "Can (Could)",
+        "reason": "Asking for permission."
+      },
+      {
+        "id": "CP1-15",
+        "week": 3,
+        "target": "Light",
+        "prompt": "Put the words in order: Where / you / do / work?",
+        "options": [],
+        "key": "Where do you work?",
+        "reason": "Auxiliary before the subject."
+      },
+      {
+        "id": "CP1-16",
+        "week": 4,
+        "target": "Main: present passive",
+        "prompt": "Cheese ___ (make) from milk.",
+        "options": [],
+        "key": "is made",
+        "reason": "A general fact; the cheese is the focus."
+      },
+      {
+        "id": "CP1-17",
+        "week": 4,
+        "target": "Main: present passive",
+        "prompt": "Most of the city's buses ___ by electricity now.",
+        "options": [
+          "are powered",
+          "power"
+        ],
+        "key": "are powered",
+        "reason": "Something powers the buses."
+      },
+      {
+        "id": "CP1-18",
+        "week": 4,
+        "target": "Main: past passive",
+        "prompt": "The first email ___ (send) in 1971.",
+        "options": [],
+        "key": "was sent",
+        "reason": "Past passive."
+      },
+      {
+        "id": "CP1-19",
+        "week": 4,
+        "target": "Main: past passive",
+        "prompt": "Our flight ___ because of the snow.",
+        "options": [
+          "was cancelled",
+          "cancelled"
+        ],
+        "key": "was cancelled",
+        "reason": "The airline cancelled it."
+      },
+      {
+        "id": "CP1-20",
+        "week": 4,
+        "target": "Light",
+        "prompt": "This is the hotel ___ we stayed last summer.",
+        "options": [
+          "where",
+          "who"
+        ],
+        "key": "where",
+        "reason": "'Where' for a place followed by a full clause."
+      }
     ],
     "reserves": [
-      { "id": "CP1-R1", "week": 1, "target": "reserve", "prompt": "I ___ (not / see) her since the wedding.", "options": [], "key": "haven't seen (have not seen)", "reason": "Up to now with since." },
-      { "id": "CP1-R2", "week": 2, "target": "reserve", "prompt": "Don't worry, I ___ (call) you before I ___ (leave).", "options": [], "key": "'ll call ... leave", "reason": "Will for the promise; present simple after before." },
-      { "id": "CP1-R3", "week": 3, "target": "reserve", "prompt": "You ___ (not / have to) come to the party if you're tired.", "options": [], "key": "don't have to", "reason": "It isn't necessary." },
-      { "id": "CP1-R4", "week": 4, "target": "reserve", "prompt": "The Alhambra ___ (visit) by millions of people every year.", "options": [], "key": "is visited", "reason": "Present passive with by." }
+      {
+        "id": "CP1-R1",
+        "week": 1,
+        "target": "reserve",
+        "prompt": "I ___ (not / see) her since the wedding.",
+        "options": [],
+        "key": "haven't seen (have not seen)",
+        "reason": "Up to now with since."
+      },
+      {
+        "id": "CP1-R2",
+        "week": 2,
+        "target": "reserve",
+        "prompt": "Don't worry, I ___ (call) you before I ___ (leave).",
+        "options": [],
+        "key": "'ll call ... leave",
+        "reason": "Will for the promise; present simple after before."
+      },
+      {
+        "id": "CP1-R3",
+        "week": 3,
+        "target": "reserve",
+        "prompt": "You ___ (not / have to) come to the party if you're tired.",
+        "options": [],
+        "key": "don't have to",
+        "reason": "It isn't necessary."
+      },
+      {
+        "id": "CP1-R4",
+        "week": 4,
+        "target": "reserve",
+        "prompt": "The Alhambra ___ (visit) by millions of people every year.",
+        "options": [],
+        "key": "is visited",
+        "reason": "Present passive with by."
+      }
     ],
     "reserveUse": "Reserves replace an item that pilot data shows is unclear, or form a retake for learners repeating the checkpoint.",
-    "speakingTask": "A recorded 60–90 second narrative in response to a new prompt about a change, from the weeks 1–4 speaking content.",
     "writing": {
       "prompts": [
-        { "label": "A. A change I got used to", "text": "Describe how life was before a change, what happened, what was difficult, and how things are now." },
-        { "label": "B. A note for a visitor", "text": "A friend is visiting your town for a weekend. Recommend what to see: include a regular event or custom, one fact about a place's past, a comparison, and one piece of advice." }
+        {
+          "label": "A. A change I got used to",
+          "text": "Describe how life was before a change, what happened, what was difficult, and how things are now."
+        },
+        {
+          "label": "B. A note for a visitor",
+          "text": "A friend is visiting your town for a weekend. Recommend what to see: include a regular event or custom, one fact about a place's past, a comparison, and one piece of advice."
+        }
       ],
       "conditions": [
-        { "id": "length", "setting": "Length", "value": "150 words (130–170 accepted)" },
-        { "id": "time", "setting": "Time", "value": "30 minutes, with a visible timer" },
-        { "id": "where", "setting": "Where", "value": "In the app; pasting disabled; no phrase bank or model" },
-        { "id": "attempts", "setting": "Attempts", "value": "One submission; no revise-and-retry" },
-        { "id": "marking", "setting": "Marking", "value": "AI bands on the four writing criteria straight away; a teacher confirms where one is involved, and the teacher's mark counts" }
+        {
+          "id": "length",
+          "setting": "Length",
+          "value": "150 words (130–170 accepted)"
+        },
+        {
+          "id": "time",
+          "setting": "Time",
+          "value": "30 minutes, with a visible timer"
+        },
+        {
+          "id": "where",
+          "setting": "Where",
+          "value": "In the app; pasting disabled; no phrase bank or model"
+        },
+        {
+          "id": "attempts",
+          "setting": "Attempts",
+          "value": "One submission; no revise-and-retry"
+        },
+        {
+          "id": "marking",
+          "setting": "Marking",
+          "value": "AI bands on the four writing criteria straight away; a teacher confirms where one is involved, and the teacher's mark counts"
+        }
       ]
     },
     "result": {
       "intro": "Results are reported by part and by week, never as pass or fail. Learners continue to week 5 whatever their result; the checkpoint guides practice, it does not block progress.",
       "thresholds": [
-        { "part": "Quiz", "onTarget": "14 of 20 or more (70%)" },
-        { "part": "Speaking", "onTarget": "'On target' or better on at least three criteria, and task achievement not at 'Getting there'" },
-        { "part": "Writing", "onTarget": "'On target' or better on at least three criteria, and task achievement not at 'Getting there'" }
+        {
+          "part": "Quiz",
+          "onTarget": "14 of 20 or more (70%)"
+        },
+        {
+          "part": "Speaking",
+          "onTarget": "'On target' or better on at least three criteria, and task achievement not at 'Getting there'"
+        },
+        {
+          "part": "Writing",
+          "onTarget": "'On target' or better on at least three criteria, and task achievement not at 'Getting there'"
+        }
       ],
       "practiceLinks": "Each part below target links to the matching practice: weak quiz items to that week's extra items and grammar clinic, speaking to the week's shadowing and conversation, writing to a revise-and-retry task on the same prompt."
     },
@@ -160,6 +526,43 @@
       "After 30 placed learners, compare placement with EF SET results and adjust the cut scores (11/12 and 18/19).",
       "Review any checkpoint item that more than 90% or fewer than 30% of pilot learners answer correctly.",
       "Confirm the checkpoint thresholds (70% quiz, three of four criteria) against teacher judgement of pilot learners."
-    ]
-  }
+    ],
+    "speaking": {
+      "status": "pilot draft — pending second-teacher review",
+      "intro": "After week 4, learners record one short spoken narrative under checkpoint conditions, marked with the same four descriptors.",
+      "prompt": "Talk about a time when you had to adapt to something new: a job, a place, a course or a routine. What was it like before, what happened, and how are things now? If you like, say what you would tell someone in the same situation.",
+      "conditions": [
+        {
+          "setting": "Planning",
+          "value": "1 minute; notes allowed, no phrase bank or model"
+        },
+        {
+          "setting": "Length",
+          "value": "60-90 seconds"
+        },
+        {
+          "setting": "Attempts",
+          "value": "One recording; no retry (practice tasks allow retries, checkpoints do not)"
+        },
+        {
+          "setting": "Marking",
+          "value": "AI bands on the four criteria straight away; a teacher confirms where one is involved, and the teacher's mark counts"
+        },
+        {
+          "setting": "On target",
+          "value": "\"On target\" or better on at least three of the four criteria, with no criterion at \"Getting there\" for task achievement"
+        },
+        {
+          "setting": "Language it draws on",
+          "value": "Weeks 1-4: narrative tenses, present perfect, used to / would, modals for advice; featured vocabulary from any of the four weeks"
+        }
+      ],
+      "transferNote": "The prompt is new, so it tests transfer rather than memory of a practised answer."
+    }
+  },
+  "status": "pilot draft — pending second-teacher review",
+  "sources": [
+    "Writing descriptors, placement and checkpoint 1 (21 Nov 2026)",
+    "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)"
+  ]
 }

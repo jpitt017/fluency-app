@@ -59,12 +59,16 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     const weekRes = await page.goto('/curriculum/weeks/1');
     expect(weekRes?.status()).toBeLessThan(500);
     await expect(page.getByText(/A change you got used to/i)).toBeVisible();
-    await expect(page.getByText(/Speaking model/i)).toBeVisible();
+    await expect(page.getByText(/Full practice set · pilot draft/i)).toBeVisible();
+    await expect(page.getByText(/W1-L3/)).toBeVisible();
+    await expect(page.getByText(/Shadowing chunks · 3 min warm-up/i)).toBeVisible();
     await expect(page.getByText(/Authoring notes for teachers/i)).toBeVisible();
 
     const assessmentRes = await page.goto('/assessments');
     expect(assessmentRes?.status()).toBeLessThan(500);
     await expect(page.getByRole('heading', { name: /Three bands, four criteria/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /The same four criteria for speech/i })).toBeVisible();
+    await expect(page.getByText(/Checkpoint 1 speaking/i)).toBeVisible();
     await expect(page.getByText(/CP1-01/)).toBeVisible();
     await page.getByRole('button', { name: /Reveal keys/i }).click();
     await expect(page.getByText(/In 2019' is a finished time/i)).toBeVisible();
