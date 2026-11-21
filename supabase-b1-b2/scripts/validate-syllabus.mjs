@@ -31,6 +31,9 @@ for (const [index, stage] of (doc.stages ?? []).entries()) {
   check(stage.weekEnd === expectedStart + 15, `stage ${stage.number} must end at week ${expectedStart + 15}`);
   check(stage.hours === 52, `stage ${stage.number} must be 52 hours`);
   check(stage.phases?.length === 4, `stage ${stage.number} must have four phases`);
+  for (const phase of stage.phases ?? []) {
+    check(Boolean(phase.pronunciationFocus?.trim()), `stage ${stage.number} phase ${phase.weeks} needs a pronunciation focus`);
+  }
   check(stage.checkpoints?.length === 4, `stage ${stage.number} must have four checkpoints`);
 }
 
@@ -48,7 +51,40 @@ for (const week of doc.weeks ?? []) {
   check(Boolean(week.theme?.trim()), `week ${week.number} needs a theme`);
   check(Boolean(week.mainGrammar?.trim()), `week ${week.number} needs a main grammar point`);
   check(Boolean(week.secondaryGrammarLabel?.trim()), `week ${week.number} needs a secondary grammar label or null usage`);
+  check(Boolean(week.cefr?.canDo?.trim()), `week ${week.number} needs a CEFR can-do statement`);
+  check(Boolean(week.cefr?.scale?.trim()), `week ${week.number} needs a CEFR scale`);
+  check(Boolean(week.cefr?.level?.trim()), `week ${week.number} needs a CEFR level`);
+
+  if (week.grammar?.stretch) {
+    check(Boolean(week.grammar.structures?.trim()), `week ${week.number} stretch grammar needs its structures`);
+    check(Boolean(week.grammar.marking?.trim()), `week ${week.number} stretch grammar needs its AI marking rule`);
+  }
+
+  if (week.mediation) {
+    check(Boolean(week.mediation.prompt?.trim()), `week ${week.number} mediation needs a prompt`);
+    check(Boolean(week.mediation.source?.trim()), `week ${week.number} mediation needs a source`);
+    check(Boolean(week.mediation.output?.trim()), `week ${week.number} mediation needs an output`);
+    check(Boolean(week.mediation.scale?.trim()), `week ${week.number} mediation needs a CEFR scale`);
+    check(Boolean(week.mediation.level?.trim()), `week ${week.number} mediation needs a CEFR level`);
+    check(week.mediation.time === '10 minutes', `week ${week.number} mediation must take 10 minutes`);
+    check(week.mediation.requirementKind === 'recommended', `week ${week.number} mediation must be recommended`);
+    check(week.mediation.countsTowardsUnlocking === false, `week ${week.number} mediation must not count towards unlocking`);
+  }
 }
+
+const expectedStretchWeeks = [12, 25, 26];
+const actualStretchWeeks = (doc.weeks ?? []).filter((week) => week.grammar?.stretch).map((week) => week.number);
+check(
+  JSON.stringify(actualStretchWeeks) === JSON.stringify(expectedStretchWeeks),
+  `stretch grammar must be exactly weeks ${expectedStretchWeeks.join(', ')}`,
+);
+
+const expectedMediationWeeks = [4, 8, 12, 16, 20, 24, 28, 32];
+const actualMediationWeeks = (doc.weeks ?? []).filter((week) => week.mediation).map((week) => week.number);
+check(
+  JSON.stringify(actualMediationWeeks) === JSON.stringify(expectedMediationWeeks),
+  `mediation tasks must be exactly weeks ${expectedMediationWeeks.join(', ')}`,
+);
 
 for (const weekNumber of Array.from({ length: 32 }, (_, i) => i + 1)) {
   check(seenWeeks.has(weekNumber), `week ${weekNumber} is missing`);
@@ -76,6 +112,12 @@ for (const task of doc.weeklyTasks ?? []) {
   check(Boolean(task.title?.trim()), `task ${task.key} needs a title`);
   check(['optional', 'either', 'required', 'recommended'].includes(task.requirementKind), `task ${task.key} has an invalid requirement kind`);
 }
+
+check(Boolean(doc.marking?.summary?.trim()), 'marking needs a summary');
+check(doc.marking?.onTargetLevel?.length === 3, 'marking needs three on-target level bands');
+check(doc.marking?.onTargetLevel?.[0]?.weeks === '1–8' && doc.marking?.onTargetLevel?.[0]?.level === 'B1', 'weeks 1–8 must be on target at B1');
+check(doc.marking?.onTargetLevel?.[1]?.weeks === '9–16' && doc.marking?.onTargetLevel?.[1]?.level === 'B1+', 'weeks 9–16 must be on target at B1+');
+check(doc.marking?.onTargetLevel?.[2]?.weeks === '17–32' && doc.marking?.onTargetLevel?.[2]?.level === 'B2', 'weeks 17–32 must be on target at B2');
 
 if (errors.length) {
   console.error(`Syllabus validation failed (${errors.length} problems):`);

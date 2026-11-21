@@ -41,7 +41,26 @@ export interface SyllabusStage {
   writing: string;
   extraInput: string;
   checkpoints: number[];
-  phases: { weeks: string; focus: string }[];
+  phases: { weeks: string; focus: string; pronunciationFocus: string }[];
+}
+
+export interface WeekCefr {
+  canDo: string;
+  scale: string;
+  level: string;
+}
+
+export interface WeekMediation {
+  prompt: string;
+  source: string;
+  output: string;
+  scale: string;
+  level: string;
+  time: string;
+  requirement: string;
+  requirementKind: RequirementKind;
+  countsTowardsUnlocking: boolean;
+  feedback: string;
 }
 
 export interface SyllabusWeek {
@@ -53,6 +72,9 @@ export interface SyllabusWeek {
   secondaryGrammarLabel: string;
   secondaryGrammar: string | null;
   skillsFocus: string | null;
+  cefr: WeekCefr;
+  grammar?: { stretch: boolean; structures: string; marking: string };
+  mediation?: WeekMediation;
 }
 
 export interface WeeklyTask {
@@ -101,7 +123,10 @@ export interface SyllabusDocument {
   weeks: SyllabusWeek[];
   checkpoints: SyllabusCheckpoint[];
   externalAssessments: { code: string; title: string; when: string; description: string }[];
-  marking: string;
+  marking: {
+    summary: string;
+    onTargetLevel: { weeks: string; level: string }[];
+  };
   certificate: string;
   nextSteps: { after: string; condition: string; next: string }[];
   principles: string[];
@@ -128,10 +153,18 @@ export function stageForWeek(weekNumber: number): SyllabusStage | undefined {
   return getStage(getWeek(weekNumber)?.stage ?? 0);
 }
 
-export function phaseForWeek(weekNumber: number): { weeks: string; focus: string } | undefined {
+export function phaseForWeek(weekNumber: number): { weeks: string; focus: string; pronunciationFocus: string } | undefined {
   const stage = stageForWeek(weekNumber);
   const phase = getWeek(weekNumber)?.phase;
   return stage?.phases.find((item) => item.weeks === phase);
+}
+
+export function onTargetLevelForWeek(weekNumber: number): string {
+  const band = syllabus.marking.onTargetLevel.find(({ weeks }) => {
+    const [start, end] = weeks.split('–').map(Number);
+    return weekNumber >= start && weekNumber <= end;
+  });
+  return band?.level ?? '—';
 }
 
 export function levelForWeek(ladder: SkillLadder, weekNumber: number): SkillLadderLevel | undefined {
@@ -175,7 +208,7 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
       supabase
         .from('syllabus_weeks')
         .select(
-          'week_number, stage_number, phase, theme, main_grammar, secondary_grammar_label, secondary_grammar, skills_focus',
+          'week_number, stage_number, phase, theme, main_grammar, secondary_grammar_label, secondary_grammar, skills_focus, cefr, grammar, mediation',
         )
         .order('week_number', { ascending: true }),
       supabase
@@ -202,6 +235,9 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
       secondaryGrammarLabel: String(row.secondary_grammar_label),
       secondaryGrammar: row.secondary_grammar ? String(row.secondary_grammar) : null,
       skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
+      cefr: (row.cefr ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.cefr) as WeekCefr,
+      grammar: (row.grammar ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.grammar) as SyllabusWeek['grammar'],
+      mediation: (row.mediation ?? syllabus.weeks.find((item) => item.number === Number(row.week_number))?.mediation) as SyllabusWeek['mediation'],
     }));
 
     const checkpoints: SyllabusCheckpoint[] = checkpointsRes.data.map((row) => ({

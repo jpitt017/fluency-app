@@ -350,7 +350,7 @@ export default async function CurriculumPage() {
           ))}
         </div>
         <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 text-xs leading-6 text-stone-600">
-          <strong className="font-semibold text-stone-800">Marking.</strong> {syllabus.marking}{' '}
+          <strong className="font-semibold text-stone-800">Marking.</strong> {syllabus.marking.summary}{' '}
           <strong className="font-semibold text-stone-800">Certificate.</strong> {syllabus.certificate}
         </div>
       </section>
