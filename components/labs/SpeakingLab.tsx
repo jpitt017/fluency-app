@@ -70,44 +70,9 @@ export default function SpeakingLab({
   async function evaluateAudio(blob: Blob) {
     setIsAnalyzing(true);
     setError(null);
-    const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
     try {
       const form = new FormData();
       form.set('audio', blob, 'lesson-recording.webm');
-      if (lessonContext?.mode === 'checkpoint' && lessonContext.moduleId && lessonContext.cefrSkill) {
-        const suffix = lessonContext.cefrSkill === 'Spoken Interaction' ? 'SI' : 'SP';
-        form.set('moduleNumber', String(lessonContext.moduleId));
-        form.set('objectiveId', `B1B2_M${lessonContext.moduleId}_${suffix}`);
-        form.set('durationSeconds', String(durationSeconds));
-        const result = await fetch('/api/checkpoints/evaluate', { method: 'POST', body: form });
-        const data = (await result.json()) as {
-          error?: string;
-          transcript?: string;
-          mastery?: number;
-          passed?: boolean;
-          rubric?: { summary?: string } & Record<string, unknown>;
-          reviewDeck?: string[];
-        };
-        if (!result.ok) throw new Error(data.error || 'Checkpoint assessment failed.');
-        const assessment: SpeakingFeedback = {
-          transcript: data.transcript,
-          feedback: data.rubric?.summary,
-          score: data.mastery,
-          passed: data.passed,
-          mastery: data.mastery,
-          rubric: data.rubric,
-          reviewDeck: data.reviewDeck,
-        };
-        setFeedback(assessment);
-        lessonContext.onComplete?.({
-          transcript: data.transcript,
-          score: data.mastery,
-          passed: data.passed,
-          rubric: data.rubric,
-        });
-        return;
-      }
-
       form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
       const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
@@ -172,7 +137,7 @@ export default function SpeakingLab({
       {(lessonContext?.prompt || speakingFocus || languages.length > 0) && (
         <div className="space-y-2 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-            {lessonContext?.mode === 'checkpoint' ? 'CEFR checkpoint speaking task' : 'Speaking & fluency focus'}
+            Speaking &amp; fluency focus
           </p>
           {lessonContext?.prompt && <p className="text-sm text-stone-800">{lessonContext.prompt}</p>}
           {speakingFocus && (
@@ -181,7 +146,7 @@ export default function SpeakingLab({
             </p>
           )}
           <p className="text-[11px] text-emerald-900/80">
-            AI evaluates content, grammar, vocabulary, and coherence from your transcript. Pronunciation is assessed by your teacher in live lessons and checkpoints (or self-checked in Shadowing Studio).
+            AI evaluates content, grammar, vocabulary, and coherence from your transcript. Pronunciation can be self-checked in Shadowing Studio.
           </p>
           {(lessonContext?.targetGrammar?.length ?? 0) > 0 && (
             <p className="text-xs text-stone-700">

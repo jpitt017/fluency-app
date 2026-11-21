@@ -14,43 +14,39 @@ function placementRecommendation(score: number, total: number, writingScore: num
     return {
       belowB1: true,
       band: 'Pre-B1 Foundation Recommended',
-      startLesson: 1,
-      startLabel: 'Open Grammar Clinic (B1 Basics) →',
-      startHref: '/clinic',
+      startLabel: 'Open Practice Labs →',
+      startHref: '/labs',
       summary:
-        'This 16-week programme starts at B1 and prepares learners for B2. Your diagnostic suggests locking in core A2/B1 basics (present simple/continuous, articles, quantifiers, prepositions, subject–verb agreement, and verb forms) in the Grammar Clinic before beginning Week 1.',
+        'Your diagnostic suggests locking in core A2/B1 basics (present simple/continuous, articles, quantifiers, prepositions, subject–verb agreement, and verb forms) before moving into upper-B1 fluency tasks.',
     };
   }
   if (combinedPct >= 80) {
     return {
       belowB1: false,
       band: 'B1+ / B2 Entry',
-      startLesson: 57,
-      startLabel: 'Start Week 9 · Session 57 (Health & wellbeing)',
-      startHref: '/curriculum/lessons/57',
+      startLabel: 'Open AI Speaking & Writing Labs →',
+      startHref: '/labs',
       summary:
-        'Strong control of B1–B1+ tenses, passives, deduction, and conditionals. Jump into Month 3 (Weeks 9–16) to sharpen causatives, participle clauses, inversion, hedging, and formal persuasion.',
+        'Strong control of B1–B1+ tenses, passives, deduction, and conditionals. Use the Speaking, Writing, and Shadowing Labs to sharpen hedging, register, and fluent interaction at B2.',
     };
   }
   if (combinedPct >= 60) {
     return {
       belowB1: false,
       band: 'B1 High',
-      startLesson: 29,
-      startLabel: 'Start Week 5 · Session 29 (Technology & digital life)',
-      startHref: '/curriculum/lessons/29',
+      startLabel: 'Open Practice Labs →',
+      startHref: '/labs',
       summary:
-        'Solid B1 foundation. Starting at Week 5 (Month 2) develops deduction, reported speech, gerunds/infinitives, reporting verbs, and third/mixed conditionals on your way to B2.',
+        'Solid B1 foundation. Practise deduction, reported speech, and extended speaking/writing tasks in the AI Labs and Review Studio on your way to B2.',
     };
   }
   return {
     belowB1: false,
     band: 'B1 Foundation',
-    startLesson: 1,
-    startLabel: 'Start Week 1 · Session 1 (Personal experiences & change)',
-    startHref: '/curriculum/lessons/1',
+    startLabel: 'Open Practice Labs →',
+    startHref: '/labs',
     summary:
-      'Begin at Week 1 to lock in narrative tenses, present perfect vs. past simple, future forms, modals, and passive voice across the 16-week pathway.',
+      'Focus on consolidating narrative tenses, present perfect vs. past simple, future forms, modals, and passive voice using the AI Labs and Error Review drills.',
   };
 }
 
@@ -70,13 +66,13 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     return createClient();
   }, []);
 
-  if (!questions.length) {
+      if (!questions.length) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
         <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center">
           <p className="text-sm text-stone-600">Placement questions are currently unavailable.</p>
-          <Link href="/curriculum/lessons/1" className="mt-4 inline-block rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white">
-            Start Module 1 · Lesson 1 →
+          <Link href="/labs" className="mt-4 inline-block rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white">
+            Open Practice Labs →
           </Link>
         </div>
       </main>
@@ -144,7 +140,6 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
                 total: questions.length,
                 writing_score: evaluatedScore,
                 band: rec.band,
-                recommended_lesson: rec.startLesson,
                 completed_at: new Date().toISOString(),
               },
             })
@@ -296,10 +291,10 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
                 {recommendation.startLabel}
               </button>
               <Link
-                href="/curriculum"
+                href="/dashboard"
                 className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-center text-sm font-semibold text-stone-700 hover:bg-stone-100"
               >
-                Browse all 112 sessions
+                Open Dashboard
               </Link>
             </div>
           </div>

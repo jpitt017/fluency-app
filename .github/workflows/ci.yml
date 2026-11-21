@@ -36,7 +36,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm run validate:curriculum
       - run: npm run eval:prompts -- --offline
       - run: npm run build
         env:

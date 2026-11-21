@@ -24,48 +24,12 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.goto('/review');
     await expect(page.getByRole('heading', { name: /Sign in to practise|Mistake & Pattern Drill/i })).toBeVisible();
 
-    await page.goto('/clinic');
-    await expect(page.getByRole('heading', { name: /Grammar Clinic/i })).toBeVisible();
-    await expect(page.getByText(/8 B1 Baseline Clinics/i)).toBeVisible();
-    await expect(page.getByText(/Zero & second conditionals/i)).toBeVisible();
-    await expect(page.getByText(/Comparatives & superlatives/i)).toBeVisible();
-
     await page.goto('/teacher');
     await expect(page.getByRole('heading', { name: /Sign in with a teacher account|Teacher Review/i })).toBeVisible();
 
-    const genRes = await page.request.post('/api/lessons/generate', { data: {} });
-    expect(genRes.status()).toBe(410);
-
-    if (hasRealSupabase) {
-      await page.goto('/curriculum');
-      await expect(page.getByText(/16 weeks · 112 daily sessions/i)).toBeVisible();
-
-      await page.goto('/curriculum/lessons/112');
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-
-      await page.goto('/curriculum/lessons/1');
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.getByText(/Part 1 · Core Vocabulary \(8 expressions\)/i)).toBeVisible();
-      await expect(page.getByText(/Part 2 · Collocations & Phrasal Expressions/i)).toBeVisible();
-      await expect(page.getByText(/Part 3 · Word Families/i)).toBeVisible();
-      await expect(page.getByText(/Part 4 · Useful Linking Expressions/i)).toBeVisible();
-      await expect(page.getByText(/B1 productive/i).first()).toBeVisible();
-      await expect(page.getByText(/Guided B2/i).first()).toBeVisible();
-
-      await page.goto('/curriculum/lessons/15');
-      await expect(page.getByText(/Part 5 · Optional Extensions/i)).toBeVisible();
-      await expect(page.getByText(/pop round/i)).toBeVisible();
-
-      await page.goto('/curriculum/lessons/2');
-      await expect(page.getByText(/Step 1 · Hear & notice the model/i)).toBeVisible();
-      await expect(page.getByText(/5 items · 5 grammar/i)).toBeVisible();
-
-      await page.goto('/checkpoints/b1_consolidation');
-      await expect(page.getByText(/Part 1 · 16-Item Grammar Diagnostic \(Weeks 1–4\)/i)).toBeVisible();
-      await expect(page.getByText(/Per-Week & Skill Breakdown/i)).toBeVisible();
-      await expect(page.getByText(/Optional Reserve Items \(4 extra/i)).toBeVisible();
-      await expect(page.getByText(/Part 2 · Separate Spoken Narrative/i)).toBeVisible();
-      await expect(page.getByText(/Part 3 · Separate Written Visitor Note/i)).toBeVisible();
+    for (const removedRoute of ['/curriculum', '/clinic', '/vocabulary', '/checkpoints']) {
+      const res = await page.goto(removedRoute);
+      expect(res?.status()).toBe(404);
     }
   });
 
@@ -161,10 +125,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.getByLabel(/Email/i).fill(email);
     await page.getByLabel(/Password/i).fill(password);
     await page.getByRole('button', { name: /Sign in/i }).click();
-    await page.waitForURL(/\/dashboard|\/curriculum/);
+    await page.waitForURL(/\/dashboard|\/labs/);
 
-    await page.goto('/curriculum/lessons/1');
-    const draftArea = page.getByPlaceholder(/Draft your paragraph/i);
+    await page.goto('/labs');
+    const draftArea = page.getByPlaceholder(/Write your B1 → B2 response here/i);
     await expect(draftArea).toBeVisible();
     await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 

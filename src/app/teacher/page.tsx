@@ -20,7 +20,7 @@ export default async function TeacherPage() {
             Sign in with a teacher account
           </h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Review learner progress across all 16 weeks, confirm speaking and writing outputs, add live pronunciation notes, and record Checkpoint 4 B2 readiness decisions.
+            Review learner progress, confirm speaking and writing outputs, add live pronunciation notes, and record B2 readiness decisions.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -78,14 +78,14 @@ export default async function TeacherPage() {
               Teacher Review &amp; Readiness Console
             </h1>
             <p className="mt-1.5 max-w-3xl text-sm leading-6 text-stone-600">
-              Inspect 16-week pacing, top personal error patterns for live lessons, speaking transcripts with teacher pronunciation notes, writing confirmations, and Checkpoint 4 readiness decisions.
+              Inspect learner pacing, top personal error patterns for live lessons, speaking transcripts with teacher pronunciation notes, and writing confirmations.
             </p>
           </div>
           <Link
-            href="/curriculum"
+            href="/dashboard"
             className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
           >
-            View 16-week syllabus →
+            Back to dashboard →
           </Link>
         </div>
       </header>

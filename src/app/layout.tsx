@@ -18,9 +18,9 @@ import { loadHeaderSummary } from '@/lib/b1b2/data';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Fluency Studio · English B1 → B2: 16-Week Preparation',
+  title: 'Fluency Studio · English B1 → B2',
   description:
-    '16-week blended English B1 to B2 preparation pathway (~63 hours full, 55h minimum) with 112 daily sessions, Grammar Clinic, and AI speaking & writing studios.',
+    'Blended English B1 to B2 practice workspace with AI speaking & writing studios, prosody shadowing, and personalised FSRS error review.',
   manifest: '/manifest.webmanifest',
 };
 
@@ -35,10 +35,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <div className="min-h-[calc(100vh-118px)]">{children}</div>
         <footer className="border-t border-stone-200 bg-white/60 py-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 text-xs text-stone-500 sm:px-6">
-            <p>Fluency Studio · English B1 → B2: 16-Week Preparation (~63h blended · focused B2 prep, not an exam guarantee)</p>
+            <p>Fluency Studio · English B1 → B2 (focused B2 preparation, not an exam guarantee)</p>
             <div className="flex items-center gap-4">
-              <Link href="/curriculum" className="hover:text-stone-800">Curriculum</Link>
               <Link href="/labs" className="hover:text-stone-800">Labs</Link>
+              <Link href="/review" className="hover:text-stone-800">Review</Link>
               <Link href="/pricing" className="hover:text-stone-800">Pricing</Link>
               <Link href="/privacy" className="hover:text-stone-800">Privacy</Link>
               <Link href="/terms" className="hover:text-stone-800">Terms</Link>

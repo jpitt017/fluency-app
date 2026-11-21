@@ -45,37 +45,22 @@ export default function WritingLab({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const isCheckpoint = lessonContext?.mode === 'checkpoint' && lessonContext.cefrSkill === 'Writing';
-  const minWords = lessonContext?.minWords ?? (isCheckpoint ? 100 : 1);
-  const maxWords = lessonContext?.maxWords ?? (isCheckpoint ? 250 : 1500);
 
   async function handleCheckWriting() {
     if (!text.trim()) return;
-    if (lessonContext?.mode === 'checkpoint' && (wordCount < minWords || wordCount > maxWords)) {
-      setError(`Write between ${minWords} and ${maxWords} words for this checkpoint.`);
-      return;
-    }
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const target = lessonContext;
-      const response = await fetch(isCheckpoint ? '/api/checkpoints/writing' : '/api/writing/correct', {
+      const response = await fetch('/api/writing/correct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          isCheckpoint && target?.moduleId && target.cefrSkill
-            ? {
-                moduleNumber: target.moduleId,
-                objectiveId: `B1B2_M${target.moduleId}_WR`,
-                writing: text,
-              }
-            : {
-                text,
-                prompt: `${activePrompt}${target?.targetGrammar?.length ? ` Target grammar: ${target.targetGrammar.join(', ')}.` : ''}`,
-                targetKeywords: activeKeywords,
-              },
-        ),
+        body: JSON.stringify({
+          text,
+          prompt: `${activePrompt}${target?.targetGrammar?.length ? ` Target grammar: ${target.targetGrammar.join(', ')}.` : ''}`,
+          targetKeywords: activeKeywords,
+        }),
       });
       const data = (await response.json()) as WritingFeedbackResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || 'Failed to analyse your writing.');
@@ -99,11 +84,7 @@ export default function WritingLab({
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
               B1 → B2 Writing Studio
-              {lessonContext?.mode === 'checkpoint'
-                ? ' · Checkpoint'
-                : lessonContext?.mode === 'drill'
-                  ? ' · Lesson drill'
-                  : ' · Free practice'}
+              {lessonContext?.mode === 'drill' ? ' · Drill' : ' · Free practice'}
             </span>
             <p className="mt-1 text-sm font-medium text-stone-800">{activePrompt}</p>
           </div>
@@ -149,13 +130,7 @@ export default function WritingLab({
         rows={6}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        placeholder={
-          compactLesson
-            ? 'Write your sentences here…'
-            : isCheckpoint
-              ? `Write ${minWords}–${maxWords} words…`
-              : 'Write your B1 → B2 response here…'
-        }
+        placeholder={compactLesson ? 'Write your sentences here…' : 'Write your B1 → B2 response here…'}
         className="w-full rounded-xl border border-stone-300 bg-white p-3.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
       />
 
@@ -171,7 +146,7 @@ export default function WritingLab({
           disabled={loading || !text.trim()}
           className="rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? 'Analysing…' : isCheckpoint ? 'Submit writing checkpoint' : 'Evaluate writing'}
+          {loading ? 'Analysing…' : 'Evaluate writing'}
         </button>
       </div>
 

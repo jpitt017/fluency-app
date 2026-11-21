@@ -5,9 +5,6 @@ export type AiEndpoint =
   | '/api/speaking/chat'
   | '/api/speaking/evaluate'
   | '/api/writing/correct'
-  | '/api/checkpoints/evaluate'
-  | '/api/checkpoints/writing'
-  | '/api/lessons/generate'
   | '/api/review/check-rewrite';
 
 export interface AiGuardResult {

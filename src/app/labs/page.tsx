@@ -30,14 +30,14 @@ export default async function LabsPage() {
               Speaking, Writing & Role-Play Labs
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-stone-600">
-              Free-practice AI coaching alongside your 16-week (112-session) curriculum: structured writing evaluation, speech transcription and content/grammar scoring, and interactive conversation practice.
+              AI coaching for B1 → B2 English fluency: structured writing evaluation, speech transcription and content/grammar scoring, prosody shadowing, and interactive conversation practice.
             </p>
           </div>
           <Link
-            href="/curriculum"
+            href="/portfolio"
             className="shrink-0 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-100"
           >
-            Browse 16-week curriculum →
+            View output portfolio →
           </Link>
         </div>
       </header>
@@ -83,21 +83,18 @@ export default async function LabsPage() {
           title="Listen-and-Compare Shadowing Studio"
           targets={[
             {
-              label: 'Module 1 · Turning point',
+              label: 'Narrative pacing · Turning point',
               text: 'I had been teaching for six years when I finally booked a one-way ticket.',
-              audioUrl: '/audio/module-1/turning-point.mp3',
               note: 'Listen for the weak form in "for" and stress on "six years" and "one-way ticket".',
             },
             {
-              label: 'Module 1 · Come round to',
+              label: 'Phrasal linking · Come round to',
               text: 'My parents came round to the idea after a few months.',
-              audioUrl: '/audio/module-1/come-round-to.mp3',
               note: 'Link "came round" smoothly and keep "to the" light.',
             },
             {
-              label: 'Module 1 · Settle down',
+              label: 'Consonant clusters · Settle down',
               text: 'They settled down in Valencia after years of travelling.',
-              audioUrl: '/audio/module-1/settle-down.mp3',
               note: 'Practise clear /d/ and /t/ endings without adding an extra vowel.',
             },
           ]}
