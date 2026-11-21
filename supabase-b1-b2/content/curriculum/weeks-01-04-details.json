@@ -7,7 +7,8 @@
     "Fluency Studio: Weeks 1–4 Grammar Practice Item Bank (21 Nov 2026)",
     "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)",
     "Fluency Studio: Weeks 1–4 Listening Content (21 Nov 2026)",
-    "Fluency Studio: Weeks 1–4 Reading Content (21 Nov 2026)"
+    "Fluency Studio: Weeks 1–4 Reading Content (21 Nov 2026)",
+    "Fluency Studio: Writing Content, Weeks 1–4 (21 Nov 2026)"
   ],
   "pilotRules": {
     "grammarTask": {
@@ -657,11 +658,56 @@
         "b2Stretch": "explain why the change mattered and how you feel about it now, without the cue card."
       },
       "writing": {
+        "status": "pilot draft — pending second-teacher review",
+        "title": "A change I got used to",
+        "durationMinutes": 30,
         "words": [
           120,
           150
         ],
-        "prompt": "Write a personal narrative about a change. Set the scene, use since then or eventually to move the story on, and close with one sentence about how things are now.",
+        "prompt": "Write a personal narrative about a change in your life. Set the scene, use since then or eventually to move the story on, and close with one sentence about how things are now.",
+        "grammar": "narrative tenses; present perfect vs past simple; used to / would; present perfect continuous",
+        "featuredWords": [
+          "face a challenge",
+          "get used to",
+          "since then"
+        ],
+        "stretchWords": [
+          "gradually",
+          "look back on"
+        ],
+        "linkers": [
+          "since then",
+          "eventually"
+        ],
+        "readerAndPurpose": "A blog post for readers who don’t know you. The aim is to tell a clear story with a beginning, middle and end.",
+        "requiredPoints": [
+          "How life was before the change",
+          "What changed and what was difficult",
+          "What helped",
+          "How things are now (final sentence)",
+          "since then or eventually used at least once"
+        ],
+        "planFrame": [
+          "Before: where you were and what you used to do",
+          "The change and the biggest challenge",
+          "What helped, and how things moved on",
+          "Now: one sentence about today"
+        ],
+        "usefulLanguage": [
+          "When I..., I had never... before",
+          "I used to... / We would...",
+          "The biggest challenge I faced was...",
+          "It took me a while to get used to...",
+          "Eventually,...",
+          "Since then, I’ve...",
+          "I’ve been ...ing for...",
+          "Now..."
+        ],
+        "onTarget": "covers every required point; uses the past perfect or past continuous once and the present perfect once; uses two featured items; organises the story in a clear order.",
+        "correctionPriority": "1) past simple vs present perfect with time words (I have moved in 2020); 2) would with states (would live); 3) the -ing form after get used to.",
+        "reviseAndRetryFocus": "Add one sentence with the past perfect or past continuous to set the scene, and check every finished time (last year, in 2020) uses the past simple.",
+        "modelAnswer": "When I finished university, I moved from a small village to the city for my first job. I had never lived alone before, and at first everything felt strange. In the village, I used to know everyone, and my neighbours would often stop to chat. In the city, nobody said hello.\n\nThe biggest challenge I faced was cooking for myself. For the first few weeks, I ate takeaways almost every night! Then my flatmate’s mum gave me a simple recipe book, and I started to try one new dish every weekend.\n\nEventually, I got used to my new routine. Since then, I’ve learnt to cook about twenty dishes, and I’ve been inviting friends round for dinner every month. Now the city feels like home, and I’m proud of how much I’ve changed.",
         "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?"
       },
       "conversation": {
@@ -1339,11 +1385,53 @@
         "b2Stretch": "explain why the goal matters and weigh two alternatives, without the cue card."
       },
       "writing": {
+        "status": "pilot draft — pending second-teacher review",
+        "title": "A goal and a plan",
+        "durationMinutes": 30,
         "words": [
           120,
           150
         ],
-        "prompt": "Write a message to a friend about a goal, a confirmed arrangement, your next step and a back-up plan. Use in order to once to explain a purpose.",
+        "prompt": "Write a message to a friend about a goal. Include a confirmed arrangement, your next step and a back-up plan. Use in order to once to explain a purpose.",
+        "grammar": "going to; present continuous for arrangements; will; present simple after when / as soon as; first and second conditionals",
+        "featuredWords": [
+          "goal",
+          "intend to",
+          "career",
+          "look forward to"
+        ],
+        "stretchWords": [],
+        "linkers": [
+          "in order to"
+        ],
+        "readerAndPurpose": "An informal email or message to a friend. The aim is to share news clearly and sound natural and friendly.",
+        "requiredPoints": [
+          "The goal",
+          "One arrangement that is already fixed (day or date)",
+          "The next step after that (when / as soon as + will)",
+          "A back-up plan (if + present simple, will)",
+          "in order to used once"
+        ],
+        "planFrame": [
+          "Greeting and the news",
+          "The goal and what is already arranged",
+          "The next step and the back-up plan",
+          "Friendly close"
+        ],
+        "usefulLanguage": [
+          "My goal is to...",
+          "I intend to...",
+          "I’m going to... in order to...",
+          "I’m meeting / starting... on...",
+          "When I finish..., I’ll...",
+          "If I don’t..., I’ll...",
+          "I’m really looking forward to...",
+          "Speak soon,"
+        ],
+        "onTarget": "covers every required point; uses at least two future forms correctly; uses a first or second conditional; uses two featured items; has a greeting and close that suit a friend.",
+        "correctionPriority": "1) will after when, as soon as or if (when I will finish); 2) going to vs present continuous for fixed arrangements; 3) look forward to + -ing.",
+        "reviseAndRetryFocus": "Check every time clause (when, as soon as, before, after) uses the present simple, and add a day or date to the arrangement.",
+        "modelAnswer": "Hi Sam,\n\nI hope you’re well! I wanted to tell you about my plans. My goal is to start a career in graphic design, so I’ve signed up for an online course. It starts on 10 January, and I’m meeting my tutor for the first time next Monday.\n\nI’m going to practise every evening in order to build a portfolio quickly. When I finish the course in June, I’ll apply for junior jobs in design studios. If I don’t find a job straight away, I’ll do some freelance work to get more experience.\n\nI intend to keep my current job until then, so it’ll be a busy six months! I’m really looking forward to it, though. I’ll let you know how the first lesson goes.\n\nSpeak soon,\nLucía",
         "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?"
       },
       "conversation": {
@@ -2009,11 +2097,57 @@
         "b2Stretch": "add a likely problem (noise, guests or bills) and suggest a compromise, without the cue card."
       },
       "writing": {
+        "status": "pilot draft — pending second-teacher review",
+        "title": "Welcome to the flat",
+        "durationMinutes": 30,
         "words": [
           120,
           150
         ],
-        "prompt": "Write a welcome message for a new flatmate: one requirement, one rule, one optional thing and one piece of advice. Use at least one of the week's linkers (on the other hand, in fact, apart from that).",
+        "prompt": "Write a welcome message for a new flatmate. Include one requirement, one rule, one optional thing and one piece of advice. Use at least one of the week’s linkers: on the other hand, in fact, apart from that.",
+        "grammar": "have to, mustn’t, don’t have to, should, can / could; questions",
+        "featuredWords": [
+          "get on with",
+          "arrange",
+          "routine",
+          "politely"
+        ],
+        "stretchWords": [],
+        "linkers": [
+          "on the other hand",
+          "in fact",
+          "apart from that (required)"
+        ],
+        "readerAndPurpose": "A friendly message to someone moving in. The aim is to explain how the flat works without sounding strict.",
+        "requiredPoints": [
+          "One requirement (have to)",
+          "One rule (mustn’t)",
+          "One optional thing (don’t have to)",
+          "One piece of advice (should)",
+          "At least one of the week’s linkers"
+        ],
+        "planFrame": [
+          "Welcome and when they arrive",
+          "Requirements and rules",
+          "What’s optional, and advice",
+          "Friendly close, or a question for them"
+        ],
+        "usefulLanguage": [
+          "Welcome to the flat!",
+          "We have to...",
+          "You mustn’t... because...",
+          "You don’t have to..., but...",
+          "You should...",
+          "On the other hand,...",
+          "In fact,...",
+          "Apart from that,...",
+          "We all get on with each other...",
+          "See you on...!"
+        ],
+        "onTarget": "covers every required point; uses have to, mustn’t and don’t have to correctly between them; gives advice with should; uses one of the week’s linkers; uses two featured items.",
+        "correctionPriority": "1) mustn’t vs don’t have to; 2) to after a modal (you must to); 3) -s after a modal (she can speaks).",
+        "reviseAndRetryFocus": "Check that each rule uses the right modal for its meaning (required, forbidden, optional), and add a linker where two ideas contrast.",
+        "modelAnswer": "Hi Tom,\n\nWelcome to the flat! We’re really pleased you’re moving in on Saturday. Here are a few things you should know.\n\nWe have to take the bins out on Thursday evenings, and we take turns, so check the rota on the kitchen door. You mustn’t leave food in the living room, because we’ve had problems with mice! On the other hand, you don’t have to join us for dinner. We all have different routines, and most of us cook for ourselves.\n\nMy advice? You should get to know our neighbour, Mrs Hill. In fact, she’s lived here for forty years and knows everything about the area. Apart from that, just relax and make yourself at home. We all get on with each other really well.\n\nSee you on Saturday!\nElena",
         "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional."
       },
       "conversation": {
@@ -2703,11 +2837,56 @@
         "b2Stretch": "add extra information with a non-defining clause (\"The market hall, which was built in 1890, ...\"), without the cue card."
       },
       "writing": {
+        "status": "pilot draft — pending second-teacher review",
+        "title": "A trip worth taking",
+        "durationMinutes": 30,
         "words": [
           120,
           150
         ],
-        "prompt": "Write a visitor recommendation or trip note. Separate a place fact from what you personally did, and organise it with to begin with and all in all.",
+        "prompt": "Write a visitor recommendation or trip note about a place you have been to. Separate facts about the place from what you personally did, and organise it with to begin with and all in all.",
+        "grammar": "present and past passive; relative clauses (which, where); comparatives and superlatives",
+        "featuredWords": [
+          "local",
+          "custom",
+          "destination",
+          "tradition",
+          "set off"
+        ],
+        "stretchWords": [],
+        "linkers": [
+          "to begin with",
+          "all in all"
+        ],
+        "readerAndPurpose": "A short article or note for someone planning a visit. The aim is to inform (facts) and recommend (your experience).",
+        "requiredPoints": [
+          "At least one fact about the place in the passive (was built, is held)",
+          "What you personally did",
+          "A comparison or superlative",
+          "A recommendation",
+          "to begin with and all in all"
+        ],
+        "planFrame": [
+          "Where you went and a first opinion",
+          "To begin with: the first place, with a fact",
+          "What else you did and a comparison",
+          "All in all: recommendation and one tip"
+        ],
+        "usefulLanguage": [
+          "Last month I spent... in...",
+          "To begin with, we visited...",
+          "It was built in... / ... is held every...",
+          "..., which was...,",
+          "a place where...",
+          "It’s quieter / busier than...",
+          "It’s one of the most...",
+          "All in all,...",
+          "If you go, set off early..."
+        ],
+        "onTarget": "covers every required point; uses at least one present or past passive correctly; uses a comparative or superlative; uses to begin with and all in all; uses two featured items.",
+        "correctionPriority": "1) be + past participle (was build, is visit); 2) irregular participles (held, built, taken); 3) comparative forms (more quiet, the most big).",
+        "reviseAndRetryFocus": "Turn one fact about the place into the passive, and check each comparison uses -er / -est or more / most correctly.",
+        "modelAnswer": "Last month I spent a weekend in Bath, and I’d definitely recommend it.\n\nTo begin with, we visited the Roman Baths. They were built almost two thousand years ago, and they are still fed by natural hot springs. Then we walked to the Royal Crescent, a curved row of houses which was built in the eighteenth century. It’s one of the most beautiful streets I’ve ever seen.\n\nIn the afternoon, we found a small local café where they serve traditional Bath buns. The city is much quieter than London, and it’s easy to explore on foot.\n\nAll in all, Bath is a great destination for a short break. If you go, set off early on Saturday, because the Roman Baths get very busy by lunchtime.",
         "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place."
       },
       "conversation": {
@@ -4017,6 +4196,63 @@
           }
         ],
         "respond": "Which place in Bath would you like to visit first, and why?"
+      }
+    ]
+  },
+  "writing": {
+    "status": "pilot draft — pending second-teacher review",
+    "intro": "Pilot draft, pending second-teacher review. Source: Writing Content PDF (21 Nov 2026).",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Plan",
+        "minutes": 5,
+        "what": "required points and optional frame; model hidden"
+      },
+      {
+        "step": 2,
+        "name": "Write",
+        "minutes": 15,
+        "what": "120-150 words in the app, live word count; pasted text flagged"
+      },
+      {
+        "step": 3,
+        "name": "Feedback (instant)",
+        "minutes": null,
+        "what": "band per criterion, one strength, up to two corrections"
+      },
+      {
+        "step": 4,
+        "name": "Revise",
+        "minutes": 8,
+        "what": "word-by-word comparison of drafts"
+      },
+      {
+        "step": 5,
+        "name": "Compare",
+        "minutes": 2,
+        "what": "model shown with grammar and featured words highlighted"
+      }
+    ],
+    "marking": "Writing descriptors (task achievement, vocabulary, grammar, organisation); B1 target; under 100 words caps task achievement at 'Getting there'; British spelling taught, American noted not penalised.",
+    "unlocking": "Required: next week opens when speaking, writing and either listening or reading are done.",
+    "source": "Writing Content PDF (21 Nov 2026)",
+    "weeks": [
+      {
+        "week": 1,
+        "title": "A change I got used to"
+      },
+      {
+        "week": 2,
+        "title": "A goal and a plan"
+      },
+      {
+        "week": 3,
+        "title": "Welcome to the flat"
+      },
+      {
+        "week": 4,
+        "title": "A trip worth taking"
       }
     ]
   }

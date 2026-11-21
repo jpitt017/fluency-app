@@ -42,7 +42,7 @@ write to them. The older `english-b1-b2` course is left in place for historical
 learner rows and is not used by the curriculum routes.
 
 Migration `0020_weeks_1_4_and_assessments.sql` adds `syllabus_week_details`
-(4 payloads with the full speaking content), `syllabus_assessments` (4 specs:
+(4 payloads with the full grammar, speaking, listening, reading and writing content), `syllabus_assessments` (4 specs:
 writing, speaking, placement and checkpoint 1), `syllabus_vocab_items` (80
 items), `syllabus_grammar_items` (120 items), `syllabus_input_items` (80 listening
 and reading questions) and `syllabus_checkpoint_items` (20 scored + 4 reserves), all with the same public read policy. Regenerate it with `npm run build:details-seed` after

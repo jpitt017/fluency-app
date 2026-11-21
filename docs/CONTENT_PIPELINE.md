@@ -90,7 +90,7 @@ reads weeks and checkpoints from Supabase (public read policies) and falls back
 to the bundled document when Supabase is not configured or unreachable. Routes:
 
 - `/curriculum` — stage overview, week explorer, weekly rhythm, ladders, checkpoints and policies
-- `/curriculum/weeks/[week]` — one week's grammar bank, speaking, listening script, reading text, targets and checkpoint
+- `/curriculum/weeks/[week]` — one week's grammar bank, speaking, listening script, reading text, full writing task, targets and checkpoint
 - `/syllabus` — redirects to `/curriculum`
 - `/assessments` — writing and speaking bands, placement rules, Checkpoint 1 speaking conditions and the filterable quiz bank
 

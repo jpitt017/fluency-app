@@ -66,6 +66,8 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Full reading text/i)).toBeVisible();
     await expect(page.getByText(/L1-G1/)).toBeVisible();
     await expect(page.getByText(/R1-G1/)).toBeVisible();
+    await expect(page.getByText(/Required points checked by the AI/i)).toBeVisible();
+    await expect(page.getByText(/Reveal model answer/i)).toBeVisible();
     await expect(page.getByText(/Authoring notes for teachers/i)).toBeVisible();
 
     const assessmentRes = await page.goto('/assessments');

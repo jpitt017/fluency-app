@@ -499,7 +499,8 @@
           "setting": "Marking",
           "value": "AI bands on the four writing criteria straight away; a teacher confirms where one is involved, and the teacher's mark counts"
         }
-      ]
+      ],
+      "onTarget": "'On target' or better on at least three criteria, task achievement not 'Getting there'. Results guide practice; they never block week 5."
     },
     "result": {
       "intro": "Results are reported by part and by week, never as pass or fail. Learners continue to week 5 whatever their result; the checkpoint guides practice, it does not block progress.",

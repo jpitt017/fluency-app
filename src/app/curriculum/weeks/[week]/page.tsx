@@ -191,6 +191,7 @@ export default async function WeekPage({ params }: PageProps) {
             detail={weekDetail}
             checkpointFocus={checkpoint?.number === 1 ? weekDetail.checkpoint1.focus : undefined}
             inputContent={inputContent}
+            writingSpec={curriculumDetails.writing}
           />
       )}
 

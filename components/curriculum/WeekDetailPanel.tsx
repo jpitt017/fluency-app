@@ -1,8 +1,9 @@
-import { BookOpen, Flag, PenLine, Sparkles } from 'lucide-react';
-import type { InputSpec as InputSpecDoc, InputWeek, WeekDetail } from '@/lib/curriculum/details';
+import { BookOpen, Flag, Sparkles } from 'lucide-react';
+import type { InputSpec as InputSpecDoc, InputWeek, WeekDetail, WritingSpec as WritingSpecDoc } from '@/lib/curriculum/details';
 import GrammarPracticeBank from './GrammarPracticeBank';
 import SpeakingSpec from './SpeakingSpec';
 import InputSpec from './InputSpec';
+import WritingSpec from './WritingSpec';
 
 const USE_LABELS: Record<string, string> = {
   P: 'B1 productive',
@@ -34,9 +35,11 @@ export default function WeekDetailPanel({
   detail,
   checkpointFocus,
   inputContent,
+  writingSpec,
 }: {
   detail: WeekDetail;
   checkpointFocus?: string;
+  writingSpec: WritingSpecDoc;
   inputContent: {
     listening: { spec: Omit<InputSpecDoc, 'weeks'>; content: InputWeek };
     reading: { spec: Omit<InputSpecDoc, 'weeks'>; content: InputWeek };
@@ -110,15 +113,7 @@ export default function WeekDetailPanel({
         />
       ))}
 
-      <section className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
-          <SectionHeading icon={PenLine} title="Writing task" note={`${detail.writing.words[0]}–${detail.writing.words[1]} words · 30 min`} />
-          <p className="text-xs leading-6 text-stone-700">{detail.writing.prompt}</p>
-          <p className="border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">
-            <strong className="font-semibold text-stone-800">Delayed recall:</strong> {detail.writing.delayedRecall}
-          </p>
-        </div>
-      </section>
+      <WritingSpec writing={detail.writing} spec={writingSpec} />
 
       <section className="space-y-3">
         <SectionHeading icon={BookOpen} title="Vocabulary and collocations" note={`${detail.vocabulary.newCards} new cards this week`} />

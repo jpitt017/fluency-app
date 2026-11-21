@@ -120,6 +120,37 @@ export interface InputSpec {
   weeks: InputWeek[];
 }
 
+export interface WritingDetail {
+  status: string;
+  title: string;
+  durationMinutes: number;
+  words: number[];
+  prompt: string;
+  grammar: string;
+  featuredWords: string[];
+  stretchWords: string[];
+  linkers: string[];
+  readerAndPurpose: string;
+  requiredPoints: string[];
+  planFrame: string[];
+  usefulLanguage: string[];
+  onTarget: string;
+  correctionPriority: string;
+  reviseAndRetryFocus: string;
+  modelAnswer: string;
+  delayedRecall: string;
+}
+
+export interface WritingSpec {
+  status: string;
+  intro: string;
+  steps: { step: number; name: string; minutes: number | null; what: string }[];
+  marking: string;
+  unlocking: string;
+  source: string;
+  weeks: { week: number; title: string }[];
+}
+
 export interface WeekDetail {
   number: number;
   title: string;
@@ -134,7 +165,7 @@ export interface WeekDetail {
     practice: GrammarPractice;
   };
   speaking: SpeakingDetail;
-  writing: { words: number[]; prompt: string; delayedRecall: string };
+  writing: WritingDetail;
   conversation: {
     scenario: string;
     openingLine: string;
@@ -164,6 +195,7 @@ export interface DetailsDocument {
   reviewChecklist: string[];
   listening: InputSpec;
   reading: InputSpec;
+  writing: WritingSpec;
 }
 
 export interface AssessmentItem {
@@ -237,6 +269,7 @@ export interface AssessmentsDocument {
     };
     writing: {
       prompts: { label: string; text: string }[];
+      onTarget: string;
       conditions: { id: string; setting: string; value: string }[];
     };
     result: { intro: string; thresholds: { part: string; onTarget: string }[]; practiceLinks: string };

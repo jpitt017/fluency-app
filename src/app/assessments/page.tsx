@@ -242,6 +242,9 @@ export default async function AssessmentsPage() {
               <strong className="font-semibold text-stone-900">Writing:</strong>{' '}
               {doc.checkpoint1.writing.prompts.map((prompt) => prompt.label).join(' / ')}
             </p>
+            <p className="mt-2 border-t border-stone-100 pt-2 text-[11px] leading-5 text-stone-600">
+              <strong className="font-semibold text-stone-900">On target:</strong> {doc.checkpoint1.writing.onTarget}
+            </p>
             <div className="mt-2 flex flex-wrap gap-1">
               {doc.checkpoint1.writing.conditions.map((condition) => (
                 <span key={condition.id} className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] text-stone-700">
