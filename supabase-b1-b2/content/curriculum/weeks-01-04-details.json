@@ -8,6 +8,7 @@
     "Fluency Studio: Weeks 1–4 Speaking Content (21 Nov 2026)",
     "Fluency Studio: Weeks 1–4 Listening Content (21 Nov 2026)",
     "Fluency Studio: Weeks 1–4 Reading Content (21 Nov 2026)",
+    "Fluency Studio: Writing Content, Weeks 1–4 (21 Nov 2026)",
     "Fluency Studio: Writing Content, Weeks 1–4 (21 Nov 2026)"
   ],
   "pilotRules": {
@@ -1392,7 +1393,7 @@
           120,
           150
         ],
-        "prompt": "Write a message to a friend about a goal. Include a confirmed arrangement, your next step and a back-up plan. Use in order to once to explain a purpose.",
+        "prompt": "Write a letter to the Ask Sam advice column about a goal. Include a confirmed arrangement, your next step, a back-up plan and one question asking for advice. Use in order to once to explain a purpose.",
         "grammar": "going to; present continuous for arrangements; will; present simple after when / as soon as; first and second conditionals",
         "featuredWords": [
           "goal",
@@ -1404,19 +1405,20 @@
         "linkers": [
           "in order to"
         ],
-        "readerAndPurpose": "An informal email or message to a friend. The aim is to share news clearly and sound natural and friendly.",
+        "readerAndPurpose": "A letter to an advice column, like Daniel’s letter in this week’s reading. The aim is to explain your situation and plans clearly, then ask one clear question.",
         "requiredPoints": [
           "The goal",
           "One arrangement that is already fixed (day or date)",
           "The next step after that (when / as soon as + will)",
           "A back-up plan (if + present simple, will)",
+          "One question asking for advice (Should I...?)",
           "in order to used once"
         ],
         "planFrame": [
-          "Greeting and the news",
-          "The goal and what is already arranged",
+          "Greeting, who you are and the goal",
+          "What is already arranged",
           "The next step and the back-up plan",
-          "Friendly close"
+          "Your worry, one question for Sam, and a close"
         ],
         "usefulLanguage": [
           "My goal is to...",
@@ -1425,13 +1427,14 @@
           "I’m meeting / starting... on...",
           "When I finish..., I’ll...",
           "If I don’t..., I’ll...",
-          "I’m really looking forward to...",
-          "Speak soon,"
+          "I’m looking forward to..., but I’m worried about...",
+          "Should I...?",
+          "Thanks,"
         ],
-        "onTarget": "covers every required point; uses at least two future forms correctly; uses a first or second conditional; uses two featured items; has a greeting and close that suit a friend.",
+        "onTarget": "covers every required point; uses at least two future forms correctly; uses a first or second conditional; uses two featured items; ends with one clear question for Sam; has a greeting and close that suit an advice column.",
         "correctionPriority": "1) will after when, as soon as or if (when I will finish); 2) going to vs present continuous for fixed arrangements; 3) look forward to + -ing.",
         "reviseAndRetryFocus": "Check every time clause (when, as soon as, before, after) uses the present simple, and add a day or date to the arrangement.",
-        "modelAnswer": "Hi Sam,\n\nI hope you’re well! I wanted to tell you about my plans. My goal is to start a career in graphic design, so I’ve signed up for an online course. It starts on 10 January, and I’m meeting my tutor for the first time next Monday.\n\nI’m going to practise every evening in order to build a portfolio quickly. When I finish the course in June, I’ll apply for junior jobs in design studios. If I don’t find a job straight away, I’ll do some freelance work to get more experience.\n\nI intend to keep my current job until then, so it’ll be a busy six months! I’m really looking forward to it, though. I’ll let you know how the first lesson goes.\n\nSpeak soon,\nLucía",
+        "modelAnswer": "Dear Sam,\n\nI’m 31 and I work in a bank, but my goal is to start a career in graphic design. I’ve signed up for an online course, which starts on 10 January, and I’m meeting my tutor for the first time next Monday.\n\nI’m going to practise every evening in order to build a portfolio quickly. When I finish the course in June, I’ll apply for junior jobs in design studios. If I don’t find a job straight away, I’ll do some freelance work to get more experience.\n\nI intend to keep my current job until then. I’m really looking forward to the course, but I’m worried about telling my manager. Should I tell her about my plans now, or wait until I find a new job?\n\nThanks,\nLucía",
         "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?"
       },
       "conversation": {
@@ -2118,7 +2121,7 @@
           "in fact",
           "apart from that (required)"
         ],
-        "readerAndPurpose": "A friendly message to someone moving in. The aim is to explain how the flat works without sounding strict.",
+        "readerAndPurpose": "A friendly welcome email to someone moving in. The aim is to explain how the flat works without sounding strict.",
         "requiredPoints": [
           "One requirement (have to)",
           "One rule (mustn’t)",
@@ -2886,7 +2889,7 @@
         "onTarget": "covers every required point; uses at least one present or past passive correctly; uses a comparative or superlative; uses to begin with and all in all; uses two featured items.",
         "correctionPriority": "1) be + past participle (was build, is visit); 2) irregular participles (held, built, taken); 3) comparative forms (more quiet, the most big).",
         "reviseAndRetryFocus": "Turn one fact about the place into the passive, and check each comparison uses -er / -est or more / most correctly.",
-        "modelAnswer": "Last month I spent a weekend in Bath, and I’d definitely recommend it.\n\nTo begin with, we visited the Roman Baths. They were built almost two thousand years ago, and they are still fed by natural hot springs. Then we walked to the Royal Crescent, a curved row of houses which was built in the eighteenth century. It’s one of the most beautiful streets I’ve ever seen.\n\nIn the afternoon, we found a small local café where they serve traditional Bath buns. The city is much quieter than London, and it’s easy to explore on foot.\n\nAll in all, Bath is a great destination for a short break. If you go, set off early on Saturday, because the Roman Baths get very busy by lunchtime.",
+        "modelAnswer": "Last summer I spent a weekend in Edinburgh, and I’d definitely recommend it.\n\nTo begin with, we visited Edinburgh Castle, which sits on top of an old volcano. The oldest part was built in the twelfth century. Almost every day, a gun is fired from the castle at one o’clock, a tradition which started in 1861.\n\nIn the afternoon, we walked down the Royal Mile, a busy street where you can find lots of small local shops and cafés. Then we climbed Arthur’s Seat. It was harder than I expected, but the view was the best of the whole trip.\n\nAll in all, Edinburgh is a great destination for a short break. If you go, set off early, because the castle gets very busy by lunchtime.",
         "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place."
       },
       "conversation": {
@@ -4201,7 +4204,7 @@
   },
   "writing": {
     "status": "pilot draft — pending second-teacher review",
-    "intro": "Pilot draft, pending second-teacher review. Source: Writing Content PDF (21 Nov 2026).",
+    "intro": "Pilot draft, pending second-teacher review. Source: Writing Content PDF (21 Nov 2026), revised so each task matches the repo reading texts.",
     "steps": [
       {
         "step": 1,
@@ -4236,7 +4239,7 @@
     ],
     "marking": "Writing descriptors (task achievement, vocabulary, grammar, organisation); B1 target; under 100 words caps task achievement at 'Getting there'; British spelling taught, American noted not penalised.",
     "unlocking": "Required: next week opens when speaking, writing and either listening or reading are done.",
-    "source": "Writing Content PDF (21 Nov 2026)",
+    "source": "Writing Content PDF (21 Nov 2026), revised so each task matches the repo reading texts.",
     "weeks": [
       {
         "week": 1,
