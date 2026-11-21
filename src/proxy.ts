@@ -4,7 +4,9 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 const AI_PROTECTED_PATHS = new Set([
   '/api/speaking/chat',
   '/api/speaking/evaluate',
+  '/api/speaking/transcribe',
   '/api/writing/correct',
+  '/api/mediation/feedback',
   '/api/review/check-rewrite',
 ]);
 

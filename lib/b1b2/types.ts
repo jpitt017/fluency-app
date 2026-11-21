@@ -652,4 +652,16 @@ export interface TeacherRosterLearner {
     teacher_notes: string | null;
     created_at: string;
   }[];
+  mediation_attempts: {
+    id: string;
+    week: number;
+    task_key: string;
+    transcript: string | null;
+    response_text: string | null;
+    feedback: Record<string, unknown> | null;
+    needs_review: boolean;
+    review_reason: string | null;
+    disputed: boolean;
+    created_at: string;
+  }[];
 }

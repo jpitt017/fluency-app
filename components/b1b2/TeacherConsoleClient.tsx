@@ -444,6 +444,50 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
               </div>
             )}
           </div>
+          {/* Mediation attempts */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4 text-indigo-700" />
+              <h3 className="font-serif text-lg font-semibold text-stone-900">
+                Mediation Attempts
+              </h3>
+              <span className="ml-auto text-[11px] text-stone-500">
+                {selected.mediation_attempts.filter((item) => item.needs_review).length} in review queue
+              </span>
+            </div>
+            {selected.mediation_attempts.length === 0 ? (
+              <p className="mt-3 text-xs text-stone-500">No mediation tasks submitted yet.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {selected.mediation_attempts.map((attempt) => (
+                  <div key={attempt.id} className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-stone-900">Week {attempt.week} · {attempt.task_key}</span>
+                      {attempt.needs_review && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-900">
+                          Review queue · {attempt.review_reason ?? 'flagged'}
+                        </span>
+                      )}
+                      {attempt.disputed && (
+                        <span className="rounded-full bg-rose-100 px-2 py-0.5 font-bold text-rose-900">Disputed</span>
+                      )}
+                      <span className="ml-auto text-stone-500">{new Date(attempt.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="whitespace-pre-line rounded-lg bg-white p-2.5 text-stone-800">
+                      {attempt.transcript || attempt.response_text || 'No response text recorded.'}
+                    </p>
+                    {Array.isArray(attempt.feedback?.criteria) && (
+                      <p className="text-stone-600">
+                        {(attempt.feedback.criteria as { label?: string; note?: string }[])
+                          .map((item) => `${item.label ?? 'Criterion'}: ${item.note ?? '—'}`)
+                          .join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>

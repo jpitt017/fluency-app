@@ -4,6 +4,9 @@ import { useRef, useState } from 'react';
 import type { WeekMediation } from '@/lib/curriculum/syllabus';
 
 interface MediationFeedback {
+  attemptId?: string;
+  needsReview?: boolean;
+  reviewReason?: string | null;
   criteria: { label: string; note: string }[];
   readerNeed: string;
   feedback: string;
@@ -18,19 +21,22 @@ export default function MediationTask({
   task: WeekMediation;
 }) {
   const isVoice = /voice message/i.test(task.output);
+  const taskKey = `week-${weekNumber}-mediation`;
   const [mode, setMode] = useState<'voice' | 'text'>(isVoice ? 'voice' : 'text');
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState<MediationFeedback | null>(null);
+  const [disputed, setDisputed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  async function requestFeedback(submission: string) {
+  async function requestFeedback(submission: string, submissionMode: 'voice' | 'text') {
     setLoading(true);
     setError(null);
     setFeedback(null);
+    setDisputed(false);
     try {
       const response = await fetch('/api/mediation/feedback', {
         method: 'POST',
@@ -43,6 +49,8 @@ export default function MediationTask({
           scale: task.scale,
           level: task.level,
           week: weekNumber,
+          taskKey,
+          mode: submissionMode,
         }),
       });
       const data = (await response.json()) as MediationFeedback & { error?: string };
@@ -50,6 +58,25 @@ export default function MediationTask({
       setFeedback(data);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not get feedback. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function disputeFeedback() {
+    if (!feedback?.attemptId || disputed) return;
+    setLoading(true);
+    try {
+      const response = await fetch('/api/mediation/dispute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId: feedback.attemptId }),
+      });
+      const data = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok) throw new Error(data.error || 'Could not flag this feedback.');
+      setDisputed(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not flag this feedback.');
     } finally {
       setLoading(false);
     }
@@ -79,14 +106,15 @@ export default function MediationTask({
         form.set('prompt', task.prompt);
         form.set('targetPhrase', `${task.scale}, ${task.level}`);
         try {
-          const transcription = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
+          // Transcription-only: 2 units, no speaking rubric or pronunciation score.
+          const transcription = await fetch('/api/speaking/transcribe', { method: 'POST', body: form });
           const data = (await transcription.json()) as { transcript?: string; error?: string };
           if (!transcription.ok) throw new Error(data.error || 'Could not transcribe your recording.');
           if (!data.transcript) throw new Error('No speech was detected. Please try again or type your response.');
           setText(data.transcript);
-          await requestFeedback(data.transcript);
+          await requestFeedback(data.transcript, 'voice');
         } catch (caught) {
-          setError(caught instanceof Error ? caught.message : 'Could not evaluate your recording.');
+          setError(caught instanceof Error ? caught.message : 'Could not transcribe your recording.');
         }
       };
       recorder.start();
@@ -165,7 +193,7 @@ export default function MediationTask({
       {mode === 'text' && (
         <button
           type="button"
-          onClick={() => requestFeedback(text)}
+          onClick={() => requestFeedback(text, 'text')}
           disabled={loading || !text.trim()}
           className="rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -197,6 +225,22 @@ export default function MediationTask({
           </p>
           <p className="text-stone-700">{feedback.feedback}</p>
           <p className="text-xs text-stone-600">Next time: {feedback.suggestion}</p>
+          <div className="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-3 text-xs text-stone-600">
+            <span>Saved to your mediation practice log.</span>
+            {feedback.needsReview && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-900">
+                Teacher check: {feedback.reviewReason?.replace(/_/g, ' ') ?? 'flagged'}
+              </span>
+            )}
+            <button
+              type="button"
+              disabled={loading || disputed || !feedback.attemptId}
+              onClick={() => void disputeFeedback()}
+              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+            >
+              {disputed ? 'Flagged for teacher' : 'I think this is right'}
+            </button>
+          </div>
         </div>
       )}
     </section>

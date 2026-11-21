@@ -473,15 +473,41 @@ export async function loadTeacherRoster(): Promise<{
     return { signedIn: true, authorized: false, learners: [] };
   }
 
-  const { data, error } = await supabase.rpc('teacher_get_roster');
+  const [{ data, error }, attemptsRes] = await Promise.all([
+    supabase.rpc('teacher_get_roster'),
+    supabase
+      .from('mediation_attempts')
+      .select('id, user_id, week, task_key, transcript, response_text, feedback, needs_review, review_reason, disputed, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200),
+  ]);
   if (error) {
     console.error('teacher_get_roster failed:', error.message);
     return { signedIn: true, authorized: true, learners: [] };
   }
 
-  return {
-    signedIn: true,
-    authorized: true,
-    learners: (Array.isArray(data) ? data : []) as TeacherRosterLearner[],
-  };
+  const attemptsByUser = new Map<string, TeacherRosterLearner['mediation_attempts']>();
+  for (const row of attemptsRes.data ?? []) {
+    const list = attemptsByUser.get(row.user_id) ?? [];
+    list.push({
+      id: String(row.id),
+      week: Number(row.week),
+      task_key: String(row.task_key),
+      transcript: row.transcript ? String(row.transcript) : null,
+      response_text: row.response_text ? String(row.response_text) : null,
+      feedback: (row.feedback ?? {}) as Record<string, unknown>,
+      needs_review: Boolean(row.needs_review),
+      review_reason: row.review_reason ? String(row.review_reason) : null,
+      disputed: Boolean(row.disputed),
+      created_at: String(row.created_at),
+    });
+    attemptsByUser.set(row.user_id, list);
+  }
+
+  const learners = ((Array.isArray(data) ? data : []) as TeacherRosterLearner[]).map((learner) => ({
+    ...learner,
+    mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
+  }));
+
+  return { signedIn: true, authorized: true, learners };
 }

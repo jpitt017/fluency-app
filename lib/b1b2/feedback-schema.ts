@@ -432,7 +432,7 @@ export async function persistLearnerErrors(
   supabase: SupabaseClient,
   params: {
     userId: string;
-    sourceType: 'writing' | 'speaking' | 'checkpoint_writing' | 'checkpoint_speaking';
+    sourceType: 'writing' | 'speaking' | 'checkpoint_writing' | 'checkpoint_speaking' | 'mediation';
     sourceId?: string | null;
     lessonId?: string | null;
     sourceText?: string;

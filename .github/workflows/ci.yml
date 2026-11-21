@@ -39,6 +39,7 @@ jobs:
       - run: npm run validate:details
       - run: npm run lint
       - run: npm run eval:prompts -- --offline
+      - run: npm run test:mediation
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
