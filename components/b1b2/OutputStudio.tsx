@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
-import { Mic, RotateCcw, Sparkles, Square } from 'lucide-react';
+import { Eye, EyeOff, Mic, RotateCcw, Sparkles, Square, Volume2 } from 'lucide-react';
 import ShadowingLab from '@/components/b1b2/ShadowingLab';
 import { computeWordDiff } from '@/lib/b1b2/diff';
 import { speakPhrase } from '@/lib/b1b2/speech';
@@ -73,6 +73,11 @@ const SEVERITY_BADGE: Record<string, string> = {
 export default function OutputStudio({
   lessonId,
   lessonNumber,
+  moduleLessonNumber,
+  outputTitle,
+  outputPrompt,
+  delayedRecallPrompt,
+  grammarPoint,
   signedIn,
   speaking,
   writing,
@@ -80,16 +85,28 @@ export default function OutputStudio({
 }: {
   lessonId: string;
   lessonNumber: number;
+  moduleLessonNumber?: number;
+  outputTitle?: string;
+  outputPrompt?: string;
+  delayedRecallPrompt?: string | null;
+  grammarPoint?: string | null;
   signedIn: boolean;
   speaking: SpeakingTask | null;
   writing: WritingTask | null;
   onSubmitted: () => void;
 }) {
+  const isTuesdayGrammar = moduleLessonNumber === 2;
+  const isSundayDelayedRecall = moduleLessonNumber === 7 && Boolean(delayedRecallPrompt);
+
   const [transcript, setTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const [modelVisible, setModelVisible] = useState(true);
+  const [modelHiddenForRecording, setModelHiddenForRecording] = useState(false);
+  const [recallPhraseBankShown, setRecallPhraseBankShown] = useState(false);
 
   const [draft, setDraft] = useState('');
   const [variety, setVariety] = useState<'British' | 'American' | 'International'>('British');
@@ -111,8 +128,26 @@ export default function OutputStudio({
 
   const supabase = createClient();
 
+  const activeSpeakingTitle = isTuesdayGrammar
+    ? outputTitle || 'Say & refine one target sentence'
+    : isSundayDelayedRecall
+      ? 'Sunday Delayed Recall (45–60s)'
+      : speaking?.title || '';
+
+  const activeSpeakingPrompt = isTuesdayGrammar
+    ? outputPrompt || speaking?.prompt || ''
+    : isSundayDelayedRecall && delayedRecallPrompt
+      ? delayedRecallPrompt
+      : speaking?.prompt || '';
+
+  const activeTargetSeconds = isTuesdayGrammar ? 30 : isSundayDelayedRecall ? 55 : (speaking?.target_seconds ?? 55);
+
   async function startRecording() {
     setError('');
+    if (speaking?.model_answer && modelVisible) {
+      setModelVisible(false);
+      setModelHiddenForRecording(true);
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((type) =>
@@ -180,20 +215,19 @@ export default function OutputStudio({
         }
       }
 
-      const targetPhrase = [
-        ...(speaking.target_terms ?? []),
-        ...(speaking.target_linkers ?? []),
-      ].join(', ');
+      const targetPhrase = isTuesdayGrammar
+        ? grammarPoint || (speaking.target_terms ?? []).join(', ')
+        : [...(speaking.target_terms ?? []), ...(speaking.target_linkers ?? [])].join(', ');
 
       let res: Response;
       if (audioBlob && !transcript.trim()) {
         const form = new FormData();
         form.set('audio', audioBlob, `lesson-${lessonNumber}.webm`);
-        form.set('prompt', speaking.prompt);
+        form.set('prompt', activeSpeakingPrompt);
         form.set('targetPhrase', targetPhrase);
         form.set('taskId', speaking.id);
         form.set('lessonId', lessonId);
-        form.set('durationSeconds', String(seconds || speaking.target_seconds));
+        form.set('durationSeconds', String(seconds || activeTargetSeconds));
         form.set('mimeType', audioBlob.type || 'audio/webm');
         if (audioPath) form.set('audioPath', audioPath);
         res = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
@@ -203,11 +237,11 @@ export default function OutputStudio({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             transcript: transcript.trim(),
-            prompt: speaking.prompt,
+            prompt: activeSpeakingPrompt,
             targetPhrase,
             taskId: speaking.id,
             lessonId,
-            durationSeconds: seconds || speaking.target_seconds,
+            durationSeconds: seconds || activeTargetSeconds,
             audioPath: audioPath || undefined,
             mimeType: audioBlob?.type || undefined,
           }),
@@ -221,6 +255,9 @@ export default function OutputStudio({
         setTranscript(data.transcript);
       }
       setSpeakingResult(data);
+      if (isSundayDelayedRecall) {
+        setRecallPhraseBankShown(true);
+      }
       onSubmitted();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not evaluate speaking response.');
@@ -321,35 +358,119 @@ export default function OutputStudio({
       {speaking && (
         <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
           <div>
-            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-800">
-              Speaking · {speaking.kind}
-            </span>
-            <h3 className="mt-1.5 text-sm font-bold text-stone-900">{speaking.title}</h3>
-            <p className="mt-2 text-sm text-stone-700">{speaking.prompt}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-800">
+                {isTuesdayGrammar
+                  ? 'Tuesday · Say & refine one sentence'
+                  : isSundayDelayedRecall
+                    ? 'Sunday · Delayed recall'
+                    : `Speaking · ${speaking.kind === 'role_play' ? '2–3 turn role-play' : speaking.kind}`}
+              </span>
+              {speaking.b2_stretch && !isTuesdayGrammar && !isSundayDelayedRecall && (
+                <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200">
+                  Optional B2 stretch available
+                </span>
+              )}
+            </div>
+            <h3 className="mt-1.5 text-sm font-bold text-stone-900">{activeSpeakingTitle}</h3>
+            <p className="mt-2 text-sm text-stone-700">{activeSpeakingPrompt}</p>
             <p className="mt-1 text-xs text-stone-500">
-              Target length: ~{speaking.target_seconds}s
-              {speaking.target_terms?.length ? ` · Target vocabulary: ${speaking.target_terms.join(', ')}` : ''}
+              {isTuesdayGrammar
+                ? 'Target: 1 clear spoken or typed sentence (~30s), then review feedback and try once more'
+                : `Target length: ~${activeTargetSeconds}s`}
+              {!isTuesdayGrammar && !isSundayDelayedRecall && speaking.target_terms?.length
+                ? ` · Target vocabulary: ${speaking.target_terms.join(', ')}`
+                : ''}
             </p>
 
-            {speaking.useful_phrases?.length ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {speaking.useful_phrases.map((phrase) => (
-                  <span key={phrase} className="rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700">
-                    {phrase}
-                  </span>
-                ))}
+            {speaking.model_answer && !isTuesdayGrammar && !isSundayDelayedRecall && (
+              <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/40 p-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-indigo-900">
+                      Model answer (listen first, then hide before recording)
+                    </p>
+                    {modelHiddenForRecording && !modelVisible && (
+                      <p className="text-[11px] text-indigo-700">
+                        Hidden while recording so you speak naturally in your own words.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void speakPhrase(speaking.model_answer!, 'en-GB', 0.95)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
+                    >
+                      <Volume2 className="h-3.5 w-3.5" />
+                      <span>Listen to model</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModelVisible((v) => !v);
+                        setModelHiddenForRecording(false);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-50"
+                    >
+                      {modelVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      <span>{modelVisible ? 'Hide model' : 'Show model'}</span>
+                    </button>
+                  </div>
+                </div>
+                {modelVisible && (
+                  <p className="mt-2.5 whitespace-pre-line rounded-lg bg-white p-3 text-xs leading-5 text-stone-800 ring-1 ring-indigo-100">
+                    {speaking.model_answer}
+                  </p>
+                )}
               </div>
-            ) : null}
+            )}
 
-            {speaking.target_linkers?.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {speaking.target_linkers.map((linker) => (
-                  <span key={linker} className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
-                    {linker}
-                  </span>
-                ))}
+            {speaking.b2_stretch && !isTuesdayGrammar && !isSundayDelayedRecall && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-950">
+                <strong className="uppercase tracking-wide text-amber-900">Optional B2 stretch (not compulsory):</strong>{' '}
+                {speaking.b2_stretch}
               </div>
-            ) : null}
+            )}
+
+            {isSundayDelayedRecall && !recallPhraseBankShown && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-xs text-amber-950">
+                <span>
+                  Phrase bank is hidden on your first take so you test genuine recall from memory.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setRecallPhraseBankShown(true)}
+                  className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-900 hover:bg-amber-50"
+                >
+                  Reveal phrase bank
+                </button>
+              </div>
+            )}
+
+            {!isTuesdayGrammar && (!isSundayDelayedRecall || recallPhraseBankShown) && (
+              <>
+                {speaking.useful_phrases?.length ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {speaking.useful_phrases.map((phrase) => (
+                      <span key={phrase} className="rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                        {phrase}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {speaking.target_linkers?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {speaking.target_linkers.map((linker) => (
+                      <span key={linker} className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800">
+                        {linker}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {!recording ? (
@@ -375,12 +496,18 @@ export default function OutputStudio({
             </div>
 
             <label className="mt-3 block text-xs font-semibold text-stone-600">
-              Spoken transcript (Whisper transcribes your mic recording automatically; transcript checks cover content, grammar &amp; vocabulary)
+              {isTuesdayGrammar
+                ? 'Spoken or typed sentence (record mic or type one sentence below)'
+                : 'Spoken transcript (Whisper transcribes your mic recording automatically; transcript checks cover content, grammar & vocabulary)'}
               <textarea
-                rows={3}
+                rows={isTuesdayGrammar ? 2 : 3}
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Record with your mic above or type your spoken answer here…"
+                placeholder={
+                  isTuesdayGrammar
+                    ? 'Say or type one target sentence here…'
+                    : 'Record with your mic above or type your spoken answer here…'
+                }
                 className="mt-1.5 w-full rounded-xl border border-stone-300 bg-stone-50/50 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
               />
             </label>
@@ -396,7 +523,13 @@ export default function OutputStudio({
                 className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-800 disabled:bg-stone-300"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>{busy === 'speaking' ? 'Transcribing & scoring…' : 'Evaluate spoken content'}</span>
+                <span>
+                  {busy === 'speaking'
+                    ? 'Transcribing & scoring…'
+                    : isTuesdayGrammar
+                      ? 'Check sentence & try again'
+                      : 'Evaluate spoken content'}
+                </span>
               </button>
             </div>
           </div>
@@ -437,9 +570,20 @@ export default function OutputStudio({
                   className="inline-flex items-center gap-1 rounded-lg border border-indigo-300 bg-white px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-50"
                 >
                   <RotateCcw className="h-3 w-3" />
-                  <span>Retry &amp; improve score</span>
+                  <span>{isTuesdayGrammar ? 'Try sentence again' : 'Retry & improve score'}</span>
                 </button>
               </div>
+
+              {(speakingResult.corrections?.[0] || speakingResult.improvements?.[0]) && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                  <strong className="uppercase tracking-wide text-amber-900">One focus for your retry:</strong>{' '}
+                  {speakingResult.corrections?.[0]
+                    ? `${speakingResult.corrections[0].original} → ${
+                        speakingResult.corrections[0].corrected_sentence || speakingResult.corrections[0].alternative
+                      } (${speakingResult.corrections[0].explanation || speakingResult.corrections[0].reason || 'tighten accuracy'})`
+                    : speakingResult.improvements?.[0]}
+                </div>
+              )}
 
               <p className="text-sm text-stone-800">{speakingResult.feedback}</p>
               {speakingResult.transcriptionNote && (

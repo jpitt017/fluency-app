@@ -345,6 +345,122 @@ export const GRAMMAR_CLINIC_TOPICS: ClinicTopic[] = [
       },
     ],
   },
+  {
+    slug: 'zero-second-conditionals',
+    title: 'Zero & second conditionals',
+    errorCategories: ['conditional', 'tense_aspect', 'verb_form'],
+    summary:
+      'Moved here from Week 2 review so Tuesday grammar focuses on intentions, arrangements, and future time clauses. Separate general truths (zero) from imagined situations and diplomatic advice (second).',
+    coreRules: [
+      'Zero conditional uses present simple + present simple for facts and habits that are always true (If you heat water to 100°C, it boils).',
+      'Second conditional uses past simple + would + infinitive for unlikely or imagined present/future situations (If I had more time, I would learn design).',
+      'Use "If I were you, I would..." as a polite, diplomatic way to offer advice.',
+    ],
+    contrastExamples: [
+      {
+        weak: 'If I would have more free evenings, I will join a choir.',
+        strong: 'If I had more free evenings, I would join a choir.',
+        why: 'Never put "would" inside the if-clause; use past simple in the condition and "would" in the result.',
+      },
+      {
+        weak: 'If I am you, I ask the manager tomorrow.',
+        strong: 'If I were you, I would ask the manager tomorrow.',
+        why: 'Use "If I were you, I would..." for hypothetical advice.',
+      },
+    ],
+    items: [
+      {
+        id: 'zsc-1',
+        prompt: 'If you ___ the heating on overnight, the flat gets far too warm.',
+        options: ['leave', 'left', 'would leave'],
+        answer: 'leave',
+        explanation: 'A general cause-and-effect habit takes the zero conditional (present simple + present simple).',
+      },
+      {
+        id: 'zsc-2',
+        prompt: 'If I had a shorter commute, I ___ more time to cook in the evenings.',
+        options: ['have', 'will have', 'would have'],
+        answer: 'would have',
+        explanation: 'An imagined present situation takes past simple in the if-clause and "would" in the result.',
+      },
+      {
+        id: 'zsc-3',
+        prompt: 'Which sentence gives advice most diplomatically?',
+        options: [
+          'If I were you, I would check the contract before signing.',
+          'If I am you, I check the contract before signing.',
+          'If I would be you, I checked the contract.',
+        ],
+        answer: 'If I were you, I would check the contract before signing.',
+        explanation: '"If I were you, I would..." is the standard polite second-conditional frame.',
+      },
+      {
+        id: 'zsc-4',
+        prompt: 'When the library ___ busy before exams, students usually book a quiet desk online.',
+        options: ['gets', 'got', 'would get'],
+        answer: 'gets',
+        explanation: 'Zero conditional / general rule uses present simple in both clauses.',
+      },
+    ],
+  },
+  {
+    slug: 'comparatives-superlatives',
+    title: 'Comparatives & superlatives',
+    errorCategories: ['comparison', 'adjective_adverb', 'word_form'],
+    summary:
+      'Moved here from Week 4 review so Week 4 focuses on present/past passives and visitor guides. Control short -er/-est forms, longer more/most forms, and equal comparisons.',
+    coreRules: [
+      'Short adjectives take -er / -est (quieter, the quietest); two-syllable -y adjectives change y to i (busier, the busiest).',
+      'Longer adjectives take more / the most (more welcoming, the most memorable); never combine more + -er ("more easier").',
+      'Use "as + adjective + as" for equal comparisons and "the + superlative + in + place" (not "of the city").',
+    ],
+    contrastExamples: [
+      {
+        weak: 'Taking the tram is more easier than driving in the centre.',
+        strong: 'Taking the tram is much easier than driving in the centre.',
+        why: 'Avoid double comparatives: "easy" becomes "easier", not "more easier".',
+      },
+      {
+        weak: 'This is the oldest market of the town.',
+        strong: 'This is the oldest market in the town.',
+        why: 'Places after a superlative take "in", not "of".',
+      },
+    ],
+    items: [
+      {
+        id: 'cmp-1',
+        prompt: 'The riverside path is much ___ than the main shopping street on Saturdays.',
+        options: ['quieter', 'more quieter', 'most quiet'],
+        answer: 'quieter',
+        explanation: '"Quiet" takes "-er" ("quieter"); never add "more" as well.',
+      },
+      {
+        id: 'cmp-2',
+        prompt: 'The historic market hall is the oldest public building ___ the town.',
+        options: ['of', 'in', 'from'],
+        answer: 'in',
+        explanation: 'Use "in" (not "of") with places after a superlative.',
+      },
+      {
+        id: 'cmp-3',
+        prompt: 'The winter festival was not ___ crowded as the summer parade.',
+        options: ['as', 'so much', 'more'],
+        answer: 'as',
+        explanation: 'Equal/unequal comparison with "not ... as" uses "not as + adjective + as".',
+      },
+      {
+        id: 'cmp-4',
+        prompt: 'Which comparison uses the irregular adverb form accurately?',
+        options: [
+          'Our second visit went far better than the first.',
+          'Our second visit went more well than the first.',
+          'Our second visit went gooder than the first.',
+        ],
+        answer: 'Our second visit went far better than the first.',
+        explanation: 'The comparative of "well" (and "good") is "better".',
+      },
+    ],
+  },
 ];
 
 export function findClinicTopicsForErrors(categories: string[]): ClinicTopic[] {

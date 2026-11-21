@@ -9,7 +9,11 @@ export interface QuizItem {
   prompt: string;
   options: string[] | null;
   answer: string;
+  accepted_answers?: string[] | null;
   explanation?: string | null;
+  week?: number;
+  skill_tag?: string;
+  recommended_lesson?: number;
 }
 
 function renderPromptWithBlank(prompt: string, fillText?: string) {
@@ -36,6 +40,19 @@ function normalizeAnswer(value: string): string {
     .replace(/[.!?]+$/, '');
 }
 
+function isItemAnswerCorrect(item: QuizItem, response: string): boolean {
+  const norm = normalizeAnswer(response);
+  if (!norm) return false;
+  if (norm === normalizeAnswer(item.answer)) return true;
+  return (item.accepted_answers ?? []).some((alt) => normalizeAnswer(alt) === norm);
+}
+
+function isCorrectOption(item: QuizItem, option: string): boolean {
+  if (option === item.answer) return true;
+  const normOpt = normalizeAnswer(option);
+  return (item.accepted_answers ?? []).some((alt) => normalizeAnswer(alt) === normOpt);
+}
+
 function supportsRecallInput(item: QuizItem): boolean {
   return item.prompt.includes('___') || item.answer.split(/\s+/).length <= 4;
 }
@@ -43,14 +60,18 @@ function supportsRecallInput(item: QuizItem): boolean {
 export default function PracticeQuiz({
   items,
   onScoreChange,
+  onItemChecked,
   compact = false,
+  hideCustomSentence = false,
   lessonId,
   signedIn = false,
   grammarPoint,
 }: {
   items: QuizItem[];
   onScoreChange?: (correct: number, total: number) => void;
+  onItemChecked?: (item: QuizItem, isCorrect: boolean, response: string) => void;
   compact?: boolean;
+  hideCustomSentence?: boolean;
   lessonId?: string;
   signedIn?: boolean;
   grammarPoint?: string | null;
@@ -75,7 +96,7 @@ export default function PracticeQuiz({
   const score = useMemo(() => {
     return items.reduce((total, item) => {
       if (!checked[item.id]) return total;
-      const isMatch = normalizeAnswer(selected[item.id] ?? '') === normalizeAnswer(item.answer);
+      const isMatch = isItemAnswerCorrect(item, selected[item.id] ?? '');
       return isMatch ? total + 1 : total;
     }, 0);
   }, [items, checked, selected]);
@@ -86,7 +107,7 @@ export default function PracticeQuiz({
     const response = selected[item.id];
     if (!response || !response.trim()) return;
 
-    const isCorrect = normalizeAnswer(response) === normalizeAnswer(item.answer);
+    const isCorrect = isItemAnswerCorrect(item, response);
     const nextChecked = { ...checked, [item.id]: true };
     setChecked(nextChecked);
     setAttempts((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
@@ -94,9 +115,10 @@ export default function PracticeQuiz({
     const correct = items.reduce((total, entry) => {
       if (!nextChecked[entry.id]) return total;
       const val = entry.id === item.id ? response : selected[entry.id] ?? '';
-      return normalizeAnswer(val) === normalizeAnswer(entry.answer) ? total + 1 : total;
+      return isItemAnswerCorrect(entry, val) ? total + 1 : total;
     }, 0);
     onScoreChange?.(correct, items.length);
+    onItemChecked?.(item, isCorrect, response.trim());
 
     if (signedIn && lessonId && supabase && !item.id.includes('-q')) {
       try {
@@ -198,7 +220,7 @@ export default function PracticeQuiz({
         {items.map((item, index) => {
           const isChecked = Boolean(checked[item.id]);
           const userAnswer = selected[item.id] ?? '';
-          const isCorrect = isChecked && normalizeAnswer(userAnswer) === normalizeAnswer(item.answer);
+          const isCorrect = isChecked && isItemAnswerCorrect(item, userAnswer);
           const useTyping = recallMode && supportsRecallInput(item) && !revealedHints[item.id];
           const attemptCount = attempts[item.id] ?? 0;
 
@@ -246,7 +268,8 @@ export default function PracticeQuiz({
                 <div className="mt-3 grid gap-2">
                   {(item.options ?? []).map((option) => {
                     const chosen = userAnswer === option;
-                    const answerOption = isChecked && isCorrect && option === item.answer;
+                    const optionMatches = isCorrectOption(item, option);
+                    const answerOption = isChecked && isCorrect && chosen && optionMatches;
                     const revealAfterRetry = isChecked && attemptCount >= 2 && option === item.answer;
                     const wrongChosen = isChecked && chosen && !isCorrect;
                     return (
@@ -330,7 +353,7 @@ export default function PracticeQuiz({
         </li>
       </ol>
 
-      {!compact && signedIn && lessonId && (
+      {!compact && !hideCustomSentence && signedIn && lessonId && (
         <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-xs font-bold uppercase tracking-wide text-indigo-900">

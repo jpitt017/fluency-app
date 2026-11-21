@@ -5,103 +5,124 @@
       "number": 1,
       "phase": "Month 1: Strengthen B1 foundations",
       "title": "Personal experiences and change",
-      "summary": "Narrate past events clearly, separate finished past from life experience, and describe habits that changed over time.",
+      "summary": "Tell a story and connect a past change to now with the past simple, present perfect, and used to vs got used to.",
       "hours": 4,
       "releaseStage": "live",
       "vocabularyTopic": "Personal experiences, life changes & adaptation",
-      "lightGrammar": "used to / would; present perfect continuous",
+      "lightGrammar": "Past continuous background & explicit past perfect (optional B2 stretch)",
       "grammar": [
         {
-          "key": "narrative-tenses",
-          "name": "Narrative tenses",
-          "explanation": "When you tell a story, past continuous sets the scene, past simple moves the action forward, and past perfect explains what had already happened.",
+          "key": "past-simple-present-perfect-used-to",
+          "role": "main",
+          "name": "Past simple vs present perfect; used to vs got used to",
+          "explanation": "Use the past simple for a finished event (\"I moved last year\") and the present perfect for a change up to now (\"Since then, I’ve made a few friends\"). Use the past continuous as story background, and contrast used to work (a former habit or state) with got used to working (became accustomed to something new).",
           "keyPoints": [
-            "Past continuous frames the background: I was walking home when I saw the message.",
-            "Past perfect marks the earlier of two past events: the film had already started.",
-            "Keep one main timeline; use past perfect only when the order matters."
+            "Finished past event at a finished time: \"I moved here last year.\"",
+            "Change continuing or connected to now: \"Since then, I’ve made a few friends.\"",
+            "Story background action: \"I was walking home when I bumped into a neighbour.\"",
+            "Contrast \"used to + base verb\" (old habit/state) with \"got used to + noun / -ing\" (became accustomed to it)."
           ],
-          "example": "I had been waiting for hours when the bus finally arrived, so I walked the last two kilometres.",
+          "example": "When I moved to a new city last year, I didn’t know anyone. It took me a few weeks to get used to spending my evenings alone, and since then I’ve made a few friends.",
           "items": [
             {
-              "prompt": "When I arrived, the film ___.",
+              "prompt": "I ___ here last year. Since then, I’ve made a few friends.",
               "options": [
-                "already started",
-                "had already started",
-                "was already starting"
+                "moved",
+                "have moved"
               ],
-              "answer": "had already started",
-              "explanation": "Past perfect shows the film started before you arrived.",
-              "difficulty": 2
+              "answer": "moved",
+              "explanation": "“Last year” names a finished past time, so use the past simple (“moved”).",
+              "difficulty": 1
             },
             {
-              "prompt": "I ___ home when I saw the message.",
+              "prompt": "Since I joined the running club in April, I ___ much more at home in the city.",
+              "options": [
+                "felt",
+                "have felt",
+                "was feeling"
+              ],
+              "answer": "have felt",
+              "explanation": "“Since I joined...” connects a past starting point to the present, so use the present perfect (“have felt”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Two years ago, Maya ___ her office job and retrained as a pastry chef.",
+              "options": [
+                "left",
+                "has left",
+                "has been leaving"
+              ],
+              "answer": "left",
+              "explanation": "“Two years ago” marks a finished event in the past, so use the past simple (“left”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "I ___ home after my first session when a runner from the group asked if I wanted a coffee.",
               "options": [
                 "walked",
                 "was walking",
-                "had walked"
+                "have walked"
               ],
               "answer": "was walking",
-              "explanation": "Past continuous sets the background action interrupted by a shorter event.",
+              "explanation": "Use the past continuous (“was walking”) for the longer background action in a story.",
               "difficulty": 1
             },
             {
-              "prompt": "We ___ for hours before the bus finally came.",
+              "prompt": "At first the early train felt exhausting, but I gradually ___ at six.",
               "options": [
-                "waited",
-                "had been waiting",
-                "were waiting"
+                "used to wake up",
+                "got used to waking up",
+                "got used to wake up"
               ],
-              "answer": "had been waiting",
-              "explanation": "Past perfect continuous emphasises duration before a later past moment.",
-              "difficulty": 3
+              "answer": "got used to waking up",
+              "explanation": "“Got used to + -ing” means gradually becoming accustomed to a new routine; “used to + verb” is for old habits that stopped.",
+              "difficulty": 2
             }
-          ],
-          "role": "main"
+          ]
         },
         {
-          "key": "used-to-present-perfect-continuous",
+          "key": "explicit-past-perfect-stretch",
           "role": "light",
-          "name": "used to / would; present perfect continuous",
-          "explanation": "Use used to (or would for repeated past actions) for past habits that have stopped, and present perfect continuous for an activity that started in the past and is still continuing or just stopped with visible results.",
+          "name": "Past continuous background & explicit past perfect (optional B2 stretch)",
+          "explanation": "Only add the past perfect when an earlier past event explains what happened next in an explicit sequence; habitual \"would\" and present perfect continuous are deferred.",
           "keyPoints": [
-            "Used to works for both past states (I used to live in Leeds) and repeated actions.",
-            "Would is only for repeated past actions, never stative verbs like live, be, or know.",
-            "Present perfect continuous highlights duration up to now: I have been commuting by bike for six months."
+            "Keep the sequence explicit: \"We missed the opening scene. The film had already started when we arrived.\"",
+            "Do not force past perfect when simple chronological order is already clear."
           ],
-          "example": "I used to drive to work every day, but I have been cycling since April and feel much fitter.",
+          "example": "We missed the opening scene because the film had already started when we arrived.",
           "items": [
             {
-              "prompt": "Before moving to Bristol, I ___ live in a tiny flat near the harbour.",
+              "prompt": "We missed the opening scene. The film ___ when we arrived.",
               "options": [
-                "would",
-                "used to",
-                "have been"
+                "already started",
+                "had already started",
+                "has already started"
               ],
-              "answer": "used to",
-              "explanation": "\"Live\" is a state, so use \"used to\" rather than \"would\".",
-              "difficulty": 1
-            },
-            {
-              "prompt": "She ___ English for three years and still takes two classes a week.",
-              "options": [
-                "used to study",
-                "has been studying",
-                "studied"
-              ],
-              "answer": "has been studying",
-              "explanation": "Present perfect continuous connects an ongoing activity from the past into the present.",
-              "difficulty": 1
-            },
-            {
-              "prompt": "Every summer, our family ___ walk along the coastal path before breakfast.",
-              "options": [
-                "would",
-                "has been",
-                "was used"
-              ],
-              "answer": "would",
-              "explanation": "\"Would\" describes repeated past actions in a nostalgic narrative.",
+              "answer": "had already started",
+              "explanation": "The past perfect (“had already started”) makes it clear the film began before we arrived.",
               "difficulty": 2
+            },
+            {
+              "prompt": "By the time we reached the café, our colleagues ___ a table by the window.",
+              "options": [
+                "already booked",
+                "had already booked",
+                "were booking"
+              ],
+              "answer": "had already booked",
+              "explanation": "Use the past perfect for the earlier action that explains the situation when you arrived.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "While I ___ for the late bus, I chatted to two neighbours for the first time.",
+              "options": [
+                "was waiting",
+                "had waited",
+                "used to wait"
+              ],
+              "answer": "was waiting",
+              "explanation": "Past continuous sets the background scene interrupted by a shorter past action.",
+              "difficulty": 1
             }
           ]
         }
@@ -443,30 +464,33 @@
       "speaking": [
         {
           "kind": "prompt_card",
-          "title": "A turning point in your life (60–90s)",
-          "prompt": "Talk for 60 to 90 seconds about a change or turning point in your life. Explain what you used to do, what happened, and what you have been doing differently since.",
-          "seconds": 75,
+          "title": "A change you got used to (45–60s)",
+          "prompt": "Record 45–60 seconds. What changed? What was difficult, what helped, and what is different now? Listen to the model first, then hide it before recording.",
+          "seconds": 55,
           "phrases": [
-            "What stands out is...",
-            "At the time I felt...",
-            "Looking back, I would say..."
+            "The biggest challenge I faced was...",
+            "It took me a few weeks to get used to...",
+            "Since then, I’ve..."
           ],
           "linkers": [
-            "Eventually",
-            "Since then"
+            "Since then",
+            "Gradually"
           ],
           "terms": [
-            "turning point",
+            "face a challenge",
             "get used to",
-            "adapt",
+            "since then",
+            "gradually",
             "look back on"
-          ]
+          ],
+          "modelAnswer": "When I moved to a new city last year, I didn’t know anyone. The biggest challenge I faced was meeting people outside work. It took me a few weeks to get used to spending my evenings alone.\n\nThen I joined a running group. I was nervous at the first session, but I gradually got to know the other runners. Since then, I’ve made a few friends, and the city feels more like home. When I look back on those first few weeks, I’m really glad I went to that first session.",
+          "b2Stretch": "Explain why the change mattered. If an earlier event explains what happened next, try the past perfect; it is not compulsory."
         }
       ],
       "writing": {
-        "title": "Informal email: news and changes",
-        "prompt": "Write an informal email to a friend you have not contacted for a year. Tell them about one change in your life, ask two questions, and suggest meeting. 120–150 words.",
-        "format": "informal email",
+        "title": "Personal narrative: a change and how things are now",
+        "prompt": "Write a short personal narrative (120–150 words) about a change you got used to. Describe what happened, what felt difficult at first, what helped, and close with one sentence about how things are now.",
+        "format": "short personal narrative",
         "wordMin": 120,
         "wordMax": 150,
         "outline": {
@@ -501,14 +525,14 @@
           "requirement": "optional",
           "outputRequired": false,
           "minutes": 15,
-          "title": "Grammar: Narrative tenses & present perfect vs past simple",
-          "objective": "Master Narrative tenses & present perfect vs past simple + used to / would; present perfect continuous through guided contrast examples and instant-feedback drills.",
-          "canDo": "I can apply Narrative tenses & present perfect vs past simple accurately when discussing personal experiences and change.",
+          "title": "Grammar: Past simple, present perfect & getting used to change",
+          "objective": "Practise separating finished past events from changes connected to now, story background, and used to vs got used to.",
+          "canDo": "I can tell a short story about a change and connect it to how things are now.",
           "skill": "grammar",
           "input": "reading",
-          "outputTitle": "Apply Narrative tenses & present perfect vs past simple",
-          "output": "Produce 3 original sentences demonstrating Narrative tenses & present perfect vs past simple and used to / would; present perfect continuous.",
-          "targetSeconds": 75,
+          "outputTitle": "Say & refine one sentence about a change",
+          "output": "Say (or type) one sentence connecting a past change to now using past simple + since then + present perfect, or got used to + -ing. Review feedback and try it once more.",
+          "targetSeconds": 45,
           "wordRange": [
             60,
             100
@@ -555,14 +579,14 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 15,
-          "title": "Speaking (Required): Personal experiences and change",
+          "title": "Speaking (Required): A change you got used to (45–60s)",
           "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
-          "canDo": "I can speak coherently for 75 seconds on personal experiences and change using Narrative tenses & present perfect vs past simple.",
+          "canDo": "I can speak for 45–60 seconds about a change, what helped me adapt, and what is different now.",
           "skill": "speaking",
           "input": "listening",
-          "outputTitle": "Recorded speaking task (75s)",
-          "output": "Speak for 60–90 seconds about a personal turning point using narrative tenses and used to.",
-          "targetSeconds": 75,
+          "outputTitle": "Recorded speaking task (45–60s)",
+          "output": "Listen to the model first, hide it before recording, then speak for 45–60 seconds about a change you got used to.",
+          "targetSeconds": 55,
           "wordRange": [
             80,
             130
@@ -573,13 +597,13 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 30,
-          "title": "Writing (Required): Informal email: news and changes",
+          "title": "Writing (Required): Personal narrative & how things are now",
           "objective": "Plan, draft, and revise a 120–150 word text on personal experiences and change.",
           "canDo": "I can write a well-structured 120–150 word response incorporating Narrative tenses & present perfect vs past simple.",
           "skill": "writing",
           "input": "reading",
-          "outputTitle": "Informal email: news and changes",
-          "output": "Write an informal email to a friend you have not contacted for a year. Tell them about one change in your life, ask two questions, and suggest meeting. 120–150 words.",
+          "outputTitle": "Personal narrative: a change and how things are now",
+          "output": "Write a short personal narrative (120–150 words) about a change you got used to and close with one sentence about how things are now.",
           "targetSeconds": 75,
           "wordRange": [
             120,
@@ -597,12 +621,13 @@
           "skill": "review",
           "input": "reading",
           "outputTitle": "Error-log self-correction",
-          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "output": "Delayed recall (try without a phrase bank first): \"Tell me about a new routine that felt strange at first. What helped it feel normal?\" Also review this week’s SRS cards.",
           "targetSeconds": 60,
           "wordRange": [
             40,
             80
-          ]
+          ],
+          "delayedRecallPrompt": "Tell me about a new routine that felt strange at first. What helped it feel normal?"
         }
       ],
       "vocabPack": {
@@ -743,105 +768,130 @@
       "number": 2,
       "phase": "Month 1: Strengthen B1 foundations",
       "title": "Plans, goals and ambitions",
-      "summary": "Distinguish arrangements, fixed intentions, and spontaneous decisions, and review zero, first, and second conditionals.",
+      "summary": "Describe an intention (going to), a confirmed arrangement (present continuous), and what you will do next using present-tense future time clauses.",
       "hours": 4,
       "releaseStage": "live",
       "vocabularyTopic": "Plans, goals and ambitions",
-      "lightGrammar": "Conditionals 0–2 (review)",
+      "lightGrammar": "Timetables, predictions & first conditional (optional B2 stretch)",
       "grammar": [
         {
-          "key": "future-forms",
-          "name": "Future forms: plans, predictions, arrangements",
-          "explanation": "Choose the future form by meaning: going to for intentions, will for predictions and spontaneous decisions, present continuous for fixed arrangements.",
+          "key": "future-intentions-arrangements-time-clauses",
+          "role": "main",
+          "name": "Future intentions, arrangements & time clauses",
+          "explanation": "For an intention, use going to. For a confirmed arrangement, use the present continuous. In ordinary future time clauses (after when, as soon as, before, until), use a present form: \"I’ll apply when I finish.\" Keep indirect questions distinct: \"I don’t know when I’ll finish.\"",
           "keyPoints": [
-            "Fixed arrangement: I'm meeting my manager at nine tomorrow.",
-            "Intention: I'm going to apply for the internal role.",
-            "Prediction or offer: It will probably take two years. I'll send it now."
+            "Intention already decided: \"I’m going to take a short course this spring.\"",
+            "Confirmed arrangement in your schedule: \"I’m meeting someone from the college on Thursday.\"",
+            "Future time clause (no \"will\"): \"I’ll apply as soon as I finish the course.\"",
+            "Indirect questions keep \"will\": \"I don’t know when I’ll finish.\" (\"I will see my dentist tomorrow\" is also grammatical; pick the wording that best highlights the intended meaning.)"
           ],
-          "example": "I'm meeting the recruiter on Thursday, and I'm going to take the online course before then; it will make the interview easier.",
+          "example": "My goal is to start a career in design. I’m going to take a short course this spring, and I’m meeting someone from the college on Thursday. When I finish the course, I’ll apply for junior roles.",
           "items": [
             {
-              "prompt": "I ___ the recruiter at nine tomorrow — it is already in my calendar.",
+              "prompt": "You decided yesterday to retrain in web design this spring, though you have not booked a class yet. Which wording best highlights your intention?",
               "options": [
-                "will meet",
-                "am meeting",
-                "meet"
+                "I’m going to take a short course this spring.",
+                "I’m taking a short course at 9 a.m. tomorrow.",
+                "I take a short course when I will be free."
               ],
-              "answer": "am meeting",
-              "explanation": "A fixed arrangement takes the present continuous.",
+              "answer": "I’m going to take a short course this spring.",
+              "explanation": "“Going to” highlights a personal decision or intention before a fixed appointment is made.",
               "difficulty": 1
             },
             {
-              "prompt": "Which sentence expresses an intention?",
+              "prompt": "Helena has made up her mind about her long-term work goal. Which sentence best highlights her intention?",
               "options": [
-                "I'm going to retrain next year.",
-                "I'll retrain, I promise.",
-                "I retrain next year."
+                "I’m going to start a career in nursing next year.",
+                "I’m starting a career in nursing at 10 a.m. today.",
+                "I start a career in nursing if I will pass."
               ],
-              "answer": "I'm going to retrain next year.",
-              "explanation": "'Going to' expresses a plan or intention rather than a promise.",
-              "difficulty": 2
+              "answer": "I’m going to start a career in nursing next year.",
+              "explanation": "Use “going to” to express a settled personal intention.",
+              "difficulty": 1
             },
             {
-              "prompt": "The job ___ harder than it looks.",
+              "prompt": "You have already agreed a 2 p.m. time with a college tutor for Thursday. Which wording best highlights that confirmed arrangement?",
               "options": [
-                "is being",
-                "will be",
-                "is going"
+                "I’m meeting someone from the college on Thursday.",
+                "I’m going to hope to meet someone someday.",
+                "I meet someone from the college when I will finish."
               ],
-              "answer": "will be",
-              "explanation": "Predictions about the future use will + infinitive.",
+              "answer": "I’m meeting someone from the college on Thursday.",
+              "acceptedAnswers": [
+                "I’m meeting someone from the college on Thursday.",
+                "I will meet someone from the college on Thursday."
+              ],
+              "explanation": "Present continuous highlights a confirmed arrangement with an agreed time and person.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Dan has booked his train ticket and confirmed the interview slot with the studio. Complete his message: \"I ___ the design team in Bristol on Friday morning.\"",
+              "options": [
+                "’m meeting",
+                "’m going to think about meeting",
+                "meet when I will arrive"
+              ],
+              "answer": "’m meeting",
+              "explanation": "A confirmed arrangement with a booked time and place takes the present continuous (“I’m meeting”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "I’ll apply as soon as I ___ the course.",
+              "options": [
+                "finish",
+                "will finish"
+              ],
+              "answer": "finish",
+              "explanation": "In an ordinary future time clause after “as soon as”, use the present simple (“finish”), not “will”.",
               "difficulty": 1
             }
-          ],
-          "role": "main"
+          ]
         },
         {
-          "key": "conditionals-1-2",
-          "name": "Conditionals 0–2 (review)",
-          "explanation": "First conditional covers realistic future possibilities; second conditional covers imagined or unlikely present situations and polite proposals.",
+          "key": "timetables-predictions-first-conditional",
+          "role": "light",
+          "name": "Timetables, predictions & first conditional (optional B2 stretch)",
+          "explanation": "Review predictions with will and indirect questions (\"I don’t know when I’ll finish\"), plus an optional first conditional for a realistic backup plan. Zero and second conditionals live in the Grammar Clinic.",
           "keyPoints": [
-            "First: If I finish the course, I will ask for a promotion.",
-            "Second: If I had more time, I would study design.",
-            "Use were with I/he/she in formal second conditionals: If I were you..."
+            "Indirect question: \"I don’t know when I’ll finish\" (different from time clause \"when I finish\").",
+            "Optional B2 stretch backup plan: \"If the spring course fills up, I’ll join the September cohort.\""
           ],
-          "example": "If I pass the exam in June, I'll apply for the master's; if I had the money now, I'd already be enrolled.",
+          "example": "I don’t know when I’ll hear back, though if the first course fills up, I’ll book the autumn session.",
           "items": [
             {
-              "prompt": "If I ___ the exam in June, I will apply for the master's.",
+              "prompt": "Compare the indirect question: \"I don’t know when I ___ the portfolio.\"",
               "options": [
-                "pass",
-                "passed",
-                "will pass"
+                "’ll finish",
+                "finishing",
+                "finished tomorrow"
               ],
-              "answer": "pass",
-              "explanation": "The first conditional uses the present simple in the if-clause.",
-              "difficulty": 1
-            },
-            {
-              "prompt": "If I had more time, I ___ a second language.",
-              "options": [
-                "will learn",
-                "would learn",
-                "learn"
-              ],
-              "answer": "would learn",
-              "explanation": "Imagined present situations take would + infinitive.",
-              "difficulty": 1
-            },
-            {
-              "prompt": "Which sentence is the most diplomatic way to give advice?",
-              "options": [
-                "If I am you, I apply.",
-                "If I were you, I would negotiate the salary.",
-                "If I was you, I will negotiate."
-              ],
-              "answer": "If I were you, I would negotiate the salary.",
-              "explanation": "'If I were you, I would...' is the standard diplomatic formula.",
+              "answer": "’ll finish",
+              "explanation": "After “I don’t know when...”, “when” introduces an indirect question, so “will” is natural.",
               "difficulty": 2
+            },
+            {
+              "prompt": "If the spring class is full, I ___ for the September evening group instead.",
+              "options": [
+                "’ll apply",
+                "applied",
+                "am apply"
+              ],
+              "answer": "’ll apply",
+              "explanation": "First conditional pairs present simple in the if-clause with “will” for a realistic alternative.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The train to Manchester ___ at 08:15 every weekday morning.",
+              "options": [
+                "leaves",
+                "is going to leave",
+                "will leaving"
+              ],
+              "answer": "leaves",
+              "explanation": "Fixed public timetables normally use the present simple.",
+              "difficulty": 1
             }
-          ],
-          "role": "light"
+          ]
         }
       ],
       "vocab": [
@@ -1187,31 +1237,33 @@
       "speaking": [
         {
           "kind": "prompt_card",
-          "title": "Your six-month goal (60–90s)",
-          "prompt": "Speak for 60 to 90 seconds about a skill or personal goal you plan to reach over the next six months. Explain what you have already arranged, what you intend to do, and what would change if your schedule got busier.",
-          "seconds": 75,
+          "title": "A goal and the next step (45–60s)",
+          "prompt": "Record 45–60 seconds. Share one goal, one step already arranged and what you’ll do when that step is complete. Listen to the model first, then hide it before recording.",
+          "seconds": 55,
           "phrases": [
-            "I am planning to…",
-            "I have already arranged…",
-            "If my schedule gets busy, I will…"
+            "My goal is to...",
+            "I’m going to...",
+            "I’m meeting...",
+            "When I finish..., I’ll..."
           ],
           "linkers": [
-            "In order to"
+            "In order to",
+            "When"
           ],
           "terms": [
-            "ambition",
             "goal",
+            "intend",
             "career",
-            "deadline",
-            "apply",
             "look forward to"
-          ]
+          ],
+          "modelAnswer": "My goal is to start a career in design. I’m going to take a short course this spring, and I’m meeting someone from the college on Thursday. I’m looking forward to seeing some of the students’ work. A friend who did the course has offered to help me choose a project. When I finish the course, I’ll apply for a few junior roles and use my project to show what I can do.",
+          "b2Stretch": "Explain why the goal matters and give a realistic alternative if the first plan changes. A first conditional can help; do not require it."
         }
       ],
       "writing": {
-        "title": "Personal action plan: next six months",
-        "prompt": "Write 120–150 words outlining one realistic goal for the next six months, the steps you have already arranged, and how you will handle obstacles using future forms and conditionals.",
-        "format": "structured short plan",
+        "title": "Friendly message: goal, arrangement & next step",
+        "prompt": "Write a 120–150 word message to a friend about one goal you are working towards, a confirmed arrangement you have made, and what you will do next when that step is complete.",
+        "format": "informal message",
         "wordMin": 120,
         "wordMax": 150,
         "outline": {
@@ -1246,14 +1298,14 @@
           "requirement": "optional",
           "outputRequired": false,
           "minutes": 15,
-          "title": "Grammar: Future forms",
-          "objective": "Master Future forms + Conditionals 0–2 (review) through guided contrast examples and instant-feedback drills.",
-          "canDo": "I can apply Future forms accurately when discussing plans, goals and ambitions.",
+          "title": "Grammar: Intentions, arrangements & future time clauses",
+          "objective": "Distinguish intentions (going to), confirmed arrangements (present continuous), and present-tense future time clauses.",
+          "canDo": "I can describe an intention, a confirmed arrangement, and what happens next.",
           "skill": "grammar",
           "input": "reading",
-          "outputTitle": "Apply Future forms",
-          "output": "Produce 3 original sentences demonstrating Future forms and Conditionals 0–2 (review).",
-          "targetSeconds": 75,
+          "outputTitle": "Say & refine one sentence about your next step",
+          "output": "Say (or type) one sentence sharing an intention (going to), an arrangement (present continuous), or a next-step time clause (when / as soon as + present). Check feedback and try again.",
+          "targetSeconds": 45,
           "wordRange": [
             60,
             100
@@ -1300,14 +1352,14 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 15,
-          "title": "Speaking (Required): Plans, goals and ambitions",
+          "title": "Speaking (Required): A goal and the next step (45–60s)",
           "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
-          "canDo": "I can speak coherently for 75 seconds on plans, goals and ambitions using Future forms.",
+          "canDo": "I can speak for 45–60 seconds about a goal, one arranged step, and what I will do afterwards.",
           "skill": "speaking",
           "input": "listening",
-          "outputTitle": "Recorded speaking task (75s)",
-          "output": "Speak for 60–90s about a six-month goal using future forms and conditionals.",
-          "targetSeconds": 75,
+          "outputTitle": "Recorded speaking task (45–60s)",
+          "output": "Listen to the model first, hide it before recording, then share your goal, arranged step, and next action in 45–60 seconds.",
+          "targetSeconds": 55,
           "wordRange": [
             80,
             130
@@ -1318,13 +1370,13 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 30,
-          "title": "Writing (Required): Personal action plan: next six months",
+          "title": "Writing (Required): Message about a goal & arrangement",
           "objective": "Plan, draft, and revise a 120–150 word text on plans, goals and ambitions.",
           "canDo": "I can write a well-structured 120–150 word response incorporating Future forms.",
           "skill": "writing",
           "input": "reading",
-          "outputTitle": "Personal action plan: next six months",
-          "output": "Write 120–150 words describing your six-month plan and realistic backup steps.",
+          "outputTitle": "Friendly message: goal, arrangement & next step",
+          "output": "Write a 120–150 word message to a friend about one goal, a confirmed arrangement, and your next step.",
           "targetSeconds": 75,
           "wordRange": [
             120,
@@ -1342,12 +1394,13 @@
           "skill": "review",
           "input": "reading",
           "outputTitle": "Error-log self-correction",
-          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "output": "Delayed recall (try without a phrase bank first): \"You’ve decided to learn a new skill. What have you arranged, and what will you do afterwards?\" Also review this week’s SRS cards.",
           "targetSeconds": 60,
           "wordRange": [
             40,
             80
-          ]
+          ],
+          "delayedRecallPrompt": "You’ve decided to learn a new skill. What have you arranged, and what will you do afterwards?"
         }
       ],
       "vocabPack": {
@@ -1482,102 +1535,123 @@
       "number": 3,
       "phase": "Month 1: Strengthen B1 foundations",
       "title": "Daily life and social interaction",
-      "summary": "Express obligation, advice, ability, and polite permission naturally, and keep conversations flowing with clear questions and linkers.",
+      "summary": "Tell a flatmate what is required, forbidden, or optional, and give practical advice with polite permission.",
       "hours": 4,
       "releaseStage": "live",
       "vocabularyTopic": "Daily life, relationships & social interaction",
-      "lightGrammar": "Question forms; basic linkers",
+      "lightGrammar": "Polite permission & indirect questions (extension)",
       "grammar": [
         {
-          "key": "modals-obligation-advice-ability-permission",
+          "key": "house-rules-obligation-prohibition-advice",
           "role": "main",
-          "name": "Modals of obligation, advice, ability, permission",
-          "explanation": "Choose between must / have to (strong obligation), should / ought to (advice), can / be able to (ability), and may / could (polite permission) according to social register.",
+          "name": "House rules: have to, mustn’t, don’t have to & should",
+          "explanation": "Use have to for a requirement, mustn’t for something forbidden, don’t have to for something optional, and should for advice. In a permission exchange, \"Could I ...?\" softens the question and \"Yes, you can\" grants permission.",
           "keyPoints": [
-            "Mustn’t expresses prohibition, whereas don’t have to means something is unnecessary.",
-            "Use could you / would you mind + -ing for polite everyday requests.",
-            "Use managed to or was able to (not could) for succeeding on one specific past occasion."
+            "Required: \"We have to clean up after cooking.\"",
+            "Forbidden: \"We mustn’t leave the cooker on when we go out.\"",
+            "Optional (allowed, not required): \"You don’t have to cook for everyone.\"",
+            "Practical advice: \"We should arrange a cleaning rota around our work hours.\" (Past ability is deferred.)"
           ],
-          "example": "You don’t have to bring food to the flatwarming, though you ought to let Sam know if you are running late.",
+          "example": "We have to clean up after cooking, and we mustn’t leave the cooker on when we go out. You don’t have to cook for everyone, though we should arrange a fair rota.",
           "items": [
             {
-              "prompt": "Entry to the community library is free, so visitors ___ pay a membership fee.",
+              "prompt": "Taking turns cooking is optional. You ___ cook on Mondays.",
               "options": [
                 "mustn’t",
-                "don’t have to",
-                "shouldn’t to"
+                "don’t have to"
               ],
               "answer": "don’t have to",
-              "explanation": "Lack of necessity takes \"don’t have to\", whereas \"mustn’t\" means forbidden.",
+              "explanation": "“Don’t have to” means cooking on Mondays is allowed, not required; “mustn’t” means forbidden.",
               "difficulty": 1
             },
             {
-              "prompt": "Even though the train was delayed, Nadia ___ arrive before the meeting began.",
+              "prompt": "Everyone in the flatshare is required to keep the hallway clear. You ___ leave bikes blocking the front door.",
               "options": [
-                "could",
-                "was able to",
-                "ought to"
+                "mustn’t",
+                "don’t have to",
+                "should to"
               ],
-              "answer": "was able to",
-              "explanation": "Single-occasion past achievement uses \"was able to\" or \"managed to\", not \"could\".",
+              "answer": "mustn’t",
+              "explanation": "Something forbidden or unsafe takes “mustn’t”.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The bin collection is early on Wednesday, so all flatmates ___ put the recycling outside on Tuesday night.",
+              "options": [
+                "have to",
+                "don’t have to",
+                "mustn’t"
+              ],
+              "answer": "have to",
+              "explanation": "A shared household requirement takes “have to”.",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Which sentence uses the modal verb form accurately?",
+              "options": [
+                "You mustn’t to use the washing machine after ten.",
+                "You don’t have to wash every pan straight away.",
+                "Does he has to lock the back gate?"
+              ],
+              "answer": "You don’t have to wash every pan straight away.",
+              "explanation": "Use a bare infinitive after “mustn’t” (no “to”) and “have to” (not “has to”) after “does”.",
               "difficulty": 2
             },
             {
-              "prompt": "___ I borrow your umbrella until tomorrow morning?",
+              "prompt": "Two flatmates work late shifts and keep missing each other. What is the best practical suggestion?",
               "options": [
-                "Must",
-                "Could",
-                "Shouldn’t"
+                "We should arrange a cleaning rota around our work hours.",
+                "We mustn’t speak to anyone in the kitchen.",
+                "We don’t have to have a front door."
               ],
-              "answer": "Could",
-              "explanation": "\"Could I...\" is a natural, polite way to ask permission.",
+              "answer": "We should arrange a cleaning rota around our work hours.",
+              "explanation": "Use “should” to give a practical, polite suggestion.",
               "difficulty": 1
             }
           ]
         },
         {
-          "key": "question-forms-basic-linkers",
+          "key": "polite-permission-indirect-questions",
           "role": "light",
-          "name": "Question forms; basic linkers",
-          "explanation": "Build accurate subject questions, indirect questions (Could you tell me where…?), and smooth everyday linkers (although, because, so, however).",
+          "name": "Polite permission & indirect questions (extension)",
+          "explanation": "Use \"Could I ...?\" to soften permission requests and \"Yes, you can\" to grant permission. For B2 stretch negotiation, use indirect question frames like \"Could you tell me when you usually get home?\"",
           "keyPoints": [
-            "Indirect questions keep statement word order: Do you know what time the café closes?",
-            "Subject questions need no auxiliary do/does: Who organised the street dinner?",
-            "Avoid using \"although\" and \"but\" in the same sentence."
+            "Soften permission: \"Could I use the washing machine tonight?\" → \"Yes, you can, if it’s before ten.\"",
+            "B2 stretch indirect question: \"Could you tell me when you usually get home?\" (keep statement word order)."
           ],
-          "example": "Could you tell me who lives upstairs? I need to ask them to move their parcel, although there is no rush.",
+          "example": "Could I use the washing machine tonight? — Yes, you can, if it’s before ten. Could you tell me when you usually get home?",
           "items": [
             {
-              "prompt": "Could you tell me what time ___?",
+              "prompt": "New flatmate: \"___ use the washing machine tonight?\" You: \"Yes, you can, if it’s before ten.\"",
               "options": [
-                "does the post office close",
-                "the post office closes",
-                "closes the post office"
+                "Could I",
+                "Have I to",
+                "Shouldn’t I"
               ],
-              "answer": "the post office closes",
-              "explanation": "Indirect questions keep subject + verb order without \"does\".",
-              "difficulty": 2
-            },
-            {
-              "prompt": "___ left this umbrella by the front door?",
-              "options": [
-                "Who did",
-                "Who",
-                "Whom did"
-              ],
-              "answer": "Who",
-              "explanation": "When \"who\" is the subject, do not insert \"did\".",
+              "answer": "Could I",
+              "explanation": "“Could I...?” softens a polite request for permission.",
               "difficulty": 1
             },
             {
-              "prompt": "The hall was noisy; ___, everyone heard the announcements clearly.",
+              "prompt": "Could you tell me when ___ home in the evenings?",
               "options": [
-                "because",
-                "however",
-                "so"
+                "you usually get",
+                "do you usually get",
+                "are you usually get"
               ],
-              "answer": "however",
-              "explanation": "\"However\" introduces contrast between two clauses.",
+              "answer": "you usually get",
+              "explanation": "Indirect questions keep subject + verb word order without “do”.",
+              "difficulty": 2
+            },
+            {
+              "prompt": "What time ___ the bins usually get collected on our street?",
+              "options": [
+                "do",
+                "are",
+                "have"
+              ],
+              "answer": "do",
+              "explanation": "Direct present-simple questions with a main verb take “do”.",
               "difficulty": 1
             }
           ]
@@ -1899,32 +1973,33 @@
       "speaking": [
         {
           "kind": "role_play",
-          "title": "Polite request & social catch-up (60–90s)",
-          "prompt": "Speak for 60 to 90 seconds: leave a voice message for a neighbour or colleague politely asking a favour, explaining what they do not need to worry about, and suggesting a time to catch up.",
-          "seconds": 75,
+          "title": "Agree on house rules (45–60s flatmate exchange)",
+          "prompt": "Take two or three turns with a new flatmate (45–60s). Explain one shared responsibility, one rule and one optional routine. Suggest a compromise if the flatmate works late. Listen to the model first, then hide it before recording.",
+          "seconds": 55,
           "phrases": [
-            "Would you mind…?",
-            "You don’t have to…",
-            "Could you let me know…?"
+            "We have to...",
+            "We mustn’t...",
+            "You don’t have to...",
+            "We should arrange..."
           ],
           "linkers": [
-            "On the other hand",
-            "In fact",
-            "Apart from that"
+            "Apart from that",
+            "On the other hand"
           ],
           "terms": [
             "get on with",
-            "catch up (with)",
             "arrange",
-            "rely on",
-            "awkward (situation)"
-          ]
+            "routine",
+            "politely"
+          ],
+          "modelAnswer": "New flatmate: What do I need to know about the kitchen?\nYou: We have to clean up after cooking, and we mustn’t leave the cooker on when we go out. You don’t have to cook for everyone.\nNew flatmate: I sometimes work late. Could I use the washing machine tonight?\nYou: Yes, you can, if it’s before ten. We should arrange a cleaning rota around our work hours.",
+          "b2Stretch": "Negotiate a different arrangement without a script. If a question frame helps, offer \"Could you tell me when you usually get home?\""
         }
       ],
       "writing": {
-        "title": "Friendly message: arranging a social plan & favour",
-        "prompt": "Write a 120–150 word message to a friend or neighbour politely asking a favour, explaining house or event rules using modals, and arranging a time to meet.",
-        "format": "informal message",
+        "title": "Welcome message for a new flatmate",
+        "prompt": "Write a 120–150 word welcome message for a new flatmate explaining one shared responsibility (have to), one rule (mustn’t), one optional routine (don’t have to), and a helpful suggestion (should). Use a revised linker such as \"apart from that\" only if it fits.",
+        "format": "friendly flatshare message",
         "wordMin": 120,
         "wordMax": 150,
         "outline": {
@@ -1959,14 +2034,14 @@
           "requirement": "optional",
           "outputRequired": false,
           "minutes": 15,
-          "title": "Grammar: Modals of obligation, advice, ability, permission",
-          "objective": "Master Modals of obligation, advice, ability, permission + Question forms; basic linkers through guided contrast examples and instant-feedback drills.",
-          "canDo": "I can apply Modals of obligation, advice, ability, permission accurately when discussing daily life and social interaction.",
+          "title": "Grammar: Requirement, prohibition, no obligation & advice",
+          "objective": "Practise separating have to (required), mustn’t (forbidden), don’t have to (optional), and should (practical advice).",
+          "canDo": "I can tell a flatmate what is required, forbidden, or optional, and offer advice.",
           "skill": "grammar",
           "input": "reading",
-          "outputTitle": "Apply Modals of obligation, advice, ability, permission",
-          "output": "Produce 3 original sentences demonstrating Modals of obligation, advice, ability, permission and Question forms; basic linkers.",
-          "targetSeconds": 75,
+          "outputTitle": "Say & refine one flatshare rule or suggestion",
+          "output": "Say (or type) one sentence telling a new flatmate what is required, forbidden, or optional—or offering advice with should. Check feedback and try it once more.",
+          "targetSeconds": 45,
           "wordRange": [
             60,
             100
@@ -2013,14 +2088,14 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 15,
-          "title": "Speaking (Required): Daily life and social interaction",
+          "title": "Speaking (Required): Agree on house rules (45–60s)",
           "objective": "Complete the required 75-second speaking task and self-check prosody in the Shadowing Lab.",
-          "canDo": "I can speak coherently for 75 seconds on daily life and social interaction using Modals of obligation, advice, ability, permission.",
+          "canDo": "I can handle a 2–3 turn exchange with a flatmate about house rules, optional routines, and a compromise.",
           "skill": "speaking",
           "input": "listening",
-          "outputTitle": "Recorded speaking task (75s)",
-          "output": "Record a 60–90s polite voice message asking a favour and arranging to meet.",
-          "targetSeconds": 75,
+          "outputTitle": "Recorded flatmate exchange (45–60s)",
+          "output": "Listen to the 2-turn flatmate model, hide it before recording, then deliver your own 45–60 second response.",
+          "targetSeconds": 55,
           "wordRange": [
             80,
             130
@@ -2031,13 +2106,13 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 30,
-          "title": "Writing (Required): Friendly message: arranging a social plan & favour",
+          "title": "Writing (Required): Welcome message for a new flatmate",
           "objective": "Plan, draft, and revise a 120–150 word text on daily life and social interaction.",
           "canDo": "I can write a well-structured 120–150 word response incorporating Modals of obligation, advice, ability, permission.",
           "skill": "writing",
           "input": "reading",
-          "outputTitle": "Friendly message: arranging a social plan & favour",
-          "output": "Write 120–150 words arranging a social catch-up and making a polite request.",
+          "outputTitle": "Welcome message for a new flatmate",
+          "output": "Write a 120–150 word welcome message for a new flatmate covering rules, optional routines, and a polite suggestion.",
           "targetSeconds": 75,
           "wordRange": [
             120,
@@ -2055,12 +2130,13 @@
           "skill": "review",
           "input": "reading",
           "outputTitle": "Error-log self-correction",
-          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "output": "Delayed recall (try without a phrase bank first): \"Tell a new colleague one thing they need to do, one thing they mustn’t do and one thing that’s optional.\" Also review this week’s SRS cards.",
           "targetSeconds": 60,
           "wordRange": [
             40,
             80
-          ]
+          ],
+          "delayedRecallPrompt": "Tell a new colleague one thing they need to do, one thing they mustn’t do and one thing that’s optional."
         }
       ],
       "vocabPack": {
@@ -2234,105 +2310,127 @@
       "number": 4,
       "phase": "Month 1: Strengthen B1 foundations",
       "title": "Travel and cultural experiences",
-      "summary": "Describe heritage sites and travel logistics with the passive voice, and add vivid detail using relative clauses and comparatives.",
+      "summary": "Describe a current local practice and a historical fact about a place using present and past passive where it fits.",
       "hours": 4,
       "releaseStage": "live",
       "vocabularyTopic": "Travel, transport & cultural experiences",
-      "lightGrammar": "Relative clauses; comparatives and superlatives",
+      "lightGrammar": "Defining relative clauses for places (B2 stretch)",
       "grammar": [
         {
-          "key": "passive-voice",
-          "name": "Passive voice in present and past",
-          "explanation": "Use the passive when the action matters more than the doer, or when the doer is obvious, unknown or already understood.",
+          "key": "passive-voice-visitor-guide",
+          "role": "main",
+          "name": "Present & past passive (visitor guide)",
+          "explanation": "Use be + past participle in the present and past simple to focus on the place, event, or result; add by + agent only if the agent matters. Contrast \"is held\" (current practice) with \"was built\" (past fact), and keep \"It happened\" active.",
           "keyPoints": [
-            "Present passive: The old town is visited by two million people a year.",
-            "Past passive: The temple was built in the eleventh century.",
-            "Keep the agent with by only when it adds information."
+            "Present passive for current practices: \"The food market is held there every Saturday.\"",
+            "Past passive for historical facts: \"The market hall was built in 1890.\"",
+            "Practise irregular participles: built, held, given, made, served.",
+            "Keep active verbs natural where the focus is an event happening: \"It happened last autumn\" (never passive)."
           ],
-          "example": "The festival is celebrated every spring, and the square was decorated by local families for generations.",
+          "example": "Start at the market hall. It was built in 1890, and the food market is held there every Saturday.",
           "items": [
             {
-              "prompt": "The temple ___ in the eleventh century.",
+              "prompt": "Guide to current events: \"The craft market ___ in the main square every Sunday.\"",
               "options": [
-                "built",
-                "was built",
-                "is building"
+                "is held",
+                "was held",
+                "is hold"
               ],
-              "answer": "was built",
-              "explanation": "A finished past action with an unknown or unimportant agent takes the past passive.",
+              "answer": "is held",
+              "explanation": "A regular current event uses the present simple passive (“is” + irregular past participle “held”).",
               "difficulty": 1
             },
             {
-              "prompt": "Choose the best sentence for a travel guide.",
+              "prompt": "Visitor leaflet: \"Fresh local honey and sourdough bread ___ at the harbour stalls every morning.\"",
               "options": [
-                "Two million people visit the old town every year.",
-                "The old town is visited by two million people every year.",
-                "The old town visits two million people every year."
+                "are sold",
+                "were sold",
+                "are sell"
               ],
-              "answer": "The old town is visited by two million people every year.",
-              "explanation": "Guides foreground the place, so the passive keeps the old town as the topic.",
+              "answer": "are sold",
+              "explanation": "Current everyday practices take the present passive (“are sold”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Guide card (Market hall / build / 1890): \"The historic market hall ___ in 1890.\"",
+              "options": [
+                "was built",
+                "is built",
+                "was build"
+              ],
+              "answer": "was built",
+              "explanation": "A historical fact in 1890 takes the past simple passive (“was built”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "Festival note: \"Last year, every first-time visitor ___ a free map at the station entrance.\"",
+              "options": [
+                "was given",
+                "is given",
+                "was gave"
+              ],
+              "answer": "was given",
+              "explanation": "Past simple passive requires “was/were” + past participle (“given”, not “gave”).",
               "difficulty": 2
             },
             {
-              "prompt": "When can 'by + agent' be dropped?",
+              "prompt": "Choose the most natural wording in a travel note.",
               "options": [
-                "Never",
-                "When the agent is unknown, obvious or unimportant",
-                "Only in the past tense"
+                "A street parade happened outside the castle yesterday afternoon.",
+                "A street parade was happened outside the castle yesterday afternoon.",
+                "A street parade is happened outside the castle every May."
               ],
-              "answer": "When the agent is unknown, obvious or unimportant",
-              "explanation": "The agent is optional; include it only if it carries new information.",
-              "difficulty": 1
+              "answer": "A street parade happened outside the castle yesterday afternoon.",
+              "explanation": "Keep “happen” active — it never takes a passive form.",
+              "difficulty": 2
             }
-          ],
-          "role": "main"
+          ]
         },
         {
-          "key": "relative-clauses",
-          "name": "Relative clauses; comparatives and superlatives",
-          "explanation": "Defining clauses identify which person or place you mean and take no commas; non-defining clauses add extra information and always take commas.",
+          "key": "defining-relative-clauses-stretch",
+          "role": "light",
+          "name": "Defining relative clauses for places (B2 stretch)",
+          "explanation": "Use a defining relative clause without commas to identify which place you mean (\"It’s the square where the market is held\"). Non-defining clauses come later, and comparatives/superlatives live in the Grammar Clinic.",
           "keyPoints": [
-            "Defining: The village that we visited is now a tourist trap.",
-            "Non-defining: Lisbon, which I visited last year, is crowded in August.",
-            "Never use that in a non-defining clause, and never drop the relative pronoun after a comma."
+            "Identify a place clearly: \"It’s the square where the craft market is held.\"",
+            "Identify a building or object: \"The bakery that opened in 1920 still uses the original oven.\""
           ],
-          "example": "The guide, who grew up in the old quarter, showed us a market that no tourist ever finds.",
+          "example": "It’s the square where the market is held, right next to the bridge that was built in 1890.",
           "items": [
             {
-              "prompt": "Lisbon, ___ I visited last year, is crowded in August.",
+              "prompt": "It’s the cobbled square ___ the food market is held every Saturday.",
               "options": [
-                "that",
-                "which",
-                "where"
-              ],
-              "answer": "which",
-              "explanation": "Non-defining clauses about a thing take which, never that.",
-              "difficulty": 1
-            },
-            {
-              "prompt": "Which sentence needs commas?",
-              "options": [
-                "The guide who grew up here knows every street.",
-                "My brother who lives in Berlin is visiting.",
-                "Both, depending on meaning"
-              ],
-              "answer": "Both, depending on meaning",
-              "explanation": "Commas change meaning: with them the clause is extra information; without them it identifies the person.",
-              "difficulty": 3
-            },
-            {
-              "prompt": "The town ___ we stayed had no tourists at all.",
-              "options": [
-                "which",
                 "where",
+                "which",
                 "who"
               ],
               "answer": "where",
-              "explanation": "Where replaces a place adverbial: we stayed in the town.",
+              "explanation": "Use “where” to refer to a place where an action happens (“in the square”).",
+              "difficulty": 1
+            },
+            {
+              "prompt": "The old stone bridge ___ connects the two neighbourhoods was restored last spring.",
+              "options": [
+                "that",
+                "where",
+                "who"
+              ],
+              "answer": "that",
+              "explanation": "When the bridge is the subject of “connects”, use “that” or “which” (not “where”).",
               "difficulty": 2
+            },
+            {
+              "prompt": "The local guide ___ showed us around the harbour grew up two streets away.",
+              "options": [
+                "who",
+                "which",
+                "where"
+              ],
+              "answer": "who",
+              "explanation": "Use “who” (or “that”) for a person.",
+              "difficulty": 1
             }
-          ],
-          "role": "light"
+          ]
         }
       ],
       "vocab": [
@@ -2644,33 +2742,33 @@
       "speaking": [
         {
           "kind": "prompt_card",
-          "title": "A memorable place & responsible travel (60–90s)",
-          "prompt": "Some travellers say you should always follow local customs; others say visitors pay for tolerance. Give your view with two examples. Two minutes.",
-          "seconds": 90,
+          "title": "Give a short visitor guide (45–60s)",
+          "prompt": "Record a 45–60 second guide for a first-time visitor. Include a regular event or custom, one fact about the past, and a recommendation. Don’t require a set number of passives. Listen to the model first, then hide it before recording.",
+          "seconds": 55,
           "phrases": [
-            "It depends on...",
-            "Where I draw the line is...",
-            "A good example is..."
+            "If you visit this town, start at...",
+            "It was built in...",
+            "The ... is held there every..."
           ],
           "linkers": [
             "To begin with",
-            "What's more",
-            "Despite",
-            "All in all"
+            "Afterwards"
           ],
           "terms": [
-            "destination",
+            "local",
             "custom",
+            "destination",
             "tradition",
-            "set off",
-            "local"
-          ]
+            "set off"
+          ],
+          "modelAnswer": "If you visit this town, start at the market hall. It was built in 1890, and the food market is held there every Saturday. It’s a local tradition, and you can try food from nearby farms. I’d set off early if you want to see the market at its busiest.\n\nAfterwards, take a walk by the river. It’s a quiet spot and my favourite part of town.",
+          "b2Stretch": "Add a defining relative clause if it helps identify something: \"It’s the square where the market is held.\" Leave non-defining clauses for later."
         }
       ],
       "writing": {
-        "title": "Descriptive article: a place worth protecting",
-        "prompt": "Write a 160–180-word descriptive article about a place you know that is changing because of tourism. Describe it, explain what is changing, and suggest one measure.",
-        "format": "descriptive article",
+        "title": "Short visitor recommendation or trip note",
+        "prompt": "Write a short visitor recommendation or trip note (120–150 words). Separate a factual detail about the place (what normally takes place there and one fact about its past) from what you personally did when you visited.",
+        "format": "short visitor recommendation",
         "wordMin": 120,
         "wordMax": 150,
         "outline": {
@@ -2705,14 +2803,14 @@
           "requirement": "optional",
           "outputRequired": false,
           "minutes": 15,
-          "title": "Grammar: Passive voice",
-          "objective": "Master Passive voice + Relative clauses; comparatives and superlatives through guided contrast examples and instant-feedback drills.",
-          "canDo": "I can apply Passive voice accurately when discussing travel and cultural experiences.",
+          "title": "Grammar: Present & past passive in visitor guides",
+          "objective": "Practise be + past participle in present and past simple to describe current local practices and historical facts.",
+          "canDo": "I can describe a current local practice and a past fact about a place using the passive where it fits.",
           "skill": "grammar",
           "input": "reading",
-          "outputTitle": "Apply Passive voice",
-          "output": "Produce 3 original sentences demonstrating Passive voice and Relative clauses; comparatives and superlatives.",
-          "targetSeconds": 90,
+          "outputTitle": "Say & refine one visitor-guide sentence",
+          "output": "Say (or type) one sentence about a place using present passive (e.g. is held) or past passive (e.g. was built). Check feedback and try it once more.",
+          "targetSeconds": 45,
           "wordRange": [
             60,
             100
@@ -2759,14 +2857,14 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 15,
-          "title": "Speaking (Required): Travel and cultural experiences",
+          "title": "Speaking (Required): Give a short visitor guide (45–60s)",
           "objective": "Complete the required 90-second speaking task and self-check prosody in the Shadowing Lab.",
-          "canDo": "I can speak coherently for 90 seconds on travel and cultural experiences using Passive voice.",
+          "canDo": "I can record a 45–60 second visitor guide with a regular event, one past fact, and a recommendation.",
           "skill": "speaking",
           "input": "listening",
-          "outputTitle": "Recorded speaking task (90s)",
-          "output": "Speak for 60–90s about a cultural place worth protecting using passive forms and relative clauses.",
-          "targetSeconds": 90,
+          "outputTitle": "Recorded visitor guide (45–60s)",
+          "output": "Listen to the model guide, hide it before recording, then record your 45–60 second recommendation.",
+          "targetSeconds": 55,
           "wordRange": [
             80,
             130
@@ -2777,13 +2875,13 @@
           "requirement": "required",
           "outputRequired": true,
           "minutes": 30,
-          "title": "Writing (Required): Descriptive article: a place worth protecting",
+          "title": "Writing (Required): Short visitor recommendation or trip note",
           "objective": "Plan, draft, and revise a 120–150 word text on travel and cultural experiences.",
           "canDo": "I can write a well-structured 120–150 word response incorporating Passive voice.",
           "skill": "writing",
           "input": "reading",
-          "outputTitle": "Descriptive article: a place worth protecting",
-          "output": "Write a 160–180-word descriptive article about a place you know that is changing because of tourism. Describe it, explain what is changing, and suggest one measure.",
+          "outputTitle": "Short visitor recommendation or trip note",
+          "output": "Write a 120–150 word visitor recommendation or trip note separating place facts from what you personally did.",
           "targetSeconds": 90,
           "wordRange": [
             120,
@@ -2801,12 +2899,13 @@
           "skill": "review",
           "input": "reading",
           "outputTitle": "Error-log self-correction",
-          "output": "Review this week's SRS deck and rewrite one corrected sentence from your mistake log.",
+          "output": "Delayed recall (try without a phrase bank first): \"Introduce a venue in your neighbourhood. Say what normally takes place there and give one fact about its past.\" Also review this week’s SRS cards.",
           "targetSeconds": 60,
           "wordRange": [
             40,
             80
-          ]
+          ],
+          "delayedRecallPrompt": "Introduce a venue in your neighbourhood. Say what normally takes place there and give one fact about its past."
         }
       ],
       "vocabPack": {

@@ -107,6 +107,14 @@ where it.idx = ((l.module_lesson_number - 1 + 6 + k - 1) % it.total)
       where vd2.module_id = l.module_id and vi2.gap_fill is not null
     )
   )
+  and not (
+    l.module_lesson_number = 2
+    and exists (
+      select 1 from public.lesson_blocks lb
+      where lb.lesson_id = l.id and lb.block_kind = 'practice'
+        and coalesce((lb.content->'mix'->>'grammar')::int, 0) >= 5
+    )
+  )
 on conflict do nothing;
 
 insert into public.practice_items (lesson_id, kind, sort_order, prompt, options, answer, explanation, grammar_point, difficulty)
@@ -127,11 +135,20 @@ where lv.sort_order in (7, 8)
     l.module_lesson_number <> 1
     or vi.gap_fill is null
   )
+  and not (
+    l.module_lesson_number = 2
+    and exists (
+      select 1 from public.lesson_blocks lb
+      where lb.lesson_id = l.id and lb.block_kind = 'practice'
+        and coalesce((lb.content->'mix'->>'grammar')::int, 0) >= 5
+    )
+  )
   and not exists (select 1 from public.practice_items p where p.lesson_id = lv.lesson_id and p.sort_order = lv.sort_order + 2);
 
 update public.lesson_blocks b
    set content = jsonb_set(jsonb_set(b.content, '{item_count}', '10'::jsonb), '{mix}', '{"grammar":2,"vocabulary":8}'::jsonb)
  where b.block_kind = 'practice'
+   and coalesce((b.content->'mix'->>'grammar')::int, 0) < 5
    and not exists (
      select 1 from public.lessons l
      join public.vocab_decks vd on vd.module_id = l.module_id

@@ -37,7 +37,9 @@ export default function GrammarClinicClient({
       <aside className="space-y-2.5 rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs lg:col-span-4">
         <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
           <Stethoscope className="h-4 w-4 text-indigo-700" />
-          <h2 className="font-serif text-base font-semibold text-stone-900">6 B1 Baseline Clinics</h2>
+          <h2 className="font-serif text-base font-semibold text-stone-900">
+            {topics.length} B1 Baseline Clinics
+          </h2>
         </div>
 
         <nav aria-label="Grammar Clinic topics" className="space-y-1.5">

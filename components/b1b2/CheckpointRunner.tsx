@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ListeningInputCard from '@/components/b1b2/ListeningInputCard';
-import PracticeQuiz from '@/components/b1b2/PracticeQuiz';
+import PracticeQuiz, { type QuizItem } from '@/components/b1b2/PracticeQuiz';
 import { createClient } from '@/utils/supabase/client';
 import type { CheckpointDetail } from '@/lib/b1b2/types';
 
@@ -26,6 +26,8 @@ export default function CheckpointRunner({
   const [timerActive, setTimerActive] = useState(false);
 
   const [quizScore, setQuizScore] = useState({ correct: 0, total: checkpoint.practiceItems.length });
+  const [itemResults, setItemResults] = useState<Record<string, boolean>>({});
+  const [showReserve, setShowReserve] = useState(false);
   const [speakingTranscript, setSpeakingTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -193,6 +195,54 @@ export default function CheckpointRunner({
     }
   }
 
+  const weekBreakdown = useMemo(() => {
+    const groups = new Map<
+      number,
+      {
+        week: number;
+        total: number;
+        answered: number;
+        correct: number;
+        recommendedLesson?: number;
+        missedSkills: { skillTag: string; recommendedLesson?: number }[];
+      }
+    >();
+
+    for (const item of checkpoint.practiceItems) {
+      if (typeof item.week !== 'number') continue;
+      const g = groups.get(item.week) ?? {
+        week: item.week,
+        total: 0,
+        answered: 0,
+        correct: 0,
+        recommendedLesson: item.recommended_lesson,
+        missedSkills: [],
+      };
+      g.total += 1;
+      if (item.recommended_lesson && !g.recommendedLesson) {
+        g.recommendedLesson = item.recommended_lesson;
+      }
+      if (Object.prototype.hasOwnProperty.call(itemResults, item.id)) {
+        g.answered += 1;
+        if (itemResults[item.id]) {
+          g.correct += 1;
+        } else if (item.skill_tag) {
+          g.missedSkills.push({
+            skillTag: item.skill_tag,
+            recommendedLesson: item.recommended_lesson,
+          });
+        }
+      }
+      groups.set(item.week, g);
+    }
+
+    return Array.from(groups.values()).sort((a, b) => a.week - b.week);
+  }, [checkpoint.practiceItems, itemResults]);
+
+  function handleDiagnosticCheck(item: QuizItem, isCorrect: boolean) {
+    setItemResults((prev) => ({ ...prev, [item.id]: isCorrect }));
+  }
+
   async function finalizeCheckpoint() {
     setBusy('final');
     setError('');
@@ -225,6 +275,8 @@ export default function CheckpointRunner({
           overall,
           quizCorrect: quizScore.correct,
           quizTotal: quizScore.total,
+          separateOpenResponses: Boolean(checkpoint.separateOpenResponses),
+          weekBreakdown: weekBreakdown.length ? weekBreakdown : undefined,
           code: checkpoint.code,
         },
         completed_at: new Date().toISOString(),
@@ -317,27 +369,115 @@ export default function CheckpointRunner({
 
       {checkpoint.practiceItems.length > 0 && (
         <section className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="font-serif text-xl font-bold text-stone-900">Part 2 · Grammar &amp; Vocabulary Diagnostic</h2>
+          <h2 className="font-serif text-xl font-bold text-stone-900">
+            {checkpoint.separateOpenResponses
+              ? 'Part 1 · 16-Item Grammar Diagnostic (Weeks 1–4)'
+              : 'Part 2 · Grammar & Vocabulary Diagnostic'}
+          </h2>
           <p className="mt-1 text-sm text-stone-600">
-            Check your accuracy across {checkpoint.practiceItems.length} module checkpoint items.
+            Check your accuracy across {checkpoint.practiceItems.length}{' '}
+            {checkpoint.separateOpenResponses ? 'core scored items (4 per week).' : 'module checkpoint items.'}
           </p>
           <PracticeQuiz
+            hideCustomSentence={Boolean(checkpoint.separateOpenResponses)}
             items={checkpoint.practiceItems.map((item) => ({
               id: item.id,
               prompt: item.prompt,
               options: item.options,
               answer: item.answer,
+              accepted_answers: item.accepted_answers,
               explanation: item.explanation,
+              week: item.week,
+              skill_tag: item.skill_tag,
+              recommended_lesson: item.recommended_lesson,
             }))}
             onScoreChange={(correct, total) => setQuizScore({ correct, total })}
+            onItemChecked={(item, isCorrect) => handleDiagnosticCheck(item, isCorrect)}
           />
+
+          {weekBreakdown.length > 0 && (
+            <div className="mt-6 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-indigo-900">
+                Per-Week &amp; Skill Breakdown · Next-Step Recommendations
+              </h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {weekBreakdown.map((wb) => (
+                  <div key={wb.week} className="rounded-lg bg-white p-3 text-xs ring-1 ring-indigo-100">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-stone-900">Week {wb.week}</span>
+                      <span className="font-semibold text-indigo-700">
+                        {wb.correct}/{wb.total}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500">
+                      {wb.answered} of {wb.total} checked
+                    </p>
+                    {wb.missedSkills.length > 0 && (
+                      <div className="mt-2 space-y-1 border-t border-stone-100 pt-2">
+                        {wb.missedSkills.map((ms, idx) => (
+                          <p key={idx} className="text-[11px] text-rose-700">
+                            Review: {ms.skillTag}
+                          </p>
+                        ))}
+                        {wb.recommendedLesson && (
+                          <Link
+                            href={`/curriculum/lessons/${wb.recommendedLesson}`}
+                            className="inline-block font-semibold text-indigo-700 hover:underline"
+                          >
+                            Practise Week {wb.week} Tuesday →
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {checkpoint.reservePracticeItems && checkpoint.reservePracticeItems.length > 0 && (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-700">
+                    Optional Reserve Items ({checkpoint.reservePracticeItems.length} extra · 1 per week)
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Unscored extra checks — does not affect your 16-item diagnostic score.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReserve((v) => !v)}
+                  className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                >
+                  {showReserve ? 'Hide reserve items' : 'Show 4 reserve items'}
+                </button>
+              </div>
+              {showReserve && (
+                <PracticeQuiz
+                  compact
+                  items={checkpoint.reservePracticeItems.map((item) => ({
+                    id: item.id,
+                    prompt: item.prompt,
+                    options: item.options,
+                    answer: item.answer,
+                    accepted_answers: item.accepted_answers,
+                    explanation: item.explanation,
+                  }))}
+                />
+              )}
+            </div>
+          )}
         </section>
       )}
 
       {checkpoint.speakingTask && (
         <section className="rounded-2xl border border-stone-200 bg-white p-6">
           <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-800">
-            Part 3 · Speaking Task
+            {checkpoint.separateOpenResponses
+              ? 'Part 2 · Separate Spoken Narrative (45–60s)'
+              : 'Part 3 · Speaking Task'}
           </span>
           <h2 className="mt-2 font-serif text-xl font-bold text-stone-900">{checkpoint.speakingTask.title}</h2>
           <p className="mt-2 text-sm text-stone-700">{checkpoint.speakingTask.prompt}</p>
@@ -405,7 +545,9 @@ export default function CheckpointRunner({
       {checkpoint.writingTask && (
         <section className="rounded-2xl border border-stone-200 bg-white p-6">
           <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
-            Part 4 · Writing Task
+            {checkpoint.separateOpenResponses
+              ? 'Part 3 · Separate Written Visitor Note (100–140 words)'
+              : 'Part 4 · Writing Task'}
           </span>
           <h2 className="mt-2 font-serif text-xl font-bold text-stone-900">{checkpoint.writingTask.title}</h2>
           <p className="mt-2 text-sm text-stone-700">{checkpoint.writingTask.prompt}</p>
@@ -456,14 +598,29 @@ export default function CheckpointRunner({
           }`}
         >
           <p className="text-xs font-bold uppercase tracking-wider">Milestone Outcome</p>
-          <h2 className="mt-1 font-serif text-2xl font-bold">
-            {finalOutcome.passed ? `${checkpoint.code} Passed — ${finalOutcome.overall}%` : `${checkpoint.code} Completed — ${finalOutcome.overall}%`}
-          </h2>
-          <p className="mt-1 text-sm">
-            {finalOutcome.passed
-              ? '150 XP awarded and your milestone badge eligibility has been updated.'
-              : 'Score 70%+ across the diagnostic quiz, speaking, and writing tasks to pass this milestone.'}
-          </p>
+          {checkpoint.separateOpenResponses ? (
+            <>
+              <h2 className="mt-1 font-serif text-2xl font-bold">
+                {checkpoint.code} Recorded · Diagnostic {quizScore.correct}/{quizScore.total}
+              </h2>
+              <p className="mt-1 text-sm">
+                Reported separately: Grammar diagnostic {quizScore.correct}/{quizScore.total} · Spoken narrative{' '}
+                {speakingResult ? `${speakingResult.mastery}%` : 'not submitted'} · Visitor note{' '}
+                {writingResult ? `${writingResult.score}%` : 'not submitted'}.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-1 font-serif text-2xl font-bold">
+                {finalOutcome.passed ? `${checkpoint.code} Passed — ${finalOutcome.overall}%` : `${checkpoint.code} Completed — ${finalOutcome.overall}%`}
+              </h2>
+              <p className="mt-1 text-sm">
+                {finalOutcome.passed
+                  ? '150 XP awarded and your milestone badge eligibility has been updated.'
+                  : 'Score 70%+ across the diagnostic quiz, speaking, and writing tasks to pass this milestone.'}
+              </p>
+            </>
+          )}
           <div className="mt-4 flex flex-wrap gap-3">
             <Link href="/dashboard" className="rounded-xl bg-stone-900 px-4 py-2 text-xs font-semibold text-white">
               Return to dashboard
@@ -477,8 +634,8 @@ export default function CheckpointRunner({
         signedIn && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-stone-200 bg-white p-5">
             <p className="text-xs text-stone-600">
-              Diagnostic quiz: {quizScore.correct}/{quizScore.total || '—'} · Speaking:{' '}
-              {speakingResult ? `${speakingResult.mastery}%` : 'pending'} · Writing:{' '}
+              {checkpoint.separateOpenResponses ? 'Separate scores — ' : ''}Diagnostic quiz: {quizScore.correct}/
+              {quizScore.total || '—'} · Speaking: {speakingResult ? `${speakingResult.mastery}%` : 'pending'} · Writing:{' '}
               {writingResult ? `${writingResult.score}%` : 'pending'}
             </p>
             <button
