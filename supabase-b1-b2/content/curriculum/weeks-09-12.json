@@ -326,7 +326,7 @@
         {
           "kind": "prompt_card",
           "title": "Public health & personal habits (3 min)",
-          "prompt": "Argue either for or against a tax on junk food. Use two pieces of evidence, address the strongest objection and conclude. Two to three minutes.",
+          "prompt": "Argue either for or against a tax on junk food in a 3-minute response. Use two pieces of evidence, address the strongest objection and conclude.",
           "seconds": 180,
           "phrases": [
             "The evidence suggests...",
@@ -347,7 +347,7 @@
       ],
       "writing": {
         "title": "Argument essay: health and responsibility",
-        "prompt": "Write a 200-word argument essay: should governments tax unhealthy products to improve public health? Present both sides and reach a clear conclusion.",
+        "prompt": "Write a 180–200 word argument essay: should governments tax unhealthy products to improve public health? Present both sides and reach a clear conclusion.",
         "format": "argument essay",
         "wordMin": 180,
         "wordMax": 200,
@@ -486,7 +486,81 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "maintain a balanced diet",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Busy shift workers often struggle to maintain a balanced diet."
+          },
+          {
+            "phrase": "lead a sedentary lifestyle",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Desk jobs make it easy to lead a sedentary lifestyle without noticing."
+          },
+          {
+            "phrase": "support mental wellbeing",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Regular outdoor exercise helps support mental wellbeing as well as physical fitness."
+          },
+          {
+            "phrase": "cut down on sugar",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Clear labelling helps families cut down on sugar gradually."
+          },
+          {
+            "phrase": "restrict consumer choice",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Critics argue that bans restrict consumer choice unnecessarily."
+          },
+          {
+            "phrase": "get a health check done",
+            "band": "B2",
+            "useRole": "B",
+            "example": "More adults are encouraged to get a routine health check done each year."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "addict",
+            "forms": [
+              "addictive",
+              "addiction"
+            ],
+            "example": "Highly addictive snacks make sugar addiction harder to overcome."
+          },
+          {
+            "base": "prevent",
+            "forms": [
+              "preventive",
+              "prevention"
+            ],
+            "example": "Preventive care treats health promotion and prevention as long-term savings."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "it is widely believed that",
+            "functionLabel": "Passive reporting",
+            "band": "B2",
+            "useRole": "B",
+            "example": "It is widely believed that preventive care reduces hospital pressure."
+          },
+          {
+            "expression": "by contrast",
+            "functionLabel": "Contrast",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Taxes raise prices immediately; by contrast, education changes habits slowly."
+          }
+        ]
+      }
     },
     {
       "number": 10,
@@ -982,7 +1056,82 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "ease traffic congestion",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Frequent regional buses can ease traffic congestion during peak hours."
+          },
+          {
+            "phrase": "upgrade ageing infrastructure",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The municipality must upgrade ageing infrastructure before expanding the tram line."
+          },
+          {
+            "phrase": "build affordable housing",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Councils need land rules that encourage developers to build affordable housing."
+          },
+          {
+            "phrase": "improve step-free accessibility",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Lifts at every platform will improve step-free accessibility across the network."
+          },
+          {
+            "phrase": "pedestrianise the centre",
+            "band": "B2",
+            "useRole": "B",
+            "example": "A vote to pedestrianise the centre transformed local café trade."
+          },
+          {
+            "phrase": "avoid peak hours",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Flexible start times allow commuters to avoid peak hours."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "access",
+            "forms": [
+              "accessible",
+              "accessibility",
+              "inaccessible"
+            ],
+            "example": "Poor step-free accessibility leaves older stations inaccessible to many passengers."
+          },
+          {
+            "base": "afford",
+            "forms": [
+              "affordable",
+              "affordability"
+            ],
+            "example": "Rising rents threaten housing affordability even where apartments look modern."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "far fewer / far less",
+            "functionLabel": "Comparison",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Pedestrianised streets carry far fewer cars and generate far less noise."
+          },
+          {
+            "expression": "in addition",
+            "functionLabel": "Addition",
+            "band": "B1",
+            "useRole": "P",
+            "example": "Reliable buses cut journey times; in addition, they lower street-level pollution."
+          }
+        ]
+      }
     },
     {
       "number": 11,
@@ -1477,7 +1626,82 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "curate an exhibition",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Community volunteers helped curate an exhibition on neighbourhood craft."
+          },
+          {
+            "phrase": "critically acclaimed",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The critically acclaimed documentary sold out three local screenings."
+          },
+          {
+            "phrase": "make culture accessible",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Pay-what-you-can evenings help regional theatres make culture accessible."
+          },
+          {
+            "phrase": "achieve a creative breakthrough",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Stepping away from screens helped the composer achieve a creative breakthrough."
+          },
+          {
+            "phrase": "enter the mainstream",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Independent cinema often shapes style long before ideas enter the mainstream."
+          },
+          {
+            "phrase": "depend on public patronage",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Experimental venues still depend on public patronage to survive quiet seasons."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "origin",
+            "forms": [
+              "original",
+              "originality",
+              "originally"
+            ],
+            "example": "Originally an experimental print shop, the space became famous for bold originality."
+          },
+          {
+            "base": "evoke",
+            "forms": [
+              "evocative",
+              "evocation"
+            ],
+            "example": "The film uses spare dialogue and evocative music rather than heavy exposition."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "having seen",
+            "functionLabel": "Participle link",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Having seen the exhibition twice, I noticed how carefully the lighting was planned."
+          },
+          {
+            "expression": "moreover",
+            "functionLabel": "Addition",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Public galleries draw visitors; moreover, they host free youth workshops."
+          }
+        ]
+      }
     },
     {
       "number": 12,
@@ -1976,7 +2200,81 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "demand accountability",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Employees rightly demand accountability when promotion criteria feel opaque."
+          },
+          {
+            "phrase": "face an ethical dilemma",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Whistleblowers often face an ethical dilemma between loyalty and honesty."
+          },
+          {
+            "phrase": "expose a double standard",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Auditors were quick to expose a double standard in expense approvals."
+          },
+          {
+            "phrase": "declare a conflict of interest",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Committee members must declare a conflict of interest before voting."
+          },
+          {
+            "phrase": "close a legal loophole",
+            "band": "B2",
+            "useRole": "B",
+            "example": "New pay-reporting rules aim to close a legal loophole on contractor wages."
+          },
+          {
+            "phrase": "act with integrity",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Trust grows when leaders act with integrity even when nobody is checking."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "transparent",
+            "forms": [
+              "transparency",
+              "transparently"
+            ],
+            "example": "Genuine transparency requires firms to publish salary bands transparently."
+          },
+          {
+            "base": "exploit",
+            "forms": [
+              "exploitation",
+              "exploitative"
+            ],
+            "example": "Weak oversight allows exploitative practices and worker exploitation."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "not only ... but also",
+            "functionLabel": "Emphasis",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Not only did the audit cut waste, but it also restored staff trust."
+          },
+          {
+            "expression": "what matters most is",
+            "functionLabel": "Cleft focus",
+            "band": "B2",
+            "useRole": "B",
+            "example": "What matters most is that every applicant faces the same transparent standard."
+          }
+        ]
+      }
     }
   ]
 }

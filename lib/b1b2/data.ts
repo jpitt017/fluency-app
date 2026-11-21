@@ -603,15 +603,46 @@ export async function loadCheckpointDetail(code: string): Promise<{
   if (isCheckpoint1) {
     practiceItems = CHECKPOINT_1_SCORED_ITEMS;
   } else {
-    const lessonIds = (lessonsRes.data ?? []).map((l) => l.id);
-    if (user && lessonIds.length > 0) {
+    const phaseEnd = modRes.data?.module_number;
+    let phaseLessonIds: string[] = [];
+    if (user && phaseEnd && phaseEnd >= 8) {
+      const phaseNumbers = [phaseEnd - 3, phaseEnd - 2, phaseEnd - 1, phaseEnd];
+      const { data: phaseModules } = await supabase
+        .from('modules')
+        .select('id, module_number')
+        .in('module_number', phaseNumbers)
+        .order('module_number');
+      const phaseModIds = (phaseModules ?? []).map((m) => m.id);
+      if (phaseModIds.length > 0) {
+        const { data: phaseLessons } = await supabase
+          .from('lessons')
+          .select('id, module_id, module_lesson_number')
+          .in('module_id', phaseModIds)
+          .in('module_lesson_number', [2, 7]);
+        phaseLessonIds = (phaseLessons ?? []).map((l) => l.id);
+      }
+    }
+    const targetLessonIds =
+      phaseLessonIds.length > 0
+        ? phaseLessonIds
+        : (lessonsRes.data ?? []).map((l) => l.id);
+    if (user && targetLessonIds.length > 0) {
       const { data: pItems } = await supabase
         .from('practice_items')
-        .select('id, kind, sort_order, prompt, options, answer, explanation, difficulty')
-        .in('lesson_id', lessonIds)
-        .lte('sort_order', 2)
-        .limit(12);
-      practiceItems = (pItems as PracticeItem[] | null) ?? [];
+        .select('id, kind, sort_order, prompt, options, answer, explanation, difficulty, lesson_id')
+        .in('lesson_id', targetLessonIds)
+        .lte('sort_order', 3)
+        .order('sort_order');
+      const grouped = new Map<string, PracticeItem[]>();
+      for (const row of (pItems as (PracticeItem & { lesson_id?: string })[] | null) ?? []) {
+        const lid = row.lesson_id ?? 'default';
+        const list = grouped.get(lid) ?? [];
+        if (list.length < 3) {
+          list.push(row);
+          grouped.set(lid, list);
+        }
+      }
+      practiceItems = Array.from(grouped.values()).flat().slice(0, 12);
     }
   }
 

@@ -492,7 +492,81 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "sign a binding treaty",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Neighbouring nations agreed to sign a binding treaty on river water sharing."
+          },
+          {
+            "phrase": "build climate resilience",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Flood barriers and wetlands work together to build climate resilience."
+          },
+          {
+            "phrase": "allocate emergency funding",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Regional agencies must allocate emergency funding transparently."
+          },
+          {
+            "phrase": "narrow a regional disparity",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Targeted rail links can help narrow a regional disparity in job access."
+          },
+          {
+            "phrase": "clear a supply bottleneck",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Joint customs desks helped clear a supply bottleneck at the port."
+          },
+          {
+            "phrase": "provide a financial incentive",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Grants provide a financial incentive for small towns to insulate public halls."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "resilient",
+            "forms": [
+              "resilience",
+              "resiliently"
+            ],
+            "example": "Urban resilience depends on infrastructure built to recover resiliently from floods."
+          },
+          {
+            "base": "allocate",
+            "forms": [
+              "allocation",
+              "reallocate"
+            ],
+            "example": "Fair funding allocation sometimes requires governments to reallocate old budgets."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "it would appear that",
+            "functionLabel": "Hedging",
+            "band": "B2",
+            "useRole": "B",
+            "example": "It would appear that voluntary targets rarely match the speed of binding treaties."
+          },
+          {
+            "expression": "to some extent",
+            "functionLabel": "Qualification",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Local schemes help to some extent, though cross-border rules remain essential."
+          }
+        ]
+      }
     },
     {
       "number": 14,
@@ -988,7 +1062,81 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "test a working prototype",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Engineers will test a working prototype in coastal towns next spring."
+          },
+          {
+            "phrase": "become economically viable",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Grid-scale batteries have finally become economically viable for rural clinics."
+          },
+          {
+            "phrase": "trigger unforeseen consequences",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Rushing automation into schools can trigger unforeseen consequences for assessment."
+          },
+          {
+            "phrase": "build in ethical safeguards",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Hospitals must build in ethical safeguards before deploying diagnostic models."
+          },
+          {
+            "phrase": "render equipment obsolete",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Proprietary chargers quickly render otherwise functional equipment obsolete."
+          },
+          {
+            "phrase": "test long-term scalability",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Pilot schemes look promising, yet planners must test long-term scalability."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "automate",
+            "forms": [
+              "automation",
+              "automated"
+            ],
+            "example": "Automated triage speeds up intake, yet full automation still needs human review."
+          },
+          {
+            "base": "foresee",
+            "forms": [
+              "foreseeable",
+              "unforeseen"
+            ],
+            "example": "Even careful forecasts leave room for unforeseen shifts alongside foreseeable trends."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "by 2035",
+            "functionLabel": "Future milestone",
+            "band": "B2",
+            "useRole": "B",
+            "example": "By 2035, most regional rail fleets will have switched to electric traction."
+          },
+          {
+            "expression": "is bound to",
+            "functionLabel": "Strong probability",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Repair-right legislation is bound to extend the average lifespan of electronics."
+          }
+        ]
+      }
     },
     {
       "number": 15,
@@ -1331,7 +1479,7 @@
       ],
       "writing": {
         "title": "Formal proposal: a change worth making",
-        "prompt": "Write a 180–200-word formal proposal to a decision-maker recommending one change to a policy you know. Include the decision required, the options and a clear recommendation.",
+        "prompt": "Write a 200–220 word formal proposal to a decision-maker recommending one change to a policy you know. Include the decision required, the options and a clear recommendation.",
         "format": "formal proposal",
         "wordMin": 200,
         "wordMax": 220,
@@ -1445,7 +1593,7 @@
           "skill": "writing",
           "input": "reading",
           "outputTitle": "Formal proposal: a change worth making",
-          "output": "Write a 180–200-word formal proposal to a decision-maker recommending one change to a policy you know. Include the decision required, the options and a clear recommendation.",
+          "output": "Write a 200–220 word formal proposal to a decision-maker recommending one change to a policy you know. Include the decision required, the options and a clear recommendation.",
           "targetSeconds": 180,
           "wordRange": [
             200,
@@ -1470,7 +1618,82 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "provide compelling evidence",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Three independent trials provide compelling evidence for extending library hours."
+          },
+          {
+            "phrase": "concede a valid point",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Strong proposals concede a valid point about cost before proposing savings."
+          },
+          {
+            "phrase": "find common ground",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Employers and unions managed to find common ground on flexible shift swaps."
+          },
+          {
+            "phrase": "rebut a counter-argument",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Use concrete figures rather than slogans to rebut a counter-argument."
+          },
+          {
+            "phrase": "draft a policy proposal",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The working group will draft a policy proposal for Monday’s board meeting."
+          },
+          {
+            "phrase": "maintain credibility",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Acknowledging limitations openly helps analysts maintain credibility."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "persuade",
+            "forms": [
+              "persuasive",
+              "persuasion",
+              "persuasively"
+            ],
+            "example": "Persuasive writing pairs calm persuasion with evidence presented persuasively."
+          },
+          {
+            "base": "credible",
+            "forms": [
+              "credibility",
+              "incredible"
+            ],
+            "example": "Exaggerated claims damage credibility far faster than modest, credible estimates."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "admittedly",
+            "functionLabel": "Concession",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Admittedly, the initial setup costs are high; nonetheless, operating expenses fall."
+          },
+          {
+            "expression": "in light of",
+            "functionLabel": "Formal cause",
+            "band": "B2",
+            "useRole": "B",
+            "example": "In light of recent ridership figures, we recommend extending the evening bus route."
+          }
+        ]
+      }
     },
     {
       "number": 16,
@@ -1791,11 +2014,11 @@
           "outputRequired": false,
           "minutes": 15,
           "title": "Vocabulary: B2 consolidation and review",
-          "objective": "Learn 8–10 core B2 items for b2 consolidation and review, practising collocations and word families.",
-          "canDo": "I can deploy B2 b2 consolidation and review collocations accurately in context.",
+          "objective": "Learn 8–10 core B2 items for B2 consolidation and review, practising collocations and word families.",
+          "canDo": "I can deploy B2 consolidation and review collocations accurately in context.",
           "skill": "vocabulary",
           "input": "reading",
-          "outputTitle": "Use 4 b2 consolidation and review expressions",
+          "outputTitle": "Use 4 B2 consolidation and review expressions",
           "output": "Write or record 4 nuanced sentences using this week's B2 collocations.",
           "targetSeconds": 90,
           "wordRange": [
@@ -1827,7 +2050,7 @@
           "outputRequired": false,
           "minutes": 15,
           "title": "Listening: Timed listening: three accents, one topic",
-          "objective": "Follow a 3.5-minute multi-accent discussion on b2 consolidation and review, noting nuance and hedging.",
+          "objective": "Follow a 3.5-minute multi-accent discussion on B2 consolidation and review, noting nuance and hedging.",
           "canDo": "I can extract main arguments, concessions, and implied attitude from a 3.5-minute track.",
           "skill": "listening",
           "input": "listening",
@@ -1845,7 +2068,7 @@
           "outputRequired": false,
           "minutes": 15,
           "title": "Reading: Timed reading: the limits of a good statistic",
-          "objective": "Analyse a 250–350 word B2 article on b2 consolidation and review for evidence, tone, and structure.",
+          "objective": "Analyse a 250–350 word B2 article on B2 consolidation and review for evidence, tone, and structure.",
           "canDo": "I can evaluate evidence and distinguish fact from opinion in a 250–350 word text.",
           "skill": "reading",
           "input": "reading",
@@ -1863,8 +2086,8 @@
           "outputRequired": true,
           "minutes": 15,
           "title": "Speaking (Required): Position Statement — B2 consolidation and review",
-          "objective": "Deliver a structured recorded position statement (up to 3 minutes) on b2 consolidation and review, plus Shadowing self-check.",
-          "canDo": "I can record a clear, hedged B2 position statement up to 3 minutes on b2 consolidation and review.",
+          "objective": "Deliver a structured recorded position statement (up to 3 minutes) on B2 consolidation and review, plus Shadowing self-check.",
+          "canDo": "I can record a clear, hedged B2 position statement up to 3 minutes on B2 consolidation and review.",
           "skill": "speaking",
           "input": "listening",
           "outputTitle": "Recorded position statement (up to 3 min)",
@@ -1881,8 +2104,8 @@
           "outputRequired": true,
           "minutes": 30,
           "title": "Writing (Required): Final essay: an argument with examples",
-          "objective": "Plan, draft, and polish a 200–220 word B2 piece on b2 consolidation and review.",
-          "canDo": "I can produce a cohesive 200–220 word B2 text using Mixed review chosen from each learner’s error log.",
+          "objective": "Plan, draft, and polish a 200–220 word B2 piece on B2 consolidation and review.",
+          "canDo": "I can produce a cohesive 200–220 word B2 text using mixed B2 structures and my personal error-log targets.",
           "skill": "writing",
           "input": "reading",
           "outputTitle": "Final essay: an argument with examples",
@@ -1911,7 +2134,81 @@
             90
           ]
         }
-      ]
+      ],
+      "vocabPack": {
+        "collocations": [
+          {
+            "phrase": "outweigh the drawbacks",
+            "band": "B2",
+            "useRole": "B",
+            "example": "For hybrid teams, lower commuting stress can outweigh the drawbacks of remote calls."
+          },
+          {
+            "phrase": "mitigate the impact",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Scheduled mentoring days help mitigate the impact of working from home."
+          },
+          {
+            "phrase": "reach a broad consensus",
+            "band": "B2",
+            "useRole": "B",
+            "example": "After two rounds of consultation, the panel managed to reach a broad consensus."
+          },
+          {
+            "phrase": "prove detrimental to",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Constant late-evening messages can prove detrimental to staff retention."
+          },
+          {
+            "phrase": "technically feasible",
+            "band": "B2",
+            "useRole": "B",
+            "example": "The pilot proved technically feasible, though funding remains uncertain."
+          },
+          {
+            "phrase": "retain the nuance",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Good summaries stay concise while managing to retain the nuance of the debate."
+          }
+        ],
+        "wordFamilies": [
+          {
+            "base": "mitigate",
+            "forms": [
+              "mitigation",
+              "mitigating"
+            ],
+            "example": "Careful planning offers practical mitigation against burnout."
+          },
+          {
+            "base": "prevail",
+            "forms": [
+              "prevalent",
+              "prevalence"
+            ],
+            "example": "Flexible contracts have grown increasingly prevalent across service industries."
+          }
+        ],
+        "linkingExpressions": [
+          {
+            "expression": "on balance",
+            "functionLabel": "Synthesis",
+            "band": "B2",
+            "useRole": "B",
+            "example": "On balance, the evidence favours hybrid arrangements over rigid office mandates."
+          },
+          {
+            "expression": "taking everything into account",
+            "functionLabel": "Conclusion",
+            "band": "B2",
+            "useRole": "B",
+            "example": "Taking everything into account, clear expectations matter more than physical desks."
+          }
+        ]
+      }
     }
   ]
 }

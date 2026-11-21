@@ -2108,7 +2108,7 @@
           "minutes": 30,
           "title": "Writing (Required): Welcome message for a new flatmate",
           "objective": "Plan, draft, and revise a 120–150 word text on daily life and social interaction.",
-          "canDo": "I can write a well-structured 120–150 word response incorporating Modals of obligation, advice, ability, permission.",
+          "canDo": "I can write a well-structured 120–150 word response using house-rule modals (have to, mustn't, don't have to, should).",
           "skill": "writing",
           "input": "reading",
           "outputTitle": "Welcome message for a new flatmate",
