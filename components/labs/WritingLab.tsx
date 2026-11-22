@@ -15,6 +15,7 @@ export interface WritingLabProps {
   onSpeak?: (text: string) => void;
   lessonContext?: LessonLabContext;
   compactLesson?: boolean;
+  unlockedModel?: string | null;
 }
 
 interface WritingFeedbackResponse {
@@ -24,6 +25,7 @@ interface WritingFeedbackResponse {
   score?: number;
   passed?: boolean;
   rubric?: Record<string, unknown>;
+  modelAnswer?: string | null;
 }
 
 export default function WritingLab({
@@ -33,6 +35,7 @@ export default function WritingLab({
   onSpeak,
   lessonContext,
   compactLesson = false,
+  unlockedModel = null,
 }: WritingLabProps) {
   const activePrompt =
     lessonContext?.prompt ??
@@ -60,6 +63,7 @@ export default function WritingLab({
           text,
           prompt: `${activePrompt}${target?.targetGrammar?.length ? ` Target grammar: ${target.targetGrammar.join(', ')}.` : ''}`,
           targetKeywords: activeKeywords,
+          weekNumber: lessonContext?.weekNumber,
         }),
       });
       const data = (await response.json()) as WritingFeedbackResponse & { error?: string };
@@ -155,6 +159,8 @@ export default function WritingLab({
           {error}
         </p>
       )}
+
+      {(result?.modelAnswer || unlockedModel) && <section className="rounded-xl border border-emerald-200 p-4"><h3 className="font-semibold">Model answer</h3><p className="mt-2 whitespace-pre-line text-sm">{result?.modelAnswer || unlockedModel}</p></section>}
 
       {result && (
         <div role="status" className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">

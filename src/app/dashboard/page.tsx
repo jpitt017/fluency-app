@@ -178,7 +178,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             </nav>
           </div>
           <p className="mt-3 text-sm font-semibold text-emerald-950">By the end of this week I can…</p>
-          <p className="mt-1 font-serif text-xl leading-snug text-stone-900 sm:text-2xl">{week.cefr.canDo}</p>
+          <Link href={`/week/${week.number}`} className="mt-1 block font-serif text-xl leading-snug text-stone-900 underline decoration-emerald-400 underline-offset-4 sm:text-2xl">{week.cefr.canDo}</Link>
           <p className="mt-2 text-xs text-emerald-800">
             {week.cefr.scale} · Level {week.cefr.level}
           </p>

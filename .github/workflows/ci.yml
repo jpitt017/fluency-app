@@ -64,13 +64,13 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
       - name: Run Playwright core-loop E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --reporter=line,github
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || '' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || '' }}
           E2E_STUB_LLM: 'true'

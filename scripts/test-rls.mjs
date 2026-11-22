@@ -50,6 +50,14 @@ async function run() {
     const { error: signInErr } = await clientA.auth.signInWithPassword({ email: userA.email, password: userA.password });
     if (signInErr) throw signInErr;
 
+    // Model unlocks are server-created and visible only to their owner.
+    const { error: unlockSeedError } = await admin.from('week_output_submissions').insert({ user_id: userBId, week_number: 1, skill: 'writing' });
+    if (unlockSeedError) throw new Error(`Could not seed week unlock: ${unlockSeedError.message}`);
+    const { data: foreignUnlocks, error: unlockReadError } = await clientA.from('week_output_submissions').select('skill').eq('user_id', userBId);
+    if (unlockReadError || foreignUnlocks.length) throw new Error('Week unlock isolation failed');
+    const { error: spoofUnlockError } = await clientA.from('week_output_submissions').insert({ user_id: userAId, week_number: 1, skill: 'writing' });
+    if (!spoofUnlockError) throw new Error('Learner could create a model unlock directly');
+
     // 1. User A must see 0 rows when querying User B's learner_errors
     const { data: crossRows } = await clientA
       .from('learner_errors')

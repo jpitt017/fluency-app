@@ -5,6 +5,8 @@ import ConversationalSpeakingLab from '@/components/labs/ConversationalSpeakingL
 import ShadowingLab from '@/components/b1b2/ShadowingLab';
 import type { LessonLabContext } from '@/components/labs/LessonLabContext';
 import { getViewer } from '@/lib/b1b2/data';
+import { loadUnlockedModels } from '@/lib/curriculum/week-models';
+import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +15,10 @@ type LabsProps = { searchParams: Promise<{ week?: string | string[] }> };
 
 export default async function LabsPage({ searchParams }: LabsProps) {
   const viewer = await getViewer();
-  const weekNumber = learnerWeekFromParam((await searchParams).week);
+  const weekParam = (await searchParams).week;
+  const weekNumber = learnerWeekFromParam(weekParam);
+  const selectedWeek = weekParam ? await loadLearnerWeek(weekNumber) : null;
+  const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
   const freeContext: LessonLabContext = {
     prompt:
@@ -67,24 +72,24 @@ export default async function LabsPage({ searchParams }: LabsProps) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-12">
-        <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
+        <section id="writing" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
           <div className="mb-4 border-b border-stone-100 pb-3">
             <h2 className="text-lg font-bold text-stone-900">Writing Studio</h2>
             <p className="text-xs text-stone-500">
               Draft a paragraph, email, review, or essay and get targeted B2 corrections.
             </p>
           </div>
-          <WritingLab lessonContext={freeContext} />
+          <WritingLab unlockedModel={unlockedModels?.writing} lessonContext={selectedWeek ? { ...freeContext, prompt: selectedWeek.writingPrompt, weekNumber } : freeContext} />
         </section>
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
+        <section id="speaking" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
           <div className="mb-4 border-b border-stone-100 pb-3">
             <h2 className="text-lg font-bold text-stone-900">Speaking Evaluator</h2>
             <p className="text-xs text-stone-500">
               Record 60–180 seconds for Whisper transcription and B1 → B2 feedback.
             </p>
           </div>
-          <SpeakingLab lessonContext={freeContext} pronunciationFocus={pronunciationFocus} />
+          <SpeakingLab unlockedModel={unlockedModels?.speaking} lessonContext={selectedWeek ? { ...freeContext, prompt: selectedWeek.speakingPrompt, weekNumber } : freeContext} pronunciationFocus={pronunciationFocus} />
         </section>
       </div>
 

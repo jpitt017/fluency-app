@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { error: weekDeleteError } = await supabase.from('week_output_submissions').delete().eq('user_id', user.id);
+    if (weekDeleteError) return NextResponse.json({ error: weekDeleteError.message }, { status: 500 });
+
     const { data: rpcResult, error: rpcErr } = await supabase.rpc('delete_my_learning_data');
     if (rpcErr) {
       return NextResponse.json({ error: rpcErr.message }, { status: 500 });

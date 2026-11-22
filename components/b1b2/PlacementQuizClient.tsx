@@ -10,8 +10,8 @@ type Placement = 'foundation' | 'stage1' | 'stage2';
 
 function placementRecommendation(placement: Placement) {
   if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice Labs →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
-  if (placement === 'stage1') return { belowB1: false, band: 'Stage 1', startLabel: 'Open Curriculum →', startHref: '/curriculum', summary: 'Start with Stage 1.' };
-  return { belowB1: false, band: 'Stage 2', startLabel: 'Open Curriculum →', startHref: '/curriculum', summary: 'Start with Stage 2.' };
+  if (placement === 'stage1') return { belowB1: false, band: 'Stage 1', startLabel: 'Start Week 1 →', startHref: '/week/1', summary: 'Start with Stage 1.' };
+  return { belowB1: false, band: 'Stage 2', startLabel: 'Start Week 17 →', startHref: '/week/17', summary: 'Start with Stage 2.' };
 }
 
 export default function PlacementQuizClient({ questions, texts }: { questions: PlacementQuestionRow[]; texts: PlacementTextRow[] }) {
