@@ -258,6 +258,55 @@ test('encoding is injectable, so the tests never need ffmpeg', async () => {
   assert.equal(called, 1);
 });
 
+test('an upload is retried through a transient storage 5xx', async () => {
+  const { uploadToBucket } = await import('../../scripts/lib/course-audio/publish.mjs');
+  const calls = [];
+  const client = {
+    storage: {
+      from: () => ({
+        async upload(key, body, options) {
+          calls.push(key);
+          return calls.length < 3 ? { error: { status: 520, message: '<none>' } } : { error: null };
+        },
+        getPublicUrl: () => ({ data: { publicUrl: 'https://example.test/x.mp3' } }),
+      }),
+    },
+  };
+  const url = await uploadToBucket(client, {
+    bucket: 'course-audio-review',
+    key: 'weeks-01-04/ai-trial/voice-check-Host.mp3',
+    contentType: 'audio/mpeg',
+    body: Buffer.from('x'),
+  });
+  assert.equal(calls.length, 3, 'retried twice, then succeeded');
+  assert.equal(url, null, 'a private bucket has no public URL');
+});
+
+test('an upload permission error is not retried', async () => {
+  const { uploadToBucket } = await import('../../scripts/lib/course-audio/publish.mjs');
+  const calls = [];
+  const client = {
+    storage: {
+      from: () => ({
+        async upload(key) {
+          calls.push(key);
+          return { error: { status: 403, message: 'row-level security' } };
+        },
+      }),
+    },
+  };
+  await assert.rejects(
+    uploadToBucket(client, {
+      bucket: 'course-audio-review',
+      key: 'weeks-01-04/ai-trial/voice-check-Host.mp3',
+      contentType: 'audio/mpeg',
+      body: Buffer.from('x'),
+    }),
+    /row-level security/,
+  );
+  assert.equal(calls.length, 1);
+});
+
 test('the workflow saves only the review artefacts and requires the ElevenLabs secret', () => {
   assert.match(workflow, /ELEVENLABS_API_KEY/);
   assert.doesNotMatch(workflow, /OPENAI/);

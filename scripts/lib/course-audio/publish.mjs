@@ -34,6 +34,19 @@ export { AUDIO_BUCKET, DEFAULT_REVIEW_BUCKET, TRIAL_PREFIX, trialObjectKeys, rev
 /** Review links expire after an hour: long enough for one review pass. */
 export const REVIEW_LINK_SECONDS = 60 * 60;
 
+/** Uploads are retried this many times, for the storage 5xx blips. */
+const UPLOAD_ATTEMPTS = 4;
+
+/**
+ * Storage reports a transient failure as a 5xx, or as the literal status 520
+ * (Cloudflare "unknown error") with an empty message. A 4xx is a real problem:
+ * wrong bucket, wrong mime type, missing permission.
+ */
+function isTransientStorageError(error) {
+  const status = Number(error?.status ?? error?.statusCode ?? 0);
+  return status >= 500 || status === 0;
+}
+
 /**
  * Keys of the per-speaker voice-check files written by `--voice-check`.
  * They live next to the tracks, so the same delete rules cover them.
@@ -104,18 +117,34 @@ export async function listReviewFiles(client, week, bucket = DEFAULT_REVIEW_BUCK
  * ------------------------------------------------------------------ */
 
 /**
- * Uploads one object. The review bucket is private, so the returned value is
- * only a key to sign later; the public bucket returns the URL a learner hears.
+ * Uploads one object, retrying the transient failures Storage occasionally
+ * returns for a large binary upload (a bare 520 with no message: the request is
+ * worth repeating, a permission error is not).
+ *
+ * The review bucket is private, so the returned value is only a key to sign
+ * later; the public bucket returns the URL a learner hears.
  */
 export async function uploadToBucket(client, target) {
   const bucket = target.bucket ?? AUDIO_BUCKET;
   if (bucket === AUDIO_BUCKET) assertTrialTrackKey(target.key, bucket);
   else assertReviewKey(target.key, bucket);
-  const { error } = await client.storage.from(bucket).upload(target.key, target.body, {
-    contentType: target.contentType,
-    upsert: true,
-  });
-  if (error) throw new Error(`Upload of ${bucket}/${target.key} failed: ${JSON.stringify(error)}`);
+  let lastError = null;
+  for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt += 1) {
+    const { error } = await client.storage.from(bucket).upload(target.key, target.body, {
+      contentType: target.contentType,
+      upsert: true,
+    });
+    if (!error) {
+      lastError = null;
+      break;
+    }
+    lastError = error;
+    if (!isTransientStorageError(error) || attempt === UPLOAD_ATTEMPTS) break;
+    await new Promise((resolve) => setTimeout(resolve, 2_000 * attempt));
+  }
+  if (lastError) {
+    throw new Error(`Upload of ${bucket}/${target.key} failed: ${JSON.stringify(lastError)}`);
+  }
   if (bucket !== AUDIO_BUCKET) return null;
   const { data } = client.storage.from(bucket).getPublicUrl(target.key);
   if (!data?.publicUrl) throw new Error(`Could not resolve a public URL for ${bucket}/${target.key}`);
