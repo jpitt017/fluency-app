@@ -23,8 +23,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.production_ai_test == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -41,8 +41,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.production_issue_test == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -59,8 +59,8 @@ jobs:
     outputs:
       prompts: ${{ steps.filter.outputs.prompts }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -73,8 +73,8 @@ jobs:
   build-and-offline-evals:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -89,6 +89,7 @@ jobs:
       - run: node --test tests/unit/learner-wording.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
+      - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
@@ -102,8 +103,8 @@ jobs:
   playwright-e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -136,9 +137,9 @@ jobs:
         env:
           GROQ_KEY: ${{ secrets.GROQ_API_KEY }}
         run: echo "available=$([ -n "$GROQ_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.check.outputs.available == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.check.outputs.available == 'true'
         with:
           node-version: 22
@@ -159,15 +160,21 @@ jobs:
         env:
           SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: echo "available=$([ -n "$SERVICE_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.check.outputs.available == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.check.outputs.available == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
         if: steps.check.outputs.available == 'true'
+      - name: Verify live issue alert grouping
+        if: steps.check.outputs.available == 'true'
+        run: node scripts/test-issue-alert-grouping.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Verify Postgres RLS isolation & deletion coverage
         if: steps.check.outputs.available == 'true'
         run: node scripts/test-rls.mjs
