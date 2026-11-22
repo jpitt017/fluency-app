@@ -84,3 +84,9 @@ Never reuse a personal or long-lived account for production tests.
 ### Pilot navigation
 
 Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. Signed-in learners use their server-calculated current week across devices. Signed-out visitors use the last week opened in this browser, defaulting to Week 1.
+
+### Issue reporting
+
+Reports require authentication, the Supabase service role key and migration 0032. Audio is recorded as a maximum 60-second WAV, sent to the existing speech provider using the same transcription helper, and does not consume study units. A separate five-per-hour limit applies to report attempts. Screenshots are selected manually; people should remove private information first. URL query strings are omitted. Only the latest saved writing or speaking transcript is included when explicitly selected.
+
+Broken-issue alerts use Resend. Configure `RESEND_API_KEY`, `ISSUE_EMAIL_FROM` (a verified Resend sender), `ISSUE_ADMIN_EMAIL`, and `ISSUE_APP_URL` in the deployment environment. Never put their values in Git. Unsent alerts remain pending and the existing daily retention cron retries them. Resend receives only a generic notification and the link, not the report content. The cron requires `CRON_SECRET`.

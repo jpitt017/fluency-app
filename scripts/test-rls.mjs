@@ -97,6 +97,28 @@ async function run() {
     const { data: foreignInputs, error: foreignInputError } = await clientA.from('week_input_submissions').select('skill').eq('user_id', userBId);
     if (foreignInputError || foreignInputs.length) throw new Error('Week input isolation failed');
 
+    // Reports are private to their owner until staff access them.
+    const issueSeed = await clientA.from('issue_reports').insert({ user_id: userAId, type: 'idea', message: 'Test report', page_url: '/test' }).select('id').single();
+    if (issueSeed.error || !issueSeed.data) throw new Error(`Issue creation failed: ${issueSeed.error?.message}`);
+    const spoofIssue = await clientA.from('issue_reports').insert({ user_id: userBId, type: 'idea', message: 'Spoof', page_url: '/test' });
+    if (!spoofIssue.error) throw new Error('Issue user spoof was allowed');
+    const ownerIssue = await clientA.from('issue_reports').select('id').eq('id', issueSeed.data.id);
+    if (ownerIssue.error || ownerIssue.data.length !== 1) throw new Error('Owner could not read issue');
+    const ownStatusChange = await clientA.from('issue_reports').update({ status: 'Fixed' }).eq('id', issueSeed.data.id).select();
+    if (!ownStatusChange.error && ownStatusChange.data.length) throw new Error('Learner changed issue status');
+    const issueFile = `${userAId}/rls-issue-test.png`;
+    const uploadedIssueFile = await admin.storage.from('issue-attachments').upload(issueFile, new Uint8Array([137,80,78,71,13,10,26,10]), { contentType: 'image/png' });
+    if (uploadedIssueFile.error) throw uploadedIssueFile.error;
+    const ownFile = await clientA.storage.from('issue-attachments').createSignedUrl(issueFile, 60);
+    if (ownFile.error) throw new Error('Issue owner could not read attachment');
+    const clientBAsLearner = createClient(url, anonKey);
+    const userBSignIn = await clientBAsLearner.auth.signInWithPassword({ email: userB.email, password: userB.password });
+    if (userBSignIn.error) throw userBSignIn.error;
+    const foreignIssue = await clientBAsLearner.from('issue_reports').select('id').eq('id', issueSeed.data.id);
+    if (foreignIssue.error || foreignIssue.data.length) throw new Error('Other learner read issue');
+    const foreignFile = await clientBAsLearner.storage.from('issue-attachments').createSignedUrl(issueFile, 60);
+    if (!foreignFile.error) throw new Error('Other learner could read attachment');
+
     // 1. User A must see 0 rows when querying User B's learner_errors
     const { data: crossRows } = await clientA
       .from('learner_errors')
@@ -181,6 +203,13 @@ async function run() {
     const clientB = createClient(url, anonKey);
     const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: userB.email, password: userB.password });
     if (teacherSignInErr) throw teacherSignInErr;
+
+    const staffFile = await clientB.storage.from('issue-attachments').createSignedUrl(issueFile, 60);
+    if (staffFile.error) throw new Error('Teacher could not read issue attachment');
+    const staffIssue = await clientB.from('issue_reports').select('id').eq('id', issueSeed.data.id);
+    if (staffIssue.error || staffIssue.data.length !== 1) throw new Error('Teacher could not read issue');
+    const staffStatus = await clientB.from('issue_reports').update({ status: 'Investigating' }).eq('id', issueSeed.data.id).select('status').single();
+    if (staffStatus.error || staffStatus.data?.status !== 'Investigating') throw new Error('Teacher could not update issue status');
 
     const { data: staffAttempts, error: staffAttemptErr } = await clientB
       .from('mediation_attempts')

@@ -11,7 +11,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="text-base font-semibold text-stone-900">1. Information We Collect</h2>
             <p className="mt-1.5">
-              We collect information you provide directly when creating an account, such as your email address and authentication credentials via Supabase. When you use our speaking and writing studios, we process your voice audio and text submissions to store your progress and generate AI-driven feedback.
+              We collect information you provide directly when creating an account, such as your email address and authentication credentials via Supabase. When you use our speaking and writing studios, we process your voice audio and text submissions to store your progress and generate AI-driven feedback. Issue reports include your message and device details. You may choose to add a screenshot, recording or last saved answer.
             </p>
           </div>
 
@@ -34,6 +34,7 @@ export default function PrivacyPage() {
               <li><strong>Groq:</strong> Turns speech into text and provides feedback.</li>
               <li><strong>OpenAI:</strong> Pre-generated curriculum audio synthesis (TTS, no learner PII).</li>
               <li><strong>Stripe:</strong> Payment processing, customer records, and subscription billing.</li>
+              <li><strong>Resend:</strong> Sends an alert when a user reports a broken feature.</li>
               <li><strong>Vercel:</strong> Hosts the app and runs scheduled data deletion.</li>
               <li><strong>AWS (S3 / CloudFront):</strong> Optional static course audio CDN delivery when configured.</li>
             </ul>
@@ -43,7 +44,7 @@ export default function PrivacyPage() {
             <h2 className="text-base font-semibold text-stone-900">4. Data storage and security</h2>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">
               <li>
-                <strong>Automated 12-month purge:</strong> Each day, we delete recordings, AI request logs and usage events older than 12 months.
+                <strong>Automated 12-month purge:</strong> Each day, we delete study recordings, AI request logs and usage events older than 12 months. Issue reports and their attachments stay until you delete your learning data.
               </li>
               <li>
                 <strong>90-day cache TTL:</strong> Anonymized AI evaluation cache entries expire automatically after 90 days.
@@ -57,7 +58,7 @@ export default function PrivacyPage() {
           <div className="rounded-xl border border-stone-200 bg-stone-50 p-5">
             <h2 className="text-base font-semibold text-stone-900">5. Your EU / GDPR Rights &amp; Data Deletion</h2>
             <p className="mt-1.5 text-xs leading-5 text-stone-600">
-              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
+              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
             </p>
             <div className="mt-4">
               <DeleteDataButton />

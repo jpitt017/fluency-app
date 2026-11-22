@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
 import { createServerSupabase } from '@/utils/supabase/server';
 
 const RECORDING_BUCKET = 'speaking-recordings';
@@ -23,6 +24,18 @@ export async function POST(request: NextRequest) {
         { error: 'Pass { "confirm": "DELETE" } to permanently erase your learning data.' },
         { status: 400 },
       );
+    }
+
+    // Private report files must be removed too, before their database records.
+    const admin = createAdminSupabase();
+    if (!admin) return NextResponse.json({ error: 'Data deletion is temporarily unavailable.' }, { status: 503 });
+    while (true) {
+      const attachments = await admin.storage.from('issue-attachments').list(user.id, { limit: 100 });
+      if (attachments.error) return NextResponse.json({ error: 'Could not delete report files.' }, { status: 503 });
+      const issuePaths = (attachments.data ?? []).map(item => `${user.id}/${item.name}`);
+      if (!issuePaths.length) break;
+      const removed = await admin.storage.from('issue-attachments').remove(issuePaths);
+      if (removed.error || !removed.data?.length) return NextResponse.json({ error: 'Could not delete report files.' }, { status: 503 });
     }
 
     const { error: weekDeleteError } = await supabase.from('week_output_submissions').delete().eq('user_id', user.id);

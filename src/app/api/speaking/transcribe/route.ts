@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { transcribeAudio } from '@/lib/b1b2/transcription';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { logAiRequest } from '@/lib/b1b2/observability';
-import { sanitizeLearnerText } from '@/lib/b1b2/prompt-guard';
 
 // Transcription only: no speaking rubric, no corrections. Costs 2 units vs 6 for /api/speaking/evaluate.
 const QUOTA_ENDPOINT = '/api/speaking/evaluate';
 const LOG_ENDPOINT = '/api/speaking/transcribe';
 const MODEL_ID = 'whisper-large-v3-turbo';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
-const MAX_TRANSCRIPT_CHARS = 4000;
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
@@ -26,13 +24,6 @@ export async function POST(req: NextRequest) {
       return guard.response;
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      statusCode = 503;
-      errorMessage = 'GROQ_API_KEY is not configured';
-      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
-    }
-
     const formData = await req.formData();
     const audio = formData.get('audio') as File | null;
     if (!audio) {
@@ -44,13 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Audio file exceeds the 10 MB limit.' }, { status: 413, headers: guard.headers });
     }
 
-    const transcription = await new Groq({ apiKey }).audio.transcriptions.create({
-      file: audio,
-      model: MODEL_ID,
-      language: 'en',
-      response_format: 'json',
-    });
-    const transcript = sanitizeLearnerText(transcription.text, MAX_TRANSCRIPT_CHARS).text;
+    const transcript = await transcribeAudio(audio);
     audioSeconds = Math.max(1, Math.round(audio.size / 16000));
 
     if (!transcript) {

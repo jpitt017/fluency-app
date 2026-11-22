@@ -21,6 +21,8 @@ const USER_TABLES = [
   'weekly_reports',
   'week_output_submissions',
   'week_input_submissions',
+  'issue_reports',
+  'issue_report_attempts',
   'writing_submissions',
   'xp_events',
 ];
@@ -44,6 +46,8 @@ export async function createTestUser(admin, prefix) {
 /** Remove every row linked to a test user, then delete the auth user itself. */
 export async function deleteTestUser(admin, id) {
   if (!id) return;
+  const files = await admin.storage.from('issue-attachments').list(id, { limit: 1000 });
+  if (!files.error && files.data?.length) await admin.storage.from('issue-attachments').remove(files.data.map((file) => `${id}/${file.name}`));
   for (const table of USER_TABLES) {
     // Some deployments may not have every optional table; ignore "not found".
     const { error } = await admin.from(table).delete().eq('user_id', id);
