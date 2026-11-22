@@ -43,3 +43,4 @@ playwright-report/
 
 # generated audio (uploaded to Supabase storage, never committed)
 /audio-out/
+/voice-check/

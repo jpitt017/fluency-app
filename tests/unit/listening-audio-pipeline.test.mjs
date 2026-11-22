@@ -325,6 +325,53 @@ test('the workflow saves only the review artefacts and requires the ElevenLabs s
   assert.match(workflow, /mode: voice-check|voice-check/);
 });
 
+test('the voice-check clips travel as a `voice-check` artifact, on the Node 24 action', () => {
+  // Signed links are redacted wherever GitHub renders them, so the MP3s have to
+  // be downloadable. Same action major as the other Node 24 actions in the repo.
+  const block = workflow.split('- name: Voice check clips for a listen')[1]?.split('- name:')[0];
+  assert.ok(block, 'the voice check has an artifact step');
+  assert.match(block, /uses: actions\/upload-artifact@v7/);
+  assert.match(block, /name: voice-check\n/);
+  assert.match(block, /path: voice-check\//);
+  assert.match(block, /retention-days: 3/);
+  assert.doesNotMatch(workflow, /actions\/upload-artifact@v4/, 'every artifact step runs on Node 24');
+});
+
+test('a generate run attaches the tracks (MP3 + captions) as the `review` artifact for 3 days', () => {
+  const block = workflow.split('- name: Tracks for a listen (MP3 + captions)')[1]?.split('- name:')[0];
+  assert.ok(block, 'generate has an artifact step');
+  assert.match(block, /if: \$\{\{ inputs\.mode == 'generate' && !inputs\.dry_run \}\}/);
+  assert.match(block, /uses: actions\/upload-artifact@v7/);
+  assert.match(block, /name: review\n/);
+  assert.match(block, /audio-out\/weeks-01-04\/\*\.mp3/);
+  assert.match(block, /audio-out\/weeks-01-04\/\*\.vtt/);
+  assert.match(block, /retention-days: 3/);
+  assert.doesNotMatch(workflow, /weeks-01-04-ai-trial-audio/, 'the old artifact is gone');
+});
+
+test('only the review mode prints a signed link, and never into the summary', () => {
+  // Generate and voice-check runs must stay link-free in the log.
+  const generateBlock = workflow.split('- name: Generate, upload unreleased, record approval state')[1]?.split('- name:')[0];
+  assert.ok(generateBlock);
+  assert.match(generateBlock, /SIGNED_LINKS_IN_LOG: ''/);
+  const reviewBlock = workflow.split('- name: Review links (signed, valid 1 hour)')[1]?.split('- name:')[0];
+  assert.match(reviewBlock, /SIGNED_LINKS_IN_LOG: '1'/);
+
+  // And in the code, the summary builder cannot emit a URL at all.
+  assert.match(cli, /function signedLinksInLog\(\)/);
+  const report = cli.split('function reviewReport(report) {')[1].split('\n}')[0];
+  assert.doesNotMatch(report, /signReviewUrl|signedUrl|signedURL|https?:\/\//, 'no URLs in the summary');
+  // The one place a link is signed is guarded by the flag.
+  const guarded = cli.split('if (signedLinksInLog()) {')[1]?.split('\n    }')[0] ?? '';
+  assert.match(guarded, /signReviewUrl/);
+  assert.equal((cli.match(/signReviewUrl\(/g) ?? []).length, 1, 'links are signed in exactly one place');
+});
+
+test('the CLI writes the voice-check clips to ./voice-check, which is not committed', () => {
+  assert.match(cli, /path\.join\(process\.cwd\(\), 'voice-check'\)/);
+  const ignore = readFileSync(new URL('../../.gitignore', import.meta.url), 'utf8');
+  assert.match(ignore, /^\/voice-check\/$/m);
+});
 /* ---------------------------------------------------------------- end to end */
 
 const weeks = await readListeningWeeks();

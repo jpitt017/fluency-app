@@ -4,11 +4,13 @@
 #
 # `mode` is the approval workflow:
 #   voice-check  synthesise one line per speaker, upload the seven clips to the
-#                private review bucket and print 1-hour links, so the voices can
-#                be approved before a whole week is recorded
+#                private review bucket and attach them as the `voice-check`
+#                artifact, so the accents can be approved before a whole week is
+#                recorded
 #   generate     synthesise the tracks, upload them to `course-audio-review`
 #                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
-#                print the state
+#                attach them as the `review` artifact (MP3 + WebVTT, 3 days) and
+#                print the state. Never prints a signed link.
 #   review       print a 1-hour signed listening link for the weeks chosen
 #   release      approve reviewed weeks: copy them to the public `course-audio`
 #                bucket, set audio_url + released = true, so /week/[n] shows the
@@ -128,21 +130,39 @@ jobs:
         if: ${{ inputs.mode == 'generate' }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
 
-      - name: Voice check — one line per speaker, approval links
+      - name: Voice check — one line per speaker
         if: ${{ inputs.mode == 'voice-check' }}
         run: node scripts/generate-course-audio.mjs --voice-check
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
+      # The signed links in the step summary are not usable outside the run page
+      # (GitHub redacts the token when it renders them), so the clips themselves
+      # travel as an artifact.
+      - name: Voice check clips for a listen
+        if: ${{ inputs.mode == 'voice-check' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: voice-check
+          path: voice-check/
+          retention-days: 3
 
       - name: Generate, upload unreleased, record approval state
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}"
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          # Signed review links stay out of the log: the tracks travel as the
+          # `review` artifact below.
+          SIGNED_LINKS_IN_LOG: ''
 
+      # Only the review mode hands out links, and only because its whole job is
+      # listening to a track that already exists. Generate runs never print one.
       - name: Review links (signed, valid 1 hour)
         if: ${{ inputs.mode == 'review' }}
         run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
+        env:
+          SIGNED_LINKS_IN_LOG: '1'
 
       - name: Release approved weeks
         if: ${{ inputs.mode == 'release' }}
@@ -168,10 +188,14 @@ jobs:
       - name: Run the audio pipeline tests
         run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-audio-approval.test.mjs
 
-      - name: Keep the generated files for a listen
+      # MP3 + WebVTT for each generated week, so a week can be listened to (with
+      # captions) before anyone approves it.
+      - name: Tracks for a listen (MP3 + captions)
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: weeks-01-04-ai-trial-audio
-          path: audio-out/weeks-01-04/
-          retention-days: 7
+          name: review
+          path: |
+            audio-out/weeks-01-04/*.mp3
+            audio-out/weeks-01-04/*.vtt
+          retention-days: 3

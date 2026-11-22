@@ -183,8 +183,9 @@ key, and installs ffmpeg for MP3 encoding.
 
 **Step 1 — approve the voices (`mode: voice-check`).** This records one short
 line per speaker with the same words, uploads the seven clips to the private
-review bucket and prints a 1-hour signed link for each, so the accents can be
-compared before a whole week is recorded. Short clips do not use up a normal
+review bucket, and attaches them to the run as the **`voice-check` artifact**
+(kept for three days), so the accents can be compared before a whole week is
+recorded. Download the artifact to listen. Short clips do not use up a normal
 monthly quota cycle the way four full tracks would, and a voice that needs
 replacing is replaced before any track depends on it.
 
@@ -202,9 +203,25 @@ replacing is replaced before any track depends on it.
    timed to the audio;
 5. uploads both to the **private** `course-audio-review` bucket under
    `weeks-01-04/ai-trial/` and writes the row **unreleased** with
-   `source: "ai-trial"` and no `audio_url`.
+   `source: "ai-trial"` and no `audio_url`;
+6. attaches the week's MP3 and WebVTT files to the run as the **`review`
+   artifact** (three days), so a week can be listened to — with captions — before
+   anyone approves it.
 
 Nothing here sets the live `audioUrl`. Nothing here releases a track.
+
+### Listening before approval
+
+**Signed links.** One-hour, single-purpose URLs into the private bucket. They are
+printed to the step log only in `mode: review`, whose whole job is handing out a
+link for a track that already exists; `generate` and `voice-check` never print
+one. They are never written into the step summary, because GitHub redacts the
+token when it renders the page — a link in a summary is unusable, and a link in a
+log is a link in a screenshot.
+
+**Artifacts.** `<mode> generate` attaches `review` (MP3 + WebVTT per week) and
+`mode: voice-check` attaches `voice-check` (one clip per speaker). Both are kept
+for three days and are the supported way to listen, including on a phone.
 
 ### Speech model
 
@@ -240,9 +257,10 @@ otherwise, because learners rely on the voices to tell speakers apart.
 
 ### Reviewing and approving
 
-1. `mode: review`, `weeks: "1"` prints a signed listening link valid for **one
-   hour** (plus the state: unreleased). The review bucket is private, so the
-   link is the only way in.
+1. Listen to the `review` artifact from the generate run, or run `mode: review`,
+   `weeks: "1"` for a signed listening link valid for **one hour** (plus the
+   state: unreleased). The review bucket is private, so those are the only ways
+   in.
 2. Listen against the script, using the production checklist in
    `weeks-01-04-details.json`.
 3. `mode: release`, `weeks: "1"` copies the reviewed MP3 and WebVTT from
