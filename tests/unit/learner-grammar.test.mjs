@@ -15,6 +15,20 @@ test('learner projection never includes teacher keys, reasons or models', () => 
   }
 });
 
+test('learner data excludes a real secret answer for each week', () => {
+  for (const week of details.weeks) {
+    const practice = week.grammar.practice;
+    const rendered = JSON.stringify(projectLearnerGrammar(practice));
+    // Correct multiple-choice options must be displayed as choices, so use an
+    // unseen free-text answer as the sentinel for each week instead.
+    const item = practice.items.find(entry => entry.step === 'Fix' && typeof entry.key === 'string');
+    assert.ok(item, `Week ${week.number} needs a private key sentinel`);
+    assert.ok(!rendered.includes(item.key), `Week ${week.number} exposed ${item.id}'s key`);
+    const intentionallyLeaky = JSON.stringify({ ...projectLearnerGrammar(practice), key: item.key });
+    assert.ok(intentionallyLeaky.includes(item.key), 'the sentinel detects a leak');
+  }
+});
+
 test('fixed questions accept their keys and alternatives and reject wrong answers', () => {
   for (const week of details.weeks) for (const item of week.grammar.practice.items) {
     if (item.step === 'Use it') {
@@ -57,9 +71,13 @@ test('adaptive decisions are made only after all 11 choose and complete answers'
 
 test('each week 1–4 vocabulary item has an authored meaning', () => {
   const meanings = JSON.parse(readFileSync(new URL('../../lib/curriculum/vocabulary-meanings.json', import.meta.url)));
+  assert.equal(meanings.status, 'draft, pending teacher review');
+  for (const [word, meaning] of Object.entries(meanings.meanings)) {
+    assert.ok(meaning.trim().split(/\s+/).length < 12, `${word} meaning must have fewer than 12 words`);
+  }
   for (const week of details.weeks) {
     for (const item of [...week.vocabulary.core, ...week.vocabulary.collocations, ...week.vocabulary.optional]) {
-      assert.ok(meanings[item.target], `Week ${week.number}: ${item.target}`);
+      assert.ok(meanings.meanings[item.target], `Week ${week.number}: ${item.target}`);
     }
   }
 });

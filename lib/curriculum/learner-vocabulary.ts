@@ -1,6 +1,6 @@
 import 'server-only';
 import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
-import meanings from './vocabulary-meanings.json';
+import vocabularyMeanings from './vocabulary-meanings.json';
 
 const recorded: Record<string, string> = {
   'turning point': '/audio/module-1/turning-point.mp3',
@@ -19,7 +19,7 @@ export function learnerVocabulary(weekNumber: number): LearnerVocabularyCard[] |
     ...week.vocabulary.core, ...week.vocabulary.collocations, ...week.vocabulary.optional,
   ];
   return entries.map(entry => {
-    const meaning = (meanings as Record<string, string>)[entry.target];
+    const meaning = (vocabularyMeanings.meanings as Record<string, string>)[entry.target];
     if (!meaning) throw new Error(`Missing vocabulary meaning for ${entry.target}`);
     return { word: entry.target, type: typeNames[entry.type ?? ''] ?? 'phrase', meaning, example: entry.example,
       use: entry.use === 'P' ? 'P' : 'B', audioUrl: recorded[entry.target] ?? null };
