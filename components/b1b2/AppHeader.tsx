@@ -36,13 +36,13 @@ const STAFF_ITEMS = [
 export default function AppHeader({ summary, week, pricingEnabled }: { summary: HeaderSummary; week: number; pricingEnabled: boolean }) {
   const [currentWeek, setCurrentWeek] = useState(week);
   useEffect(() => {
-    const updateWeek = (event: Event) => setCurrentWeek((event as CustomEvent<number>).detail);
+    const updateWeek = (event: Event) => { if (!summary.signedIn) setCurrentWeek((event as CustomEvent<number>).detail); };
     window.addEventListener('learner-week', updateWeek);
     return () => window.removeEventListener('learner-week', updateWeek);
-  }, []);
+  }, [summary.signedIn]);
   const isStaff = summary.role === 'teacher' || summary.role === 'admin';
   const navItems = [
-    { href: `/week/${currentWeek}`, label: 'This week', icon: BookOpen },
+    { href: `/week/${summary.signedIn ? week : currentWeek}`, label: 'This week', icon: BookOpen },
     { href: '/labs', label: 'Practice', icon: Mic },
     { href: '/review', label: 'Review', icon: RotateCcw },
     { href: '/portfolio', label: 'My work', icon: FolderOpen },

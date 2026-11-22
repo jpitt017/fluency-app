@@ -7,6 +7,7 @@ import type { LessonLabContext } from '@/components/labs/LessonLabContext';
 import { getViewer } from '@/lib/b1b2/data';
 import { loadUnlockedModels } from '@/lib/curriculum/week-models';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
+import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ type LabsProps = { searchParams: Promise<{ week?: string | string[] }> };
 export default async function LabsPage({ searchParams }: LabsProps) {
   const viewer = await getViewer();
   const weekParam = (await searchParams).week;
-  const weekNumber = learnerWeekFromParam(weekParam);
+  const weekNumber = weekParam ? learnerWeekFromParam(weekParam) : await currentLearnerWeek();
   const selectedWeek = weekParam ? await loadLearnerWeek(weekNumber) : null;
   const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;

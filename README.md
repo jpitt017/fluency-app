@@ -83,4 +83,4 @@ Never reuse a personal or long-lived account for production tests.
 
 ### Pilot navigation
 
-Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. The learner's current week is the last week opened in that browser, stored in a first-party cookie; it defaults to Week 1. It does not yet sync across devices.
+Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. Signed-in learners use their server-calculated current week across devices. Signed-out visitors use the last week opened in this browser, defaulting to Week 1.

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
+import { currentLearnerWeek } from '@/lib/curriculum/current-week';
+import { languageRules, safeChatReply } from '@/lib/b1b2/chat-language.mjs';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import {
   sanitizeLearnerText,
@@ -89,7 +91,10 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    const week = await currentLearnerWeek();
     const systemPrompt = `You are a supportive English conversation coach helping a CEFR B1 → B2 learner practise fluent spoken English.
+Learner week: ${week}
+${languageRules(week)}
 Scenario: ${scenario}
 ${targetPhrase ? `Target language to encourage naturally: "${targetPhrase}"` : ''}
 
@@ -97,7 +102,7 @@ ${UNTRUSTED_DATA_SYSTEM_RULE}
 
 Guidelines:
 - Keep responses concise (2–4 sentences) so the dialogue feels natural and spoken.
-- Use clear, idiomatic British or international English with B1 → B2 collocations and discourse linkers.
+- Match the learner’s week and language level. Do not force target phrases above that level.
 - Gently model accurate grammar in your reply without breaking the role-play flow, and end with an open question to keep the learner speaking.`;
 
     const completion = await groq.chat.completions.create({
@@ -112,9 +117,7 @@ Guidelines:
     promptTokens = completion.usage?.prompt_tokens ?? 0;
     completionTokens = completion.usage?.completion_tokens ?? 0;
 
-    const reply =
-      completion.choices[0]?.message?.content?.trim() ||
-      'That makes a lot of sense. Could you explain a bit more about your view on that?';
+    const reply = safeChatReply(completion.choices[0]?.message?.content, week);
 
     return NextResponse.json({ reply }, { headers: guard.headers });
   } catch (err: unknown) {
