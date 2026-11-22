@@ -215,7 +215,7 @@ ${wrapLearnerSubmission(text)}`;
     }
 
     const weekTask = Number.isInteger(body.weekNumber) ? await loadLearnerWeek(body.weekNumber!) : null;
-    const modelAnswer = guard.userId && weekTask && prompt.startsWith(weekTask.writingPrompt)
+    const modelAnswer = guard.userId && weekTask && prompt.startsWith(sanitizeLearnerText(weekTask.writingPrompt, 500).text)
       ? await recordWeekSubmission(guard.userId, body.weekNumber, 'writing') : null;
 
     return NextResponse.json(

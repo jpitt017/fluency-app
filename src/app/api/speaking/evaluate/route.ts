@@ -251,7 +251,7 @@ ${wrapLearnerSubmission(transcript)}`;
     }
 
     const weekTask = weekNumber ? await loadLearnerWeek(weekNumber) : null;
-    const modelAnswer = guard.userId && isAudio && weekTask && promptContext === weekTask.speakingPrompt
+    const modelAnswer = guard.userId && isAudio && weekTask && promptContext === sanitizeLearnerText(weekTask.speakingPrompt, 500).text
       ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking') : null;
 
     return NextResponse.json(
