@@ -25,6 +25,11 @@ export async function recordWeekSubmission(userId: string, weekNumber: unknown, 
     console.error('[week] Failed to record submission:', error.message);
     return null;
   }
+  const client = await createServerSupabase();
+  if (client) {
+    const { error: progressError } = await client.rpc('refresh_current_week');
+    if (progressError) console.error('[week] Could not refresh progress:', progressError.message);
+  }
   return model;
 }
 

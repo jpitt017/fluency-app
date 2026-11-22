@@ -17,6 +17,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { safeChatReply, sentencesWithinLimit } from '../lib/b1b2/chat-language.mjs';
 import { z } from 'zod';
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
 
@@ -233,6 +234,14 @@ function checkOfflineSuite() {
       failures++;
       console.error(`FAIL [${item.id}] Zod schema:`, parsed.error.issues);
     }
+  }
+
+  // Offline: pass a long simulated partner reply through the production Week 1 guard.
+  const longPartnerReply = 'That sounds like a very difficult experience and I wonder if you might explain what happened next and how your friends helped you get used to everything.';
+  const weekOneReply = safeChatReply(longPartnerReply, 1);
+  if (sentencesWithinLimit(longPartnerReply) || !sentencesWithinLimit(weekOneReply)) {
+    failures++;
+    console.error('FAIL Week 1 partner sentence length check');
   }
 
   // FSRS progression check

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ErrorReviewStudio from '@/components/b1b2/ErrorReviewStudio';
 import MediationTask from '@/components/b1b2/MediationTask';
 import { loadDashboard, loadErrorReviewCards } from '@/lib/b1b2/data';
+import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,8 @@ export const dynamic = 'force-dynamic';
 type ReviewProps = { searchParams: Promise<{ week?: string | string[] }> };
 
 export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) {
-  const weekNumber = learnerWeekFromParam((await searchParams).week);
+  const weekParam = (await searchParams).week;
+  const weekNumber = weekParam ? learnerWeekFromParam(weekParam) : await currentLearnerWeek();
   const [{ cards: errorCards, signedIn }, { telemetry }, syllabusContent] = await Promise.all([
     loadErrorReviewCards(),
     loadDashboard(),

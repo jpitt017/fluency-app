@@ -58,6 +58,45 @@ async function run() {
     const { error: spoofUnlockError } = await clientA.from('week_output_submissions').insert({ user_id: userAId, week_number: 1, skill: 'writing' });
     if (!spoofUnlockError) throw new Error('Learner could create a model unlock directly');
 
+    // Week progression is shared across sessions and requires all three tasks.
+    const startWeek = await clientA.rpc('refresh_current_week');
+    if (startWeek.error || startWeek.data !== 1) throw new Error('New learner should start at Week 1');
+    const { error: profileSpoof } = await clientA.from('profiles').update({ current_week: 17 }).eq('id', userAId);
+    if (!profileSpoof) throw new Error('Learner could set current week directly');
+    const outputSeed = await admin.from('week_output_submissions').insert([
+      { user_id: userAId, week_number: 1, skill: 'speaking' },
+      { user_id: userAId, week_number: 1, skill: 'writing' },
+    ]);
+    if (outputSeed.error) throw outputSeed.error;
+    const missingInput = await clientA.rpc('refresh_current_week');
+    if (missingInput.error || missingInput.data !== 1) throw new Error('Output alone opened next week');
+    const fakeInput = await clientA.from('week_input_submissions').insert({ user_id: userAId, week_number: 1, skill: 'reading' });
+    if (!fakeInput.error) throw new Error('Learner could forge input completion directly');
+    const inputSeed = await admin.from('week_input_submissions').insert({ user_id: userAId, week_number: 1, skill: 'reading' });
+    if (inputSeed.error) throw inputSeed.error;
+    const advanced = await clientA.rpc('refresh_current_week');
+    if (advanced.error || advanced.data !== 2) throw new Error('Completed week did not open Week 2');
+    const lateOutputs = await admin.from('week_output_submissions').insert([
+      { user_id: userAId, week_number: 3, skill: 'speaking' },
+      { user_id: userAId, week_number: 3, skill: 'writing' },
+    ]);
+    if (lateOutputs.error) throw lateOutputs.error;
+    const lateInput = await admin.from('week_input_submissions').insert({ user_id: userAId, week_number: 3, skill: 'listening' });
+    if (lateInput.error) throw lateInput.error;
+    const noSkip = await clientA.rpc('refresh_current_week');
+    if (noSkip.error || noSkip.data !== 2) throw new Error('A later task skipped an incomplete week');
+    const otherSession = createClient(url, anonKey);
+    const otherLogin = await otherSession.auth.signInWithPassword({ email: userA.email, password: userA.password });
+    if (otherLogin.error) throw otherLogin.error;
+    const shared = await otherSession.from('profiles').select('current_week').eq('id', userAId).single();
+    if (shared.error || shared.data.current_week !== 2) throw new Error('Current week not shared across sessions');
+    const stage2Placement = await admin.from('profiles').update({ placement_result: { band: 'Stage 2' } }).eq('id', userAId);
+    if (stage2Placement.error) throw stage2Placement.error;
+    const stage2Start = await clientA.rpc('refresh_current_week');
+    if (stage2Start.error || stage2Start.data !== 17) throw new Error('Stage 2 placement did not start at Week 17');
+    const { data: foreignInputs, error: foreignInputError } = await clientA.from('week_input_submissions').select('skill').eq('user_id', userBId);
+    if (foreignInputError || foreignInputs.length) throw new Error('Week input isolation failed');
+
     // 1. User A must see 0 rows when querying User B's learner_errors
     const { data: crossRows } = await clientA
       .from('learner_errors')

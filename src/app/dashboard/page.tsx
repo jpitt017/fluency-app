@@ -13,7 +13,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
   const [currentWeek, summary, data, syllabus] = await Promise.all([
     currentLearnerWeek(), loadHeaderSummary(), loadDashboard(), loadSyllabusContent(),
   ]);
-  const weekNumber = param ? learnerWeekFromParam(param) : currentWeek;
+  const weekNumber = !summary.signedIn && param ? learnerWeekFromParam(param) : currentWeek;
   const week = syllabus.weeks.find((item) => item.number === weekNumber);
   const staff = summary.role === 'teacher' || summary.role === 'admin';
   const obs = staff ? await loadObservabilitySummary(7) : null;

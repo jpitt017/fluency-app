@@ -131,6 +131,9 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               },
             })
             .eq('id', user.id);
+          const { error: progressError } = await supabase.rpc('refresh_current_week');
+          if (progressError) console.error('Failed to update current week:', progressError.message);
+          router.refresh();
         }
       }
     } catch (err) {
