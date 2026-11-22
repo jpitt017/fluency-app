@@ -8,17 +8,17 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Check the secret exists and the API answers
+      - name: Probe TTS capability
         env:
           EL: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
           if [ -z "$EL" ]; then echo "::warning::EL_KEY_MISSING=yes"; exit 0; fi
-          echo "::warning::EL_KEY_MISSING=no len=${#EL}"
-          code=$(curl -s -o /tmp/models.json -w '%{http_code}' -m 30 https://api.elevenlabs.io/v1/models -H "xi-api-key: $EL")
-          echo "::warning::models_http=$code bytes=$(wc -c </tmp/models.json)"
-          python3 -c "import json;d=json.load(open('/tmp/models.json'));ms=d if isinstance(d,list) else d.get('models',[]);[print('::warning::model '+str(m.get('model_id'))+' keys='+','.join(sorted(k for k in ('can_do_text_to_speech',) if m.get(k)) ) ) for m in ms]"
-          python3 -c "import json;d=json.load(open('/tmp/models.json'));ms=d if isinstance(d,list) else d.get('models',[]);[print('::warning::tts '+str(m.get('model_id'))+' enabled='+str(m.get('can_do_text_to_speech'))) for m in ms]"
-          echo "::warning::body=$(tr -d '\n' </tmp/models.json | cut -c1-200)"
-          case "$EL" in sk_*) echo "::warning::prefix=sk_";; *) echo "::warning::prefix=other";; esac
-          t=$(printf '%s' "$EL" | tr -d '[:space:]'); echo "::warning::len_trimmed=${#t} raw=${#EL}"
-          echo "::warning::suffix_is_space=$([[ "$EL" == *' ' ]] && echo yes || echo no)"
+          echo "::warning::EL_KEY_MISSING=no"
+          u=$(curl -s -o /tmp/user.json -w '%{http_code}' -m 20 https://api.elevenlabs.io/v1/user -H "xi-api-key: $EL"); echo "::warning::user_http=$u $(head -c 160 /tmp/user.json | tr -d '\n')"
+          v=$(curl -s -o /tmp/voices.json -w '%{http_code}' -m 20 https://api.elevenlabs.io/v1/voices -H "xi-api-key: $EL"); echo "::warning::voices_http=$v bytes=$(wc -c </tmp/voices.json)"
+          for m in eleven_multilingual_v2 eleven_turbo_v2_5 eleven_flash_v2_5 eleven_v3; do
+            code=$(curl -s -o "/tmp/$m.mp3" -w '%{http_code}' -m 60 -X POST "https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo" \
+              -H "xi-api-key: $EL" -H 'Content-Type: application/json' -H 'Accept: audio/mpeg' \
+              -d "{\"text\":\"Hello, this is a voice check.\",\"model_id\":\"$m\"}")
+            echo "::warning::tts $m http=$code bytes=$(wc -c <"/tmp/$m.mp3") head=$(head -c 120 "/tmp/$m.mp3" | tr -d '\n' | tr -d '\"')"
+          done
