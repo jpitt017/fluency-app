@@ -21,3 +21,8 @@ test('week vocabulary shows safe cards and exercise steps before reading', async
   await vocabulary.getByRole('button', { name: 'Next' }).click();
   await expect(vocabulary.getByText(/Personal sentence feedback is coming soon/)).toBeVisible();
 });
+
+test('draft on-demand model route is not exposed', async ({ request }) => {
+  const response = await request.post('/api/week/model', { data: { week: 1, skill: 'writing', confirmEarly: true } });
+  expect(response.status()).toBe(404);
+});
