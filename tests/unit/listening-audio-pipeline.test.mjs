@@ -30,7 +30,13 @@ import {
   listeningTrialAudioKey,
   readListeningWeeks,
 } from '../../scripts/lib/course-audio/listening-trial.mjs';
-import { recordUnreleasedTrial, releaseTrial } from '../../scripts/lib/course-audio/publish.mjs';
+import {
+  deleteTrialFiles,
+  listTrialFiles,
+  recordUnreleasedTrial,
+  releaseTrial,
+  trialObjectKeys,
+} from '../../scripts/lib/course-audio/publish.mjs';
 
 const weeks = await readListeningWeeks();
 const week = (number) => weeks.find((item) => item.week === number);
@@ -430,4 +436,72 @@ test('the CLI estimate covers all four weeks and is close to two minutes', () =>
     const seconds = estimateDurationSeconds(lines);
     assert.ok(seconds > 85 && seconds < 150, `week ${spec.week} estimates ${seconds}s`);
   }
+});
+
+/** Fake storage that can remove files, for the deletion path. */
+function fakeStorage({ onList = {}, failRemove = false } = {}) {
+  const stored = new Set();
+  return {
+    stored,
+    client: {
+      storage: {
+        from(bucket) {
+          assert.equal(bucket, 'course-audio');
+          return {
+            async remove(keys) {
+              if (failRemove) return { data: null, error: { message: 'not allowed' } };
+              const removed = keys.filter((key) => stored.has(key));
+              removed.forEach((key) => stored.delete(key));
+              return { data: removed.map((name) => ({ name })), error: null };
+            },
+            async list(prefix) {
+              return {
+                data: [...stored]
+                  .filter((key) => key.startsWith(prefix))
+                  .map((key) => ({ name: key.replace(`${prefix}/`, '') })),
+                error: null,
+              };
+            },
+          };
+        },
+      },
+    },
+    seed(week) {
+      for (const key of trialObjectKeys(week)) stored.add(key);
+    },
+    has(week) {
+      return trialObjectKeys(week).filter((key) => stored.has(key));
+    },
+    listed: onList,
+  };
+}
+
+test('the deletion helper targets exactly the MP3 and VTT of one week', () => {
+  assert.deepEqual(trialObjectKeys(3), [
+    'weeks-01-04/ai-trial/week-3-listening.mp3',
+    'weeks-01-04/ai-trial/week-3-listening.vtt',
+  ]);
+});
+
+test('deleting a week removes both files and confirms nothing is left', async () => {
+  const storage = fakeStorage();
+  storage.seed(1);
+  storage.seed(2);
+  const removed = await deleteTrialFiles(storage.client, 1);
+  assert.deepEqual(removed, trialObjectKeys(1));
+  assert.deepEqual(storage.has(1), [], 'week 1 files are gone');
+  assert.equal(storage.has(2).length, 2, 'other weeks are untouched');
+  assert.deepEqual(await listTrialFiles(storage.client, 1), []);
+});
+
+test('deleting a week that is already empty reports success, not a false failure', async () => {
+  const storage = fakeStorage();
+  assert.deepEqual(await deleteTrialFiles(storage.client, 4), []);
+});
+
+test('a failed delete throws instead of claiming the files are gone', async () => {
+  const storage = fakeStorage({ failRemove: true });
+  storage.seed(1);
+  await assert.rejects(() => deleteTrialFiles(storage.client, 1), /Could not delete week 1/);
+  assert.equal(storage.has(1).length, 2, 'the files are still there');
 });

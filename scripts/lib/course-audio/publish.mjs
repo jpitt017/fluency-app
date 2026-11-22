@@ -9,6 +9,49 @@
 
 export const AUDIO_BUCKET = 'course-audio';
 
+/** Everything the pipeline writes for one week. */
+export function trialObjectKeys(week) {
+  return [
+    `weeks-01-04/ai-trial/week-${week}-listening.mp3`,
+    `weeks-01-04/ai-trial/week-${week}-listening.vtt`,
+  ];
+}
+
+/**
+ * Removes a week's files from the public bucket.
+ *
+ * Deleting through the Storage API is what removes the object, its metadata row
+ * and the bytes; the bucket is public, so an unreleased track must not be left
+ * sitting there. Returns the keys Storage confirmed as removed, and throws if
+ * anything it reported back is still listed.
+ */
+export async function deleteTrialFiles(client, week) {
+  const keys = trialObjectKeys(week);
+  const { data, error } = await client.storage.from(AUDIO_BUCKET).remove(keys);
+  if (error) throw new Error(`Could not delete week ${week} from ${AUDIO_BUCKET}: ${JSON.stringify(error)}`);
+  const removed = new Set((data ?? []).map((item) => item.name ?? item.path ?? ''));
+  const missing = keys.filter((key) => !removed.has(key));
+  if (missing.length === keys.length) {
+    // Nothing was reported back. Treat that as "already gone" only if a listing
+    // confirms it, so a silent failure cannot pass as a deletion.
+    const stillThere = await listTrialFiles(client, week);
+    if (stillThere.length) {
+      throw new Error(`Storage did not delete ${stillThere.join(', ')}`);
+    }
+    return [];
+  }
+  if (missing.length) throw new Error(`Storage did not delete ${missing.join(', ')}`);
+  return keys;
+}
+
+/** Confirms what is actually left in the bucket for a week. */
+export async function listTrialFiles(client, week) {
+  const { data, error } = await client.storage.from(AUDIO_BUCKET).list('weeks-01-04/ai-trial', { limit: 100 });
+  if (error) throw new Error(`Could not list ${AUDIO_BUCKET}: ${JSON.stringify(error)}`);
+  const prefix = `week-${week}-listening`;
+  return (data ?? []).map((item) => item.name).filter((name) => name.startsWith(prefix));
+}
+
 export async function uploadToBucket(client, target) {
   const bucket = target.bucket ?? AUDIO_BUCKET;
   const { error } = await client.storage.from(bucket).upload(target.key, target.body, {

@@ -46,7 +46,7 @@ import {
   readListeningWeeks,
 } from './lib/course-audio/listening-trial.mjs';
 import { createWebSocketTransport, parseScript } from './lib/course-audio/tts.mjs';
-import { releaseTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import { deleteTrialFiles as removeTrialFiles, listTrialFiles as listBucketFiles, releaseTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -74,7 +74,10 @@ const reviewWeekList = listArg('--review');
 const releaseWeekList = listArg('--release');
 const revokeWeekList = listArg('--revoke');
 const listTrials = args.includes('--list');
-const weeksMode = Boolean(weekList || reviewWeekList || releaseWeekList || revokeWeekList || listTrials);
+const deleteTrial = args.includes('--delete-trial');
+const weeksMode = Boolean(
+  weekList || reviewWeekList || releaseWeekList || revokeWeekList || listTrials || deleteTrial,
+);
 /** Long enough to finish a review pass, short enough not to circulate. */
 const REVIEW_LINK_SECONDS = 60 * 60 * 24 * 7;
 
@@ -415,6 +418,35 @@ async function listTrialState() {
   }
 }
 
+/**
+ * Removes generated trial audio from the public bucket and clears the URLs on
+ * the approval row. The row itself stays, unreleased, so the week keeps saying
+ * "Audio coming soon." The public bucket is why this exists: files that are not
+ * going to be used must not stay downloadable.
+ */
+async function deleteTrialFiles(weeks) {
+  const client = requireSupabase();
+  if (!weeks.length) throw new Error('--delete-trial needs at least one week');
+  const summary = [];
+  for (const week of weeks) {
+    const removed = await removeTrialFiles(client, week);
+    const { error } = await client
+      .from('listening_audio_trials')
+      .update({ audio_url: null, captions_url: null, released: false, released_at: null, voices: null, model: null })
+      .eq('week', week);
+    if (error) throw new Error(`Could not clear the row for week ${week}: ${JSON.stringify(error)}`);
+    const left = await listBucketFiles(client, week);
+    if (left.length) throw new Error(`Week ${week} still has ${left.join(', ')} in the bucket`);
+    const line = removed.length
+      ? `Week ${week}: deleted ${removed.join(', ')}`
+      : `Week ${week}: nothing left in the bucket (already deleted)`;
+    console.log(line);
+    console.log(`  public URLs cleared, row still unreleased - /week/${week} shows "Audio coming soon."`);
+    summary.push(`- Week ${week}: ${removed.length ? `deleted ${removed.length} file(s)` : 'no files found'} · unreleased`);
+  }
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary('# AI trial files deleted', '', ...summary);
+}
+
 async function reviewWeek(weeks) {
   const client = requireSupabase();
   const summary = [];
@@ -482,6 +514,7 @@ async function revokeWeek(weeks) {
 
 async function main() {
   if (weeksMode) {
+    if (deleteTrial) return deleteTrialFiles(weekList ?? []);
     if (listTrials) return listTrialState();
     if (reviewWeekList) return reviewWeek(reviewWeekList);
     if (releaseWeekList) return releaseWeek(releaseWeekList);
