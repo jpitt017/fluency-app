@@ -159,6 +159,21 @@ jobs:
           E2E_STUB_LLM: 'true'
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Turn the Playwright report into readable annotations
+        if: always()
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const path = "test-results/.last-run.json";
+            if (!fs.existsSync(path)) { console.log("::warning::no .last-run.json"); process.exit(0); }
+            const summary = JSON.parse(fs.readFileSync(path, "utf8"));
+            for (const test of (summary.failedTests || []).slice(0, 8)) {
+              const label = typeof test === "string" ? test : (test.title || test.name || JSON.stringify(test));
+              console.log(`::warning title=playwright failure::${String(label).replace(/[\r\n]/g, " ").slice(0, 900)}`);
+            }
+          '
+
+
   live-prompt-evals:
     needs: changes
     runs-on: ubuntu-latest

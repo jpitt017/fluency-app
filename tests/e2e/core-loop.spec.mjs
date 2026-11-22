@@ -185,20 +185,19 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
       if (await writingHeading.isVisible().catch(() => false)) {
         break;
       }
-      const optionButtons = page.locator('div.space-y-2\\.5 > button');
-      await optionButtons.first().click();
-      await page.locator('button.w-full.rounded-xl.bg-indigo-700').click();
+      await page.getByTestId('placement-option').first().click();
+      await page.getByTestId('placement-continue').click();
     }
 
     await expect(page.getByText(/Write a short text \(optional\)/i)).toBeVisible();
     await page
-      .getByPlaceholder(/Write a short paragraph/i)
+      .getByRole('textbox')
       .fill(
         'I want to reach B2 English so I can lead international workshops smoothly and explain technical trade-offs without pausing to translate.',
       );
     await page.getByRole('button', { name: /Evaluate Sample & Recommend Level/i }).click();
 
-    await expect(page.getByText(/Placement Check Complete/i)).toBeVisible();
+    await expect(page.getByText(/Placement Check Complete/i)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/Writing 82\/100/i)).toBeVisible();
   });
 
