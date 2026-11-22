@@ -54,8 +54,15 @@ test('every input item has a short draft reason with an exact source quotation',
     assert.equal(item.key, question.key);
     assert.ok(item.reason.trim(), `${question.id} needs a reason`);
     assert.ok(item.sourceLine.trim());
-    assert.ok((skill === 'reading' ? week.text : week.script).includes(item.sourceLine), `${question.id} quotes source exactly`);
-    assert.ok(item.reason.startsWith(`“${item.sourceLine}”`), `${question.id} begins with the quotation`);
+    const quotes = item.sourceLines ?? [item.sourceLine];
+    assert.equal(quotes[0], item.sourceLine);
+    assert.ok(quotes.length >= 1 && quotes.length <= 2);
+    for (const quote of quotes) assert.ok((skill === 'reading' ? week.text : week.script).includes(quote), `${question.id} quotes source exactly`);
+    const quotePrefix = quotes.map(quote => `“${quote}”`).join(' ');
+    assert.ok(item.reason.startsWith(quotePrefix), `${question.id} begins with its quotation or quotations`);
+    if (question.id.includes('-X') || /^(True|False)\b/i.test(question.key)) {
+      assert.ok(item.reason.slice(quotePrefix.length).trim(), `${question.id} explains the rule or true/false answer`);
+    }
     assert.ok((item.reason.match(/\b[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*\b/gu) ?? []).length < 25, `${question.id} is under 25 words`);
     const safe = JSON.stringify(projectInputQuestions([{ ...question, reason: item.reason, reasonStatus: item.reasonStatus }]));
     assert.ok(!safe.includes(item.reason), `${question.id} reason is not in the initial projection`);
@@ -66,7 +73,10 @@ test('every input item has a short draft reason with an exact source quotation',
 test('teacher review table includes all question IDs and is labelled draft', () => {
   const table = readFileSync(new URL('../../docs/teacher-review/reading-listening-reasons-weeks-01-04.md', import.meta.url), 'utf8');
   assert.match(table, /draft, pending teacher review/);
-  for (const skill of ['reading', 'listening']) for (const week of details[skill].weeks) for (const q of week.questions) {
-    assert.ok(table.includes(`| ${week.week} | ${q.id} |`), q.id);
+  const bank = JSON.parse(readFileSync(new URL('../../lib/curriculum/input-reasons.json', import.meta.url)));
+  const escape = value => String(value).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+  for (const item of bank.items) {
+    const cells = [item.week, item.id, item.question, item.key, item.reason, (item.sourceLines ?? [item.sourceLine]).join(' / ')];
+    assert.ok(table.includes(`| ${cells.map(escape).join(' | ')} |`), item.id);
   }
 });

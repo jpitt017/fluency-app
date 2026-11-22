@@ -17,7 +17,7 @@
       "id": "R1-D1",
       "question": "Before she moved, Lucía had never been to the UK.",
       "key": "False (she had visited twice on holiday)",
-      "reason": "“I had visited the UK twice on holiday.” She had been before.",
+      "reason": "“I had visited the UK twice on holiday.” She had been before, not never.",
       "sourceLine": "I had visited the UK twice on holiday.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -77,7 +77,7 @@
       "id": "R1-X1",
       "question": "\"My friends and I would sit in the square until midnight.\" What does would show?",
       "key": "a repeated action in the past",
-      "reason": "“my friends and I would sit in the square until midnight” Would shows a past habit.",
+      "reason": "“my friends and I would sit in the square until midnight” Would shows a repeated past action.",
       "sourceLine": "my friends and I would sit in the square until midnight",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -87,7 +87,7 @@
       "id": "R1-X2",
       "question": "\"I've been going to the group every Tuesday for nine months.\" Does she still go?",
       "key": "Yes",
-      "reason": "“I've been going to the group every Tuesday for nine months now.” She still goes.",
+      "reason": "“I've been going to the group every Tuesday for nine months now.” Have been going shows she still goes.",
       "sourceLine": "I've been going to the group every Tuesday for nine months now.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -137,8 +137,8 @@
       "id": "R2-D3",
       "question": "Daniel has already applied for the course.",
       "key": "False (he hasn't decided yet)",
-      "reason": "“I intend to apply for a training course, but the deadline is next month and I haven't decided yet.” He has not applied yet.",
-      "sourceLine": "I intend to apply for a training course, but the deadline is next month and I haven't decided yet.",
+      "reason": "“I haven't decided yet.” He has not applied yet.",
+      "sourceLine": "I haven't decided yet.",
       "reasonStatus": "draft, pending teacher review"
     },
     {
@@ -177,7 +177,7 @@
       "id": "R2-X1",
       "question": "\"If I were you, I'd also talk to some teachers.\" What is Sam doing?",
       "key": "giving advice",
-      "reason": "“If I were you, I'd also talk to some teachers.” Sam is giving advice.",
+      "reason": "“If I were you, I'd also talk to some teachers.” If I were you is used to give advice.",
       "sourceLine": "If I were you, I'd also talk to some teachers.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -187,7 +187,7 @@
       "id": "R2-X2",
       "question": "\"If you volunteer for a few hours a week, you'll find out...\" Which form comes after if?",
       "key": "present simple",
-      "reason": "“If you volunteer for a few hours a week, you'll find out whether you really enjoy it” After if, Sam uses present simple.",
+      "reason": "“If you volunteer for a few hours a week, you'll find out whether you really enjoy it” After if, we use present simple.",
       "sourceLine": "If you volunteer for a few hours a week, you'll find out whether you really enjoy it",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -237,7 +237,7 @@
       "id": "R3-D3",
       "question": "Loud music is never allowed in the house.",
       "key": "False (only not after 11 p.m. on weeknights)",
-      "reason": "“you mustn't play loud music after 11 p.m. on weeknights” This rule is for weeknights.",
+      "reason": "“you mustn't play loud music after 11 p.m. on weeknights” This rule is for weeknights, not all the time.",
       "sourceLine": "you mustn't play loud music after 11 p.m. on weeknights",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -277,7 +277,7 @@
       "id": "R3-X1",
       "question": "\"You don't have to clean other people's rooms.\" Is this not allowed, or not necessary?",
       "key": "not necessary",
-      "reason": "“You don't have to clean other people's rooms” It is not necessary.",
+      "reason": "“You don't have to clean other people's rooms” Don't have to means not necessary.",
       "sourceLine": "You don't have to clean other people's rooms",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -287,7 +287,7 @@
       "id": "R3-X2",
       "question": "\"You mustn't play loud music after 11 p.m.\" Is this not allowed, or not necessary?",
       "key": "not allowed",
-      "reason": "“you mustn't play loud music after 11 p.m. on weeknights” It is not allowed then.",
+      "reason": "“you mustn't play loud music after 11 p.m. on weeknights” Mustn't means not allowed.",
       "sourceLine": "you mustn't play loud music after 11 p.m. on weeknights",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -297,7 +297,7 @@
       "id": "R3-X3",
       "question": "Find the phrase that means \"have a friendly relationship\".",
       "key": "get on with",
-      "reason": "“we get on with each other really well” They have a friendly relationship.",
+      "reason": "“we get on with each other really well” Get on with means have a friendly relationship.",
       "sourceLine": "we get on with each other really well",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -307,8 +307,8 @@
       "id": "R4-G1",
       "question": "What kind of text is this?",
       "key": "a short travel guide",
-      "reason": "“48 hours in Bath” The text gives a short travel guide.",
-      "sourceLine": "48 hours in Bath",
+      "reason": "“Set off early and start at the Roman Baths.” The text gives a short travel guide.",
+      "sourceLine": "Set off early and start at the Roman Baths.",
       "reasonStatus": "draft, pending teacher review"
     },
     {
@@ -377,7 +377,7 @@
       "id": "R4-X1",
       "question": "\"They were built by the Romans nearly 2,000 years ago.\" Present or past?",
       "key": "past",
-      "reason": "“They were built by the Romans nearly 2,000 years ago” This happened in the past.",
+      "reason": "“They were built by the Romans nearly 2,000 years ago” Were built is past simple passive.",
       "sourceLine": "They were built by the Romans nearly 2,000 years ago",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -397,7 +397,7 @@
       "id": "R4-X3",
       "question": "Complete from the text: \"It's ___ than the busy centre, and the views are better.\"",
       "key": "quieter",
-      "reason": "“It's quieter than the busy centre, and the views are better.”",
+      "reason": "“It's quieter than the busy centre, and the views are better.” Quieter compares two places.",
       "sourceLine": "It's quieter than the busy centre, and the views are better.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -437,7 +437,7 @@
       "id": "L1-D3",
       "question": "Ellie bought the house in Scotland.",
       "key": "False (her grandmother had left it to her)",
-      "reason": "“My grandmother had left me a small house near Inverness” Her grandmother left it to her.",
+      "reason": "“My grandmother had left me a small house near Inverness” She did not buy it.",
       "sourceLine": "My grandmother had left me a small house near Inverness",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -457,7 +457,7 @@
       "id": "L1-D5",
       "question": "The nearest supermarket is a twenty-minute walk away.",
       "key": "False (twenty minutes by car)",
-      "reason": "“the nearest supermarket is twenty minutes away by car” It is by car, not on foot.",
+      "reason": "“the nearest supermarket is twenty minutes away by car” By car, not walking.",
       "sourceLine": "the nearest supermarket is twenty minutes away by car",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -477,7 +477,7 @@
       "id": "L1-X1",
       "question": "\"I'd leave home at seven every morning.\" What does I'd mean here?",
       "key": "I would (a past habit)",
-      "reason": "“I'd leave home at seven every morning.” I'd means I would here.",
+      "reason": "“I'd leave home at seven every morning.” I'd means I would for a past habit.",
       "sourceLine": "I'd leave home at seven every morning.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -487,8 +487,8 @@
       "id": "L1-X2",
       "question": "\"My grandmother had left me a small house.\" Did she leave it before or after Ellie decided to move?",
       "key": "before",
-      "reason": "“My grandmother had left me a small house near Inverness, so I decided to try it for a year.”",
-      "sourceLine": "My grandmother had left me a small house near Inverness, so I decided to try it for a year.",
+      "reason": "“My grandmother had left me a small house near Inverness” Had left means it happened before she decided.",
+      "sourceLine": "My grandmother had left me a small house near Inverness",
       "reasonStatus": "draft, pending teacher review"
     },
     {
@@ -497,7 +497,7 @@
       "id": "L1-X3",
       "question": "Complete from the clip: \"It took me months to ___ the silence.\"",
       "key": "get used to",
-      "reason": "“It took me months to get used to the silence.”",
+      "reason": "“It took me months to get used to the silence.” Get used to means something becomes normal.",
       "sourceLine": "It took me months to get used to the silence.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -507,9 +507,13 @@
       "id": "L2-G1",
       "question": "What are Tom and Aisha mainly talking about?",
       "key": "their plans for the future",
-      "reason": "“My goal is to change career in the next two years.” Tom and Aisha talk about future plans.",
+      "reason": "“My goal is to change career in the next two years.” “I'd love to do a master's.” Tom and Aisha share future plans.",
       "sourceLine": "My goal is to change career in the next two years.",
-      "reasonStatus": "draft, pending teacher review"
+      "reasonStatus": "draft, pending teacher review",
+      "sourceLines": [
+        "My goal is to change career in the next two years.",
+        "I'd love to do a master's."
+      ]
     },
     {
       "week": 2,
@@ -537,7 +541,7 @@
       "id": "L2-D3",
       "question": "Tom is going to leave his job before the course starts.",
       "key": "False (he's going to keep working)",
-      "reason": "“I'm going to keep working here.” He is not leaving before the course.",
+      "reason": "“I'm going to keep working here.” He will not leave before the course.",
       "sourceLine": "I'm going to keep working here.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -577,7 +581,7 @@
       "id": "L2-X1",
       "question": "\"I'm meeting Sarah from HR on Thursday.\" Is this an arrangement or a prediction?",
       "key": "an arrangement",
-      "reason": "“I'm meeting Sarah from HR on Thursday” This is an arrangement.",
+      "reason": "“I'm meeting Sarah from HR on Thursday” Present continuous can show an arrangement.",
       "sourceLine": "I'm meeting Sarah from HR on Thursday",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -587,7 +591,7 @@
       "id": "L2-X2",
       "question": "\"If I had the money, I'd apply this year.\" Does Aisha have the money?",
       "key": "No",
-      "reason": "“If I had the money, I'd apply this year.” She does not have the money.",
+      "reason": "“If I had the money, I'd apply this year.” If I had shows she does not have it now.",
       "sourceLine": "If I had the money, I'd apply this year.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -597,7 +601,7 @@
       "id": "L2-X3",
       "question": "Complete from the clip: \"I'm really ___ learning something new.\"",
       "key": "looking forward to",
-      "reason": "“I'm really looking forward to learning something new.”",
+      "reason": "“I'm really looking forward to learning something new.” Look forward to means feel happy about something coming.",
       "sourceLine": "I'm really looking forward to learning something new.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -607,9 +611,13 @@
       "id": "L3-G1",
       "question": "What is the conversation mainly about?",
       "key": "the flat's rules and routines",
-      "reason": "“We have to label our food in the fridge” Dan explains the flat rules and routines.",
+      "reason": "“We have to label our food in the fridge” “We take turns every week.” Dan explains the flat rules and routines.",
       "sourceLine": "We have to label our food in the fridge",
-      "reasonStatus": "draft, pending teacher review"
+      "reasonStatus": "draft, pending teacher review",
+      "sourceLines": [
+        "We have to label our food in the fridge",
+        "We take turns every week."
+      ]
     },
     {
       "week": 3,
@@ -677,7 +685,7 @@
       "id": "L3-X1",
       "question": "\"You mustn't put glass in the green bin.\" Is this not allowed, or not necessary?",
       "key": "not allowed",
-      "reason": "“you mustn't put glass in the green bin” It is not allowed.",
+      "reason": "“you mustn't put glass in the green bin” Mustn't means not allowed.",
       "sourceLine": "you mustn't put glass in the green bin",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -687,7 +695,7 @@
       "id": "L3-X2",
       "question": "\"You don't have to ask.\" Is this not allowed, or not necessary?",
       "key": "not necessary",
-      "reason": "“You don't have to ask” It is not necessary.",
+      "reason": "“You don't have to ask” Don't have to means not necessary.",
       "sourceLine": "You don't have to ask",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -697,7 +705,7 @@
       "id": "L3-X3",
       "question": "Complete from the clip: \"Apart from that, we all ___ each other really well.\"",
       "key": "get on with",
-      "reason": "“Apart from that, we all get on with each other really well.”",
+      "reason": "“Apart from that, we all get on with each other really well.” Get on with means have a friendly relationship.",
       "sourceLine": "Apart from that, we all get on with each other really well.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -777,7 +785,7 @@
       "id": "L4-X1",
       "question": "\"It's visited by millions of tourists every year.\" Is this present or past?",
       "key": "present",
-      "reason": "“It's visited by millions of tourists every year.” This describes the present.",
+      "reason": "“It's visited by millions of tourists every year.” Is visited is present simple passive.",
       "sourceLine": "It's visited by millions of tourists every year.",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -787,7 +795,7 @@
       "id": "L4-X2",
       "question": "Complete from the clip: \"...a narrow street ___ butchers used to sell meat.\"",
       "key": "where",
-      "reason": "“a narrow street where butchers used to sell meat”",
+      "reason": "“a narrow street where butchers used to sell meat” Where is used for a place.",
       "sourceLine": "a narrow street where butchers used to sell meat",
       "reasonStatus": "draft, pending teacher review"
     },
@@ -797,7 +805,7 @@
       "id": "L4-X3",
       "question": "Complete from the clip: \"It's much ___ up there than in the busy streets below.\"",
       "key": "quieter",
-      "reason": "“It's much quieter up there than in the busy streets below.”",
+      "reason": "“It's much quieter up there than in the busy streets below.” Quieter compares two places.",
       "sourceLine": "It's much quieter up there than in the busy streets below.",
       "reasonStatus": "draft, pending teacher review"
     }
