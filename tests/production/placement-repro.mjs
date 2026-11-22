@@ -84,7 +84,9 @@ try {
   await page.getByLabel('Email address', { exact: true }).fill(user.email);
   await page.getByLabel('Password', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.waitForURL((target) => !target.pathname.startsWith('/login'), { timeout: 30000 });
+  // `waitForURL` waits for a load event, which an App Router client-side redirect
+  // may never fire. Poll the URL instead.
+  await page.waitForFunction(() => !location.pathname.startsWith('/login'), null, { timeout: 30000 });
   log('stage', `signed in, at ${page.url()}`);
 
   // --- the quiz ---
