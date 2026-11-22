@@ -15,11 +15,12 @@ export type LearnerVocabularyCard = { word: string; type: string; meaning: strin
 export function learnerVocabulary(weekNumber: number): LearnerVocabularyCard[] | null {
   const week = details.weeks.find(entry => entry.number === weekNumber);
   if (!week) return null;
+  const definitions = vocabularyMeanings.weeks.find(entry => entry.week === weekNumber)?.definitions;
   const entries: { target: string; example: string; type?: string; use?: string }[] = [
     ...week.vocabulary.core, ...week.vocabulary.collocations, ...week.vocabulary.optional,
   ];
   return entries.map(entry => {
-    const meaning = (vocabularyMeanings.meanings as Record<string, string>)[entry.target];
+    const meaning = definitions?.find(definition => definition.target === entry.target)?.definition;
     if (!meaning) throw new Error(`Missing vocabulary meaning for ${entry.target}`);
     return { word: entry.target, type: typeNames[entry.type ?? ''] ?? 'phrase', meaning, example: entry.example,
       use: entry.use === 'P' ? 'P' : 'B', audioUrl: recorded[entry.target] ?? null };

@@ -48,3 +48,36 @@ test('initial learner projection omits secret answer fields, models and paired m
     assert.deepEqual(projected.careful, week.careful);
   }
 });
+
+
+test('match meanings equal the matching week and target card definition', () => {
+  const definitions = JSON.parse(readFileSync(new URL('../../lib/curriculum/vocabulary-meanings.json', import.meta.url)));
+  for (const week of bank.weeks) for (const item of week.match.items) {
+    const group = definitions.weeks.find(group => group.week === week.week);
+    const card = group?.definitions.find(entry => entry.target === item.word);
+    assert.ok(card, `Missing definition for ${item.word} in week ${week.week}`);
+    assert.equal(item.meaning, card.definition, item.id);
+  }
+});
+
+test('server marking covers all fixed items and typed recall spelling rules', async () => {
+  const { markVocabularyAnswer } = await import('../../lib/curriculum/vocabulary-marking.mjs');
+  for (const week of bank.weeks) {
+    for (const item of week.match.items) assert.equal(markVocabularyAnswer(week, item.id, item.meaning).correct, true);
+    for (const item of week.text.items) assert.equal(markVocabularyAnswer(week, item.id, item.key).correct, true);
+    for (const item of [...week.chooseVerb, ...week.wordForms]) {
+      assert.equal(markVocabularyAnswer(week, item.id, item.options[item.answer_index]).correct, true);
+      assert.equal(markVocabularyAnswer(week, item.id, item.options[(item.answer_index + 1) % item.options.length]).correct, false);
+    }
+    for (const item of week.typeTheWord.items) for (const answer of item.accept) {
+      assert.equal(markVocabularyAnswer(week, item.id, `  ${answer.toUpperCase()}  `).correct, true);
+    }
+  }
+  const week = bank.weeks[0];
+  assert.deepEqual(markVocabularyAnswer(week, 'V1-R2', 'regert'), { correct: false, nearly: false, feedback: 'Not quite. The answer is: regret' });
+  assert.deepEqual(markVocabularyAnswer(week, 'V1-R2', 'regat'), { correct: false, nearly: false, feedback: 'Not quite. The answer is: regret' });
+  assert.deepEqual(markVocabularyAnswer(week, 'V1-R2', 'regretx'), { correct: true, nearly: true, feedback: 'Nearly! Check the spelling: regret' });
+  assert.equal(markVocabularyAnswer(week, 'V1-R1', 'toke up').correct, false, 'short words do not qualify');
+  assert.equal(markVocabularyAnswer(bank.weeks[1], 'V2-R2', 'work toward').correct, true);
+  assert.throws(() => markVocabularyAnswer(week, 'V1-S1', 'answer'), /not found/);
+});

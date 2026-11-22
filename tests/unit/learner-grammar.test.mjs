@@ -72,12 +72,12 @@ test('adaptive decisions are made only after all 11 choose and complete answers'
 test('each week 1–4 vocabulary item has an authored meaning', () => {
   const meanings = JSON.parse(readFileSync(new URL('../../lib/curriculum/vocabulary-meanings.json', import.meta.url)));
   assert.equal(meanings.status, 'draft, pending teacher review');
-  for (const [word, meaning] of Object.entries(meanings.meanings)) {
-    assert.ok(meaning.trim().split(/\s+/).length < 12, `${word} meaning must have fewer than 12 words`);
+  for (const group of meanings.weeks) for (const entry of group.definitions) {
+    assert.ok(entry.definition.trim().split(/\s+/).length < 12, `${entry.target} meaning must have fewer than 12 words`);
   }
   for (const week of details.weeks) {
     for (const item of [...week.vocabulary.core, ...week.vocabulary.collocations, ...week.vocabulary.optional]) {
-      assert.ok(meanings.meanings[item.target], `Week ${week.number}: ${item.target}`);
+      assert.ok(meanings.weeks.find(group => group.week === week.number)?.definitions.some(definition => definition.target === item.target), `Week ${week.number}: ${item.target}`);
     }
   }
 });
