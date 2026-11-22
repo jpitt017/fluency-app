@@ -47,10 +47,11 @@ function writeSummary() {
   const body = ['## Placement writing-step repro', '', '```', ...report, '```', ''].join('\n');
   if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, body, { flag: 'a' });
   if (process.env.REPRO_OUTPUT) writeFileSync(process.env.REPRO_OUTPUT, body);
-  const keys = /^(h1 after click|textarea count|writing prompt visible|evaluate button count|writing counter|hint|score error visible|console errors|page errors|failed requests|q24 button|after clicking q24|PROBE|placement page status|q1 option count|q1 uses test ids|stage|signed in)/;
+  const keys = /^(PROBE|console errors|page errors|failed requests|writing prompt visible|evaluate button count|score error visible|main text)/;
   const lines = report.filter((line) => keys.test(line));
-  for (let index = 0; index < lines.length && index < 9; index += 1) {
-    const text = lines[index].replace(/[\r\n]+/g, ' ').slice(0, 920);
+  // GitHub allows 10 warnings per step; the report file is uploaded as well.
+  for (let index = 0; index < lines.length && index < 10; index += 1) {
+    const text = lines[index].replace(/[\r\n]+/g, ' ').slice(0, 900);
     console.log(`::warning title=placement repro ${index + 1}::${text}`);
   }
 }
