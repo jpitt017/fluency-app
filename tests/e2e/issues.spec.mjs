@@ -38,7 +38,7 @@ test('learner sends reports with explicit answer consent', async ({ page }) => {
       if (include) await dialog.getByLabel('Include my last answer').check();
       await dialog.getByRole('button', { name: 'Send report' }).click();
       await expect(dialog.getByText("Thank you! We'll look at this soon.")).toBeVisible();
-      await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Close', exact: true }).last().click();
     }
     const reports = await admin.from('issue_reports').select('message,last_answer,page_url,current_week,app_version').eq('user_id', user.id).order('created_at');
     if (reports.error) throw reports.error;
