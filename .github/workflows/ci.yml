@@ -17,6 +17,10 @@ on:
         description: 'Send one production test issue and delete the test user'
         type: boolean
         default: false
+      production_placement_test:
+        description: 'Answer all placement questions on production, signed out and signed in'
+        type: boolean
+        default: false
 
 jobs:
   production-ai-test:
@@ -35,6 +39,23 @@ jobs:
         run: node tests/production/ai-feedback.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  production-placement-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.production_placement_test == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Answer the whole placement quiz on production
+        run: node tests/production/placement.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   production-issue-test:
@@ -90,6 +111,7 @@ jobs:
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/usage-messages.test.mjs
+      - run: node --test tests/unit/text-utils.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema
         env:
@@ -115,7 +137,10 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
-      - name: Run Playwright core-loop E2E tests
+      - name: Run Playwright E2E tests
+        # Includes the placement walk that answers all 24 v2 questions through to
+        # the writing step, signed out and signed in, failing on any console error,
+        # page error or failed request the page produced.
         run: npm run test:e2e -- --reporter=line,github
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

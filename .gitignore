@@ -37,3 +37,6 @@ tsconfig.tsbuildinfo
 # playwright artifacts
 test-results/
 playwright-report/
+
+# local agent scratch work
+.arena-work/

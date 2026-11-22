@@ -90,7 +90,14 @@ export default function IssueReporter({ signedIn }: { signedIn: boolean }) {
     finally { setBusy(false); }
   }
   return <>
-    <button type="button" onClick={() => { setSent(false); setError(''); dialog.current?.showModal(); }} className="fixed bottom-4 right-4 z-40 rounded-full bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-800">Problem? Tell us</button>
+    {/* On phones and small tablets a floating pill at the bottom-right sits directly
+        on top of full-width primary actions (it blocked "Continue to Writing Sample →"
+        at the end of the placement quiz), so below `sm` the launcher docks into the
+        footer instead of floating. From `sm` up it is a compact pill that stays clear
+        of page actions, which reserve the bottom-right corner with `pb-24`. */}
+    <div className="mx-auto flex w-full max-w-6xl justify-end px-4 pb-2 sm:pointer-events-none sm:fixed sm:inset-x-0 sm:bottom-4 sm:z-40 sm:px-6 sm:pb-0">
+      <button type="button" onClick={() => { setSent(false); setError(''); dialog.current?.showModal(); }} className="pointer-events-auto rounded-full bg-indigo-700 px-4 py-2.5 text-xs font-semibold leading-5 text-white shadow-lg hover:bg-indigo-800">Problem? Tell us</button>
+    </div>
     <dialog ref={dialog} onCancel={event => { if (busy) event.preventDefault(); else finishRecording(false); }} className="m-auto max-h-[90vh] w-[min(32rem,calc(100%-2rem))] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl backdrop:bg-black/50">
       <div className="flex justify-between gap-4"><h2 className="text-xl font-bold">Tell us about a problem</h2><button type="button" onClick={close} aria-label="Close" disabled={busy}>✕</button></div>
       {sent ? <div className="mt-5 space-y-4"><p>Thank you! We&apos;ll look at this soon.</p><button type="button" onClick={close} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Close</button></div> : !signedIn ? <div className="mt-5"><p>Please sign in to send a report.</p><a href="/login" className="mt-3 inline-block font-semibold text-indigo-700 underline">Sign in</a></div> : <form onSubmit={send} className="mt-4 space-y-4">
