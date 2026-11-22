@@ -30,7 +30,7 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   }
   const questionsFor = (mode: string, fallback: typeof reading.questions): LearnerQuestion[] => {
     const rows = dbQuestions.filter((row) => row.mode === mode).map((row) => row.payload as { id: string; question: string; options: string[] });
-    return (rows.length ? rows : fallback).map((q) => ({ id: q.id, question: q.question, options: q.options }));
+    return (rows.length ? rows : fallback).map((q) => ({ id: q.id, question: q.question, options: Array.isArray(q.options) ? q.options : [] }));
   };
   return {
     title: week.title, canDo: week.canDo,
