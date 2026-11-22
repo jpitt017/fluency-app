@@ -480,26 +480,67 @@ async function reviewWeek(weeks) {
       .maybeSingle();
     if (error) throw new Error(`Could not read week ${week}: ${error.message}`);
     if (!data) throw new Error(`Week ${week} has no generated track yet; run --week ${week} first.`);
-    const [audioKey] = reviewObjectKeys(week);
-    const url = await signReviewUrl(client, audioKey);
-    const minutes = REVIEW_LINK_SECONDS / 60;
-    lines.push(`Week ${week} review link (valid ${minutes} minutes, ${data.duration_seconds ?? '?'}s):`);
-    lines.push(`  ${url}`);
     const state = data.released ? 'already released' : 'unreleased - learners cannot hear it yet';
-    lines.push(`  state: ${state}`);
-    summary.push(
-      `### Week ${week} — ${Math.round(Number(data.duration_seconds ?? 0))}s, ${state}`,
-      '',
-      `[Listen to the Week ${week} track](${url}) — link valid for ${minutes} minutes.`,
-      '',
-      data.released
-        ? 'Already approved, so it is live in /week/' + week + '.'
-        : `Not live. Approve with mode: release, weeks: "${week}".`,
-      '',
-    );
+    lines.push(`Week ${week}: ${data.duration_seconds ?? '?'}s, ${state}`);
+    if (signedLinksInLog()) {
+      // The `review` mode exists to hand out a link, so it prints one. Nothing
+      // else does, and it never goes in the summary.
+      const url = await signReviewUrl(client, reviewObjectKeys(week)[0]);
+      lines.push(`  link (valid ${REVIEW_LINK_SECONDS / 60} minutes): ${url}`);
+    }
+    summary.push({
+      label: `Week ${week}`,
+      detail: `${Math.round(Number(data.duration_seconds ?? 0))}s, ${state}`,
+    });
   }
   console.log(lines.join('\n'));
-  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary('# Listening trial review links', '', ...summary);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await appendSummary(
+      ...reviewReport({
+        title: 'Listening track review',
+        artifact: 'review',
+        rows: summary,
+        footer: 'Nothing is released until you run mode: release for a week.',
+      }),
+    );
+  }
+}
+
+/**
+ * Signed review URLs are 1-hour, single-purpose links into a private bucket.
+ * They are printed to the step log only when the run asks for it (the `review`
+ * mode does: its whole job is handing out links for an existing track). Generate
+ * and voice-check runs must not print them: nothing needs a link on the way in,
+ * and a link in a log is a link in a screenshot.
+ */
+function signedLinksInLog() {
+  const raw = process.env.SIGNED_LINKS_IN_LOG;
+  return raw === '1' || raw === 'true';
+}
+
+/**
+ * Summary rows for tracks and clips.
+ *
+ * The summary never contains a signed URL. GitHub redacts the token when it
+ * renders the page, so a link there is unusable for a reviewer, and the artifact
+ * is the supported way to listen. What the table does carry is everything a
+ * person needs to approve a recording: what it is, how long, and whether it is
+ * live.
+ *
+ * @param {{title: string, artifact: string, rows: {label: string, detail: string}[], footer?: string}} report
+ */
+function reviewReport(report) {
+  const rows = [
+    `# ${report.title}`,
+    '',
+    `Download from the **\`${report.artifact}\`** artifact on this run (kept for 3 days): ${runUrl()}`,
+    '',
+    '| Track | Length | State |',
+    '| --- | --- | --- |',
+  ];
+  for (const row of report.rows) rows.push(`| ${row.label} | ${row.detail} |`);
+  if (report.footer) rows.push('', report.footer);
+  return rows;
 }
 
 /**
@@ -529,27 +570,21 @@ async function voiceCheck() {
     log: (message) => console.log(message),
   });
 
-  const summary = [
-    '# Voice check — one line per speaker',
-    '',
-    `Download the seven MP3s from the **\`voice-check\`** artifact on this run (kept for 3 days): ${runUrl()}`,
-    '',
-    'The signed links below work for one hour and are a convenience only; GitHub redacts the token whenever the summary is rendered.',
-    '',
-    '| Speaker | Voice | Accent | Length | Signed link (1 hour) |',
-    '| --- | --- | --- | --- | --- |',
-  ];
   for (const entry of results) {
-    const url = await signReviewUrl(client, entry.key);
-    console.log(`${entry.speaker} (${entry.name}, ${entry.accent}) ${entry.durationSeconds}s`);
-    console.log(`  ${url}`);
-    summary.push(
-      `| ${entry.speaker} | ${entry.name} | ${entry.accent} | ${entry.durationSeconds}s | [listen](${url}) |`,
-    );
+    console.log(`${entry.speaker} (${entry.name}, ${entry.accent}) ${entry.durationSeconds}s -> ${entry.mp3Path}`);
   }
-  summary.push('', `Links are valid for ${REVIEW_LINK_SECONDS / 60} minutes.`, '', 'Nothing is released: these clips are for approval only.');
+  const summary = reviewReport({
+    title: 'Voice check — one line per speaker',
+    artifact: 'voice-check',
+    rows: results.map((entry) => ({
+      label: `${entry.speaker} — ${entry.name} (${entry.accent})`,
+      detail: `${entry.durationSeconds}s`,
+    })),
+    footer: 'Nothing is released: these clips are for approval only.',
+  });
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
-  console.log(`\n${results.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased. Links valid ${REVIEW_LINK_SECONDS / 60} minutes.`);
+  console.log(`\n${results.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
+  void client;
 }
 
 /** This run's page, so the summary can point at the artifact. */
