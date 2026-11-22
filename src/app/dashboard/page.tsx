@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { WeeklyPaceSelector, WeeklyReportCard } from '@/components/b1b2/DashboardControls';
-import { loadDashboard, loadHeaderSummary, loadObservabilitySummary } from '@/lib/b1b2/data';
+import { loadDashboard, loadHeaderSummary, loadObservabilitySummary, loadAiUsageStatus } from '@/lib/b1b2/data';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import type { SkillArea } from '@/lib/b1b2/types';
@@ -10,14 +10,13 @@ type DashboardProps = { searchParams: Promise<{ week?: string | string[] }> };
 
 export default async function DashboardPage({ searchParams }: DashboardProps) {
   const param = (await searchParams).week;
-  const [currentWeek, summary, data, syllabus] = await Promise.all([
-    currentLearnerWeek(), loadHeaderSummary(), loadDashboard(), loadSyllabusContent(),
+  const [currentWeek, summary, data, syllabus, aiUsage] = await Promise.all([
+    currentLearnerWeek(), loadHeaderSummary(), loadDashboard(), loadSyllabusContent(), loadAiUsageStatus(),
   ]);
   const weekNumber = !summary.signedIn && param ? learnerWeekFromParam(param) : currentWeek;
   const week = syllabus.weeks.find((item) => item.number === weekNumber);
   const staff = summary.role === 'teacher' || summary.role === 'admin';
   const obs = staff ? await loadObservabilitySummary(7) : null;
-  const pricingEnabled = process.env.NEXT_PUBLIC_PILOT_PRICING_ENABLED === 'true';
   const skills: { key: SkillArea; label: string; href: string; action: string }[] = [
     { key: 'reading', label: 'Reading', href: `/week/${weekNumber}`, action: 'Read this week’s text' },
     { key: 'listening', label: 'Listening', href: `/week/${weekNumber}`, action: 'Open this week’s listening' },
@@ -46,7 +45,8 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     <section className="rounded-2xl border border-stone-200 bg-white p-6">
       <h2 className="font-serif text-2xl font-semibold">Your progress</h2>
       <p className="mt-2">You have studied for {data.dashboard?.streak_days ?? 0} days in a row.</p>
-      {staff && (data.subscriptionStatus === 'active' || data.subscriptionStatus === 'trialing' ? <span>Pro Member</span> : pricingEnabled && <Link href="/pricing">Upgrade</Link>)}
+      <p className="mt-2">{aiUsage ? `AI practice left today: ${aiUsage.daily_units_remaining} of ${aiUsage.daily_unit_limit}` : 'AI practice balance is not available right now.'}</p>
+      <p className="mt-1 text-sm text-stone-600">Your daily balance resets at midnight in Madrid.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {skills.map((skill) => <Link key={skill.key} href={skill.href} className="rounded-xl border border-stone-200 p-4 hover:border-indigo-400">
           <strong>{skill.label}</strong><p className="mt-1 text-sm text-stone-600">{Math.round(Number(data.dashboard?.skills?.[skill.key]?.score ?? 0))}%</p>

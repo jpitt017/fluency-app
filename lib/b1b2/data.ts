@@ -486,13 +486,14 @@ export async function loadTeacherRoster(): Promise<{
     return { signedIn: true, authorized: false, learners: [] };
   }
 
-  const [{ data, error }, attemptsRes] = await Promise.all([
+  const [{ data, error }, attemptsRes, pilotRes] = await Promise.all([
     supabase.rpc('teacher_get_roster'),
     supabase
       .from('mediation_attempts')
       .select('id, user_id, week, task_key, transcript, response_text, feedback, needs_review, review_reason, disputed, created_at')
       .order('created_at', { ascending: false })
       .limit(200),
+    supabase.from('pilot_learners').select('user_id'),
   ]);
   if (error) {
     console.error('teacher_get_roster failed:', error.message);
@@ -519,8 +520,17 @@ export async function loadTeacherRoster(): Promise<{
 
   const learners = ((Array.isArray(data) ? data : []) as TeacherRosterLearner[]).map((learner) => ({
     ...learner,
+    pilot: pilotRes.error ? null : (pilotRes.data ?? []).some((row) => row.user_id === learner.user_id),
     mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
   }));
 
   return { signedIn: true, authorized: true, learners };
+}
+
+export async function loadAiUsageStatus(): Promise<{ daily_unit_limit: number; daily_units_remaining: number } | null> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('get_ai_usage_status');
+  if (error || !data || !Number.isInteger(data.daily_unit_limit) || !Number.isInteger(data.daily_units_remaining)) return null;
+  return { daily_unit_limit: data.daily_unit_limit, daily_units_remaining: data.daily_units_remaining };
 }
