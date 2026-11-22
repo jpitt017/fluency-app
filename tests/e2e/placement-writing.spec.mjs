@@ -8,17 +8,15 @@ const QUESTION_COUNT = 24;
 /**
  * The placement quiz regression cover.
  *
- * The bug: after Q24, tapping "Continue to Writing Sample →" did nothing. Two
- * causes are covered here.
- *
- * 1. At 375x667 the fixed "Problem? Tell us" launcher sat on top of the
- *    full-width Continue button, so the tap opened the report dialog instead.
- * 2. `placement_questions_safe` returns the v2 and the legacy rows, and both use
- *    sort_order 1–24, so the page arrived with 48 rows — two per question, eight
- *    options per card — instead of 24.
+ * The bug: after Q24, tapping "Continue to Writing Sample →" did nothing. The
+ * cause, confirmed on production, was layout: at 375x667 the fixed "Problem? Tell
+ * us" launcher sat on top of the full-width Continue button, so the tap opened
+ * the report dialog and the quiz stayed on question 24.
  *
  * The quiz is answered on a phone viewport, with a hit-test on the real button,
- * and the walk continues past Q24 to the writing task and the result.
+ * and the walk continues past Q24 to the writing task and the result. The card is
+ * also pinned at four options, because the base table carries a legacy v2-less
+ * series as well and only the safe view keeps it out.
  */
 
 /** Answer every question, assert the button is tappable, and land on the writing step. */
@@ -28,7 +26,7 @@ async function walkToWritingStep(page) {
   for (let index = 0; index < QUESTION_COUNT; index += 1) {
     await expect(page.getByRole('heading', { name: `Question ${index + 1} of ${QUESTION_COUNT}` })).toBeVisible();
 
-    // Exactly four options: the duplicate-version bug showed eight.
+    // Exactly four options: the safe view must never let the legacy series in.
     const options = page.getByTestId('placement-option');
     await expect(options).toHaveCount(4);
 
@@ -152,7 +150,7 @@ test('the answer key never reaches the browser', async ({ page }) => {
   const html = await page.content();
   expect(html).not.toContain('answer_index');
   expect(html).not.toContain('"reason"');
-  // 24 questions, not 48: the duplicate-version rows must not be shipped either.
+  // Four options per card and 24 questions: the legacy series stays out.
   expect(await page.getByTestId('placement-option').count()).toBe(4);
   expect(bank.questions.length).toBe(QUESTION_COUNT);
 });

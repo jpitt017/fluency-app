@@ -9,15 +9,15 @@ import {
 } from '../../lib/b1b2/text-utils.mjs';
 
 /**
- * The placement quiz shipped 48 questions instead of 24.
+ * The placement loader's query shape, plus the writing-step helpers the page uses.
  *
- * `placement_questions_safe` returns the active v2 questions *and* the 24 legacy
- * ones, and both versions number their rows sort_order 1–24. Ordering by
- * sort_order alone returns 48 rows; only the `.eq('version', …)` filter — or the
- * dedupe — keeps a question from appearing twice on the card.
- *
- * These tests pin the loader's query and its dedupe, and the writing-step helpers
- * the page now uses.
+ * Correction, recorded because it matters: the base table `placement_questions`
+ * holds 48 active rows (24 v2 + 24 legacy, both numbered sort_order 1–24), but the
+ * `placement_questions_safe` *view* already filters `active AND version = 'v2'`
+ * and returns 24. The page was therefore never rendering duplicate options, and
+ * the extra `.eq('version', …)` plus the dedupe below are defence in depth, not a
+ * bug fix. Only 24 questions ever reached the browser; the production check
+ * confirms it.
  */
 
 const data = readFileSync(new URL('../../lib/b1b2/data.ts', import.meta.url), 'utf8');
