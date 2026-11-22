@@ -47,7 +47,7 @@ function writeSummary() {
   const body = ['## Placement writing-step repro', '', '```', ...report, '```', ''].join('\n');
   if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, body, { flag: 'a' });
   if (process.env.REPRO_OUTPUT) writeFileSync(process.env.REPRO_OUTPUT, body);
-  const keys = /^(h1 after click|textarea count|writing prompt visible|evaluate button count|score error visible|console errors|page errors|failed requests|q24 button|after clicking q24|PROBE|placement page status)/;
+  const keys = /^(h1 after click|textarea count|writing prompt visible|evaluate button count|writing counter|hint|score error visible|console errors|page errors|failed requests|q24 button|after clicking q24|PROBE|placement page status|q1 option count|q1 uses test ids|stage|signed in)/;
   const lines = report.filter((line) => keys.test(line));
   for (let index = 0; index < lines.length && index < 9; index += 1) {
     const text = lines[index].replace(/[\r\n]+/g, ' ').slice(0, 920);
@@ -92,28 +92,58 @@ try {
   log('placement page status', quiz?.status() ?? 'unknown');
   log('heading', (await page.getByRole('heading', { level: 1 }).first().innerText()).trim());
 
-  let q24Button = null;
+  // Locators prefer stable test ids (the fixed component has them) and fall back
+  // to the deployed markup: the quiz options are the buttons between the question
+  // and the single Next/Continue button, which is the last button in `main`.
+  const NON_OPTION = /^(Next Question|Continue to Writing Sample|Problem\? Tell us|Close|Skip sample|Evaluate|Try again|Sign in|Delete my learning data)/;
+  async function optionCount() {
+    const tagged = page.locator('[data-testid="placement-option"]');
+    if (await tagged.count()) return { locator: tagged, count: await tagged.count(), tagged: true };
+    const all = page.locator('main button[type="button"]');
+    const total = await all.count();
+    const indexes = [];
+    for (let i = 0; i < total; i += 1) {
+      const text = (await all.nth(i).innerText()).trim();
+      if (!NON_OPTION.test(text)) indexes.push(i);
+    }
+    return { locator: all, indexes, count: indexes.length, tagged: false };
+  }
+  async function nextButton() {
+    const tagged = page.locator('[data-testid="placement-next"]');
+    if (await tagged.count()) return tagged.first();
+    return page.locator('main button[type="button"]').last();
+  }
+
+  let q24State = null;
   for (let index = 0; index < 24; index += 1) {
-    const heading = page.getByRole('heading', { name: `Question ${index + 1} of 24` });
-    await heading.waitFor({ timeout: 15000 });
-    // Pick the first rendered option, whatever it says, so copy changes cannot
-    // hide the bug. The bank is only used to know how many options exist.
-    const optionCount = bank.questions[index]?.options.length ?? 4;
-    const buttons = page.locator('main button[type="button"]');
-    // The last button is "Next Question" / "Continue to Writing Sample →".
-    const optionButtons = buttons.filter({ hasNotText: /Next Question|Continue to Writing Sample/ });
-    const rendered = await optionButtons.count();
-    log(`q${index + 1} options rendered`, `${rendered} (fixture has ${optionCount})`);
-    await optionButtons.first().click();
-    const next = buttons.filter({ hasText: /Next Question|Continue to Writing Sample/ }).first();
+    await page.getByRole('heading', { name: `Question ${index + 1} of 24` }).waitFor({ timeout: 20000 });
+    const options = await optionCount();
+    if (index === 0) {
+      const labels = await page.locator('main button[type="button"]').allInnerTexts();
+      log('buttons at q1', labels.map((text) => text.trim().slice(0, 40)));
+      log('q1 option count', String(options.count));
+      log('q1 uses test ids', String(options.tagged));
+    }
+    if (!options.count) throw new Error(`Question ${index + 1} rendered no answer options`);
+    const target = options.tagged ? options.locator.first() : options.locator.nth(options.indexes[0]);
+    await target.click();
+    const next = await nextButton();
     if (index === 23) {
-      q24Button = next;
-      log('q24 button text', (await next.innerText()).trim());
-      log('q24 button disabled', String(await next.isDisabled()));
+      q24State = {
+        text: (await next.innerText()).trim(),
+        disabled: await next.isDisabled(),
+        enabled: await next.isEnabled(),
+      };
+      log('q24 button', q24State);
+      await expectEnabled(next);
     }
     await next.click();
-    await page.waitForTimeout(150);
     if (index === 23) break;
+  }
+
+  async function expectEnabled(locator) {
+    // A disabled Continue button is a bug in itself; record it, do not click it.
+    if (await locator.isDisabled()) log('q24 button is DISABLED before click', 'yes');
   }
 
   // --- the moment under test ---
@@ -125,6 +155,8 @@ try {
   log('writing prompt visible', String(await page.getByText(/60.100 words/).count()));
   log('evaluate button count', String(await page.getByRole('button', { name: /Evaluate/ }).count()));
   log('score error visible', String(await page.getByRole('alert').count()));
+  log('writing counter', (await page.getByTestId('writing-word-counter').innerText().catch(() => '(none)')).trim());
+  log('hint', (await page.getByTestId('writing-hint').innerText().catch(() => '(none)')).trim());
   log('body text length', String((await page.locator('main').innerText()).length));
   log('main text (first 600)', (await page.locator('main').innerText()).slice(0, 600).replace(/\s+/g, ' '));
 
