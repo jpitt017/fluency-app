@@ -47,7 +47,7 @@ import {
 } from './lib/course-audio/listening-trial.mjs';
 import { createWebSocketTransport, parseScript } from './lib/course-audio/tts.mjs';
 import { releaseTrial, revokeTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
-import { checkApprovalTarget } from './lib/course-audio/environment.mjs';
+import { checkApprovalTarget, isApprovalBypassRequested } from './lib/course-audio/environment.mjs';
 import { assertTrialWeek, isConfirmed } from './lib/course-audio/delete-guard.mjs';
 import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
@@ -498,7 +498,9 @@ async function reviewWeek(weeks) {
 async function releaseWeek(weeks) {
   // Check the target before any database work: a production release is refused
   // outright, so this must fail on the rule rather than on some later read.
-  const verdict = checkApprovalTarget({ url: supabaseUrl });
+  // The bypass is the workflow's two-key acknowledgement (ALLOW_PRODUCTION_RELEASE),
+  // so a deliberate, reviewed release gets through and nothing else does.
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
   if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
@@ -523,7 +525,7 @@ async function releaseWeek(weeks) {
 }
 
 async function revokeWeek(weeks) {
-  const verdict = checkApprovalTarget({ url: supabaseUrl });
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
   if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {

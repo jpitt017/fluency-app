@@ -182,6 +182,17 @@ test('the CLI checks the target before it reads anything from the database', () 
   }
 });
 
+test('the CLI passes the workflow bypass to the target check, so a two-keyed run can proceed', () => {
+  const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', import.meta.url), 'utf8');
+  // Regression: the guard was called without `bypass`, which made the documented
+  // escape hatch dead - a correct two-key release was refused on production.
+  for (const fn of ['releaseWeek', 'revokeWeek']) {
+    const start = cli.indexOf(`async function ${fn}(`);
+    const body = cli.slice(start, cli.indexOf('\n}\n', start));
+    assert.match(body, /checkApprovalTarget\(\{ url: supabaseUrl, bypass: isApprovalBypassRequested\(\) \}\)/, `${fn} must honour the bypass`);
+  }
+});
+
 test('the workflow cannot release on production without an explicit override', () => {
   const workflow = readFileSync(new URL('../../.github/workflows/course-audio.yml', import.meta.url), 'utf8');
   assert.match(workflow, /allow_production_release:/);
