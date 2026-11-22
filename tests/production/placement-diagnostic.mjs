@@ -80,8 +80,15 @@ try {
     await page.getByLabel(/Email address/i).fill(user.email);
     await page.getByLabel(/^Password/i).fill(user.password);
     await page.getByRole('button', { name: /^Sign in$/ }).click();
-    await page.waitForURL(/\/(dashboard|labs|teacher|onboarding)/, { timeout: 60000 });
+    await page.waitForTimeout(6000);
+    report.login_url = page.url();
+    report.login_alerts = (await page.getByRole('alert').allTextContents()).join(' || ').slice(0, 300);
+    report.login_cookie = await page.evaluate(() => document.cookie.includes('sb-'));
+    if (!/\/(dashboard|labs|teacher|onboarding)/.test(page.url())) {
+      await page.goto(`${BASE}/onboarding/placement`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    }
     report.landing = page.url();
+    report.header_signed_in = (await page.locator('header').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160);
     await walk(page, 'signedin');
     await context.close();
   } else {
