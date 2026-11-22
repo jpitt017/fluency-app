@@ -212,7 +212,8 @@ jobs:
         run: |
           set -euo pipefail
           exec > >(tee /tmp/deletion-ci.log) 2>&1
-          trap 'echo "::error::Isolated deletion failed: $(tail -n 8 /tmp/deletion-ci.log | tr \'\n\' \' \')"' ERR
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 8 /tmp/deletion-ci.log); }
+          trap report_failure ERR
           db='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
           for file in supabase-b1-b2/migrations/*.sql; do
             case "$file" in *0038_*|*0039_*) continue;; esac
