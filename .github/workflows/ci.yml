@@ -223,6 +223,7 @@ jobs:
             case "$file" in *0038_*|*0039_*) continue;; esac
             psql "$db" -v ON_ERROR_STOP=1 -f "$file"
           done
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
           psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0039_repair_learning_data_deletion.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
           psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0038_vocabulary_attempts.sql

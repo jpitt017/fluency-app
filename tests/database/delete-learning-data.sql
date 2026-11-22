@@ -33,7 +33,7 @@ begin
   insert into public.user_badges(user_id,badge_id) values(u,b);
   insert into public.weekly_reports(user_id,week_start) values(u,current_date);
   insert into public.daily_sessions(user_id) values(u);
-  insert into public.curriculum_preferences(user_id) values(u);
+  insert into public.curriculum_preferences(user_id) values(u) on conflict (user_id) do update set target_hours_per_week=5;
   insert into public.learner_errors(user_id,source_type,category,original,corrected,explanation) values(u,'writing','tense','test','test','test');
   insert into public.error_review_cards(user_id,category,prompt_sentence,corrected_sentence,explanation) values(u,'tense','test','test','test');
   insert into public.mediation_attempts(user_id,week,task_key,response_text) values(u,1,'test','test');
