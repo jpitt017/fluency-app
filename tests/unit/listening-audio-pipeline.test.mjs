@@ -264,7 +264,7 @@ test('an upload is retried through a transient storage 5xx', async () => {
   const client = {
     storage: {
       from: () => ({
-        async upload(key, body, options) {
+        async upload(key) {
           calls.push(key);
           return calls.length < 3 ? { error: { status: 520, message: '<none>' } } : { error: null };
         },
