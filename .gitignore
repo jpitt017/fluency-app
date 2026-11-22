@@ -40,3 +40,6 @@ playwright-report/
 
 # local agent scratch work
 .arena-work/
+
+# generated audio (uploaded to Supabase storage, never committed)
+/audio-out/

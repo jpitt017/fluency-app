@@ -112,6 +112,8 @@ jobs:
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/usage-messages.test.mjs
       - run: node --test tests/unit/text-utils.test.mjs
+      - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
+      - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema
         env:

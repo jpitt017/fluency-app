@@ -105,3 +105,129 @@ to the bundled document when Supabase is not configured or unreachable. Routes:
 
 The legacy `english-b1-b2` course and its learner rows are deliberately left
 untouched; the new routes read the `syllabus_*` tables instead.
+
+## 6. Weeks 1–4 listening audio (AI trial recordings)
+
+The four listening scripts in `weeks-01-04-details.json` need recordings. Real
+voice actors are the plan; until those exist, a synthetic **AI trial recording**
+can stand in, clearly labelled and easy to take back down.
+
+> **Current status (22 November 2026):** the first trial used OpenAI's voices
+> and sounded American rather than British, so it will not be used. All four
+> weeks are unreleased, the generated MP3/WebVTT files have been deleted from the
+> public `course-audio` bucket, and `/week/[n]` shows "Audio coming soon." The
+> tracks will be regenerated with ElevenLabs British voices; only the speech
+> model and voice table below need to change.
+
+### The approval switch
+
+Migration `0038_listening_audio_trials.sql` adds one row per week to
+`public.listening_audio_trials`:
+
+| column | meaning |
+| --- | --- |
+| `week` | 1–4 |
+| `audio_url` | the live MP3 URL. **Empty until a person approves the track.** |
+| `captions_url` | the WebVTT file, uploaded for a later release; not shown yet |
+| `source` | `ai-trial` until a voice-actor recording replaces it |
+| `released` | `false` = learners see "Audio coming soon." |
+| `model`, `voices`, `duration_seconds`, `caption_cues`, `generated_at`, `released_at` | audit trail |
+
+`/week/[n]` reads this table server-side. `resolveTrialAudio()` in
+`lib/curriculum/listening-audio.ts` fails closed: no row, `released = false`,
+a source other than `ai-trial`, or an empty `audio_url` all leave the page on
+"Audio coming soon." Every row is created unreleased, so merging this code plays
+nothing.
+
+### Generating the tracks
+
+Run the manual **Course audio — AI trial tracks** workflow
+(`.github/workflows/course-audio.yml`, `workflow_dispatch`) with
+`mode: generate`. It needs the `OPENAI_API_KEY` repository secret plus the
+Supabase URL and service-role key, and installs ffmpeg for MP3 encoding. It runs
+`scripts/generate-course-audio.mjs --weeks 1,2,3,4`, which:
+
+1. parses each authored script into speaker turns;
+2. speaks every line in that speaker's own voice with an accent instruction —
+   Host = southern English, Ellie = Scottish, Aisha = London, Tom = northern
+   English, Dan = Welsh, Marta = West Midlands, Joanne = Yorkshire;
+3. holds a slightly slower B1 pace (`0.95` of the voice's natural speed, about
+   142 words a minute) and inserts a 0.35 s gap between lines and 0.6 s between
+   paragraphs;
+4. encodes one MP3 and one WebVTT file per track, with one caption cue per line
+   timed to the audio;
+5. uploads both to the public `course-audio` bucket under
+   `weeks-01-04/ai-trial/` and writes the row **unreleased** with
+   `source: "ai-trial"` and no `audio_url`.
+
+Nothing here sets the live `audioUrl`. Nothing here releases a track.
+
+### Speech model (first trial, retired)
+
+The voices from this pass are not being used: `gpt-realtime-2.1-mini` produced
+American-sounding speech even with an explicit regional accent instruction, and
+the course needs British regional accents. The replacement will be ElevenLabs
+British voices; keep everything else (approval gate, captions, upload rules) and
+swap `SPEAKER_VOICES` plus the synthesis call in
+`scripts/lib/course-audio/tts.mjs`.
+
+For the record, the workflow did **not** use `POST /v1/audio/speech`. OpenAI deprecated
+`tts-1`, `tts-1-hd` and both `gpt-4o-mini-tts` snapshots with a shutdown date of
+**6 January 2027**, and the recommended replacement `gpt-realtime-2.1-mini` is not
+served by that endpoint. See
+<https://developers.openai.com/api/docs/deprecations>. The pipeline therefore
+uses the Realtime API over WebSocket (`wss://api.openai.com/v1/realtime`):
+`session.update` sets the voice, the accent/pace instructions and 24 kHz PCM
+output, then `conversation.item.create` plus `response.create` speak each line
+and `response.output_audio.delta` events are assembled into the track. The
+legacy Modules 1–8 vocabulary audio still posts to the Speech API and needs the
+same migration before January 2027.
+
+Voices must be unique within a track; `assertDistinctVoices()` fails the run
+otherwise, because learners rely on the voices to tell speakers apart.
+
+### Reviewing and approving
+
+1. `mode: review`, `weeks: "1"` prints a private listening link valid for seven
+   days (plus the state: unreleased).
+2. Listen against the script, using the production checklist in
+   `weeks-01-04-details.json`.
+3. `mode: release`, `weeks: "1"` sets `audio_url` and `released = true`. That is
+   the only code path that makes a track playable. The page then shows the
+   player labelled **AI voice – trial recording**, with the speakers' accents and
+   a note that the real voices will replace it. The track plays twice (first
+   listen for the gist task, second for detail) with the transcript hidden.
+4. `mode: revoke` un-approves a track, and learners go back to "Audio coming
+   soon."
+5. `mode: delete` deletes a week's MP3 and WebVTT from the public bucket and
+   clears the public URLs on the row. Because the bucket is public, this is the
+   step to run for any trial recording that will not be used: an unreleased file
+   that stays in the bucket is still downloadable. The row itself stays,
+   unreleased, so the week keeps saying "Audio coming soon." Deletion goes
+   through the Storage API (Supabase blocks direct deletes on `storage.objects`)
+   and the command re-lists the folder afterwards to confirm the files are gone.
+
+   `mode: delete` is guarded in three ways:
+
+   - **Only trial paths.** It refuses any key that is not exactly
+     `weeks-01-04/ai-trial/week-N-listening.mp3` or `…vtt` for Weeks 1–4, so a
+     `..` segment, an absolute path, a nested or empty segment, an encoded
+     traversal (`%2e`, `%2f`) or any other file name is rejected before the
+     Storage API is called. Only Weeks 1–4 have trial tracks, so any other week
+     number is an error as well.
+   - **Dry run unless confirmed.** Without `confirm: true` (workflow input
+     `confirm`, CLI `--confirm`) the command prints what it *would* delete and
+     exits successfully without removing or updating anything.
+   - **Never a released week.** A week with `released = true` is reported as
+     `BLOCKED - released for learners`, and a confirmed batch containing any
+     released week is refused as a whole. Run `mode: revoke` first.
+
+The bucket is public, so the review link is convenience rather than access
+control; what keeps an unapproved track away from learners is the `released`
+flag, because the app never renders a URL for an unreleased row.
+
+### Marking
+
+Listening answers are saved but **not marked** yet: `WeekInputTask` records
+completion so a week can open, and the answer key stays in the locked
+`syllabus_input_items` table. Marking arrives with reading.
