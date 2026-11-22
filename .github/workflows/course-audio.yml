@@ -7,8 +7,12 @@
 #             UNRELEASED (source "ai-trial", no live audioUrl), print the state
 #   review    print a time-limited private listening link for the weeks chosen
 #   release   approve reviewed weeks: set audio_url + released = true, so
-#             /week/[n] shows the player labelled "AI voice – trial recording"
-#   revoke    un-approve: learners go back to "Audio coming soon."
+#             /week/[n] shows the player labelled "AI voice – trial recording".
+#             Refused on the production project: a week is never marked released
+#             there, not even briefly for a test. Rehearse against a preview
+#             database instead (see docs/CONTENT_PIPELINE.md §6).
+#   revoke    un-approve: learners go back to "Audio coming soon." Same
+#             production refusal as release.
 #   delete    delete a week's MP3 + VTT from the public `course-audio` bucket and
 #             clear its public URLs; the row stays unreleased. Dry run unless
 #             `confirm` is set; refuses released weeks and any path outside
@@ -39,6 +43,14 @@ on:
         description: 'delete: actually delete (off = dry run). Never applies to a released week'
         type: boolean
         default: false
+      allow_production_release:
+        description: 'release/revoke: override the production refusal. Only for a deliberate, reviewed release'
+        type: boolean
+        default: false
+      production_ack:
+        description: 'release/revoke on production: type "release to learners" to acknowledge the override'
+        type: string
+        default: ''
 
 concurrency:
   group: course-audio
@@ -47,6 +59,11 @@ concurrency:
 env:
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  # Approval writes refuse production unless this run explicitly opts in with
+  # both the checkbox and the acknowledgement. A week is never marked released on
+  # production, not even briefly for a test - this is the deliberate-release path
+  # only, and the scripts enforce the same rule from their side.
+  ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
 
 jobs:
   run:
@@ -104,6 +121,16 @@ jobs:
         if: ${{ inputs.mode == 'review' }}
         run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
 
+      - name: Refuse an unacknowledged approval write on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
+        run: |
+          echo "::error::release/revoke on the production project needs the acknowledgement phrase. A week is never marked released on production for a test: use a preview database, a fake week number learners cannot open, or a unit test with a fake client."
+          exit 1
+
+      - name: Warn that this run writes approval state on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
+        run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
+
       - name: Release approved weeks
         if: ${{ inputs.mode == 'release' }}
         run: node scripts/generate-course-audio.mjs --release "${{ inputs.weeks }}"
@@ -126,7 +153,7 @@ jobs:
         run: node scripts/generate-course-audio.mjs --list
 
       - name: Run the audio pipeline tests
-        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs
+        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-audio-approval.test.mjs
 
       - name: Keep the generated files for a listen
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}

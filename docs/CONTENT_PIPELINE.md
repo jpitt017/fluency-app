@@ -139,6 +139,40 @@ a source other than `ai-trial`, or an empty `audio_url` all leave the page on
 "Audio coming soon." Every row is created unreleased, so merging this code plays
 nothing.
 
+### Approval rules
+
+**A week is never marked `released` on production, not even briefly for a test.**
+`released = true` is exactly the switch that makes a real learner hear a track
+and that changes `/week/[n]` from "Audio coming soon."; the page is live, so
+there is no safe window between "flip the flag, check the behaviour, flip it
+back". A test that needs the flag set must run somewhere the flag cannot reach a
+learner:
+
+| instead of production                                      | what it gives you                                                                                                                                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **unit tests** with a fake Supabase client                 | `resolveTrialAudio()`, `releaseTrial()`, `assertNotReleased()` and the delete guards, with no project involved. This is the default and covers almost everything. |
+| **a preview / branch database**                            | a real `listening_audio_trials` table to release against, with the pipeline pointed at that URL                                                                   |
+| **a fake week number learners cannot open** (e.g. week 31) | the row really becomes `released = true`, but no page path can show it: only Weeks 1–4 are scheduled, and `resolveTrialAudio()` fails closed for anything else    |
+
+Verifying a _guard_ — "does delete refuse a released week?" — never needs a
+production release at all: pass the guard a row that says `released: true` and
+assert it refuses. If a behaviour can only be shown by writing to production,
+it is not tested enough yet.
+
+The scripts enforce the same rule from their side: `--release` and `--revoke`
+call `checkApprovalTarget()` from
+`scripts/lib/course-audio/environment.mjs` and refuse to run when
+`NEXT_PUBLIC_SUPABASE_URL` points at the production project
+(`ebzmkhrssgnzmixfsuso`), or at anything unrecognisable. The only escape hatch is
+an explicit `ALLOW_PRODUCTION_RELEASE=1`, which belongs to a deliberate,
+human-reviewed release and nothing else. The workflow asks for two things before
+it will set that: the `allow_production_release` checkbox **and** typing
+`release to learners` into `production_ack`. A single stray tick is not enough.
+
+Writes that do _not_ touch the flag stay safe to rehearse against production:
+generating, uploading unreleased, `mode: review`, `mode: list` and
+`mode: delete` all leave learners on "Audio coming soon."
+
 ### Generating the tracks
 
 Run the manual **Course audio — AI trial tracks** workflow
@@ -216,7 +250,7 @@ otherwise, because learners rely on the voices to tell speakers apart.
      Storage API is called. Only Weeks 1–4 have trial tracks, so any other week
      number is an error as well.
    - **Dry run unless confirmed.** Without `confirm: true` (workflow input
-     `confirm`, CLI `--confirm`) the command prints what it *would* delete and
+     `confirm`, CLI `--confirm`) the command prints what it _would_ delete and
      exits successfully without removing or updating anything.
    - **Never a released week.** A week with `released = true` is reported as
      `BLOCKED - released for learners`, and a confirmed batch containing any
