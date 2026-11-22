@@ -207,6 +207,21 @@ otherwise, because learners rely on the voices to tell speakers apart.
    through the Storage API (Supabase blocks direct deletes on `storage.objects`)
    and the command re-lists the folder afterwards to confirm the files are gone.
 
+   `mode: delete` is guarded in three ways:
+
+   - **Only trial paths.** It refuses any key that is not exactly
+     `weeks-01-04/ai-trial/week-N-listening.mp3` or `…vtt` for Weeks 1–4, so a
+     `..` segment, an absolute path, a nested or empty segment, an encoded
+     traversal (`%2e`, `%2f`) or any other file name is rejected before the
+     Storage API is called. Only Weeks 1–4 have trial tracks, so any other week
+     number is an error as well.
+   - **Dry run unless confirmed.** Without `confirm: true` (workflow input
+     `confirm`, CLI `--confirm`) the command prints what it *would* delete and
+     exits successfully without removing or updating anything.
+   - **Never a released week.** A week with `released = true` is reported as
+     `BLOCKED - released for learners`, and a confirmed batch containing any
+     released week is refused as a whole. Run `mode: revoke` first.
+
 The bucket is public, so the review link is convenience rather than access
 control; what keeps an unapproved track away from learners is the `released`
 flag, because the app never renders a URL for an unreleased row.

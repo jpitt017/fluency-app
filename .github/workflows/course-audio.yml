@@ -10,7 +10,9 @@
 #             /week/[n] shows the player labelled "AI voice – trial recording"
 #   revoke    un-approve: learners go back to "Audio coming soon."
 #   delete    delete a week's MP3 + VTT from the public `course-audio` bucket and
-#             clear its public URLs; the row stays unreleased
+#             clear its public URLs; the row stays unreleased. Dry run unless
+#             `confirm` is set; refuses released weeks and any path outside
+#             weeks-01-04/ai-trial/
 #   list      show the approval state of every track
 #
 # Secret required: OPENAI_API_KEY (repository secret). The Supabase URL and
@@ -31,6 +33,10 @@ on:
         default: '1,2,3,4'
       dry_run:
         description: 'generate: report speakers and length, generate nothing'
+        type: boolean
+        default: false
+      confirm:
+        description: 'delete: actually delete (off = dry run). Never applies to a released week'
         type: boolean
         default: false
 
@@ -106,9 +112,14 @@ jobs:
         if: ${{ inputs.mode == 'revoke' }}
         run: node scripts/generate-course-audio.mjs --revoke "${{ inputs.weeks }}"
 
-      - name: Delete the files from the public bucket
+      - name: Delete the files from the public bucket (dry run unless confirm)
         if: ${{ inputs.mode == 'delete' }}
-        run: node scripts/generate-course-audio.mjs --delete-trial --weeks "${{ inputs.weeks }}"
+        run: |
+          if [ "${{ inputs.confirm }}" = "true" ]; then
+            node scripts/generate-course-audio.mjs --delete-trial --weeks "${{ inputs.weeks }}" --confirm
+          else
+            node scripts/generate-course-audio.mjs --delete-trial --weeks "${{ inputs.weeks }}"
+          fi
 
       - name: Approval state
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run || inputs.mode == 'release' || inputs.mode == 'revoke' || inputs.mode == 'delete' || inputs.mode == 'list' }}

@@ -46,7 +46,9 @@ import {
   readListeningWeeks,
 } from './lib/course-audio/listening-trial.mjs';
 import { createWebSocketTransport, parseScript } from './lib/course-audio/tts.mjs';
-import { deleteTrialFiles as removeTrialFiles, listTrialFiles as listBucketFiles, releaseTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import { releaseTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import { assertTrialWeek, isConfirmed } from './lib/course-audio/delete-guard.mjs';
+import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -58,26 +60,39 @@ const targetModule = moduleIdx !== -1 ? Number(args[moduleIdx + 1]) : 1;
 const uploadIdx = args.indexOf('--upload-dir');
 const uploadDir = uploadIdx !== -1 ? args[uploadIdx + 1] : null;
 
+/**
+ * Week numbers, strictly. Each entry must be a plain run of digits: anything else
+ * (letters, signs, decimals, exponents, `..`) is refused rather than coerced, so a
+ * crafted value cannot reach a storage path.
+ */
 function listArg(flag) {
   const index = args.indexOf(flag);
   if (index === -1) return null;
   const value = args[index + 1];
-  if (!value) throw new Error(`${flag} needs a week number`);
-  return value
-    .split(',')
-    .map((part) => Number(part.trim()))
-    .filter((value) => Number.isInteger(value) && value > 0);
+  if (!value || value.startsWith('--')) throw new Error(`${flag} needs a week number`);
+  return value.split(',').map((part) => {
+    const trimmed = part.trim();
+    if (!/^[0-9]{1,2}$/.test(trimmed)) {
+      throw new Error(`${flag}: "${part}" is not a week number`);
+    }
+    return Number(trimmed);
+  });
 }
 
-const weekList = listArg('--week') ?? listArg('--weeks');
-const reviewWeekList = listArg('--review');
-const releaseWeekList = listArg('--release');
-const revokeWeekList = listArg('--revoke');
-const listTrials = args.includes('--list');
-const deleteTrial = args.includes('--delete-trial');
-const weeksMode = Boolean(
-  weekList || reviewWeekList || releaseWeekList || revokeWeekList || listTrials || deleteTrial,
-);
+/**
+ * Deletion is dry by default: without this it only reports what it would remove.
+ * `--confirm` on its own, or `--confirm=true` / `--confirm true`, arms it.
+ */
+function confirmRequested() {
+  const index = args.findIndex((arg) => arg === '--confirm' || arg.startsWith('--confirm='));
+  if (index === -1) return false;
+  const arg = args[index];
+  if (arg.includes('=')) return isConfirmed(arg.slice(arg.indexOf('=') + 1));
+  const next = args[index + 1];
+  if (next === undefined || next.startsWith('--')) return true;
+  return isConfirmed(next);
+}
+
 /** Long enough to finish a review pass, short enough not to circulate. */
 const REVIEW_LINK_SECONDS = 60 * 60 * 24 * 7;
 
@@ -419,32 +434,33 @@ async function listTrialState() {
 }
 
 /**
- * Removes generated trial audio from the public bucket and clears the URLs on
- * the approval row. The row itself stays, unreleased, so the week keeps saying
- * "Audio coming soon." The public bucket is why this exists: files that are not
- * going to be used must not stay downloadable.
+ * `delete` mode. Removes generated trial audio from the public bucket and clears
+ * the URLs on the approval row, so the week keeps saying "Audio coming soon."
+ *
+ * Three guards, enforced in scripts/lib/course-audio/delete-guard.mjs:
+ *   - only Weeks 1-4 and only paths under weeks-01-04/ai-trial/ (no `..`);
+ *   - a dry run unless `--confirm` is passed;
+ *   - a released week is refused, because deleting it would break a live page.
  */
-async function deleteTrialFiles(weeks) {
-  const client = requireSupabase();
+async function deleteTrialFiles(weeks, confirmed) {
   if (!weeks.length) throw new Error('--delete-trial needs at least one week');
-  const summary = [];
-  for (const week of weeks) {
-    const removed = await removeTrialFiles(client, week);
-    const { error } = await client
-      .from('listening_audio_trials')
-      .update({ audio_url: null, captions_url: null, released: false, released_at: null, voices: null, model: null })
-      .eq('week', week);
-    if (error) throw new Error(`Could not clear the row for week ${week}: ${JSON.stringify(error)}`);
-    const left = await listBucketFiles(client, week);
-    if (left.length) throw new Error(`Week ${week} still has ${left.join(', ')} in the bucket`);
-    const line = removed.length
-      ? `Week ${week}: deleted ${removed.join(', ')}`
-      : `Week ${week}: nothing left in the bucket (already deleted)`;
-    console.log(line);
-    console.log(`  public URLs cleared, row still unreleased - /week/${week} shows "Audio coming soon."`);
-    summary.push(`- Week ${week}: ${removed.length ? `deleted ${removed.length} file(s)` : 'no files found'} · unreleased`);
+  for (const week of weeks) assertTrialWeek(week);
+  const client = requireSupabase();
+  const result = await runTrialDeletion(weeks, client, { confirmed });
+
+  for (const line of result.previews) console.log(line);
+  if (!result.confirmed) {
+    console.log('Dry run: nothing was deleted. Re-run with --confirm to remove these files.');
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      await appendSummary('# AI trial deletion - dry run', '', ...result.previews.map((line) => `- ${line}`), '', 'Nothing was deleted. Re-run with confirm enabled to remove these files.');
+    }
+    return;
   }
-  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary('# AI trial files deleted', '', ...summary);
+
+  console.log(`Deleted ${result.deleted.length} file(s). Approval rows cleared and still unreleased.`);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await appendSummary('# AI trial files deleted', '', ...result.previews.map((line) => `- ${line}`));
+  }
 }
 
 async function reviewWeek(weeks) {
@@ -512,9 +528,22 @@ async function revokeWeek(weeks) {
   }
 }
 
+/**
+ * Argument parsing lives inside the guarded entry point, so a bad `--weeks`
+ * value (letters, `..`, exponents) fails with the same clean annotation as any
+ * other error instead of a bare stack trace.
+ */
 async function main() {
-  if (weeksMode) {
-    if (deleteTrial) return deleteTrialFiles(weekList ?? []);
+  const weekList = listArg('--week') ?? listArg('--weeks');
+  const reviewWeekList = listArg('--review');
+  const releaseWeekList = listArg('--release');
+  const revokeWeekList = listArg('--revoke');
+  const listTrials = args.includes('--list');
+  const deleteTrial = args.includes('--delete-trial');
+  const confirmDelete = confirmRequested();
+
+  if (deleteTrial || listTrials || reviewWeekList || releaseWeekList || revokeWeekList || weekList) {
+    if (deleteTrial) return deleteTrialFiles(weekList ?? [], confirmDelete);
     if (listTrials) return listTrialState();
     if (reviewWeekList) return reviewWeek(reviewWeekList);
     if (releaseWeekList) return releaseWeek(releaseWeekList);
