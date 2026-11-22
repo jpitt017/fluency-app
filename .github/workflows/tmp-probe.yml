@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [arena/44148675-fluency-app]
-    paths: ['.github/workflows/tmp-probe.yml']
+    paths: ['.github/workflows/tmp-probe.yml', 'tests/production/placement-diagnostic.mjs']
 jobs:
   probe:
     runs-on: ubuntu-latest
