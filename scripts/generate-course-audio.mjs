@@ -46,7 +46,8 @@ import {
   readListeningWeeks,
 } from './lib/course-audio/listening-trial.mjs';
 import { createWebSocketTransport, parseScript } from './lib/course-audio/tts.mjs';
-import { releaseTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import { releaseTrial, revokeTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import { checkApprovalTarget } from './lib/course-audio/environment.mjs';
 import { assertTrialWeek, isConfirmed } from './lib/course-audio/delete-guard.mjs';
 import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
@@ -495,6 +496,10 @@ async function reviewWeek(weeks) {
 }
 
 async function releaseWeek(weeks) {
+  // Check the target before any database work: a production release is refused
+  // outright, so this must fail on the rule rather than on some later read.
+  const verdict = checkApprovalTarget({ url: supabaseUrl });
+  if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
     const { data, error } = await client
@@ -511,19 +516,18 @@ async function releaseWeek(weeks) {
       week,
       audioUrl: publicUrl.publicUrl,
       captionsUrl: data.captions_url ?? null,
+      url: supabaseUrl,
     });
     console.log(`Week ${week}: released · learners will see "AI voice – trial recording" and can play it twice.`);
   }
 }
 
 async function revokeWeek(weeks) {
+  const verdict = checkApprovalTarget({ url: supabaseUrl });
+  if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
-    const { error } = await client
-      .from('listening_audio_trials')
-      .update({ released: false, audio_url: null, released_at: null })
-      .eq('week', week);
-    if (error) throw new Error(`Could not revoke week ${week}: ${error.message}`);
+    await revokeTrial({ client, week, url: supabaseUrl });
     console.log(`Week ${week}: revoked - the page shows "Audio coming soon." again.`);
   }
 }

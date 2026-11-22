@@ -374,6 +374,8 @@ test('a dry run uploads nothing and a missing key stops the run', async (t) => {
 test('approval is the only thing that sets audioUrl and released', async () => {
   const calls = [];
   const client = {
+    // A preview project: approval writes are refused on production by design.
+    supabaseUrl: 'https://abcdefghijklmnopqrst.supabase.co',
     from(table) {
       assert.equal(table, 'listening_audio_trials');
       return {
