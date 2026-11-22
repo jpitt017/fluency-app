@@ -86,8 +86,14 @@ try {
   await page.getByLabel('Password', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   // `waitForURL` waits for a load event, which an App Router client-side redirect
-  // may never fire. Poll the URL instead.
-  await page.waitForFunction(() => !location.pathname.startsWith('/login'), null, { timeout: 30000 });
+  // may never fire, and `waitForFunction` can be starved by a pending navigation.
+  // Poll from Node, which observes neither restriction.
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (!new URL(page.url()).pathname.startsWith('/login')) break;
+    await page.waitForTimeout(500);
+  }
+  log('after sign-in URL', page.url());
+  if (new URL(page.url()).pathname.startsWith('/login')) throw new Error('sign-in did not leave /login');
   log('stage', `signed in, at ${page.url()}`);
 
   // --- the quiz ---
