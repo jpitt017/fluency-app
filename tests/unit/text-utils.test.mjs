@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { countWords, fetchWithTimeout, writingTaskStatus } from '../../lib/b1b2/text-utils.mjs';
 
+/**
+ * `writingTaskStatus` is the writing *lab's* wording and is asserted verbatim
+ * below; the placement page uses `writingWordCounter`/`writingHint` instead
+ * (`tests/unit/placement-questions.test.mjs`). */
+
 test('countWords ignores whitespace and keeps contractions intact', () => {
   assert.equal(countWords(''), 0);
   assert.equal(countWords('   '), 0);

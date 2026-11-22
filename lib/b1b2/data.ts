@@ -16,6 +16,9 @@ import type {
   XpEventRow,
 } from './types';
 
+/** The live placement diagnostic. `legacy` rows exist alongside it and must not leak in. */
+export const PLACEMENT_VERSION = 'v2';
+
 const ERROR_TAG_LABELS: Record<string, string> = {
   ...ERROR_CATEGORY_LABELS,
   articles: 'Articles (a / an / the)',
@@ -423,20 +426,35 @@ export async function loadObservabilitySummary(days = 7): Promise<AiObservabilit
 export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> {
   const supabase = await createServerSupabase();
   if (!supabase) return [];
+  // `placement_questions_safe` returns the active v2 questions plus the 24 legacy
+  // ones, and both versions share sort_order 1–24. Ordering by sort_order alone
+  // therefore interleaves them: 48 rows, two per question, each with four options.
+  // The page then rendered eight answer buttons per question and the component's
+  // "answers.length !== questions.length" read was meaningless. Select the
+  // version explicitly and dedupe by position so a question is never shown twice.
   const { data, error } = await supabase
     .from('placement_questions_safe')
-    .select('id, sort_order, area, question, options, code, text_id')
+    .select('id, sort_order, area, question, options, code, text_id, version')
+    .eq('version', PLACEMENT_VERSION)
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
-  return data.map((row) => ({
-    id: String(row.id),
-    sort_order: Number(row.sort_order),
-    code: String(row.code),
-    text_id: row.text_id ? String(row.text_id) : null,
-    area: String(row.area),
-    question: String(row.question),
-    options: Array.isArray(row.options) ? row.options.map(String) : [],
-  }));
+  const seen = new Set<number>();
+  return data
+    .filter((row) => {
+      const order = Number(row.sort_order);
+      if (seen.has(order)) return false;
+      seen.add(order);
+      return true;
+    })
+    .map((row) => ({
+      id: String(row.id),
+      sort_order: Number(row.sort_order),
+      code: String(row.code),
+      text_id: row.text_id ? String(row.text_id) : null,
+      area: String(row.area),
+      question: String(row.question),
+      options: Array.isArray(row.options) ? row.options.map(String) : [],
+    }));
 }
 
 /** Public reading passages for the placement quiz. */

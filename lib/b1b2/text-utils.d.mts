@@ -1,4 +1,13 @@
 export function countWords(text: string | null | undefined): number;
+export function writingWordCounter(
+  text: string,
+  minimum?: number,
+  maximum?: number,
+  target?: number,
+): { words: number; label: string; minimum: number; maximum: number; target: number; meetsMinimum: boolean; overMaximum: boolean };
+
+export function writingHint(words: number, minimum?: number): string | null;
+
 export function writingTaskStatus(
   text: string | null | undefined,
   minimum?: number,
