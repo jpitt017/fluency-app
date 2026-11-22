@@ -9,7 +9,12 @@ test('learner week 1 renders safe content and opens the weekly labs without keys
   expect(response?.status()).toBe(200);
   await expect(page.getByText('By the end of this week I can…', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Reading:/ })).toBeVisible();
-  await expect(page.getByText('Audio coming soon.')).toBeVisible();
+  // Listening audio depends on the approval flag in `listening_audio_trials`:
+  // an unreleased week says "Audio coming soon."; an approved AI trial week
+  // shows the player, always labelled as a trial recording.
+  const audioComingSoon = page.getByText('Audio coming soon.');
+  const trialPlayer = page.getByText('AI voice – trial recording');
+  await expect(audioComingSoon.or(trialPlayer)).toBeVisible();
   await expect(page.getByText(details.weeks[0].speaking.cueCard)).toBeVisible();
   const html = await page.content();
   expect(html).not.toContain('"answer_index"');
