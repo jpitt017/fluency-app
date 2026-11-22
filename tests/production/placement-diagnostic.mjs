@@ -3,15 +3,17 @@
 import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.env.PROD_BASE || 'https://fluency-app-nine.vercel.app';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const svc = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const admin = svc ? createClient(url, svc, { auth: { persistSession: false } }) : null;
 
+const report = {};
 function note(label, value) {
-  const text = `${label}=${String(value).replace(/[\r\n]+/g, ' ').slice(0, 900)}`;
-  console.log(`::warning::${text}`);
+  report[label] = String(value);
+  console.log(`${label}=${String(value).slice(0, 400)}`);
 }
 
 const browser = await chromium.launch();
@@ -111,4 +113,7 @@ try {
 } finally {
   if (user && admin) await deleteTestUser(admin, user.id).catch((e) => note('cleanup_error', e.message));
   await browser.close();
+  mkdirSync('diagnostic-output', { recursive: true });
+  writeFileSync('diagnostic-output/placement.json', JSON.stringify(report, null, 2));
+  console.log('WROTE diagnostic-output/placement.json');
 }

@@ -16,7 +16,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Diagnostic on production
+        continue-on-error: true
         run: node tests/production/placement-diagnostic.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: placement-diagnostic
+          path: diagnostic-output/
