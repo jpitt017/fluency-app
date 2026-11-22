@@ -37,3 +37,6 @@ tsconfig.tsbuildinfo
 # playwright artifacts
 test-results/
 playwright-report/
+
+# generated audio (uploaded to Supabase storage, never committed)
+/audio-out/

@@ -1,0 +1,120 @@
+# Course audio — AI trial tracks for Weeks 1–4 listening.
+#
+# Manual only: nothing here runs on a push or a pull request.
+#
+# `mode` is the approval workflow:
+#   generate  synthesise the tracks, upload them to `course-audio` as
+#             UNRELEASED (source "ai-trial", no live audioUrl), print the state
+#   review    print a time-limited private listening link for the weeks chosen
+#   release   approve reviewed weeks: set audio_url + released = true, so
+#             /week/[n] shows the player labelled "AI voice – trial recording"
+#   revoke    un-approve: learners go back to "Audio coming soon."
+#   list      show the approval state of every track
+#
+# Secret required: OPENAI_API_KEY (repository secret). The Supabase URL and
+# service-role key are the ones CI already uses for the live project.
+name: Course audio — AI trial tracks
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'generate | review | release | revoke | list'
+        type: choice
+        options: [generate, review, release, revoke, list]
+        default: generate
+      weeks:
+        description: 'Weeks to act on (comma separated, 1–4)'
+        type: string
+        default: '1,2,3,4'
+      dry_run:
+        description: 'generate: report speakers and length, generate nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: course-audio
+  cancel-in-progress: false
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install ffmpeg (MP3 encoding)
+        if: ${{ inputs.mode == 'generate' }}
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Check OPENAI_API_KEY availability
+        if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_KEY" ]; then
+            echo "::error::The OPENAI_API_KEY repository secret is not set. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Check SUPABASE_SERVICE_ROLE_KEY availability
+        if: ${{ inputs.mode != 'generate' || !inputs.dry_run }}
+        env:
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "::error::The SUPABASE_SERVICE_ROLE_KEY repository secret is not set."
+            exit 1
+          fi
+
+      - name: Validate the authored listening scripts
+        if: ${{ inputs.mode == 'generate' }}
+        run: npm run validate:details
+
+      - name: Show the planned tracks
+        if: ${{ inputs.mode == 'generate' }}
+        run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
+
+      - name: Generate, upload unreleased, record approval state
+        if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
+        run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Private review links (valid 7 days)
+        if: ${{ inputs.mode == 'review' }}
+        run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
+
+      - name: Release approved weeks
+        if: ${{ inputs.mode == 'release' }}
+        run: node scripts/generate-course-audio.mjs --release "${{ inputs.weeks }}"
+
+      - name: Revoke a track
+        if: ${{ inputs.mode == 'revoke' }}
+        run: node scripts/generate-course-audio.mjs --revoke "${{ inputs.weeks }}"
+
+      - name: Approval state
+        if: ${{ inputs.mode == 'generate' && !inputs.dry_run || inputs.mode == 'release' || inputs.mode == 'revoke' || inputs.mode == 'list' }}
+        run: node scripts/generate-course-audio.mjs --list
+
+      - name: Run the audio pipeline tests
+        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs
+
+      - name: Keep the generated files for a listen
+        if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: weeks-01-04-ai-trial-audio
+          path: audio-out/weeks-01-04/
+          retention-days: 7
