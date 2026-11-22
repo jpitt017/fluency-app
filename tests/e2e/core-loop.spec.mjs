@@ -253,3 +253,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Practise your mistakes|No error review cards due/i)).toBeVisible();
   });
 });
+
+test('all AI endpoints reject signed-out requests', async ({ request }) => {
+  for (const endpoint of ['/api/speaking/chat', '/api/speaking/evaluate', '/api/speaking/transcribe', '/api/writing/correct', '/api/mediation/feedback', '/api/review/check-rewrite']) {
+    const response = await request.post(endpoint, { data: {} });
+    expect(response.status(), `${endpoint} must require authentication`).toBe(401);
+  }
+});

@@ -9,12 +9,34 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
+      production_ai_test:
+        description: 'Run live login, writing and speaking smoke test'
+        type: boolean
+        default: false
       production_issue_test:
         description: 'Send one production test issue and delete the test user'
         type: boolean
         default: false
 
 jobs:
+  production-ai-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.production_ai_test == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Run real AI feedback smoke test
+        run: node tests/production/ai-feedback.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   production-issue-test:
     if: github.event_name == 'workflow_dispatch' && inputs.production_issue_test == true
     runs-on: ubuntu-latest
@@ -66,6 +88,7 @@ jobs:
       - run: node --test tests/unit/placement.test.mjs
       - run: node --test tests/unit/learner-wording.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
+      - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

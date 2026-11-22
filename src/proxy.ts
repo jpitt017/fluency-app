@@ -68,18 +68,13 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  let user = null;
+  // Refresh the session and forward updated cookies. Authentication and quota
+  // are enforced by the route, which also sees the refreshed request cookies.
   try {
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
+    await supabase.auth.getUser();
   } catch {
-    user = null;
-  }
-
-  // Auth gate at the edge; atomic quota enforcement (with per-request audio/text
-  // unit weighting) runs inside each API route via enforceAiUsage().
-  if (isAiProtected && !user) {
-    return NextResponse.json({ error: 'Sign in to use AI learning features.' }, { status: 401 });
+    // A refresh failure must not turn into a proxy-only authentication decision.
+    // Protected routes fail closed through their own authentication checks.
   }
 
   return response;
