@@ -1,0 +1,24 @@
+name: Probe ElevenLabs
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/44148675-fluency-app]
+    paths: ['.arena-work/probe.yml']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the secret exists and the API answers
+        env:
+          EL: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: |
+          if [ -z "$EL" ]; then echo "::warning::EL_KEY_MISSING=yes"; exit 0; fi
+          echo "::warning::EL_KEY_MISSING=no len=${#EL}"
+          code=$(curl -s -o /tmp/models.json -w '%{http_code}' -m 30 https://api.elevenlabs.io/v1/models -H "xi-api-key: $EL")
+          echo "::warning::models_http=$code bytes=$(wc -c </tmp/models.json)"
+          python3 - <<'PY' 2>/dev/null || echo "::warning::model_parse=failed"
+import json
+d=json.load(open('/tmp/models.json'))
+for m in d if isinstance(d,list) else []:
+    print(f"::warning::model {m.get('model_id')} langs={len(m.get('languages') or [])} multi={any((l or {}).get('language_id')=='en' for l in (m.get('languages') or []))}")
+PY
