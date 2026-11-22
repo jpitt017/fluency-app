@@ -1,3 +1,4 @@
+-- DRAFT ONLY: not part of the deployment migration directory.
 -- First model view per learner, week, and output skill. No influence on scoring or unlocks.
 create table if not exists public.week_model_views (
   user_id uuid not null references auth.users(id) on delete cascade,

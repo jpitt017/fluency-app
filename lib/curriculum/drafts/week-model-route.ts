@@ -1,3 +1,4 @@
+// Draft only: not installed as a route and not exposed to learners.
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
