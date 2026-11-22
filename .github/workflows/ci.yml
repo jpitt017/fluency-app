@@ -193,3 +193,35 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  isolated-deletion:
+    name: Isolated migration and learner-data deletion
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase without project migrations
+        run: |
+          supabase init
+          supabase start
+      - name: Apply migrations and test both application orders
+        shell: bash
+        run: |
+          set -euo pipefail
+          db='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          for file in supabase-b1-b2/migrations/*.sql; do
+            case "$file" in *0038_*|*0039_*) continue;; esac
+            psql "$db" -v ON_ERROR_STOP=1 -f "$file"
+          done
+          psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0039_repair_learning_data_deletion.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0038_vocabulary_attempts.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0039_repair_learning_data_deletion.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
