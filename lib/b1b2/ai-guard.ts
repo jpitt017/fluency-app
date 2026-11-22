@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { dailyLimitMessage } from './usage-messages.mjs';
 
 export type AiEndpoint =
   | '/api/speaking/chat'
@@ -10,7 +11,7 @@ export type AiEndpoint =
 export interface AiGuardResult {
   allowed: boolean;
   userId?: string;
-  tier?: 'free' | 'pro';
+  tier?: 'free' | 'pilot' | 'pro' | 'staff';
   headers: Record<string, string>;
   response?: NextResponse;
 }
@@ -68,12 +69,12 @@ export async function enforceAiUsage(
     };
   }
 
-  const tier = data.tier === 'pro' ? 'pro' : 'free';
+  const tier: NonNullable<AiGuardResult['tier']> = ['pilot', 'pro', 'staff'].includes(data.tier) ? data.tier : 'free';
   const headers: Record<string, string> = {
     'X-AI-Usage-Remaining-Minute': String(data.minute_remaining ?? 0),
     'X-AI-Usage-Remaining-Day': String(data.daily_units_remaining ?? 0),
     'X-AI-Usage-Tier': tier,
-    'X-AI-Daily-Limit': String(data.daily_unit_limit ?? (tier === 'pro' ? 180 : 30)),
+    'X-AI-Daily-Limit': String(data.daily_unit_limit ?? ({ free: 30, pilot: 120, pro: 180, staff: 1000 }[tier])),
     'X-AI-Units-Charged': String(safeUnits),
   };
 
@@ -88,9 +89,7 @@ export async function enforceAiUsage(
         {
           error:
             data.reason === 'daily_limit'
-              ? tier === 'pro'
-                ? 'Your Pro daily AI practice allowance has been reached. Please try again later.'
-                : 'Your free daily AI allowance (30 units/day) has been reached. Upgrade to Pro for 180 units/day or try again tomorrow.'
+              ? dailyLimitMessage(tier, process.env.NEXT_PUBLIC_PILOT_PRICING_ENABLED === 'true')
               : 'You are practising too quickly. Please wait a few seconds before trying again.',
           retryAfterSeconds: retryAfter,
           tier,

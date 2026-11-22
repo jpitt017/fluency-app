@@ -3,6 +3,8 @@
 const USER_TABLES = [
   'ai_request_logs',
   'ai_usage_events',
+  'ai_usage_resets',
+  'pilot_learners',
   'checkpoint_attempts',
   'curriculum_preferences',
   'daily_sessions',

@@ -16,6 +16,23 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
 
   const selected = learners.find((l) => l.user_id === selectedId) ?? learners[0] ?? null;
 
+  async function setPilot(userId: string, enabled: boolean) {
+    setSavingKey('pilot');
+    setFeedbackBanner('');
+    try {
+      const response = await fetch('/api/teacher/pilot', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, enabled }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || 'Could not update pilot access.');
+      setFeedbackBanner(enabled ? 'Pilot access enabled.' : 'Pilot access removed.');
+      router.refresh();
+    } catch (error) {
+      setFeedbackBanner(error instanceof Error ? error.message : 'Could not update pilot access.');
+    } finally { setSavingKey(null); }
+  }
+
   async function submitReview(params: {
     targetType: 'speaking' | 'writing' | 'checkpoint';
     targetId: string;
@@ -130,6 +147,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                   Streak: {selected.streak_days}d
                 </span>
               </div>
+            </div>
+
+            <div className="mt-5 border-t border-stone-100 pt-4">
+              <p className="text-sm font-semibold">Pilot AI practice: {selected.pilot === null ? 'Unavailable' : selected.pilot ? 'On' : 'Off'}</p>
+              <p className="mt-1 text-xs text-stone-600">Pilot learners get 120 units a day. An active Pro subscription takes priority.</p>
+              {selected.pilot !== null && <button type="button" disabled={savingKey !== null} onClick={() => setPilot(selected.user_id, !selected.pilot)} className="mt-2 rounded-lg border border-indigo-700 px-3 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-50">{selected.pilot ? 'Remove pilot access' : 'Give pilot access'}</button>}
             </div>
 
             {/* Top recurring errors */}

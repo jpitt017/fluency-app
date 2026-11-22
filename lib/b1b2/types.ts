@@ -597,6 +597,7 @@ export interface MissedPracticeItem {
 }
 
 export interface TeacherRosterLearner {
+  pilot: boolean | null;
   user_id: string;
   full_name: string;
   email: string | null;

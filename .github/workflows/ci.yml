@@ -89,6 +89,7 @@ jobs:
       - run: node --test tests/unit/learner-wording.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
+      - run: node --test tests/unit/usage-messages.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema
         env:
@@ -169,6 +170,13 @@ jobs:
           cache: npm
       - run: npm ci
         if: steps.check.outputs.available == 'true'
+      - name: Verify live AI limits and pilot access
+        if: steps.check.outputs.available == 'true'
+        run: node scripts/test-ai-limits.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Verify live issue alert grouping
         if: steps.check.outputs.available == 'true'
         run: node scripts/test-issue-alert-grouping.mjs
