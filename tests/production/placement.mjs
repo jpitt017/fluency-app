@@ -121,7 +121,13 @@ try {
     await page.getByLabel(/Email address/i).fill(user.email);
     await page.getByLabel(/^Password/i).fill(user.password);
     await page.getByRole('button', { name: /^Sign in$/ }).click();
-    await page.waitForURL(/\/(dashboard|labs|teacher|onboarding)/, { timeout: 60_000 });
+    // An App Router client-side redirect may not fire a load event, which
+    // waitForURL waits for. Poll the URL from Node instead.
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      if (!new URL(page.url()).pathname.startsWith('/login')) break;
+      await page.waitForTimeout(500);
+    }
+    if (new URL(page.url()).pathname.startsWith('/login')) throw new Error('sign-in did not leave /login');
     await walk(page, 'signedin', { width: 1280, height: 720 });
     // Finishing must still work for a signed-in learner (server scoring + save).
     await page.getByRole('button', { name: 'Skip sample' }).click();

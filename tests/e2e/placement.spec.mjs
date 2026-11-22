@@ -140,17 +140,20 @@ test.describe('placement quiz reaches the writing step', () => {
 
     await answerWholePlacementQuiz(page);
 
-    // The writing task is usable: word counter reports progress and gates the button.
-    await expect(page.getByText('0 words · aim for 15–100 words')).toBeVisible();
-    await expect(page.getByText('Minimum 15 words')).toBeVisible();
+    // The writing task is usable: the live counter reads "23 / 60-100 words" and
+    // the hint explains why Evaluate is disabled.
+    const counter = page.getByTestId('writing-word-counter');
+    await expect(counter).toHaveText('0 / 60-100 words');
+    await expect(page.getByTestId('writing-hint')).toHaveText('Write at least 15 words, or skip');
     const evaluate = page.getByRole('button', { name: 'Evaluate Sample & Recommend Level' });
     await expect(evaluate).toBeDisabled();
     await page.getByRole('textbox').fill('One two three four five six seven.');
-    await expect(page.getByText('7 words · aim for 15–100 words')).toBeVisible();
+    await expect(counter).toHaveText('7 / 60-100 words');
     await expect(evaluate).toBeDisabled();
     // Exactly sixty words reaches the target the task asks for.
     await page.getByRole('textbox').fill(Array.from({ length: 60 }, (_, index) => `word${index + 1}`).join(' '));
-    await expect(page.getByText('60 words · enough to evaluate')).toBeVisible();
+    await expect(counter).toHaveText('60 / 60-100 words');
+    await expect(page.getByTestId('writing-hint')).toHaveCount(0);
     await expect(evaluate).toBeEnabled();
 
     expect(problems.pageErrors).toEqual([]);
@@ -178,7 +181,7 @@ test.describe('placement quiz reaches the writing step', () => {
     await expectNoOverlapWithContinueButton(page);
 
     // The rest of the walk on a phone also lands on a usable writing step.
-    await expect(page.getByText('0 words · aim for 15–100 words')).toBeVisible();
+    await expect(page.getByTestId('writing-word-counter')).toHaveText('0 / 60-100 words');
     expect(problems.pageErrors).toEqual([]);
     expect(problems.serverErrors).toEqual([]);
   });

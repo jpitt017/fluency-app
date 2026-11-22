@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { countWords, fetchWithTimeout, writingTaskStatus } from '@/lib/b1b2/text-utils.mjs';
+import { countWords, fetchWithTimeout, writingHint, writingWordCounter } from '@/lib/b1b2/text-utils.mjs';
 import type { PlacementQuestionRow, PlacementTextRow } from '@/lib/b1b2/types';
 
 type Placement = 'foundation' | 'stage1' | 'stage2';
 
-const SCORE_TIMEOUT_MS = 30_000;
-const WRITING_TIMEOUT_MS = 45_000;
+const SCORE_TIMEOUT_MS = 20_000;
+const WRITING_TIMEOUT_MS = 20_000;
 const MIN_WRITING_WORDS = 15;
 const TARGET_WRITING_WORDS = 60;
 
@@ -52,7 +52,8 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     return () => window.clearTimeout(timer);
   }, [currentIndex, selectedOption]);
 
-  const writingStatus = writingTaskStatus(writingSample, MIN_WRITING_WORDS, TARGET_WRITING_WORDS);
+  const counter = writingWordCounter(writingSample, MIN_WRITING_WORDS, 100, TARGET_WRITING_WORDS);
+  const hint = writingHint(counter.words, MIN_WRITING_WORDS);
 
   if (!questions.length) {
     return (
@@ -101,14 +102,14 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers: submittedAnswers }),
-      }, SCORE_TIMEOUT_MS, 'Scoring is taking longer than usual. Please check your connection and try again.');
+      }, SCORE_TIMEOUT_MS, 'We could not check your answers: the connection was slow. Nothing was lost — press the button again.');
       if (!scoreRes.ok) throw new Error('Scoring unavailable');
       const data = (await scoreRes.json()) as { score: number; placement: Placement };
       if (!Number.isInteger(data.score) || !['foundation', 'stage1', 'stage2'].includes(data.placement)) throw new Error('Invalid score');
       scored = data.score;
       resultPlacement = data.placement;
     } catch (error) {
-      setScoreError(error instanceof Error && error.message.startsWith('Scoring is taking') ? error.message : 'Could not score your answers. Please try again.');
+      setScoreError(error instanceof Error && error.message.startsWith('We could not check your answers') ? error.message : 'We could not check your answers. Please try again.');
       setLoading(false);
       return;
     }
@@ -127,18 +128,18 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               'Placement writing sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
             variety: 'British',
           }),
-        }, WRITING_TIMEOUT_MS, 'Writing feedback timed out. Your quiz result still decides your starting point.');
+        }, WRITING_TIMEOUT_MS, 'We could not read your writing this time. Your quiz result still shows your level.');
         if (res.ok) {
           const data = (await res.json()) as { score?: number; feedback?: string };
           if (typeof data.score === 'number') evaluatedScore = data.score;
           if (typeof data.feedback === 'string') feedbackText = data.feedback;
         } else {
-          feedbackText = 'Writing feedback is unavailable right now. Your quiz score still decides your starting point.';
+          feedbackText = 'We could not read your writing this time. Your quiz result still shows your level.';
         }
       } catch (error) {
-        feedbackText = error instanceof Error && error.message.startsWith('Writing feedback timed out')
+        feedbackText = error instanceof Error && error.message.startsWith('We could not read your writing')
           ? error.message
-          : 'Writing feedback is unavailable right now. Your quiz score still decides your starting point.';
+          : 'We could not read your writing this time. Your quiz result still shows your level.';
       }
     }
 
@@ -224,11 +225,12 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
             })()}
             <p className="text-sm font-medium leading-6 text-stone-800">{question.question}</p>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2.5" data-testid="placement-options">
               {question.options.map((option, idx) => (
                 <button
-                  key={option}
+                  key={`${idx}-${option}`}
                   type="button"
+                  data-testid="placement-option"
                   onClick={() => selectOption(idx)}
                   className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                     selectedOption === idx
@@ -257,6 +259,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
 
             <button
               type="button"
+              data-testid="placement-continue"
               onClick={handleNextQuestion}
               disabled={selectedOption === null || missingPassage}
               className="w-full rounded-xl bg-indigo-700 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:opacity-50"
@@ -270,27 +273,32 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
           <div className="space-y-4">
             {scoreError && <p role="alert" className="text-red-700">{scoreError}</p>}
             <p className="text-sm leading-6 text-stone-700">
-              Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
+              Write 3–5 sentences (60–100 words). Say why you are learning English and
+              what you find hard to talk about.
             </p>
             <textarea
               rows={4}
               value={writingSample}
               onChange={(e) => setWritingSample(e.target.value)}
-              placeholder="Write a short paragraph here, or skip to use your 24-item quiz score…"
+              aria-describedby="placement-writing-counter placement-writing-hint"
+              placeholder="Write your answer here, or choose Skip sample"
               className="w-full rounded-xl border border-stone-300 bg-stone-50/60 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
             />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
-              <span aria-live="polite" className="font-medium">
-                {writingStatus.message}
+              <span id="placement-writing-counter" data-testid="writing-word-counter" aria-live="polite" className="font-medium">
+                {counter.label}
               </span>
-              <span>
-                {writingStatus.meetsTarget ? 'Ready for feedback' : `Minimum ${MIN_WRITING_WORDS} words`}
-              </span>
+              <span>{counter.overMaximum ? 'That is a little long, but you can send it.' : `Minimum ${MIN_WRITING_WORDS} words`}</span>
             </div>
+            {hint && !loading && (
+              <p id="placement-writing-hint" data-testid="writing-hint" className="text-xs text-stone-600">
+                {hint}
+              </p>
+            )}
             <div className="flex flex-col gap-2.5 sm:flex-row">
               <button
                 type="button"
-                disabled={loading || !writingStatus.meetsMinimum}
+                disabled={loading || !counter.meetsMinimum}
                 onClick={() => void finishPlacement(false)}
                 className="flex-1 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
               >
@@ -307,7 +315,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
             </div>
             {loading && (
               <p role="status" className="text-xs text-stone-600">
-                This can take up to 45 seconds. If it runs over, you can skip the sample and keep your quiz result.
+                This can take up to 20 seconds. If it is slow, choose Skip sample to keep your quiz result.
               </p>
             )}
           </div>
