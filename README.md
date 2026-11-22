@@ -95,8 +95,8 @@ Irish voices and land **unreleased** in the private `course-audio-review` bucket
 `course-audio` bucket and sets `audio_url` on its `listening_audio_trials` row.
 The manual `Course audio — AI trial tracks` workflow needs an `ELEVENLABS_API_KEY`
 repository secret. Start with `mode: voice-check`, which records one line per
-speaker and prints 1-hour links so the seven accents can be approved before any
-full track is recorded. A week only shows the player, labelled **AI voice – trial
+speaker and attaches the seven clips as the `voice-check` artifact (three days),
+so the accents can be approved before any full track is recorded. A week only shows the player, labelled **AI voice – trial
 recording**, once its row is released; see
 [`docs/CONTENT_PIPELINE.md`](docs/CONTENT_PIPELINE.md) section 6.
 

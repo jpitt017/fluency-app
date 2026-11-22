@@ -4,8 +4,9 @@
 #
 # `mode` is the approval workflow:
 #   voice-check  synthesise one line per speaker, upload the seven clips to the
-#                private review bucket and print 1-hour links, so the voices can
-#                be approved before a whole week is recorded
+#                private review bucket and attach them as the `voice-check`
+#                artifact, so the accents can be approved before a whole week is
+#                recorded
 #   generate     synthesise the tracks, upload them to `course-audio-review`
 #                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
 #                print the state
@@ -128,11 +129,22 @@ jobs:
         if: ${{ inputs.mode == 'generate' }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
 
-      - name: Voice check — one line per speaker, approval links
+      - name: Voice check — one line per speaker
         if: ${{ inputs.mode == 'voice-check' }}
         run: node scripts/generate-course-audio.mjs --voice-check
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
+      # The signed links in the step summary are not usable outside the run page
+      # (GitHub redacts the token when it renders them), so the clips themselves
+      # travel as an artifact.
+      - name: Voice check clips for a listen
+        if: ${{ inputs.mode == 'voice-check' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: voice-check
+          path: voice-check/
+          retention-days: 3
 
       - name: Generate, upload unreleased, record approval state
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
@@ -170,7 +182,7 @@ jobs:
 
       - name: Keep the generated files for a listen
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: weeks-01-04-ai-trial-audio
           path: audio-out/weeks-01-04/

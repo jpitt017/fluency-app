@@ -503,14 +503,23 @@ async function reviewWeek(weeks) {
 }
 
 /**
- * Audition links for the seven voices. Each clip is one line, the same words for
- * every speaker, so the accents can be compared side by side before a full week
- * is recorded.
+ * Auditions the seven voices. Each clip is one line, the same words for every
+ * speaker, so the accents can be compared side by side before a full week is
+ * recorded.
+ *
+ * The MP3s are written to ./voice-check/, which the workflow uploads as the
+ * `voice-check` artifact for three days: that is the route to listen to them,
+ * because GitHub redacts the signed token from anything it renders. The signed
+ * links are still printed to the step log, and drive the summary table, but they
+ * expire in an hour and are not readable outside the run page.
  */
 async function voiceCheck() {
   if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice check.');
   const client = requireSupabase();
-  const outputDir = path.join(process.cwd(), 'audio-out', 'voice-check');
+  // Kept outside audio-out on purpose: this is the folder the workflow uploads
+  // as the `voice-check` artifact, so a reviewer can download the seven MP3s
+  // instead of relying on signed links.
+  const outputDir = path.join(process.cwd(), 'voice-check');
   console.log(`Voice check (${TTS_MODEL}, rate ${B1_SPEECH_RATE}): "${VOICE_CHECK_LINE}"`);
   const results = await generateVoiceCheck({
     outputDir,
@@ -520,7 +529,16 @@ async function voiceCheck() {
     log: (message) => console.log(message),
   });
 
-  const summary = ['# Voice check — one line per speaker', '', '| Speaker | Voice | Accent | Length | Listen |', '| --- | --- | --- | --- | --- |'];
+  const summary = [
+    '# Voice check — one line per speaker',
+    '',
+    `Download the seven MP3s from the **\`voice-check\`** artifact on this run (kept for 3 days): ${runUrl()}`,
+    '',
+    'The signed links below work for one hour and are a convenience only; GitHub redacts the token whenever the summary is rendered.',
+    '',
+    '| Speaker | Voice | Accent | Length | Signed link (1 hour) |',
+    '| --- | --- | --- | --- | --- |',
+  ];
   for (const entry of results) {
     const url = await signReviewUrl(client, entry.key);
     console.log(`${entry.speaker} (${entry.name}, ${entry.accent}) ${entry.durationSeconds}s`);
@@ -532,6 +550,13 @@ async function voiceCheck() {
   summary.push('', `Links are valid for ${REVIEW_LINK_SECONDS / 60} minutes.`, '', 'Nothing is released: these clips are for approval only.');
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
   console.log(`\n${results.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased. Links valid ${REVIEW_LINK_SECONDS / 60} minutes.`);
+}
+
+/** This run's page, so the summary can point at the artifact. */
+function runUrl() {
+  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID } = process.env;
+  if (!GITHUB_SERVER_URL || !GITHUB_REPOSITORY || !GITHUB_RUN_ID) return 'the **Artifacts** section of this run';
+  return `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}`;
 }
 
 async function releaseWeek(weeks) {

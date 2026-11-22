@@ -325,6 +325,25 @@ test('the workflow saves only the review artefacts and requires the ElevenLabs s
   assert.match(workflow, /mode: voice-check|voice-check/);
 });
 
+test('the voice-check clips travel as a `voice-check` artifact, on the Node 24 action', () => {
+  // Signed links are redacted wherever GitHub renders them, so the MP3s have to
+  // be downloadable. Same action major as the other Node 24 actions in the repo.
+  const block = workflow.split('- name: Voice check clips for a listen')[1]?.split('- name:')[0];
+  assert.ok(block, 'the voice check has an artifact step');
+  assert.match(block, /uses: actions\/upload-artifact@v7/);
+  assert.match(block, /name: voice-check\n/);
+  assert.match(block, /path: voice-check\//);
+  assert.match(block, /retention-days: 3/);
+  assert.doesNotMatch(workflow, /actions\/upload-artifact@v4/, 'every artifact step runs on Node 24');
+  assert.doesNotMatch(workflow, /actions\/(checkout|setup-node)@v[0-4]\b/);
+});
+
+test('the CLI writes the voice-check clips to ./voice-check, which is not committed', () => {
+  assert.match(cli, /path\.join\(process\.cwd\(\), 'voice-check'\)/);
+  const ignore = readFileSync(new URL('../../.gitignore', import.meta.url), 'utf8');
+  assert.match(ignore, /^\/voice-check\/$/m);
+});
+
 /* ---------------------------------------------------------------- end to end */
 
 const weeks = await readListeningWeeks();

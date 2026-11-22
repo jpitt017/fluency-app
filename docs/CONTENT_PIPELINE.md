@@ -183,10 +183,13 @@ key, and installs ffmpeg for MP3 encoding.
 
 **Step 1 — approve the voices (`mode: voice-check`).** This records one short
 line per speaker with the same words, uploads the seven clips to the private
-review bucket and prints a 1-hour signed link for each, so the accents can be
-compared before a whole week is recorded. Short clips do not use up a normal
-monthly quota cycle the way four full tracks would, and a voice that needs
-replacing is replaced before any track depends on it.
+review bucket, and attaches them to the run as the **`voice-check` artifact**
+(kept for three days), so the accents can be compared before a whole week is
+recorded. Download the artifact to listen: the 1-hour signed links printed in the
+step summary are only a convenience, because GitHub redacts the token whenever it
+renders them. Short clips do not use up a normal monthly quota cycle the way four
+full tracks would, and a voice that needs replacing is replaced before any track
+depends on it.
 
 **Step 2 — generate the tracks (`mode: generate`).** Runs
 `scripts/generate-course-audio.mjs --weeks 1,2,3,4`, which:
