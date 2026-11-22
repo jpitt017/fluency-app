@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import RememberWeek from '@/components/b1b2/RememberWeek';
 import { notFound } from 'next/navigation';
 import { loadLearnerWeek, type LearnerQuestion } from '@/lib/curriculum/learner-week';
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
@@ -20,8 +21,9 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
+    <RememberWeek week={number} />
     <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>
-      <p className="mt-4 rounded-xl bg-emerald-50 p-4"><strong>Can-do goal: </strong>{details?.canDo ?? week.cefr.canDo}</p></header>
+      <p className="mt-4 rounded-xl bg-emerald-50 p-4"><strong>By the end of this week I can… </strong>{details?.canDo ?? week.cefr.canDo}</p></header>
     {!details ? <section className="rounded-xl border border-stone-200 p-5"><h2 className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">Detailed reading, listening, speaking and writing tasks have not been published for this week yet.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Open free practice in Labs</Link></section> : <>
       <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Reading: {details.reading.title}</h2><p className="whitespace-pre-line leading-7">{details.reading.text}</p><Questions questions={details.reading.questions} /></section>
       <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>{details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}<Questions questions={details.listening.questions} /></section>

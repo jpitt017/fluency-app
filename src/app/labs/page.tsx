@@ -34,13 +34,13 @@ export default async function LabsPage({ searchParams }: LabsProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-              AI Output Studio · B1 → B2
+              English practice · B1 → B2
             </span>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
               Speaking, Writing & Role-Play Labs
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-stone-600">
-              AI coaching for B1 → B2 English fluency: structured writing evaluation, speech transcription and content/grammar scoring, prosody shadowing, and interactive conversation practice.
+              Practise speaking and writing. Get feedback to help you improve.
             </p>
             {pronunciationFocus && (
               <p className="mt-2 text-xs font-semibold text-emerald-800">
@@ -52,7 +52,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
             href="/portfolio"
             className="shrink-0 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-100"
           >
-            View output portfolio →
+            See my work →
           </Link>
         </div>
       </header>
@@ -60,7 +60,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
       {!viewer.signedIn && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 px-5 py-4 text-sm text-indigo-950">
           <p>
-            <strong>Sign in required for AI feedback:</strong> You can draft and record below, then sign in to run Groq Whisper transcription and B1 → B2 rubric scoring.
+            <strong>Sign in for feedback.</strong> You can write and record before signing in.
           </p>
           <Link
             href="/login?next=/labs"
@@ -86,7 +86,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
           <div className="mb-4 border-b border-stone-100 pb-3">
             <h2 className="text-lg font-bold text-stone-900">Speaking Evaluator</h2>
             <p className="text-xs text-stone-500">
-              Record 60–180 seconds for Whisper transcription and B1 → B2 feedback.
+              {selectedWeek?.speakingLength ? `Speak for ${selectedWeek.speakingLength}. ` : 'Speak for about 1 minute. '}The app writes down what you said and gives you feedback.
             </p>
           </div>
           <SpeakingLab unlockedModel={unlockedModels?.speaking} lessonContext={selectedWeek ? { ...freeContext, prompt: selectedWeek.speakingPrompt, weekNumber } : freeContext} pronunciationFocus={pronunciationFocus} />

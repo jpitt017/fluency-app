@@ -7,7 +7,7 @@ const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/cu
 test('learner week 1 renders safe content and opens the weekly labs without keys or models', async ({ page }) => {
   const response = await page.goto('/week/1');
   expect(response?.status()).toBe(200);
-  await expect(page.getByText('Can-do goal:', { exact: false })).toBeVisible();
+  await expect(page.getByText('By the end of this week I can…', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Reading:/ })).toBeVisible();
   await expect(page.getByText('Audio coming soon.')).toBeVisible();
   await expect(page.getByText(details.weeks[0].speaking.cueCard)).toBeVisible();
@@ -45,3 +45,19 @@ for (const [placement, score, target, label] of [
     await expect(page).toHaveURL(new RegExp(`${target.replace('/', '\\/')}(?:[?#]|$)`));
   });
 }
+
+test('learner navigation remembers the last opened week and hides staff links', async ({ page }) => {
+  await page.goto('/week/4');
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
+  for (const label of ['Practice', 'Review', 'My work', 'Dashboard']) {
+    await expect(nav.getByRole('link', { name: label })).toBeVisible();
+  }
+  for (const label of ['Curriculum', 'Assessments', 'Teacher', 'Pricing']) {
+    await expect(nav.getByRole('link', { name: label })).toHaveCount(0);
+  }
+  await page.getByRole('link', { name: 'Open speaking task in Labs' }).click();
+  await expect(page.getByText(/Speak for 60.90 seconds/)).toBeVisible();
+  await page.reload();
+  await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
+});

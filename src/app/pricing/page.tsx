@@ -7,7 +7,7 @@ const INCLUDED = [
   'Unlimited AI speaking evaluation (content, grammar & coherence) + Shadowing Studio',
   'Writing studio with line-by-line B2 error feedback and rewrite coaching',
   'Real-time conversational English role-play across B1 → B2 scenarios',
-  'Personalised FSRS mistake-repair drills and output archive portfolio',
+  'Practice for your mistakes and a place to save your work',
   'Teacher console support for live feedback and pronunciation notes',
 ];
 
@@ -54,7 +54,7 @@ export default function PricingPage() {
             Full Access to Fluency Studio
           </h1>
           <p className="text-sm leading-6 text-stone-600">
-            Focused B2 preparation (not a guarantee of a B2 exam result): unlock unlimited AI speaking and writing feedback, real-time role-play, and personalised FSRS error review.
+            Prepare for B2 with speaking and writing feedback. Practise conversations and review mistakes.
           </p>
           <ul className="space-y-2 pt-2 text-sm text-stone-700">
             {INCLUDED.map((item) => (

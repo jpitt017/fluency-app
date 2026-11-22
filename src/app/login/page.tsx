@@ -204,7 +204,7 @@ function LoginForm() {
             ? 'Choose a new password (at least 6 characters) for your account'
             : isSignUp
               ? 'Start your B1 → B2 study workspace'
-              : 'Sign in to continue your AI labs and FSRS reviews'}
+              : 'Sign in to practise and review your mistakes'}
         </p>
       </div>
 
