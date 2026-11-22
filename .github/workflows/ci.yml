@@ -92,8 +92,17 @@ jobs:
       - name: Walk the placement quiz on production and report what breaks
         run: node tests/production/placement-repro.mjs
         env:
+          REPRO_OUTPUT: ${{ runner.temp }}/placement-repro.txt
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Keep the repro report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: placement-repro
+          path: ${{ runner.temp }}/placement-repro.txt
+          if-no-files-found: warn
 
   changes:
     runs-on: ubuntu-latest

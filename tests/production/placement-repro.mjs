@@ -16,7 +16,7 @@
 import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const base = process.env.PLACEMENT_BASE_URL || 'https://fluency-app-nine.vercel.app';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,8 +30,18 @@ const pageErrors = [];
 const failedRequests = [];
 const apiRequests = [];
 
+const report = [];
 function log(label, value) {
-  console.log(`${label}: ${typeof value === 'string' ? value : JSON.stringify(value)}`);
+  const rendered = `${label}: ${typeof value === 'string' ? value : JSON.stringify(value)}`;
+  report.push(rendered);
+  console.log(rendered);
+}
+
+/** GitHub strips job logs for this repo's runs, so the summary is the transport. */
+function writeSummary() {
+  const body = ['## Placement writing-step repro', '', '```', ...report, '```', ''].join('\n');
+  if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, body, { flag: 'a' });
+  if (process.env.REPRO_OUTPUT) writeFileSync(process.env.REPRO_OUTPUT, body);
 }
 
 let user;
@@ -130,6 +140,7 @@ try {
   log('page errors', pageErrors);
   log('failed requests', failedRequests);
   log('api requests', apiRequests);
+  writeSummary();
   if (browser) await browser.close();
   if (user) {
     const admin = createClient(url, key, { auth: { persistSession: false } });
