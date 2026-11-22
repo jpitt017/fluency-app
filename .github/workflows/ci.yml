@@ -13,10 +13,6 @@ on:
         description: 'Run live login, writing and speaking smoke test'
         type: boolean
         default: false
-      ai_test_preview:
-        description: 'Use diagnostic preview instead of production'
-        type: boolean
-        default: false
       production_issue_test:
         description: 'Send one production test issue and delete the test user'
         type: boolean
@@ -40,7 +36,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          AI_TEST_PREVIEW: ${{ inputs.ai_test_preview }}
 
   production-issue-test:
     if: github.event_name == 'workflow_dispatch' && inputs.production_issue_test == true
@@ -93,6 +88,7 @@ jobs:
       - run: node --test tests/unit/placement.test.mjs
       - run: node --test tests/unit/learner-wording.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
+      - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

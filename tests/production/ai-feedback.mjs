@@ -9,9 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
-const base = process.env.AI_TEST_PREVIEW === 'true'
-  ? 'https://fluency-app-git-arena-f6482574-fluency-app-jpitt017.vercel.app'
-  : 'https://fluency-app-nine.vercel.app';
+const base = 'https://fluency-app-nine.vercel.app';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (url !== 'https://ebzmkhrssgnzmixfsuso.supabase.co' || !key) throw new Error('Production Supabase URL and service key required');
