@@ -92,6 +92,7 @@ jobs:
       - run: node --test tests/unit/usage-messages.test.mjs
       - run: node --test tests/unit/learner-grammar.test.mjs
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
+      - run: node --test tests/unit/input-marking.test.mjs
       - run: node --test tests/unit/delete-user-storage.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema

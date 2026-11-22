@@ -1,6 +1,7 @@
 import 'server-only';
 import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { projectInputQuestions } from './input-marking.mjs';
 
 export type LearnerQuestion = { id: string; question: string; options: string[] };
 type Input = { title: string; text?: string; audioUrl?: string; questions: LearnerQuestion[] };
@@ -30,7 +31,7 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   }
   const questionsFor = (mode: string, fallback: typeof reading.questions): LearnerQuestion[] => {
     const rows = dbQuestions.filter((row) => row.mode === mode).map((row) => row.payload as { id: string; question: string; options: string[] });
-    return (rows.length ? rows : fallback).map((q) => ({ id: q.id, question: q.question, options: Array.isArray(q.options) ? q.options : [] }));
+    return projectInputQuestions(rows.length ? rows : fallback) as LearnerQuestion[];
   };
   return {
     title: week.title, canDo: week.canDo,
