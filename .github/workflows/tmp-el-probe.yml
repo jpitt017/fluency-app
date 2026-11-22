@@ -18,3 +18,7 @@ jobs:
           echo "::warning::models_http=$code bytes=$(wc -c </tmp/models.json)"
           python3 -c "import json;d=json.load(open('/tmp/models.json'));ms=d if isinstance(d,list) else d.get('models',[]);[print('::warning::model '+str(m.get('model_id'))+' keys='+','.join(sorted(k for k in ('can_do_text_to_speech',) if m.get(k)) ) ) for m in ms]"
           python3 -c "import json;d=json.load(open('/tmp/models.json'));ms=d if isinstance(d,list) else d.get('models',[]);[print('::warning::tts '+str(m.get('model_id'))+' enabled='+str(m.get('can_do_text_to_speech'))) for m in ms]"
+          echo "::warning::body=$(tr -d '\n' </tmp/models.json | cut -c1-200)"
+          case "$EL" in sk_*) echo "::warning::prefix=sk_";; *) echo "::warning::prefix=other";; esac
+          t=$(printf '%s' "$EL" | tr -d '[:space:]'); echo "::warning::len_trimmed=${#t} raw=${#EL}"
+          echo "::warning::suffix_is_space=$([[ "$EL" == *' ' ]] && echo yes || echo no)"
