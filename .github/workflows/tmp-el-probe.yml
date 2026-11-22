@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [arena/44148675-fluency-app]
-    paths: ['.arena-work/probe.yml']
+    paths: ['.github/workflows/tmp-el-probe.yml']
 jobs:
   probe:
     runs-on: ubuntu-latest
