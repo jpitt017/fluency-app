@@ -1,0 +1,25 @@
+name: Probe review bucket
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/44148675-fluency-app]
+    paths: ['.github/workflows/tmp-probe.yml']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload a small object to the review bucket
+        env:
+          URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo 'hello' > /tmp/t.txt
+          for b in course-audio-review course-audio; do
+            for i in 1 2 3; do
+              code=$(curl -s -o /tmp/out.json -w '%{http_code}' -m 60 -X POST "$URL/storage/v1/object/$b/weeks-01-04/ai-trial/probe-$b.txt" -H "Authorization: Bearer $KEY" -H "x-upsert: true" -H 'Content-Type: text/plain' --data-binary @/tmp/t.txt)
+              echo "::warning::$b attempt$i http=$code body=$(head -c 200 /tmp/out.json | tr -d '\n')"
+              [ "$code" = "200" ] && break
+              sleep 3
+            done
+          done
+          echo "::warning::buckets=$(curl -s -m 30 "$URL/storage/v1/bucket" -H "Authorization: Bearer $KEY" | head -c 600 | tr -d '\n')"
