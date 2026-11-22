@@ -106,3 +106,5 @@ Account closure is handled manually on request; there is no self-service account
 3. Have the signed-in learner use **Delete my learning data & recordings** on the Privacy page, and verify success. If that is not possible, securely remove their recordings and issue attachments from the user-ID prefixes in the `speaking-recordings` and `issue-attachments` buckets, and remove their learner-generated database data using an authorized admin procedure. Confirm that cleanup succeeded; do not rely on deleting database rows to remove storage files.
 4. In Supabase Authentication, delete the verified user's login. The profile and app subscription rows cascade on auth-user deletion; Stripe retains invoices and payments. Confirm the login is gone and the user's storage prefixes are empty.
 5. Tell the requester that account closure and subscription cancellation are complete. Do not include sensitive data in the confirmation.
+
+`0019` was edited on 22 Nov 2026 to fix an ambiguous column reference for fresh replays. No behaviour change; already applied in production, so not re-run.

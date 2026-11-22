@@ -180,7 +180,7 @@ push();
 push(`insert into public.syllabus_skill_ladders (skill_key, week_range, label, value, sort_order)
 select
   ladder.value->>'key', level.value->>'weeks', ladder.value->>'label', level.value->>'value',
-  (ordinality)::int
+  (level.ordinality)::int
 from public.syllabus_course doc
 cross join lateral jsonb_array_elements(doc.payload->'skillLadders') with ordinality as ladder(value, ordinality)
 cross join lateral jsonb_array_elements(ladder.value->'levels') with ordinality as level(value, ordinality)
