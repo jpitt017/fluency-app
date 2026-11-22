@@ -44,6 +44,9 @@ begin
   insert into public.week_output_submissions(user_id,week_number,skill) values(u,1,'writing');
   insert into public.issue_reports(user_id,type,message,page_url) values(u,'feedback','test','/week/1');
   insert into public.issue_report_attempts(user_id) values(u);
+  if to_regclass('public.week_grammar_attempts') is not null then
+    execute 'insert into public.week_grammar_attempts(user_id,week_number,item_id,answer,correct) values ($1,1,''W1-M1'',to_jsonb(''test''::text),false)' using u;
+  end if;
   if to_regclass('public.week_model_views') is not null then
     execute 'insert into public.week_model_views(user_id,week_number,skill,viewed_before_submission) values ($1,1,''writing'',true)' using u;
   end if;

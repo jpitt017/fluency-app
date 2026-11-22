@@ -24,6 +24,7 @@ const USER_TABLES = [
   'week_output_submissions',
   'week_input_submissions',
   'week_vocabulary_attempts',
+  'week_grammar_attempts',
   'issue_reports',
   'issue_report_attempts',
   'writing_submissions',
