@@ -265,8 +265,8 @@ jobs:
             const bypassSettings = projectData.protectionBypass;
             if (bypassSettings && typeof bypassSettings === 'object') {
               const matches = Object.entries(bypassSettings).some(([key, value]) => key === bypass || value === bypass || (value && typeof value === 'object' && Object.values(value).includes(bypass)));
-              console.log(matches ? 'Project bypass secret matches GitHub secret' : 'Project bypass secret match not confirmed by API');
-            } else console.log('Project bypass settings not available from API');
+              console.log(matches ? '::notice::Project bypass secret matches GitHub secret' : '::notice::Project bypass secret match not confirmed by API');
+            } else console.log('::notice::Project bypass settings not available from API');
             let deployment;
             for (let attempt = 0; attempt < 24; attempt++) {
               const response = await fetch(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(id)}&limit=100`, { headers });
@@ -284,7 +284,7 @@ jobs:
             if (location && response.status >= 300 && response.status < 400) {
               const destination = new URL(location, `https://${deployment.url}/week/1`);
               const safeLocation = `${destination.host}${destination.pathname}`.replaceAll(bypass, '[redacted]').replaceAll(token, '[redacted]');
-              console.log(`Redirect host and path: ${safeLocation}`);
+              console.log(`::notice::Redirect host and path: ${safeLocation}`);
               if (destination.hostname === deployment.url) {
                 let publicUrl = new URL(`https://${deployment.url}/pricing`);
                 let publicPage;
