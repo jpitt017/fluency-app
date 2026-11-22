@@ -260,7 +260,13 @@ jobs:
             const headers = { Authorization: `Bearer ${token}` };
             const project = await fetch('https://api.vercel.com/v9/projects/fluency-app', { headers });
             if (!project.ok) { fail(`Vercel API HTTP ${project.status}`); return; }
-            const { id } = await project.json();
+            const projectData = await project.json();
+            const { id } = projectData;
+            const bypassSettings = projectData.protectionBypass;
+            if (bypassSettings && typeof bypassSettings === 'object') {
+              const matches = Object.entries(bypassSettings).some(([key, value]) => key === bypass || value === bypass || (value && typeof value === 'object' && Object.values(value).includes(bypass)));
+              console.log(matches ? 'Project bypass secret matches GitHub secret' : 'Project bypass secret match not confirmed by API');
+            } else console.log('Project bypass settings not available from API');
             let deployment;
             for (let attempt = 0; attempt < 24; attempt++) {
               const response = await fetch(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(id)}&limit=100`, { headers });
@@ -273,7 +279,26 @@ jobs:
             if (!deployment || !/^[a-z0-9.-]+\.vercel\.app$/i.test(deployment.url)) { fail('Latest preview was not found or is not ready'); return; }
             const response = await fetch(`https://${deployment.url}/week/1`, { headers: { 'x-vercel-protection-bypass': bypass }, redirect: 'manual' });
             const page = await response.text();
-            if (response.status === 200 && page.includes('Vocabulary practice') && !page.includes('Authentication Required')) console.log('bypass works');
-            else fail(`Preview HTTP ${response.status}`);
+            if (response.status === 200 && page.includes('Vocabulary practice') && !page.includes('Authentication Required')) { console.log('bypass works'); return; }
+            const location = response.headers.get('location');
+            if (location && response.status >= 300 && response.status < 400) {
+              const destination = new URL(location, `https://${deployment.url}/week/1`);
+              const safeLocation = `${destination.host}${destination.pathname}`.replaceAll(bypass, '[redacted]').replaceAll(token, '[redacted]');
+              console.log(`Redirect host and path: ${safeLocation}`);
+              if (destination.hostname === deployment.url) {
+                let publicUrl = new URL(`https://${deployment.url}/pricing`);
+                let publicPage;
+                for (let i = 0; i < 10; i++) {
+                  publicPage = await fetch(publicUrl, { headers: publicUrl.hostname === deployment.url ? { 'x-vercel-protection-bypass': bypass } : {}, redirect: 'manual' });
+                  const next = publicPage.headers.get('location');
+                  if (publicPage.status < 300 || publicPage.status >= 400 || !next) break;
+                  publicUrl = new URL(next, publicUrl);
+                }
+                const html = await publicPage.text();
+                if (publicPage.ok && publicUrl.hostname === deployment.url && !html.includes('Authentication Required')) { console.log(`bypass works: HTTP ${publicPage.status}`); return; }
+                fail(`Public page HTTP ${publicPage.status}`); return;
+              }
+            }
+            fail(`Preview HTTP ${response.status}`);
           })().catch(() => { console.log('::error::Preview check failed before receiving a response'); process.exitCode = 1; });
           NODE
