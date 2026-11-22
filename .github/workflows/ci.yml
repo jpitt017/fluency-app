@@ -40,6 +40,7 @@ jobs:
       - run: npm run lint
       - run: npm run eval:prompts -- --offline
       - run: npm run test:mediation
+      - run: node --test tests/unit/placement.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

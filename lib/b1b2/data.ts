@@ -9,6 +9,7 @@ import type {
   HeaderSummary,
   LearnerBand,
   PlacementQuestionRow,
+  PlacementTextRow,
   RecurringErrorTag,
   TeacherRosterLearner,
   WeeklyReportRow,
@@ -424,16 +425,27 @@ export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> 
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('placement_questions_safe')
-    .select('id, sort_order, area, question, options')
+    .select('id, sort_order, area, question, options, code, text_id')
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
   return data.map((row) => ({
     id: String(row.id),
     sort_order: Number(row.sort_order),
+    code: String(row.code),
+    text_id: row.text_id ? String(row.text_id) : null,
     area: String(row.area),
     question: String(row.question),
     options: Array.isArray(row.options) ? row.options.map(String) : [],
   }));
+}
+
+/** Public reading passages for the placement quiz. */
+export async function loadPlacementTexts(): Promise<PlacementTextRow[]> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('placement_texts_safe').select('id, title, body');
+  if (error || !data) return [];
+  return data.map((row) => ({ id: String(row.id), title: String(row.title), body: String(row.body) }));
 }
 
 /** Server-only answer key for placement scoring; never sent to the browser. */
@@ -444,6 +456,7 @@ export async function loadPlacementAnswerKey(): Promise<number[]> {
     .from('placement_questions')
     .select('answer_index')
     .eq('active', true)
+    .eq('version', 'v2')
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
   return data.map((row) => Number(row.answer_index));
