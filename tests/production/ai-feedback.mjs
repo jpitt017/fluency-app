@@ -28,11 +28,17 @@ try {
   const context = await browser.newContext({ permissions: ['microphone'] });
   const page = await context.newPage();
   stage = 'load login';
-  await page.goto(`${base}/login?next=/labs`, { waitUntil: 'domcontentloaded' });
-  stage = 'sign in';
+  const loginResponse = await page.goto(`${base}/login?next=/labs`, { waitUntil: 'domcontentloaded' });
+  if (!loginResponse?.ok() || !(await page.getByLabel('Email address', { exact: true }).count())) {
+    console.log(`::error::Login page unavailable: HTTP ${loginResponse?.status() ?? 'unknown'}, title ${String(await page.title()).replace(/[\r\n%]/g, ' ')}`);
+    throw new Error('Login page unavailable');
+  }
+  stage = 'fill sign-in form';
   await page.getByLabel('Email address', { exact: true }).fill(user.email);
   await page.getByLabel('Password', { exact: true }).fill(user.password);
+  stage = 'submit sign-in form';
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  stage = 'wait for signed-in redirect';
   await page.waitForURL('**/labs', { timeout: 30000 });
   stage = 'writing';
   const writing = page.locator('#writing');
