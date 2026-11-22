@@ -48,6 +48,28 @@ An AI-powered British English learning platform focused on CEFR B1 speaking and 
 git clone [https://github.com/jpitt017/fluency-app.git](https://github.com/jpitt017/fluency-app.git)
 cd fluency-app
 npm install
+```
+
+---
+
+## Production migration history: placement v2
+
+The live Supabase project `ebzmkhrssgnzmixfsuso` records two placement-v2
+entries: `20261122093305_placement_questions_v2` and the additional
+`20261122093801_placement_questions_v2_correct_copy`. The first live apply
+inadvertently changed punctuation in the prompts for P02, P09 and P15; the
+second entry records the correction to match the supplied v2 bank. This extra
+entry is specific to the live migration history: repository migration
+[`0028_placement_questions_v2.sql`](supabase-b1-b2/migrations/0028_placement_questions_v2.sql)
+contains the correct prompts from the outset, so a fresh installation does not
+need a separate correction.
+
+A read-only comparison against an isolated fresh run of repository migrations
+0027 and 0028 found matching counts and content digests for all 24 v2 questions
+and both reading texts. The comparison covers the seeded question fields,
+including answer indices and reasons, and all text fields; generated row IDs and
+creation timestamps are not compared.
+
 ---
 
 ## Production test users

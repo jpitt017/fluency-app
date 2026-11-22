@@ -8,6 +8,7 @@
  * bundled document when Supabase is unavailable (local dev, CI, offline).
  */
 import { createServerSupabase } from '@/utils/supabase/server';
+import { resolveMediation } from './mediation-fallback';
 import syllabusJson from '../../supabase-b1-b2/content/curriculum/two-stage-syllabus.json';
 
 export type RequirementKind = 'optional' | 'either' | 'required' | 'recommended';
@@ -250,7 +251,6 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
 
       if (!hasContent(dbCefr) && bundled?.cefr) fallbackField(weekNumber, 'cefr');
       if (!hasContent(dbGrammar) && bundled?.grammar) fallbackField(weekNumber, 'grammar');
-      if (!hasContent(dbMediation) && bundled?.mediation) fallbackField(weekNumber, 'mediation');
 
       return {
         number: weekNumber,
@@ -263,7 +263,7 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
         skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
         cefr: (hasContent(dbCefr) ? dbCefr : bundled?.cefr) as WeekCefr,
         grammar: (hasContent(dbGrammar) ? dbGrammar : bundled?.grammar) as SyllabusWeek['grammar'],
-        mediation: (hasContent(dbMediation) ? dbMediation : bundled?.mediation) as SyllabusWeek['mediation'],
+        mediation: resolveMediation(weekNumber, dbMediation, bundled?.mediation) as SyllabusWeek['mediation'],
       };
     });
 
