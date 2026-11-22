@@ -19,6 +19,7 @@ const USER_TABLES = [
   'vocab_cards',
   'vocab_reviews',
   'weekly_reports',
+  'week_output_submissions',
   'writing_submissions',
   'xp_events',
 ];

@@ -2,6 +2,7 @@ export type LessonLabSkill = 'Spoken Interaction' | 'Spoken Production' | 'Writi
 export type LessonLabMode = 'free' | 'drill' | 'checkpoint';
 
 export interface LessonLabContext {
+  weekNumber?: number;
   moduleId?: number;
   lessonId?: number;
   prompt: string;

@@ -11,6 +11,8 @@ import {
 } from '@/lib/b1b2/feedback-schema';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
+import { recordWeekSubmission } from '@/lib/curriculum/week-models';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
 const ENDPOINT = '/api/speaking/evaluate';
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
     }
 
+    let weekNumber: number | null = null;
     let transcript = '';
     let targetPhrase = '';
     let promptContext = '';
@@ -69,6 +72,8 @@ export async function POST(req: NextRequest) {
     if (isAudio) {
       const formData = await req.formData();
       const audioFile = formData.get('audio') as File | null;
+      const rawWeek = formData.get('weekNumber');
+      if (rawWeek && /^\d+$/.test(String(rawWeek))) weekNumber = Number(rawWeek);
       targetPhrase = sanitizeLearnerText(formData.get('targetPhrase'), 400).text;
       promptContext = sanitizeLearnerText(formData.get('prompt'), 500).text;
       taskId = String(formData.get('taskId') || '').trim();
@@ -245,8 +250,13 @@ ${wrapLearnerSubmission(transcript)}`;
       });
     }
 
+    const weekTask = weekNumber ? await loadLearnerWeek(weekNumber) : null;
+    const modelAnswer = guard.userId && isAudio && weekTask && promptContext === weekTask.speakingPrompt
+      ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking') : null;
+
     return NextResponse.json(
       {
+        modelAnswer,
         attemptId: savedAttemptId,
         transcript,
         improvedResponse: validated.improvedResponse,

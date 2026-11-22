@@ -11,6 +11,8 @@ import {
 } from '@/lib/b1b2/feedback-schema';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
+import { recordWeekSubmission } from '@/lib/curriculum/week-models';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
 const ENDPOINT = '/api/writing/correct';
@@ -26,6 +28,7 @@ function getGroqClient(): Groq {
 }
 
 interface WritingCorrectBody {
+  weekNumber?: number;
   text?: string;
   prompt?: string;
   targetKeywords?: string[];
@@ -211,8 +214,13 @@ ${wrapLearnerSubmission(text)}`;
       });
     }
 
+    const weekTask = Number.isInteger(body.weekNumber) ? await loadLearnerWeek(body.weekNumber!) : null;
+    const modelAnswer = guard.userId && weekTask && prompt.startsWith(weekTask.writingPrompt)
+      ? await recordWeekSubmission(guard.userId, body.weekNumber, 'writing') : null;
+
     return NextResponse.json(
       {
+        modelAnswer,
         submissionId,
         corrected: validated.corrected,
         feedback: validated.feedback,

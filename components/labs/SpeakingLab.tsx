@@ -15,6 +15,7 @@ interface SpeakingFeedback {
   mastery?: number;
   rubric?: Record<string, unknown>;
   reviewDeck?: string[];
+  modelAnswer?: string | null;
 }
 
 interface SpeakingLabProps {
@@ -23,6 +24,7 @@ interface SpeakingLabProps {
   pronunciationFocus?: string;
   keyLanguage?: string[];
   lessonContext?: LessonLabContext;
+  unlockedModel?: string | null;
 }
 
 export default function SpeakingLab({
@@ -30,6 +32,7 @@ export default function SpeakingLab({
   pronunciationFocus,
   keyLanguage = [],
   lessonContext,
+  unlockedModel = null,
 }: SpeakingLabProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -75,6 +78,7 @@ export default function SpeakingLab({
     try {
       const form = new FormData();
       form.set('audio', blob, 'lesson-recording.webm');
+      if (lessonContext?.weekNumber) form.set('weekNumber', String(lessonContext.weekNumber));
       form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
       const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
@@ -214,6 +218,8 @@ export default function SpeakingLab({
           {error}
         </p>
       )}
+
+      {(feedback?.modelAnswer || unlockedModel) && <section className="rounded-xl border border-emerald-200 p-4"><h3 className="font-semibold">Model answer</h3><p className="mt-2 whitespace-pre-line text-sm">{feedback?.modelAnswer || unlockedModel}</p></section>}
 
       {feedback && (
         <div role="status" className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">

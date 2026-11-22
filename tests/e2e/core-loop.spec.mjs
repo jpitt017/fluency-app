@@ -151,6 +151,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
   });
 
   test('placement check + stubbed diagnostic writing sample completes deterministically', async ({ page }) => {
+    await page.route('**/api/placement/score', (route) => route.fulfill({ json: { score: 15, total: 24, placement: 'stage1' } }));
     await page.route('**/api/writing/correct', async (route) => {
       await route.fulfill({
         status: 200,
