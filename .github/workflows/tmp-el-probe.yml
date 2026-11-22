@@ -8,17 +8,26 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe TTS capability
+      - name: Voice inventory
         env:
           EL: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
-          if [ -z "$EL" ]; then echo "::warning::EL_KEY_MISSING=yes"; exit 0; fi
-          echo "::warning::EL_KEY_MISSING=no"
-          u=$(curl -s -o /tmp/user.json -w '%{http_code}' -m 20 https://api.elevenlabs.io/v1/user -H "xi-api-key: $EL"); echo "::warning::user_http=$u $(head -c 160 /tmp/user.json | tr -d '\n')"
-          v=$(curl -s -o /tmp/voices.json -w '%{http_code}' -m 20 https://api.elevenlabs.io/v1/voices -H "xi-api-key: $EL"); echo "::warning::voices_http=$v bytes=$(wc -c </tmp/voices.json)"
-          for m in eleven_multilingual_v2 eleven_turbo_v2_5 eleven_flash_v2_5 eleven_v3; do
-            code=$(curl -s -o "/tmp/$m.mp3" -w '%{http_code}' -m 60 -X POST "https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo" \
-              -H "xi-api-key: $EL" -H 'Content-Type: application/json' -H 'Accept: audio/mpeg' \
-              -d "{\"text\":\"Hello, this is a voice check.\",\"model_id\":\"$m\"}")
-            echo "::warning::tts $m http=$code bytes=$(wc -c <"/tmp/$m.mp3") head=$(head -c 120 "/tmp/$m.mp3" | tr -d '\n' | tr -d '\"')"
-          done
+          curl -s -m 30 https://api.elevenlabs.io/v1/voices -H "xi-api-key: $EL" -o /tmp/voices.json
+          echo "::warning::voice_count=$(python3 -c "import json;print(len(json.load(open('/tmp/voices.json')).get('voices',[])))")"
+          python3 - <<'PYEOF'
+import json
+want = {
+ 'sp7QaEHmiNEd5HgrXuOo':'Host','VGEVi3E0hARQ99wIXvJG':'Ellie','jUPSOpRcPt8GMPsWx5fy':'Aisha',
+ 'EtGAAwTx6aMveVbqUxuU':'Tom','sBU90Bu4NCleWDoNkGog':'Dan','FmIJwVFU62n8jITpotTp':'Marta',
+ 'ZR8ruiC9tbg7bV9RmBmC':'Joanne'}
+d = json.load(open('/tmp/voices.json')).get('voices', [])
+have = {v.get('voice_id'): v for v in d}
+for vid, role in want.items():
+    v = have.get(vid)
+    if not v:
+        print(f"::warning::MISSING {role} {vid}")
+        continue
+    lab = v.get('labels') or {}
+    print(f"::warning::OK {role} {vid} name={v.get('name')} accent={lab.get('accent')} gender={lab.get('gender')} desc={lab.get('description')} age={lab.get('age')}")
+print(f"::warning::unlisted_count={len([1 for vid in have if vid not in want])}")
+PYEOF
