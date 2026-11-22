@@ -34,6 +34,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run real AI feedback smoke test
         run: node tests/production/ai-feedback.mjs
         env:
