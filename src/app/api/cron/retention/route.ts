@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendIssueAlert } from '@/lib/issues/email';
 
 const RECORDING_BUCKET = 'speaking-recordings';
 
@@ -39,6 +40,11 @@ export async function GET(request: NextRequest) {
     const { data: removed } = await admin.storage.from(RECORDING_BUCKET).remove(audioPaths);
     storageRemoved = removed?.length ?? audioPaths.length;
   }
+
+  // Retry alerts that were not delivered; Resend deduplicates by issue id.
+  const pending = await admin.from('issue_reports').select('id').eq('type', 'broken').is('email_sent_at', null).order('created_at').limit(5);
+  if (pending.error) console.error('[issues] Could not load pending alerts:', pending.error.message);
+  for (const issue of pending.data ?? []) await sendIssueAlert(admin, issue.id);
 
   return NextResponse.json({
     ok: true,

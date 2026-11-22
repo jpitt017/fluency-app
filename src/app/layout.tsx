@@ -12,6 +12,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AppHeader from '@/components/b1b2/AppHeader';
+import IssueReporter from '@/components/b1b2/IssueReporter';
 import OfflineBanner from '@/components/b1b2/OfflineBanner';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { loadHeaderSummary } from '@/lib/b1b2/data';
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-[#faf9f6] text-stone-900 antialiased">
         <OfflineBanner />
         <AppHeader summary={summary} week={week} pricingEnabled={pricingEnabled} />
+        <IssueReporter signedIn={summary.signedIn} />
         <div className="min-h-[calc(100vh-118px)]">{children}</div>
         <footer className="border-t border-stone-200 bg-white/60 py-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 text-xs text-stone-500 sm:px-6">

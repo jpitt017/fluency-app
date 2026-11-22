@@ -76,6 +76,7 @@ jobs:
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || '' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || '' }}
           E2E_STUB_LLM: 'true'
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   live-prompt-evals:
     needs: changes

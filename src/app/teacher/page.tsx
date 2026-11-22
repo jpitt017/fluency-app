@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import IssueList from '@/components/b1b2/IssueList';
 import TeacherConsoleClient from '@/components/b1b2/TeacherConsoleClient';
 import { loadTeacherRoster } from '@/lib/b1b2/data';
 
@@ -8,7 +9,8 @@ export const metadata = {
   title: 'Teacher Console · Fluency Studio',
 };
 
-export default async function TeacherPage() {
+export default async function TeacherPage({ searchParams }: { searchParams: Promise<{ tab?: string; type?: string; status?: string }> }) {
+  const params = await searchParams;
   const { signedIn, authorized, learners } = await loadTeacherRoster();
 
   if (!signedIn) {
@@ -90,7 +92,11 @@ export default async function TeacherPage() {
         </div>
       </header>
 
-      <TeacherConsoleClient learners={learners} />
+      <nav aria-label="Teacher console" className="flex gap-2">
+        <Link href="/teacher" aria-current={params.tab !== 'issues' ? 'page' : undefined} className="rounded-lg border bg-white px-4 py-2">Learners</Link>
+        <Link href="/teacher?tab=issues" aria-current={params.tab === 'issues' ? 'page' : undefined} className="rounded-lg border bg-white px-4 py-2">Issues</Link>
+      </nav>
+      {params.tab === 'issues' ? <IssueList type={params.type} status={params.status} /> : <TeacherConsoleClient learners={learners} />}
     </main>
   );
 }
