@@ -1,12 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { countWords, fetchWithTimeout, writingTaskStatus } from '@/lib/b1b2/text-utils.mjs';
 import type { PlacementQuestionRow, PlacementTextRow } from '@/lib/b1b2/types';
 
 type Placement = 'foundation' | 'stage1' | 'stage2';
+
+const SCORE_TIMEOUT_MS = 30_000;
+const WRITING_TIMEOUT_MS = 45_000;
+const MIN_WRITING_WORDS = 15;
+const TARGET_WRITING_WORDS = 60;
 
 function placementRecommendation(placement: Placement) {
   if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice Labs →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
@@ -26,16 +32,31 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   const [writingScore, setWritingScore] = useState<number | null>(null);
   const [writingFeedback, setWritingFeedback] = useState('');
   const [loading, setLoading] = useState(false);
+  const [stuck, setStuck] = useState(false);
   const router = useRouter();
-
+  // Kept for auth checks only: creating the Supabase client inside a click handler
+  // would add fetches between the click and the visible state change.
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return createClient();
   }, []);
+  const question = questions[currentIndex];
+  const missingPassage = Boolean(question?.text_id && !texts.some((text) => text.id === question.text_id));
 
-      if (!questions.length) {
+  // Watchdog: never leave the learner on a button that produces no change.
+  // Advancing is synchronous, so if the question has not changed 4 seconds after
+  // an answer was picked and Continue is enabled, something swallowed the click.
+  useEffect(() => {
+    if (selectedOption === null) return;
+    const timer = window.setTimeout(() => setStuck(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [currentIndex, selectedOption]);
+
+  const writingStatus = writingTaskStatus(writingSample, MIN_WRITING_WORDS, TARGET_WRITING_WORDS);
+
+  if (!questions.length) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-12">
+      <main className="mx-auto max-w-2xl px-4 pb-24 pt-12">
         <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center">
           <p className="text-sm text-stone-600">Placement questions are currently unavailable.</p>
           <Link href="/labs" className="mt-4 inline-block rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white">
@@ -46,8 +67,14 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     );
   }
 
+  function selectOption(index: number) {
+    setStuck(false);
+    setSelectedOption(index);
+  }
+
   function handleNextQuestion() {
     if (selectedOption === null) return;
+    setStuck(false);
     setAnswers((previous) => [...previous, selectedOption]);
     setSelectedOption(null);
 
@@ -66,19 +93,22 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     let resultPlacement: Placement;
     setScoreError('');
 
+    // The last answer may still be held in the click's state update.
+    const submittedAnswers = answers.length === questions.length ? answers : [...answers, selectedOption].filter((answer): answer is number => typeof answer === 'number');
+
     try {
-      const scoreRes = await fetch('/api/placement/score', {
+      const scoreRes = await fetchWithTimeout('/api/placement/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
-      });
+        body: JSON.stringify({ answers: submittedAnswers }),
+      }, SCORE_TIMEOUT_MS, 'Scoring is taking longer than usual. Please check your connection and try again.');
       if (!scoreRes.ok) throw new Error('Scoring unavailable');
       const data = (await scoreRes.json()) as { score: number; placement: Placement };
       if (!Number.isInteger(data.score) || !['foundation', 'stage1', 'stage2'].includes(data.placement)) throw new Error('Invalid score');
       scored = data.score;
       resultPlacement = data.placement;
-    } catch {
-      setScoreError('Could not score your answers. Please try again.');
+    } catch (error) {
+      setScoreError(error instanceof Error && error.message.startsWith('Scoring is taking') ? error.message : 'Could not score your answers. Please try again.');
       setLoading(false);
       return;
     }
@@ -86,9 +116,9 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     setQuizScore(scored);
 
     const sample = writingSample.trim();
-    if (!skipWriting && sample.split(/\s+/).filter(Boolean).length >= 15) {
+    if (!skipWriting && countWords(sample) >= MIN_WRITING_WORDS) {
       try {
-        const res = await fetch('/api/writing/correct', {
+        const res = await fetchWithTimeout('/api/writing/correct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -97,14 +127,18 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               'Placement writing sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
             variety: 'British',
           }),
-        });
+        }, WRITING_TIMEOUT_MS, 'Writing feedback timed out. Your quiz result still decides your starting point.');
         if (res.ok) {
           const data = (await res.json()) as { score?: number; feedback?: string };
           if (typeof data.score === 'number') evaluatedScore = data.score;
           if (typeof data.feedback === 'string') feedbackText = data.feedback;
+        } else {
+          feedbackText = 'Writing feedback is unavailable right now. Your quiz score still decides your starting point.';
         }
-      } catch {
-        /* Fallback to quiz-only placement if unauthenticated or offline */
+      } catch (error) {
+        feedbackText = error instanceof Error && error.message.startsWith('Writing feedback timed out')
+          ? error.message
+          : 'Writing feedback is unavailable right now. Your quiz score still decides your starting point.';
       }
     }
 
@@ -145,9 +179,10 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   }
 
   const recommendation = placementRecommendation(placement ?? 'foundation');
+  const continueLabel = currentIndex + 1 === questions.length ? 'Continue to Writing Sample →' : 'Next Question';
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-140px)] max-w-2xl items-center justify-center px-4 py-10 sm:px-6">
+    <main className="mx-auto flex min-h-[calc(100vh-140px)] max-w-2xl items-center justify-center px-4 pb-24 pt-10 sm:px-6">
       <div className="w-full space-y-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
@@ -159,7 +194,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 Question {currentIndex + 1} of {questions.length}
               </h1>
               <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-600">
-                {questions[currentIndex].area}
+                {question.area}
               </span>
             </div>
           ) : stage === 'writing' ? (
@@ -180,21 +215,21 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               />
             </div>
 
-            {questions[currentIndex].text_id && (() => {
-              const passage = texts.find((text) => text.id === questions[currentIndex].text_id);
+            {question.text_id && (() => {
+              const passage = texts.find((text) => text.id === question.text_id);
               return passage ? <section className="rounded-xl bg-stone-50 p-4" aria-label={`Reading ${passage.id === 'RA' ? 'A' : 'B'}`}>
                 <h2 className="font-semibold">Reading {passage.id === 'RA' ? 'A' : 'B'}: {passage.title}</h2>
                 <p className="mt-3 whitespace-pre-line text-sm leading-6">{passage.body}</p>
               </section> : <p role="alert">Reading text is unavailable. Please try again later.</p>;
             })()}
-            <p className="text-sm font-medium leading-6 text-stone-800">{questions[currentIndex].question}</p>
+            <p className="text-sm font-medium leading-6 text-stone-800">{question.question}</p>
 
             <div className="space-y-2.5">
-              {questions[currentIndex].options.map((option, idx) => (
+              {question.options.map((option, idx) => (
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setSelectedOption(idx)}
+                  onClick={() => selectOption(idx)}
                   className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                     selectedOption === idx
                       ? 'border-indigo-600 bg-indigo-50 text-indigo-950 shadow-2xs'
@@ -206,13 +241,27 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               ))}
             </div>
 
+            {selectedOption === null && (
+              <p className="text-xs text-stone-500">Choose one answer to continue.</p>
+            )}
+            {missingPassage && (
+              <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                The reading passage for this question is unavailable, so it cannot be answered. Reload the page; if it keeps happening, use &quot;Problem? Tell us&quot;.
+              </p>
+            )}
+            {stuck && (
+              <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                The page did not move to the next question. Nothing was lost — press {continueLabel} again, or use &quot;Problem? Tell us&quot; if it keeps happening.
+              </p>
+            )}
+
             <button
               type="button"
               onClick={handleNextQuestion}
-              disabled={selectedOption === null || Boolean(questions[currentIndex].text_id && !texts.find((text) => text.id === questions[currentIndex].text_id))}
+              disabled={selectedOption === null || missingPassage}
               className="w-full rounded-xl bg-indigo-700 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:opacity-50"
             >
-              {currentIndex + 1 === questions.length ? 'Continue to Writing Sample →' : 'Next Question'}
+              {continueLabel}
             </button>
           </div>
         )}
@@ -230,10 +279,18 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
               placeholder="Write a short paragraph here, or skip to use your 24-item quiz score…"
               className="w-full rounded-xl border border-stone-300 bg-stone-50/60 p-3 text-sm text-stone-900 focus:border-indigo-500 focus:bg-white focus:outline-none"
             />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+              <span aria-live="polite" className="font-medium">
+                {writingStatus.message}
+              </span>
+              <span>
+                {writingStatus.meetsTarget ? 'Ready for feedback' : `Minimum ${MIN_WRITING_WORDS} words`}
+              </span>
+            </div>
             <div className="flex flex-col gap-2.5 sm:flex-row">
               <button
                 type="button"
-                disabled={loading || writingSample.trim().split(/\s+/).filter(Boolean).length < 15}
+                disabled={loading || !writingStatus.meetsMinimum}
                 onClick={() => void finishPlacement(false)}
                 className="flex-1 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
               >
@@ -248,6 +305,11 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 Skip sample
               </button>
             </div>
+            {loading && (
+              <p role="status" className="text-xs text-stone-600">
+                This can take up to 45 seconds. If it runs over, you can skip the sample and keep your quiz result.
+              </p>
+            )}
           </div>
         )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { writingTaskStatus } from '@/lib/b1b2/text-utils.mjs';
 import type { LessonLabContext } from './LessonLabContext';
 
 export interface WritingScaffold {
@@ -47,7 +48,7 @@ export default function WritingLab({
   const [result, setResult] = useState<WritingFeedbackResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const wordStatus = writingTaskStatus(text, 20, 60);
 
   async function handleCheckWriting() {
     if (!text.trim()) return;
@@ -139,10 +140,11 @@ export default function WritingLab({
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3">
-        <div className="flex items-center gap-2 text-xs text-stone-500">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
           <span className="font-medium">B1 → B2 Standard</span>
           <span aria-hidden="true">·</span>
-          <span>{wordCount} words</span>
+          <span aria-live="polite">{wordStatus.message}</span>
+          {!wordStatus.meetsMinimum && text.trim() && <span className="text-stone-400">Add a little more to get useful feedback</span>}
         </div>
         <button
           type="button"

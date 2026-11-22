@@ -2,29 +2,35 @@
 /**
  * Audio pipeline for Fluency Studio.
  *
- * Weeks 1-4 listening (the current production path):
+ * Weeks 1-4 listening (the current production path, ElevenLabs voices):
+ *   --voice-check       one short line per speaker -> private review bucket, so
+ *                       the seven accents can be compared before anything else
+ *                       is recorded
  *   --week 1            synthesise one AI trial track: MP3 + WebVTT, one voice per
- *                       speaker, B1 pace, unreleased upload to `course-audio`
+ *                       speaker, B1 pace, unreleased upload to `course-audio-review`
  *   --weeks 1,2,3,4     the same for several weeks
  *   --list              show the approval state of the Weeks 1-4 tracks
- *   --review 1          print a time-limited listening link for a review pass
- *   --release 1         approve a reviewed track: set audio_url + released = true
+ *   --review 1          print 1-hour signed listening links for a review pass
+ *   --release 1         approve a reviewed track: copy it to `course-audio` and
+ *                       set audio_url + released = true
  *   --revoke 1          un-approve it again (learners fall back to "Audio coming soon")
+ *   --delete-trial      delete a week's files and clear the row (dry run unless --confirm)
  *   --dry-run           parse the scripts and report speakers/length, generate nothing
  *
- * These flags use the Realtime API (gpt-realtime-2.1-mini); the Speech API models
- * are deprecated with a 6 January 2027 shutdown, see
- * https://developers.openai.com/api/docs/deprecations.
+ * Voices come from ElevenLabs (`eleven_multilingual_v2`). The accent is the
+ * custom voice, never an instruction, and `speed` sets the B1 pace.
  *
- * Legacy Modules 1-8 path (unchanged):
- *   1. Vocabulary items -> OpenAI TTS (`--vocab-only`, British English) uploaded to
- *      Supabase Storage (`course-audio` bucket) or S3/CDN.
+ * Legacy Modules 1-8 path (same provider):
+ *   1. Vocabulary items -> ElevenLabs TTS (`--vocab-only`, British English)
+ *      uploaded to Supabase Storage (`course-audio` bucket) or S3/CDN.
  *   2. Listening tracks -> Export clean actor recording scripts (`--export-scripts`)
  *      first so real speakers / voice actors record multi-accent tracks last, then
  *      upload actor-recorded MP3s + WebVTT captions (`--upload-dir <dir>`).
  *
  * Usage:
+ *   node scripts/generate-course-audio.mjs --voice-check
  *   node scripts/generate-course-audio.mjs --weeks 1,2,3,4
+ *   node scripts/generate-course-audio.mjs --review 1
  *   node scripts/generate-course-audio.mjs --release 1
  *   node scripts/generate-course-audio.mjs --week 1 --dry-run
  *   node scripts/generate-course-audio.mjs --export-scripts
@@ -37,18 +43,33 @@ import path from 'node:path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
 import {
+  DEFAULT_REVIEW_BUCKET,
   SPEAKER_VOICES,
   TTS_MODEL,
+  VOICE_CHECK_LINE,
   defaultSpeakerFor,
   estimateDurationSeconds,
   generateListeningTrial,
-  listeningTrialAudioKey,
+  generateVoiceCheck,
+  publishReleasedTrial,
   readListeningWeeks,
 } from './lib/course-audio/listening-trial.mjs';
-import { createWebSocketTransport, parseScript } from './lib/course-audio/tts.mjs';
-import { releaseTrial, revokeTrial, signReviewUrl } from './lib/course-audio/publish.mjs';
+import {
+  B1_SPEECH_RATE,
+  encodeMp3Buffer,
+  parseScript,
+  pcmToWav,
+  synthesiseTurn,
+} from './lib/course-audio/tts.mjs';
+import {
+  REVIEW_LINK_SECONDS,
+  deleteReleasedFiles,
+  releaseTrial,
+  revokeTrial,
+  signReviewUrl,
+} from './lib/course-audio/publish.mjs';
 import { checkApprovalTarget, isApprovalBypassRequested } from './lib/course-audio/environment.mjs';
-import { assertTrialWeek, isConfirmed } from './lib/course-audio/delete-guard.mjs';
+import { assertTrialWeek, isConfirmed, reviewObjectKeys } from './lib/course-audio/delete-guard.mjs';
 import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
 const args = process.argv.slice(2);
@@ -94,12 +115,9 @@ function confirmRequested() {
   return isConfirmed(next);
 }
 
-/** Long enough to finish a review pass, short enough not to circulate. */
-const REVIEW_LINK_SECONDS = 60 * 60 * 24 * 7;
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const openaiKey = process.env.OPENAI_API_KEY;
+const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
 const s3Bucket = process.env.AUDIO_S3_BUCKET;
 const publicBaseUrl = process.env.AUDIO_PUBLIC_BASE_URL;
 
@@ -110,47 +128,35 @@ function slugify(input) {
     .replace(/(^-|-$)/g, '');
 }
 
+/**
+ * The legacy Modules 1-8 material asks for a spread of accents. The Seven
+ * lesson voices are British and Irish, so this picks the closest regional voice
+ * and otherwise falls back to the Host; the accent is carried by the voice
+ * itself, and no prompt tries to talk the model into one. Anything outside the
+ * UK/Ireland set can only arrive through human actor recordings.
+ */
 function selectVoiceForAccent(accentLabel = '') {
-  if (/american|\bus\b/i.test(accentLabel) && !/british|\buk\b/i.test(accentLabel)) {
-    return { voice: 'alloy', instructions: 'Speak in clear, natural General American English.' };
-  }
-  if (/irish/i.test(accentLabel)) {
-    return { voice: 'shimmer', instructions: 'Speak in warm, natural Irish-accented English.' };
-  }
-  if (/australian/i.test(accentLabel)) {
-    return { voice: 'echo', instructions: 'Speak in clear, natural Australian English.' };
-  }
-  return { voice: 'fable', instructions: 'Speak in clear, natural British English.' };
+  const label = String(accentLabel);
+  if (/welsh|cardiff/i.test(label)) return 'Dan';
+  if (/scottish|edinburgh|glasgow/i.test(label)) return 'Ellie';
+  if (/yorkshire|leeds/i.test(label)) return 'Joanne';
+  if (/midlands|birmingham/i.test(label)) return 'Marta';
+  if (/northern|manchester|liverpool|geordie|newcastle/i.test(label)) return 'Tom';
+  if (/london|mle|multicultural/i.test(label)) return 'Aisha';
+  return 'Host';
 }
 
 /**
- * Legacy Modules 1-8 vocabulary audio.
+ * Legacy Modules 1-8 vocabulary audio: one line of text -> MP3 bytes.
  *
- * This still posts to the Speech API, whose models are deprecated with a
- * 6 January 2027 shutdown; migrate it to the Realtime path used by the Weeks 1-4
- * tracks in scripts/lib/course-audio/tts.mjs before then. The Weeks 1-4
- * listening pipeline already uses the non-deprecated model.
+ * Uses the same ElevenLabs voice set and the same PCM -> WAV -> loudnorm MP3
+ * path as the Weeks 1-4 tracks, so there is one synthesiser in the repository.
  */
 async function synthesizeMp3(text, accentLabel = 'British') {
-  const { voice, instructions } = selectVoiceForAccent(accentLabel);
-  const res = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini-tts',
-      voice,
-      instructions,
-      input: text,
-      response_format: 'mp3',
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`TTS synthesis failed (${res.status}): ${await res.text()}`);
-  }
-  return Buffer.from(await res.arrayBuffer());
+  if (!elevenLabsKey) throw new Error('ELEVENLABS_API_KEY is required to synthesise audio.');
+  const speaker = selectVoiceForAccent(accentLabel);
+  const turn = await synthesiseTurn({ speaker, text, apiKey: elevenLabsKey });
+  return encodeMp3Buffer(pcmToWav(turn.pcm));
 }
 
 function buildVtt(body, durationSeconds) {
@@ -296,7 +302,7 @@ async function processModule(supabase, moduleNum) {
         }
       }
 
-      if (!openaiKey) continue;
+      if (!elevenLabsKey) continue;
       if (inp.audio_url && /^https?:\/\//i.test(inp.audio_url)) continue;
 
       const accents = Array.isArray(inp.speaker_accents) ? inp.speaker_accents : [];
@@ -321,7 +327,7 @@ async function processModule(supabase, moduleNum) {
     }
   }
 
-  if (openaiKey) {
+  if (elevenLabsKey) {
     for (const item of vocabItems ?? []) {
       if (item.audio_url && /^https?:\/\//i.test(item.audio_url)) continue;
       const mp3 = await synthesizeMp3(`${item.term}. ${item.example}`, 'British');
@@ -372,11 +378,10 @@ async function generateWeeks(weeks) {
     return;
   }
 
-  if (!openaiKey) throw new Error('Set OPENAI_API_KEY to synthesise the AI trial tracks.');
+  if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the AI trial tracks.');
   const client = requireSupabase();
   const outputDir = path.join(process.cwd(), 'audio-out', 'weeks-01-04');
   await mkdir(outputDir, { recursive: true });
-  const transport = createWebSocketTransport();
   let uploaded = 0;
 
   for (const spec of wanted) {
@@ -384,8 +389,7 @@ async function generateWeeks(weeks) {
     const result = await generateListeningTrial({
       weekSpec: spec,
       outputDir,
-      apiKey: openaiKey,
-      transport,
+      apiKey: elevenLabsKey,
       client,
       upload: true,
       log: (message) => console.log(message),
@@ -467,24 +471,26 @@ async function deleteTrialFiles(weeks, confirmed) {
 async function reviewWeek(weeks) {
   const client = requireSupabase();
   const summary = [];
+  const lines = [];
   for (const week of weeks) {
     const { data, error } = await client
       .from('listening_audio_trials')
-      .select('week, released, captions_url, duration_seconds')
+      .select('week, released, duration_seconds')
       .eq('week', week)
       .maybeSingle();
     if (error) throw new Error(`Could not read week ${week}: ${error.message}`);
     if (!data) throw new Error(`Week ${week} has no generated track yet; run --week ${week} first.`);
-    const url = await signReviewUrl(client, listeningTrialAudioKey(week), REVIEW_LINK_SECONDS);
-    console.log(`Week ${week} review link (valid ${REVIEW_LINK_SECONDS / 86400} days, ${data.duration_seconds ?? '?'}s):`);
-    console.log(`  ${url}`);
-    if (data.captions_url) console.log(`  captions: ${data.captions_url}`);
+    const [audioKey] = reviewObjectKeys(week);
+    const url = await signReviewUrl(client, audioKey);
+    const minutes = REVIEW_LINK_SECONDS / 60;
+    lines.push(`Week ${week} review link (valid ${minutes} minutes, ${data.duration_seconds ?? '?'}s):`);
+    lines.push(`  ${url}`);
     const state = data.released ? 'already released' : 'unreleased - learners cannot hear it yet';
-    console.log(`  state: ${state}`);
+    lines.push(`  state: ${state}`);
     summary.push(
       `### Week ${week} — ${Math.round(Number(data.duration_seconds ?? 0))}s, ${state}`,
       '',
-      `[Listen to the Week ${week} track](${url}) — link valid for ${REVIEW_LINK_SECONDS / 86400} days.`,
+      `[Listen to the Week ${week} track](${url}) — link valid for ${minutes} minutes.`,
       '',
       data.released
         ? 'Already approved, so it is live in /week/' + week + '.'
@@ -492,7 +498,40 @@ async function reviewWeek(weeks) {
       '',
     );
   }
+  console.log(lines.join('\n'));
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary('# Listening trial review links', '', ...summary);
+}
+
+/**
+ * Audition links for the seven voices. Each clip is one line, the same words for
+ * every speaker, so the accents can be compared side by side before a full week
+ * is recorded.
+ */
+async function voiceCheck() {
+  if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice check.');
+  const client = requireSupabase();
+  const outputDir = path.join(process.cwd(), 'audio-out', 'voice-check');
+  console.log(`Voice check (${TTS_MODEL}, rate ${B1_SPEECH_RATE}): "${VOICE_CHECK_LINE}"`);
+  const results = await generateVoiceCheck({
+    outputDir,
+    apiKey: elevenLabsKey,
+    client,
+    upload: true,
+    log: (message) => console.log(message),
+  });
+
+  const summary = ['# Voice check — one line per speaker', '', '| Speaker | Voice | Accent | Length | Listen |', '| --- | --- | --- | --- | --- |'];
+  for (const entry of results) {
+    const url = await signReviewUrl(client, entry.key);
+    console.log(`${entry.speaker} (${entry.name}, ${entry.accent}) ${entry.durationSeconds}s`);
+    console.log(`  ${url}`);
+    summary.push(
+      `| ${entry.speaker} | ${entry.name} | ${entry.accent} | ${entry.durationSeconds}s | [listen](${url}) |`,
+    );
+  }
+  summary.push('', `Links are valid for ${REVIEW_LINK_SECONDS / 60} minutes.`, '', 'Nothing is released: these clips are for approval only.');
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
+  console.log(`\n${results.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased. Links valid ${REVIEW_LINK_SECONDS / 60} minutes.`);
 }
 
 async function releaseWeek(weeks) {
@@ -506,21 +545,15 @@ async function releaseWeek(weeks) {
   for (const week of weeks) {
     const { data, error } = await client
       .from('listening_audio_trials')
-      .select('week, captions_url, duration_seconds')
+      .select('week, duration_seconds')
       .eq('week', week)
       .maybeSingle();
     if (error) throw new Error(`Could not read week ${week}: ${error.message}`);
     if (!data) throw new Error(`Week ${week} has no generated track; nothing to release.`);
-    const { data: publicUrl } = client.storage.from('course-audio').getPublicUrl(listeningTrialAudioKey(week));
-    if (!publicUrl?.publicUrl) throw new Error(`Could not resolve the public URL for week ${week}.`);
-    await releaseTrial({
-      client,
-      week,
-      audioUrl: publicUrl.publicUrl,
-      captionsUrl: data.captions_url ?? null,
-      url: supabaseUrl,
-    });
-    console.log(`Week ${week}: released · learners will see "AI voice – trial recording" and can play it twice.`);
+    const { audioUrl, captionsUrl } = await publishReleasedTrial(client, week);
+    await releaseTrial({ client, week, audioUrl, captionsUrl, url: supabaseUrl });
+    console.log(`Week ${week}: released · ${audioUrl}`);
+    console.log('  learners will see "AI voice – trial recording" and can play it twice.');
   }
 }
 
@@ -530,7 +563,14 @@ async function revokeWeek(weeks) {
   const client = requireSupabase();
   for (const week of weeks) {
     await revokeTrial({ client, week, url: supabaseUrl });
-    console.log(`Week ${week}: revoked - the page shows "Audio coming soon." again.`);
+    // Take the public copies down as well: the row no longer points at them, and
+    // an unapproved track should not stay fetchable from a public bucket.
+    const removed = await deleteReleasedFiles(client, week);
+    console.log(
+      `Week ${week}: revoked - the page shows "Audio coming soon." again` +
+        (removed.length ? ` (removed ${removed.length} public file(s))` : ''),
+    );
+    console.log('  the private review copy is kept, so --release can put it back.');
   }
 }
 
@@ -547,6 +587,9 @@ async function main() {
   const listTrials = args.includes('--list');
   const deleteTrial = args.includes('--delete-trial');
   const confirmDelete = confirmRequested();
+  const checkVoices = args.includes('--voice-check');
+
+  if (checkVoices) return voiceCheck();
 
   if (deleteTrial || listTrials || reviewWeekList || releaseWeekList || revokeWeekList || weekList) {
     if (deleteTrial) return deleteTrialFiles(weekList ?? [], confirmDelete);

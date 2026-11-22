@@ -23,7 +23,7 @@ const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', impo
  */
 function fakeSupabase(rows = {}, files = {}) {
   const objects = new Map(Object.entries(files));
-  const calls = { remove: [], list: [], select: [], update: [] };
+  const calls = { remove: [], list: [], select: [], update: [], buckets: [] };
   return {
     objects,
     calls,
@@ -31,7 +31,12 @@ function fakeSupabase(rows = {}, files = {}) {
     client: {
       storage: {
         from(bucket) {
-          assert.equal(bucket, 'course-audio', 'only the course-audio bucket is touched');
+          calls.buckets.push(bucket);
+          assert.ok(
+            ['course-audio', 'course-audio-review'].includes(bucket),
+            `only the pipeline's two buckets are touched, not ${bucket}`,
+          );
+          // Objects are held in one map, so a test can seed a public copy too.
           return {
             async remove(keys) {
               calls.remove.push([...keys]);
@@ -221,8 +226,9 @@ test('a confirmed delete removes both files, clears the row and re-lists to prov
 
   const result = await runTrialDeletion([1], fake.client, { confirmed: true });
   assert.equal(result.confirmed, true);
+  // The review copy and the public copy are both removed; neither has to exist.
   assert.deepEqual(result.deleted, trialObjectKeys(1));
-  assert.deepEqual(fake.calls.remove, [trialObjectKeys(1)]);
+  assert.deepEqual(fake.calls.remove, [trialObjectKeys(1), trialObjectKeys(1)]);
   assert.equal(fake.objects.has('weeks-01-04/ai-trial/week-1-listening.mp3'), false);
   assert.equal(fake.objects.has('weeks-01-04/ai-trial/week-1-listening.vtt'), false);
   assert.equal(fake.objects.size, 2, 'week 2 is untouched');
@@ -233,6 +239,7 @@ test('a confirmed delete removes both files, clears the row and re-lists to prov
   assert.equal(cleared.released, false);
   assert.deepEqual(fake.calls.update[1], { week: 1 });
   assert.ok(fake.calls.list.length >= 2, 'listed before and after deleting');
+  assert.deepEqual(new Set(fake.calls.buckets), new Set(['course-audio-review', 'course-audio']));
 });
 
 test('a week with no approval row counts as unreleased and can be cleaned up', async () => {
@@ -248,7 +255,7 @@ test('a week with no approval row counts as unreleased and can be cleaned up', a
 
 test('the workflow cannot delete without an explicit confirm input', () => {
   assert.match(workflow, /confirm:\n\s+description: 'delete: actually delete.*\n\s+type: boolean\n\s+default: false/);
-  const step = workflow.split('Delete the files from the public bucket')[1].split('- name: Approval state')[0];
+  const step = workflow.split('Delete the files from both buckets')[1].split('- name: Approval state')[0];
   assert.match(step, /if \[ "\$\{\{ inputs\.confirm \}\}" = "true" \]/);
   assert.match(step, /--delete-trial --weeks "\$\{\{ inputs\.weeks \}\}" --confirm/, 'confirm is only passed in that branch');
   assert.match(step, /--delete-trial --weeks "\$\{\{ inputs\.weeks \}\}"\n/, 'the default branch has no --confirm');

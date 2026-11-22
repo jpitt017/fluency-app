@@ -3,23 +3,30 @@
 # Manual only: nothing here runs on a push or a pull request.
 #
 # `mode` is the approval workflow:
-#   generate  synthesise the tracks, upload them to `course-audio` as
-#             UNRELEASED (source "ai-trial", no live audioUrl), print the state
-#   review    print a time-limited private listening link for the weeks chosen
-#   release   approve reviewed weeks: set audio_url + released = true, so
-#             /week/[n] shows the player labelled "AI voice – trial recording".
-#             Refused on the production project: a week is never marked released
-#             there, not even briefly for a test. Rehearse against a preview
-#             database instead (see docs/CONTENT_PIPELINE.md §6).
-#   revoke    un-approve: learners go back to "Audio coming soon." Same
-#             production refusal as release.
-#   delete    delete a week's MP3 + VTT from the public `course-audio` bucket and
-#             clear its public URLs; the row stays unreleased. Dry run unless
-#             `confirm` is set; refuses released weeks and any path outside
-#             weeks-01-04/ai-trial/
-#   list      show the approval state of every track
+#   voice-check  synthesise one line per speaker, upload the seven clips to the
+#                private review bucket and print 1-hour links, so the voices can
+#                be approved before a whole week is recorded
+#   generate     synthesise the tracks, upload them to `course-audio-review`
+#                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
+#                print the state
+#   review       print a 1-hour signed listening link for the weeks chosen
+#   release      approve reviewed weeks: copy them to the public `course-audio`
+#                bucket, set audio_url + released = true, so /week/[n] shows the
+#                player labelled "AI voice – trial recording"
+#   revoke       un-approve: learners go back to "Audio coming soon.", and the
+#                public copy is removed again
+#   delete       delete a week's MP3 + VTT from both buckets and clear its URLs;
+#                the row stays unreleased. Dry run unless `confirm` is set;
+#                refuses released weeks and any path outside weeks-01-04/ai-trial/
+#   list         show the approval state of every track
 #
-# Secret required: OPENAI_API_KEY (repository secret). The Supabase URL and
+# release and revoke are refused on the production project: a week is never
+# marked released there, not even briefly for a test. Rehearse against a preview
+# database, or opt in explicitly with allow_production_release plus the
+# acknowledgement phrase for a deliberate, human-reviewed release (see
+# docs/CONTENT_PIPELINE.md section 6).
+#
+# Secret required: ELEVENLABS_API_KEY (repository secret). The Supabase URL and
 # service-role key are the ones CI already uses for the live project.
 name: Course audio — AI trial tracks
 
@@ -27,12 +34,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'generate | review | release | revoke | delete | list'
+        description: 'voice-check | generate | review | release | revoke | delete | list'
         type: choice
-        options: [generate, review, release, revoke, delete, list]
-        default: generate
+        options: [voice-check, generate, review, release, revoke, delete, list]
+        default: voice-check
       weeks:
-        description: 'Weeks to act on (comma separated, 1–4)'
+        description: 'Weeks to act on (comma separated, 1–4; ignored by voice-check)'
         type: string
         default: '1,2,3,4'
       dry_run:
@@ -80,18 +87,28 @@ jobs:
       - run: npm ci
 
       - name: Install ffmpeg (MP3 encoding)
-        if: ${{ inputs.mode == 'generate' }}
+        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' }}
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Check OPENAI_API_KEY availability
-        if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
+      - name: Check ELEVENLABS_API_KEY availability
+        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' }}
         env:
-          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
-          if [ -z "$OPENAI_KEY" ]; then
-            echo "::error::The OPENAI_API_KEY repository secret is not set. Add it in Settings > Secrets and variables > Actions."
+          if [ -z "$ELEVENLABS_KEY" ]; then
+            echo "::error::The ELEVENLABS_API_KEY repository secret is not set. Add it in Settings > Secrets and variables > Actions."
             exit 1
           fi
+
+      - name: Refuse an unacknowledged approval write on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
+        run: |
+          echo "::error::release/revoke on the production project needs the acknowledgement phrase. A week is never marked released on production for a test: use a preview database, a fake week number learners cannot open, or a unit test with a fake client."
+          exit 1
+
+      - name: Warn that this run writes approval state on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
+        run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
       - name: Check SUPABASE_SERVICE_ROLE_KEY availability
         if: ${{ inputs.mode != 'generate' || !inputs.dry_run }}
@@ -111,25 +128,21 @@ jobs:
         if: ${{ inputs.mode == 'generate' }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
 
+      - name: Voice check — one line per speaker, approval links
+        if: ${{ inputs.mode == 'voice-check' }}
+        run: node scripts/generate-course-audio.mjs --voice-check
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
       - name: Generate, upload unreleased, record approval state
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}"
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
 
-      - name: Private review links (valid 7 days)
+      - name: Review links (signed, valid 1 hour)
         if: ${{ inputs.mode == 'review' }}
         run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
-
-      - name: Refuse an unacknowledged approval write on production
-        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
-        run: |
-          echo "::error::release/revoke on the production project needs the acknowledgement phrase. A week is never marked released on production for a test: use a preview database, a fake week number learners cannot open, or a unit test with a fake client."
-          exit 1
-
-      - name: Warn that this run writes approval state on production
-        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
-        run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
       - name: Release approved weeks
         if: ${{ inputs.mode == 'release' }}
@@ -139,7 +152,7 @@ jobs:
         if: ${{ inputs.mode == 'revoke' }}
         run: node scripts/generate-course-audio.mjs --revoke "${{ inputs.weeks }}"
 
-      - name: Delete the files from the public bucket (dry run unless confirm)
+      - name: Delete the files from both buckets (dry run unless confirm)
         if: ${{ inputs.mode == 'delete' }}
         run: |
           if [ "${{ inputs.confirm }}" = "true" ]; then

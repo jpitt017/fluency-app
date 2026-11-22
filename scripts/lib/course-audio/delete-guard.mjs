@@ -1,23 +1,31 @@
 /**
  * Safety rules for the `delete` mode of scripts/generate-course-audio.mjs.
  *
- * Deleting from a public bucket is the one irreversible thing this pipeline
- * does, so the rules live in one testable module instead of inside CLI glue:
+ * Deleting audio is the one irreversible thing this pipeline does, so the rules
+ * live in one testable module instead of inside CLI glue:
  *
- * 1. Paths: an object may only be deleted from
- *    `course-audio/weeks-01-04/ai-trial/`. Anything else is refused, including
+ * 1. Buckets: only `course-audio-review` (private, the working copy) and
+ *    `course-audio` (public, released copies) are ever touched. A bucket name
+ *    from a caller is checked against that list, not interpolated.
+ * 2. Paths: an object may only be deleted from
+ *    `<bucket>/weeks-01-04/ai-trial/`. Anything else is refused, including
  *    traversal (`..`), absolute paths, backslashes, NUL bytes, empty segments
  *    and percent-encoded separators. Weeks are whole numbers.
- * 2. Dry run: a delete never touches Storage unless `confirm: true` is passed.
+ * 3. Dry run: a delete never touches Storage unless `confirm: true` is passed.
  *    Anything other than the literal `true`/`'true'` counts as not confirmed.
- * 3. Released weeks: a week that is live for learners is never deleted. Revoke
+ * 4. Released weeks: a week that is live for learners is never deleted. Revoke
  *    it first, so the files cannot vanish underneath a live page.
  */
 
 export const AUDIO_BUCKET = 'course-audio';
+export const DEFAULT_REVIEW_BUCKET = 'course-audio-review';
+/** Both buckets keep the same key layout, so release is a straight copy. */
 export const TRIAL_PREFIX = 'weeks-01-04/ai-trial/';
 /** The only weeks this pipeline generates. */
 export const TRIAL_WEEKS = [1, 2, 3, 4];
+
+export const ALLOWED_BUCKETS = [DEFAULT_REVIEW_BUCKET, AUDIO_BUCKET];
+
 /**
  * A file name under the prefix: starts with an alphanumeric, then letters,
  * digits, `_` or `-`, with at most one short extension. No leading dot, no `..`,
@@ -25,14 +33,19 @@ export const TRIAL_WEEKS = [1, 2, 3, 4];
  */
 const ALLOWED_NAME = /^[A-Za-z0-9][A-Za-z0-9_-]*(?:\.[A-Za-z0-9]{1,5})?$/;
 
+export function assertKnownBucket(bucket) {
+  if (!ALLOWED_BUCKETS.includes(bucket)) {
+    throw new Error(`Refusing bucket "${String(bucket)}": only ${ALLOWED_BUCKETS.join(', ')} are used by this pipeline`);
+  }
+  return bucket;
+}
+
 export function assertTrialWeek(week) {
   if (typeof week !== 'number' || !Number.isInteger(week)) {
     throw new Error(`Refusing week "${String(week)}": the week must be a whole number`);
   }
   if (!TRIAL_WEEKS.includes(week)) {
-    throw new Error(
-      `Refusing week ${week}: only Weeks ${TRIAL_WEEKS.join(', ')} have trial tracks`,
-    );
+    throw new Error(`Refusing week ${week}: only Weeks ${TRIAL_WEEKS.join(', ')} have trial tracks`);
   }
   return week;
 }
@@ -43,18 +56,24 @@ export function trialObjectKeys(week) {
   return [`${TRIAL_PREFIX}week-${week}-listening.mp3`, `${TRIAL_PREFIX}week-${week}-listening.vtt`];
 }
 
+/** The review copy has the same layout as the released copy. */
+export function reviewObjectKeys(week) {
+  return trialObjectKeys(week);
+}
+
 /**
  * Accepts an object key only when it is a plain name inside the trial prefix.
  * Returns the key, or throws with the reason.
  */
-export function assertTrialObjectKey(key) {
+export function assertTrialObjectKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
+  assertKnownBucket(bucket);
   if (typeof key !== 'string' || !key) throw new Error('Refusing to delete an empty object key');
   if (key.includes('\\')) throw new Error(`Refusing "${key}": backslashes are not allowed`);
   if (key.includes('\0')) throw new Error(`Refusing "${key}": NUL bytes are not allowed`);
   if (/%(2e|2f|5c)/i.test(key)) throw new Error(`Refusing "${key}": percent-encoded separators are not allowed`);
   if (key.startsWith('/')) throw new Error(`Refusing "${key}": absolute paths are not allowed`);
   if (!key.startsWith(TRIAL_PREFIX)) {
-    throw new Error(`Refusing "${key}": only ${AUDIO_BUCKET}/${TRIAL_PREFIX} may be deleted`);
+    throw new Error(`Refusing "${key}": only ${bucket}/${TRIAL_PREFIX} may be deleted`);
   }
   const name = key.slice(TRIAL_PREFIX.length);
   if (name.includes('..')) throw new Error(`Refusing "${key}": ".." is not allowed`);
@@ -70,22 +89,33 @@ export function assertTrialObjectKey(key) {
 }
 
 /** Refuses every key unless all of them are inside the trial prefix. */
-export function assertDeletableKeys(keys) {
+export function assertDeletableKeys(keys, bucket = DEFAULT_REVIEW_BUCKET) {
   if (!Array.isArray(keys) || keys.length === 0) throw new Error('Refusing to delete nothing');
-  return keys.map(assertTrialObjectKey);
+  return keys.map((key) => assertTrialObjectKey(key, bucket));
 }
 
 /**
  * The only files a week may own inside the prefix: its MP3 and its WebVTT.
  * Anything else is refused even if the name is otherwise well formed.
  */
-export function assertTrialTrackKey(key) {
-  assertTrialObjectKey(key);
+export function assertTrialTrackKey(key, bucket = AUDIO_BUCKET) {
+  assertTrialObjectKey(key, bucket);
   const allowed = TRIAL_WEEKS.flatMap((week) => [`week-${week}-listening.mp3`, `week-${week}-listening.vtt`]);
   if (!allowed.includes(key.slice(TRIAL_PREFIX.length))) {
     throw new Error(`Refusing "${key}": it is not one of the trial track files (${allowed.length} allowed)`);
   }
   return key;
+}
+
+/**
+ * Anything the pipeline uploads to, or signs from, the review bucket. That is the
+ * track files plus the per-speaker voice-check clips, and nothing else.
+ */
+export function assertReviewKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
+  assertTrialObjectKey(key, bucket);
+  const name = key.slice(TRIAL_PREFIX.length);
+  if (/^voice-check-[A-Za-z]+\.mp3$/.test(name)) return key;
+  return assertTrialTrackKey(key, bucket);
 }
 
 /** Storage listing names are bare file names, so confine them the same way. */
