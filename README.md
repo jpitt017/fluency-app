@@ -96,3 +96,13 @@ To run a single production issue-alert smoke test, manually dispatch the CI work
 To verify production AI feedback, manually dispatch CI with `production_ai_test` enabled. The test creates a confirmed `@example.test` user through the admin API, signs in via the real login page, submits writing and recorded speech in Labs using real AI services, checks feedback, and deletes the test user and data. It requires the production Supabase URL and service-role key as GitHub Actions secrets and incurs normal AI usage; it does not run on ordinary CI pushes or pull requests.
 
 AI practice limits reset at midnight Europe/Madrid. Free learners receive 30 units per day, pilot learners 120, Pro subscribers 180, and teachers/admins 1,000. Staff can turn pilot access on or off for learners in the Teacher Console. Active Pro subscriptions take priority over pilot access; staff limits take priority over both. Short per-minute limits still apply. Usage events remain logged, including for staff, and a manual daily reset does not delete usage history.
+
+### Pilot: manual account deletion (admin runbook)
+
+Account closure is handled manually on request; there is no self-service account-deletion button. Stripe remains the system of record for invoices and payments.
+
+1. Verify the requester's identity and confirm they want the login permanently removed and any active paid subscription cancelled. Locate their exact Supabase user ID and the corresponding Stripe customer/subscription; verify both identifiers before changing anything.
+2. In Stripe, cancel every active or trialing subscription for that customer and verify cancellation succeeded. If cancellation fails, stop and resolve it before deleting the login. Do not delete Stripe invoices or payment records.
+3. Have the signed-in learner use **Delete my learning data & recordings** on the Privacy page, and verify success. If that is not possible, securely remove their recordings and issue attachments from the user-ID prefixes in the `speaking-recordings` and `issue-attachments` buckets, and remove their learner-generated database data using an authorized admin procedure. Confirm that cleanup succeeded; do not rely on deleting database rows to remove storage files.
+4. In Supabase Authentication, delete the verified user's login. The profile and app subscription rows cascade on auth-user deletion; Stripe retains invoices and payments. Confirm the login is gone and the user's storage prefixes are empty.
+5. Tell the requester that account closure and subscription cancellation are complete. Do not include sensitive data in the confirmation.
