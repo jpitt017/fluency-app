@@ -26,7 +26,7 @@ test('learner sends reports with explicit answer consent', async ({ page }) => {
     if (seeded.error) throw seeded.error;
     await page.goto('/login');
     await page.getByLabel(/Email/i).fill(user.email);
-    await page.getByLabel(/Password/i).fill(user.password);
+    await page.getByLabel('Password', { exact: true }).fill(user.password);
     await page.getByRole('button', { name: /Sign in/i }).click();
     await page.waitForURL(/\/dashboard|\/labs/);
     await page.goto('/week/1?private=do-not-save');
