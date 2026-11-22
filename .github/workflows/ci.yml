@@ -205,6 +205,10 @@ jobs:
           version: 3.2.0
       - name: Start local Supabase without project migrations
         run: |
+          set -euo pipefail
+          exec > >(tee /tmp/supabase-start.log) 2>&1
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 12 /tmp/supabase-start.log); }
+          trap report_failure ERR
           supabase init
           supabase start
       - name: Apply migrations and test both application orders
