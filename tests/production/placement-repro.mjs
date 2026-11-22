@@ -37,11 +37,22 @@ function log(label, value) {
   console.log(rendered);
 }
 
-/** GitHub strips job logs for this repo's runs, so the summary is the transport. */
+/**
+ * Job logs, step summaries and artifacts are all unreachable from this sandbox,
+ * but workflow annotations are readable through the checks API. Emit the verdict
+ * as annotations, chunked to stay under GitHub's per-step limit, and keep the
+ * full text in a file for the PR comment.
+ */
 function writeSummary() {
   const body = ['## Placement writing-step repro', '', '```', ...report, '```', ''].join('\n');
   if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, body, { flag: 'a' });
   if (process.env.REPRO_OUTPUT) writeFileSync(process.env.REPRO_OUTPUT, body);
+  const keys = /^(h1 after click|textarea count|writing prompt visible|evaluate button count|score error visible|console errors|page errors|failed requests|q24 button|after clicking q24|PROBE|placement page status)/;
+  const lines = report.filter((line) => keys.test(line));
+  for (let index = 0; index < lines.length && index < 9; index += 1) {
+    const text = lines[index].replace(/[\r\n]+/g, ' ').slice(0, 920);
+    console.log(`::warning title=placement repro ${index + 1}::${text}`);
+  }
 }
 
 let user;
