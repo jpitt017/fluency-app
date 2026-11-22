@@ -1,56 +1,80 @@
 /**
- * Speech synthesis for the Weeks 1–4 listening tracks.
+ * Speech synthesis for the Weeks 1–4 listening tracks, on ElevenLabs.
  *
- * OpenAI has deprecated the whole Speech API text-to-speech line (shutdown
- * 6 January 2027) and the recommended replacement `gpt-realtime-2.1-mini` is not
- * served by that endpoint. See the deprecations page:
- * https://developers.openai.com/api/docs/deprecations. New code therefore goes
- * through the Realtime API, which is the only path that will still work:
+ * The tracks used to come from OpenAI's Realtime API. They now come from
+ * ElevenLabs' text-to-speech endpoint, which is a plain HTTP POST per line:
  *
- *   WebSocket wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1-mini
- *   session.update  -> voice, instructions (accent + pace), PCM output
- *   conversation.item.create (input_text) + response.create
- *   response.output_audio.delta (base64 PCM16) -> captured per speaker turn
+ *   POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}
+ *        ?output_format=pcm_24000
+ *   xi-api-key: <key>
+ *   { text, model_id, voice_settings: { stability, similarity_boost, style, speed } }
+ *   -> raw PCM16LE, mono, 24 kHz
  *
- * A Realtime model is a conversational model, not a reader, so each line is
- * sent with instructions to read it exactly as written and add nothing. Audio is
- * captured per turn, which gives real line boundaries for the captions and lets
- * each speaker keep their own voice inside one track.
+ * PCM output matters: it keeps the per-line boundaries the captions are built
+ * from, and the existing PCM -> WAV -> loudnorm MP3 steps work unchanged.
  *
- * The API shapes below follow the GA Realtime interface. They cannot be
- * exercised without an OPENAI_API_KEY, so `synthesiseTurn` accepts an injectable
- * transport: tests drive a fake socket, and the pipeline is verified end to end
- * by the manual GitHub Actions workflow.
+ * The accent is the voice, not an instruction. Each speaker is one of seven
+ * custom ElevenLabs voices with its own British/Irish regional accent
+ * (`accent` below is documentation for reviewers), so no prompt tries to talk
+ * the model into an accent, and the recorded accent stays consistent across
+ * tracks. `speed` is the only delivery control, and it is what gives B1 learners
+ * a slightly slower pace.
+ *
+ * `eleven_multilingual_v2` is the default because it honours `speed` and reads
+ * authored scripts verbatim. `eleven_v3` is more expressive but ignores `speed`
+ * and adds its own pauses, so it is not used for graded listening material.
+ *
+ * The API cannot be exercised without an ELEVENLABS_API_KEY, so
+ * `synthesiseTurn` accepts an injectable `fetch`: tests drive a fake, and the
+ * real request path is checked by the manual GitHub Actions workflow.
  */
 
 import { spawn } from 'node:child_process';
-import WebSocket from 'ws';
 
-export const TTS_MODEL = 'gpt-realtime-2.1-mini';
-export const REALTIME_URL = 'wss://api.openai.com/v1/realtime';
+export const TTS_PROVIDER = 'elevenlabs';
+export const TTS_MODEL = 'eleven_multilingual_v2';
+export const TTS_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
+
+/**
+ * Raw PCM16LE at 24 kHz. 44.1 kHz is a paid-tier format, 22.05 kHz works too;
+ * 24 kHz matches what the old pipeline used, so the WAV headers and the cue
+ * timings carry over exactly.
+ */
+export const OUTPUT_FORMAT = 'pcm_24000';
 
 /** B1 learners: slightly slower than a natural pace, without sounding robotic. */
-export const B1_SPEECH_RATE = 0.95;
+export const B1_SPEECH_RATE = 0.9;
 
-/** 24 kHz mono 16-bit little-endian PCM, the Realtime API default. */
 export const PCM_SAMPLE_RATE = 24_000;
 export const PCM_BYTES_PER_SAMPLE = 2;
 
 /**
- * One built-in voice per speaker, as the course spec requires: seven British
- * speakers with different regional accents, and no two speakers sharing a voice
- * inside the same track. `marin` and `cedar` are the highest-quality built-ins;
- * the Realtime voice set is alloy, ash, ballad, coral, echo, sage, shimmer,
- * verse, marin and cedar.
+ * One custom voice per speaker: seven British and Irish voices with different
+ * regional accents, and no two speakers sharing a voice inside one track.
+ *
+ * The IDs are fixed by the course spec. `name` and `accent` are for reviewers;
+ * nothing here is sent to the API except the ID.
  */
 export const SPEAKER_VOICES = {
-  Host: { voice: 'marin', accent: 'southern English (south-east England, not London)' },
-  Ellie: { voice: 'shimmer', accent: 'Scottish (Edinburgh, soft Highland-influenced)' },
-  Aisha: { voice: 'coral', accent: 'London (multicultural London English, mild)' },
-  Tom: { voice: 'ash', accent: 'northern English (Manchester)' },
-  Dan: { voice: 'cedar', accent: 'Welsh (Cardiff, mild)' },
-  Marta: { voice: 'ballad', accent: 'West Midlands (Birmingham)' },
-  Joanne: { voice: 'sage', accent: 'Yorkshire (Leeds)' },
+  Host: { voice: 'sp7QaEHmiNEd5HgrXuOo', name: 'Jack Anthony', accent: 'southern English' },
+  Ellie: { voice: 'VGEVi3E0hARQ99wIXvJG', name: 'Jenny', accent: 'Scottish' },
+  Aisha: { voice: 'jUPSOpRcPt8GMPsWx5fy', name: 'Ruby B', accent: 'London' },
+  Tom: { voice: 'EtGAAwTx6aMveVbqUxuU', name: 'Joseph', accent: 'northern English' },
+  Dan: { voice: 'sBU90Bu4NCleWDoNkGog', name: 'Richard', accent: 'Welsh' },
+  Marta: { voice: 'FmIJwVFU62n8jITpotTp', name: 'Susie', accent: 'West Midlands' },
+  Joanne: { voice: 'ZR8ruiC9tbg7bV9RmBmC', name: 'Miri', accent: 'Yorkshire' },
+};
+
+/**
+ * Voice settings shared by every line. Stability sits mid-range so repeated
+ * lines sound the same without flattening the delivery; `speed` is set per
+ * request from the rate above.
+ */
+export const VOICE_SETTINGS = {
+  stability: 0.45,
+  similarity_boost: 0.8,
+  style: 0,
+  use_speaker_boost: true,
 };
 
 /** How long a silent gap is inserted between two spoken lines. */
@@ -124,160 +148,117 @@ export function assertKnownSpeakers(lines) {
   }
 }
 
-export function buildInstructions(speaker, rate = B1_SPEECH_RATE) {
+/**
+ * The request body for one line. There is deliberately no `instructions` or
+ * prompt field: the accent comes from the custom voice, and the text is read as
+ * written.
+ */
+export function buildSpeechRequest(speaker, text, rate = B1_SPEECH_RATE) {
   const config = SPEAKER_VOICES[speaker];
   if (!config) throw new Error(`No voice configured for speaker "${speaker}"`);
-  const speedNote =
-    rate < 1
-      ? `Speak a little slower than a natural conversational pace, at about ${Math.round(
-          150 * rate,
-        )} words a minute, with clear final consonants and short breaths at punctuation.`
-      : 'Speak at a natural conversational pace with clear final consonants.';
-  return [
-    'You are a British English voice actor recording a listening track for adult B1 learners of English.',
-    `Speak with a consistent ${config.accent} accent.`,
-    speedNote,
-    'Sound warm and natural, like a podcast or a friendly colleague, with no background music or sound effects.',
-    'Read the user message exactly as written, word for word. Do not add, remove, summarise, translate or comment on anything, and do not answer questions in the text: they are part of the script.',
-  ].join(' ');
-}
-
-/**
- * The slice of a socket the synthesiser needs, so tests can fake it:
- *   { onEvent(handler), send(event), close() }
- */
-
-/**
- * Minimal `ws`-backed connection for the GA Realtime API. The API key travels in
- * the Authorization header, never in the query string.
- */
-export function createWebSocketTransport(WebSocketImpl = WebSocket) {
+  if (!text.trim()) throw new Error(`Empty line for speaker "${speaker}"`);
   return {
-    async connect({ url, apiKey, model }) {
-      const socket = new WebSocketImpl(`${url}?model=${encodeURIComponent(model)}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      const handlers = [];
-      socket.on('message', (data) => {
-        let parsed;
-        try {
-          parsed = JSON.parse(data.toString());
-        } catch {
-          return;
-        }
-        for (const handler of handlers) handler(parsed);
-      });
-      await new Promise((resolve, reject) => {
-        socket.once('open', () => resolve());
-        socket.once('error', (error) => reject(error));
-      });
-      return {
-        onEvent(handler) {
-          handlers.push(handler);
-        },
-        send(event) {
-          socket.send(JSON.stringify(event));
-        },
-        close() {
-          socket.close();
-        },
-      };
+    url: `${TTS_URL}/${encodeURIComponent(config.voice)}?output_format=${OUTPUT_FORMAT}`,
+    body: {
+      text,
+      model_id: TTS_MODEL,
+      voice_settings: { ...VOICE_SETTINGS, speed: rate },
     },
   };
 }
 
-/** The session configuration every turn shares. */
-export function buildSessionUpdate(speaker, rate = B1_SPEECH_RATE) {
-  const config = SPEAKER_VOICES[speaker];
-  if (!config) throw new Error(`No voice configured for speaker "${speaker}"`);
-  return {
-    type: 'session.update',
-    session: {
-      type: 'realtime',
-      output_modalities: ['audio'],
-      instructions: buildInstructions(speaker, rate),
-      audio: {
-        input: { format: { type: 'audio/pcm', rate: PCM_SAMPLE_RATE }, turn_detection: null },
-        output: {
-          format: { type: 'audio/pcm', rate: PCM_SAMPLE_RATE },
-          voice: config.voice,
-          speed: rate,
-        },
-      },
-    },
-  };
-}
-
-const EVENT_TIMEOUT_MS = 120_000;
+const REQUEST_TIMEOUT_MS = 120_000;
 
 /**
- * Speaks one script line and returns its PCM samples. Each call opens its own
- * short session so a voice or accent change never leaks across a speaker turn.
+ * Speaks one script line and returns its PCM samples.
+ *
+ * Retries only what is worth retrying: 429 and 5xx responses, with exponential
+ * backoff, because a 300-line track will hit a rate limit sooner or later. 4xx
+ * responses are configuration errors (bad key, unknown voice, gated format) and
+ * fail immediately with the API's message so the workflow log says what to fix.
  *
  * @returns {Promise<{speaker: string, text: string, pcm: Buffer, transcript: string}>}
  */
 export async function synthesiseTurn(options) {
-  const { speaker, text, apiKey, transport } = options;
-  const model = options.model ?? TTS_MODEL;
+  const {
+    speaker,
+    text,
+    apiKey,
+    fetchImpl = globalThis.fetch,
+    attempts = 4,
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    log = () => {},
+  } = options;
   const rate = options.rate ?? B1_SPEECH_RATE;
-  if (!text.trim()) throw new Error(`Empty line for speaker "${speaker}"`);
+  if (!apiKey) throw new Error('ELEVENLABS_API_KEY is not set');
 
-  const connection = await transport.connect({ url: REALTIME_URL, apiKey, model });
-  const chunks = [];
-  let transcript = '';
-  let failure = null;
-  let settled = false;
-  let resolveDone = () => {};
-  const done = new Promise((resolve) => {
-    resolveDone = () => {
-      if (settled) return;
-      settled = true;
-      resolve();
-    };
-  });
-  const timer = setTimeout(() => {
-    failure = new Error(`Timed out waiting for audio for ${speaker}: "${text.slice(0, 40)}…"`);
-    resolveDone();
-  }, options.timeoutMs ?? EVENT_TIMEOUT_MS);
+  const request = buildSpeechRequest(speaker, text, rate);
+  let lastError = null;
 
-  connection.onEvent((event) => {
-    const type = String(event.type ?? '');
-    if (type === 'response.output_audio.delta' && typeof event.delta === 'string') {
-      chunks.push(Buffer.from(event.delta, 'base64'));
-    } else if (type === 'response.output_audio_transcript.delta' && typeof event.delta === 'string') {
-      transcript += event.delta;
-    } else if (type === 'error') {
-      const detail = event.error;
-      failure = new Error(`Realtime API error for ${speaker}: ${detail?.message ?? JSON.stringify(event)}`);
-      resolveDone();
-    } else if (type === 'response.done') {
-      const response = event.response;
-      if (response?.status === 'failed') {
-        failure = new Error(
-          `Realtime response failed for ${speaker}: ${response.status_details?.error?.message ?? 'unknown error'}`,
-        );
-      }
-      resolveDone();
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    let response;
+    try {
+      response = await withTimeout(
+        fetchImpl(request.url, {
+          method: 'POST',
+          headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', Accept: 'audio/pcm' },
+          body: JSON.stringify(request.body),
+        }),
+        timeoutMs,
+        `${speaker}: "${text.slice(0, 40)}…"`,
+      );
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) throw error;
+      log(`    ${speaker}: request failed (${error.message}); retrying`);
+      await sleep(backoffMs(attempt));
+      continue;
     }
-  });
 
-  try {
-    connection.send(buildSessionUpdate(speaker, rate));
-    connection.send({
-      type: 'conversation.item.create',
-      item: { type: 'message', role: 'user', content: [{ type: 'input_text', text }] },
-    });
-    connection.send({ type: 'response.create', response: { output_modalities: ['audio'] } });
-    await done;
-  } finally {
-    clearTimeout(timer);
-    connection.close();
+    if (response.ok) {
+      const pcm = Buffer.from(await response.arrayBuffer());
+      if (!pcm.length) throw new Error(`No audio returned for ${speaker}: "${text.slice(0, 40)}…"`);
+      if (pcm.length % PCM_BYTES_PER_SAMPLE !== 0) {
+        throw new Error(`Audio for ${speaker} is not 16-bit PCM (${pcm.length} bytes)`);
+      }
+      return { speaker, text, pcm, transcript: text };
+    }
+
+    const detail = await safeText(response);
+    lastError = new Error(
+      `ElevenLabs ${response.status} for ${speaker}: ${detail.slice(0, 300) || response.statusText}`,
+    );
+    const retryable = response.status === 429 || response.status >= 500;
+    if (!retryable || attempt === attempts) throw lastError;
+    log(`    ${speaker}: HTTP ${response.status}; retrying in ${backoffMs(attempt) / 1000}s`);
+    await sleep(backoffMs(attempt));
   }
 
-  if (failure) throw failure;
-  const pcm = Buffer.concat(chunks);
-  if (!pcm.length) throw new Error(`No audio returned for ${speaker}: "${text.slice(0, 40)}…"`);
-  return { speaker, text, pcm, transcript: transcript.trim() || text };
+  throw lastError ?? new Error(`Could not synthesise ${speaker}`);
+}
+
+function backoffMs(attempt) {
+  return Math.min(30_000, 2_000 * 2 ** (attempt - 1));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${Math.round(ms / 1000)}s waiting for ${label}`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function safeText(response) {
+  try {
+    return (await response.text()).replace(/\s+/g, ' ').trim();
+  } catch {
+    return '';
+  }
 }
 
 /** Mono PCM16 little-endian -> a complete 44-byte-header WAV file. */
@@ -444,4 +425,60 @@ export function spawnFfmpeg(wavBuffer, outFile) {
 /** Encodes the assembled WAV as MP3. Injectable so tests can skip ffmpeg. */
 export async function encodeMp3(wavBuffer, outFile, runner = spawnFfmpeg) {
   await runner(wavBuffer, outFile);
+}
+
+/**
+ * The same encoding, returned as a Buffer. The legacy Modules 1–8 vocabulary
+ * upload needs bytes for a storage key rather than a file on disk.
+ */
+export function spawnFfmpegToBuffer(wavBuffer) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-f',
+        'wav',
+        '-i',
+        'pipe:0',
+        '-af',
+        LOUDNESS_FILTER,
+        '-codec:a',
+        'libmp3lame',
+        '-b:a',
+        '128k',
+        '-ac',
+        '1',
+        '-f',
+        'mp3',
+        'pipe:1',
+      ],
+      { stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    const chunks = [];
+    let stderr = '';
+    child.stdout.on('data', (chunk) => chunks.push(chunk));
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.once('error', (error) => {
+      reject(
+        error.code === 'ENOENT'
+          ? new Error('ffmpeg is not installed; install it to encode the MP3 audio')
+          : error,
+      );
+    });
+    child.once('close', (code) => {
+      if (code === 0) resolve(Buffer.concat(chunks));
+      else reject(new Error(`ffmpeg exited with ${code}: ${stderr.trim().slice(0, 400)}`));
+    });
+    child.stdin.end(wavBuffer);
+  });
+}
+
+/** MP3 bytes for one snippet of speech; injectable so tests can skip ffmpeg. */
+export async function encodeMp3Buffer(wavBuffer, runner = spawnFfmpegToBuffer) {
+  return runner(wavBuffer);
 }
