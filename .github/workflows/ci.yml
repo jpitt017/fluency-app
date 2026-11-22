@@ -90,6 +90,7 @@ jobs:
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/usage-messages.test.mjs
+      - run: node --test tests/unit/learner-grammar.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
       - run: npm run check:live-schema
         env:
