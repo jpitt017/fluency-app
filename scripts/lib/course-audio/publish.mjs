@@ -4,29 +4,35 @@
  *
  * Nothing here releases a track to learners: every upload lands unreleased with
  * `audio_url` empty. `--release` is a separate, deliberate step in
- * scripts/generate-course-audio.mjs.
+ * scripts/generate-course-audio.mjs. The path rules for deletion live in
+ * ./delete-guard.mjs and are enforced here, not only in the CLI.
  */
 
-export const AUDIO_BUCKET = 'course-audio';
+import {
+  AUDIO_BUCKET,
+  TRIAL_PREFIX,
+  assertDeletableKeys,
+  assertTrialTrackKey,
+  assertTrialWeek,
+  isTrialFileName,
+  trialObjectKeys,
+} from './delete-guard.mjs';
 
-/** Everything the pipeline writes for one week. */
-export function trialObjectKeys(week) {
-  return [
-    `weeks-01-04/ai-trial/week-${week}-listening.mp3`,
-    `weeks-01-04/ai-trial/week-${week}-listening.vtt`,
-  ];
-}
+export { AUDIO_BUCKET, TRIAL_PREFIX, trialObjectKeys };
 
 /**
  * Removes a week's files from the public bucket.
  *
  * Deleting through the Storage API is what removes the object, its metadata row
- * and the bytes; the bucket is public, so an unreleased track must not be left
- * sitting there. Returns the keys Storage confirmed as removed, and throws if
- * anything it reported back is still listed.
+ * and the bytes; the bucket is public, so a trial that will not be used must not
+ * be left sitting there. The week and every key are checked against
+ * ./delete-guard.mjs before the call, so this cannot be pointed outside
+ * `weeks-01-04/ai-trial/` even if a caller passes a crafted value. Returns the
+ * keys Storage confirmed as removed, and throws if anything it reported back is
+ * still listed.
  */
 export async function deleteTrialFiles(client, week) {
-  const keys = trialObjectKeys(week);
+  const keys = assertDeletableKeys(trialObjectKeys(week)).map(assertTrialTrackKey);
   const { data, error } = await client.storage.from(AUDIO_BUCKET).remove(keys);
   if (error) throw new Error(`Could not delete week ${week} from ${AUDIO_BUCKET}: ${JSON.stringify(error)}`);
   const removed = new Set((data ?? []).map((item) => item.name ?? item.path ?? ''));
@@ -46,14 +52,20 @@ export async function deleteTrialFiles(client, week) {
 
 /** Confirms what is actually left in the bucket for a week. */
 export async function listTrialFiles(client, week) {
-  const { data, error } = await client.storage.from(AUDIO_BUCKET).list('weeks-01-04/ai-trial', { limit: 100 });
+  assertTrialWeek(week);
+  const { data, error } = await client.storage.from(AUDIO_BUCKET).list(TRIAL_PREFIX.replace(/\/$/, ''), {
+    limit: 100,
+  });
   if (error) throw new Error(`Could not list ${AUDIO_BUCKET}: ${JSON.stringify(error)}`);
   const prefix = `week-${week}-listening`;
-  return (data ?? []).map((item) => item.name).filter((name) => name.startsWith(prefix));
+  return (data ?? [])
+    .map((item) => item.name)
+    .filter((name) => isTrialFileName(name) && name.startsWith(prefix));
 }
 
 export async function uploadToBucket(client, target) {
   const bucket = target.bucket ?? AUDIO_BUCKET;
+  if (bucket === AUDIO_BUCKET) assertTrialTrackKey(target.key);
   const { error } = await client.storage.from(bucket).upload(target.key, target.body, {
     contentType: target.contentType,
     upsert: true,
