@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import {
   B1_SPEECH_RATE,
   OUTPUT_FORMAT,
@@ -19,6 +22,15 @@ import {
   scheduleTrack,
   synthesiseTurn,
 } from '../../scripts/lib/course-audio/tts.mjs';
+import {
+  defaultSpeakerFor,
+  estimateDurationSeconds,
+  generateListeningTrial,
+  generateVoiceCheck,
+  listeningTrialAudioKey,
+  readListeningWeeks,
+  VOICE_CHECK_LINE,
+} from '../../scripts/lib/course-audio/listening-trial.mjs';
 
 const tts = readFileSync(new URL('../../scripts/lib/course-audio/tts.mjs', import.meta.url), 'utf8');
 const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', import.meta.url), 'utf8');
@@ -311,4 +323,172 @@ test('the workflow saves only the review artefacts and requires the ElevenLabs s
   assert.match(workflow, /ELEVENLABS_API_KEY/);
   assert.doesNotMatch(workflow, /OPENAI/);
   assert.match(workflow, /mode: voice-check|voice-check/);
+});
+
+/* ---------------------------------------------------------------- end to end */
+
+const weeks = await readListeningWeeks();
+const week = (number) => weeks.find((item) => item.week === number);
+
+/** A fake HTTP fetch that answers every line with `seconds` of PCM. */
+function pcmFetch(seconds = 1) {
+  return async () => new Response(fakePcm(seconds), { status: 200 });
+}
+
+test('a full week generates MP3 + WebVTT and uploads them to the private review bucket, unreleased', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'listening-trial-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+
+  const uploaded = [];
+  const rows = [];
+  const client = {
+    storage: {
+      from(bucket) {
+        assert.equal(bucket, 'course-audio-review', 'unapproved audio never goes to the public bucket');
+        return {
+          async upload(key, body, options) {
+            uploaded.push({ bucket, key, size: body.length, ...options });
+            return { error: null };
+          },
+          getPublicUrl() {
+            assert.fail('a private bucket has no public URL to hand out');
+          },
+        };
+      },
+    },
+    from(table) {
+      return {
+        async upsert(row) {
+          rows.push({ table, row });
+          return { error: null };
+        },
+      };
+    },
+  };
+
+  let encoded = null;
+  const result = await generateListeningTrial({
+    weekSpec: week(1),
+    outputDir: dir,
+    apiKey: 'test-key',
+    fetchImpl: pcmFetch(1),
+    client,
+    upload: true,
+    encoder: async (wav, outFile) => {
+      encoded = { wav, outFile };
+      // Stand in for ffmpeg: the pipeline reads the MP3 back to upload it.
+      await writeFile(outFile, wav.subarray(0, 64));
+    },
+  });
+
+  assert.equal(result.week, 1);
+  assert.equal(result.lines, 11);
+  assert.deepEqual(result.speakers, ['Host', 'Ellie']);
+  assert.deepEqual(result.voices, { Host: SPEAKER_VOICES.Host.voice, Ellie: SPEAKER_VOICES.Ellie.voice });
+  assert.equal(result.cues, 11);
+  assert.ok(result.durationSeconds > 10, 'pauses are included in the length');
+  assert.equal(result.uploaded, true);
+  assert.equal(result.reviewBucket, 'course-audio-review');
+
+  assert.equal(path.basename(encoded.outFile), 'week-1-listening.mp3');
+  assert.equal(encoded.wav.subarray(0, 4).toString(), 'RIFF');
+  const vtt = await readFile(path.join(dir, 'week-1-listening.vtt'), 'utf8');
+  assert.match(vtt, /^WEBVTT\n/);
+  assert.equal(vtt.match(/-->/g)?.length, 11);
+
+  assert.equal(uploaded.length, 2);
+  assert.deepEqual(
+    uploaded.map((item) => item.key),
+    [listeningTrialAudioKey(1), 'weeks-01-04/ai-trial/week-1-listening.vtt'],
+  );
+  assert.equal(uploaded[0].contentType, 'audio/mpeg');
+  assert.equal(uploaded[1].contentType, 'text/vtt');
+
+  // Recorded as an unreleased AI trial with no live audio URL and no public captions URL.
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].table, 'listening_audio_trials');
+  assert.equal(rows[0].row.week, 1);
+  assert.equal(rows[0].row.source, 'ai-trial');
+  assert.equal(rows[0].row.released, false);
+  assert.equal(rows[0].row.audio_url, null, 'the live audioUrl must not be set before approval');
+  assert.equal(rows[0].row.captions_url, null, 'captions stay private until approval');
+  assert.equal(rows[0].row.caption_cues, 11);
+  assert.equal(rows[0].row.model, 'eleven_multilingual_v2');
+});
+
+test('a rejected key stops the run before anything is uploaded', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'listening-trial-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  let uploads = 0;
+  const client = {
+    storage: { from: () => ({ upload: async () => (uploads++, { error: null }) }) },
+    from: () => ({ upsert: async () => ({ error: null }) }),
+  };
+  const rejected = async () => new Response('{"detail":"invalid api key"}', { status: 401 });
+  await assert.rejects(
+    () =>
+      generateListeningTrial({
+        weekSpec: week(1),
+        outputDir: dir,
+        apiKey: 'bad-key',
+        fetchImpl: rejected,
+        client,
+        upload: true,
+      }),
+    /ElevenLabs 401/,
+  );
+  assert.equal(uploads, 0, 'nothing is uploaded when synthesis fails');
+});
+
+test('the voice check records one clip per speaker with the same line', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'voice-check-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+
+  const requests = [];
+  const uploaded = [];
+  const client = {
+    storage: {
+      from: (bucket) => ({
+        async upload(key, body, options) {
+          assert.equal(bucket, 'course-audio-review');
+          uploaded.push({ key, size: body.length, ...options });
+          return { error: null };
+        },
+      }),
+    },
+  };
+  const fetchImpl = async (url, init) => {
+    requests.push({ url, body: JSON.parse(init.body) });
+    return new Response(fakePcm(6), { status: 200 });
+  };
+  const clips = await generateVoiceCheck({
+    outputDir: dir,
+    apiKey: 'k',
+    client,
+    upload: true,
+    fetchImpl,
+    encoder: async (wav, outFile) => writeFile(outFile, wav.subarray(0, 32)),
+  });
+
+  assert.equal(clips.length, 7);
+  assert.deepEqual(clips.map((clip) => clip.speaker), Object.keys(SPEAKER_VOICES));
+  assert.equal(new Set(requests.map((request) => request.body.text)).size, 1, 'the same line for every voice');
+  assert.equal(requests[0].body.text, VOICE_CHECK_LINE);
+  assert.equal(new Set(requests.map((request) => request.url)).size, 7, 'one distinct voice per clip');
+  assert.deepEqual(
+    uploaded.map((item) => item.key),
+    Object.keys(SPEAKER_VOICES).map((speaker) => `weeks-01-04/ai-trial/voice-check-${speaker}.mp3`),
+  );
+  for (const clip of clips) {
+    assert.equal(clip.url, null, 'nothing is public: the CLI signs links afterwards');
+    assert.equal(clip.durationSeconds.toFixed(2), '6.00');
+  }
+});
+
+test('the CLI estimate covers all four weeks and is close to two minutes', () => {
+  for (const spec of weeks) {
+    const lines = parseScript(spec.script, defaultSpeakerFor(spec));
+    const seconds = estimateDurationSeconds(lines);
+    assert.ok(seconds > 85 && seconds < 150, `week ${spec.week} estimates ${seconds}s`);
+  }
 });

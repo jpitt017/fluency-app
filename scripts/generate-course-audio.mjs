@@ -65,8 +65,10 @@ import {
   REVIEW_LINK_SECONDS,
   deleteReleasedFiles,
   releaseTrial,
+  revokeTrial,
   signReviewUrl,
 } from './lib/course-audio/publish.mjs';
+import { checkApprovalTarget, isApprovalBypassRequested } from './lib/course-audio/environment.mjs';
 import { assertTrialWeek, isConfirmed, reviewObjectKeys } from './lib/course-audio/delete-guard.mjs';
 import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
@@ -533,6 +535,12 @@ async function voiceCheck() {
 }
 
 async function releaseWeek(weeks) {
+  // Check the target before any database work: a production release is refused
+  // outright, so this must fail on the rule rather than on some later read.
+  // The bypass is the workflow's two-key acknowledgement (ALLOW_PRODUCTION_RELEASE),
+  // so a deliberate, reviewed release gets through and nothing else does.
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
+  if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
     const { data, error } = await client
@@ -543,20 +551,18 @@ async function releaseWeek(weeks) {
     if (error) throw new Error(`Could not read week ${week}: ${error.message}`);
     if (!data) throw new Error(`Week ${week} has no generated track; nothing to release.`);
     const { audioUrl, captionsUrl } = await publishReleasedTrial(client, week);
-    await releaseTrial({ client, week, audioUrl, captionsUrl });
+    await releaseTrial({ client, week, audioUrl, captionsUrl, url: supabaseUrl });
     console.log(`Week ${week}: released · ${audioUrl}`);
     console.log('  learners will see "AI voice – trial recording" and can play it twice.');
   }
 }
 
 async function revokeWeek(weeks) {
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
+  if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
-    const { error } = await client
-      .from('listening_audio_trials')
-      .update({ released: false, audio_url: null, captions_url: null, released_at: null })
-      .eq('week', week);
-    if (error) throw new Error(`Could not revoke week ${week}: ${error.message}`);
+    await revokeTrial({ client, week, url: supabaseUrl });
     // Take the public copies down as well: the row no longer points at them, and
     // an unapproved track should not stay fetchable from a public bucket.
     const removed = await deleteReleasedFiles(client, week);

@@ -28,6 +28,7 @@ import {
   reviewObjectKeys,
   trialObjectKeys,
 } from './delete-guard.mjs';
+import { checkApprovalTarget, isApprovalBypassRequested } from './environment.mjs';
 
 export { AUDIO_BUCKET, DEFAULT_REVIEW_BUCKET, TRIAL_PREFIX, trialObjectKeys, reviewObjectKeys };
 
@@ -178,9 +179,9 @@ export async function recordUnreleasedTrial(record) {
 }
 
 /**
- * Copies a reviewed track from the private review bucket into the public bucket
- * and records the public URLs. This is the only path that makes a track
- * playable, and it is a deliberate CLI step (`--release`).
+ * Copies a reviewed track from the private review bucket into the public bucket.
+ * This is the step that puts bytes where learners could fetch them, so it is
+ * only reached from `--release`, after the production guard below.
  *
  * @returns {Promise<{audioUrl: string, captionsUrl: string|null}>}
  */
@@ -204,8 +205,37 @@ export async function publishToPublicBucket(client, week, files) {
   return { audioUrl, captionsUrl };
 }
 
-/** Approval: the only code path that makes a track playable for learners. */
+/**
+ * Resolves the project URL an injected client talks to.
+ *
+ * `created.supabaseUrl` is not part of the public type, so it is read
+ * defensively; `options.url` overrides it, and the environment is the last
+ * resort. Returning undefined is fine — the guard treats "unknown URL" as a
+ * refusal for approval writes.
+ */
+export function clientProjectUrl(client, explicitUrl) {
+  if (explicitUrl) return explicitUrl;
+  const fromClient = client?.supabaseUrl;
+  if (typeof fromClient === 'string' && fromClient) return fromClient;
+  return process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+}
+
+/**
+ * Approval: the only code path that makes a track playable for learners.
+ *
+ * Refuses production unless `allowProductionRelease` is set. That is the
+ * standing rule — a week is never marked released on production, not even
+ * briefly for a test — enforced here so no caller can bypass it by accident.
+ * `productionRef`, `url` and `bypass` exist so the rule itself can be tested
+ * against a fake client without touching a project.
+ */
 export async function releaseTrial(options) {
+  const verdict = checkApprovalTarget({
+    url: clientProjectUrl(options.client, options.url),
+    productionRef: options.productionRef,
+    bypass: options.allowProductionRelease ?? isApprovalBypassRequested(),
+  });
+  if (!verdict.ok) throw new Error(verdict.reason);
   const { error } = await options.client
     .from('listening_audio_trials')
     .update({
@@ -216,6 +246,25 @@ export async function releaseTrial(options) {
     })
     .eq('week', options.week);
   if (error) throw new Error(`Could not release week ${options.week}: ${JSON.stringify(error)}`);
+}
+
+/**
+ * Un-approving a track also writes the learner-facing switch, so it carries the
+ * same production guard as `releaseTrial`. Its purpose is to catch a mistake -
+ * hiding a live track on production is worth as much care as publishing one.
+ */
+export async function revokeTrial(options) {
+  const verdict = checkApprovalTarget({
+    url: clientProjectUrl(options.client, options.url),
+    productionRef: options.productionRef,
+    bypass: options.allowProductionRelease ?? isApprovalBypassRequested(),
+  });
+  if (!verdict.ok) throw new Error(verdict.reason);
+  const { error } = await options.client
+    .from('listening_audio_trials')
+    .update({ released: false, audio_url: null, released_at: null })
+    .eq('week', options.week);
+  if (error) throw new Error(`Could not revoke week ${options.week}: ${JSON.stringify(error)}`);
 }
 
 /**

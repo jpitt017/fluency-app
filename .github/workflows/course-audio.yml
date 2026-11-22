@@ -20,6 +20,12 @@
 #                refuses released weeks and any path outside weeks-01-04/ai-trial/
 #   list         show the approval state of every track
 #
+# release and revoke are refused on the production project: a week is never
+# marked released there, not even briefly for a test. Rehearse against a preview
+# database, or opt in explicitly with allow_production_release plus the
+# acknowledgement phrase for a deliberate, human-reviewed release (see
+# docs/CONTENT_PIPELINE.md section 6).
+#
 # Secret required: ELEVENLABS_API_KEY (repository secret). The Supabase URL and
 # service-role key are the ones CI already uses for the live project.
 name: Course audio — AI trial tracks
@@ -44,6 +50,14 @@ on:
         description: 'delete: actually delete (off = dry run). Never applies to a released week'
         type: boolean
         default: false
+      allow_production_release:
+        description: 'release/revoke: override the production refusal. Only for a deliberate, reviewed release'
+        type: boolean
+        default: false
+      production_ack:
+        description: 'release/revoke on production: type "release to learners" to acknowledge the override'
+        type: string
+        default: ''
 
 concurrency:
   group: course-audio
@@ -52,6 +66,11 @@ concurrency:
 env:
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  # Approval writes refuse production unless this run explicitly opts in with
+  # both the checkbox and the acknowledgement. A week is never marked released on
+  # production, not even briefly for a test - this is the deliberate-release path
+  # only, and the scripts enforce the same rule from their side.
+  ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
 
 jobs:
   run:
@@ -80,6 +99,16 @@ jobs:
             echo "::error::The ELEVENLABS_API_KEY repository secret is not set. Add it in Settings > Secrets and variables > Actions."
             exit 1
           fi
+
+      - name: Refuse an unacknowledged approval write on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
+        run: |
+          echo "::error::release/revoke on the production project needs the acknowledgement phrase. A week is never marked released on production for a test: use a preview database, a fake week number learners cannot open, or a unit test with a fake client."
+          exit 1
+
+      - name: Warn that this run writes approval state on production
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
+        run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
       - name: Check SUPABASE_SERVICE_ROLE_KEY availability
         if: ${{ inputs.mode != 'generate' || !inputs.dry_run }}
@@ -137,7 +166,7 @@ jobs:
         run: node scripts/generate-course-audio.mjs --list
 
       - name: Run the audio pipeline tests
-        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-trial.test.mjs
+        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-audio-approval.test.mjs
 
       - name: Keep the generated files for a listen
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run }}
