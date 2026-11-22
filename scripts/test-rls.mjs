@@ -50,6 +50,25 @@ async function run() {
     const { error: signInErr } = await clientA.auth.signInWithPassword({ email: userA.email, password: userA.password });
     if (signInErr) throw signInErr;
 
+    // Vocabulary attempts are created only by trusted server marking and isolated by owner.
+    const vocabularySeed = await admin.from('week_vocabulary_attempts').insert([
+      { user_id: userAId, week_number: 1, item_id: 'V1-R1', answer: 'test', correct: false },
+      { user_id: userBId, week_number: 1, item_id: 'V1-R1', answer: 'test', correct: false },
+    ]);
+    if (vocabularySeed.error) throw vocabularySeed.error;
+    const ownVocabulary = await clientA.from('week_vocabulary_attempts').select('id,user_id');
+    if (ownVocabulary.error || ownVocabulary.data.length !== 1 || ownVocabulary.data[0].user_id !== userAId) throw new Error('Vocabulary attempt isolation failed');
+    const anonymousVocabulary = await anonClient.from('week_vocabulary_attempts').select('id');
+    if (!anonymousVocabulary.error) throw new Error('Anonymous vocabulary attempt read was allowed');
+    for (const operation of [
+      () => clientA.from('week_vocabulary_attempts').insert({ user_id: userAId, week_number: 1, item_id: 'V1-R1', answer: 'fake', correct: true }),
+      () => clientA.from('week_vocabulary_attempts').update({ correct: true }).eq('user_id', userAId),
+      () => clientA.from('week_vocabulary_attempts').delete().eq('user_id', userAId),
+    ]) {
+      const attempted = await operation();
+      if (!attempted.error) throw new Error('Learner could write vocabulary attempts directly');
+    }
+
     // Model unlocks are server-created and visible only to their owner.
     const { error: unlockSeedError } = await admin.from('week_output_submissions').insert({ user_id: userBId, week_number: 1, skill: 'writing' });
     if (unlockSeedError) throw new Error(`Could not seed week unlock: ${unlockSeedError.message}`);
@@ -288,6 +307,12 @@ async function run() {
         `SCHEMA DRIFT: delete_my_learning_data() is missing user_id tables: ${JSON.stringify(coverage?.missing_tables)}`,
       );
     }
+
+    const deleted = await clientA.rpc('delete_my_learning_data');
+    if (deleted.error || !deleted.data?.deleted) throw new Error(`Learning data deletion failed: ${deleted.error?.message}`);
+    const remainingVocabulary = await admin.from('week_vocabulary_attempts').select('id').eq('user_id', userAId);
+    const otherVocabulary = await admin.from('week_vocabulary_attempts').select('id').eq('user_id', userBId);
+    if (remainingVocabulary.error || remainingVocabulary.data.length || otherVocabulary.error || otherVocabulary.data.length !== 1) throw new Error('Vocabulary deletion or isolation failed');
 
     console.log('PASS: Postgres RLS isolation, staff-only answer tables, answer-free views & delete coverage verified.');
   } finally {
