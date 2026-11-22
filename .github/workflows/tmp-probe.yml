@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [arena/44148675-fluency-app]
+    paths: ['.github/workflows/tmp-probe.yml']
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -11,9 +12,10 @@ jobs:
         env:
           SB_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SB_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          E2E_USER: ${{ secrets.E2E_USER_EMAIL }}
+          SVC: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "prod: $(curl -s -o /dev/null -w '%{http_code}' -m 20 https://fluency-app-nine.vercel.app/onboarding/placement)"
-          echo "sb_url_set: $([ -n "$SB_URL" ] && echo yes || echo no)"
-          echo "sb_anon_set: $([ -n "$SB_ANON" ] && echo yes || echo no)"
-          echo "e2e_user_set: $([ -n "${{ secrets.E2E_USER_EMAIL }}" ] && echo yes || echo no)"
-          echo "sb_probe: $(curl -s -o /dev/null -w '%{http_code}' -m 20 "${SB_URL:-https://ebzmkhrssgnzmixfsuso.supabase.co}/rest/v1/placement_texts_safe?select=id" -H "apikey: ${SB_ANON:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU}")"
+          echo "::warning::prod_http=$(curl -s -o /dev/null -w '%{http_code}' -m 20 https://fluency-app-nine.vercel.app/onboarding/placement)"
+          echo "::warning::sb_url_set=$([ -n "$SB_URL" ] && echo yes || echo no) e2e_user_set=$([ -n "$E2E_USER" ] && echo yes || echo no) svc_set=$([ -n "$SVC" ] && echo yes || echo no)"
+          echo "::warning::texts=$(curl -s -m 20 "${SB_URL:-https://ebzmkhrssgnzmixfsuso.supabase.co}/rest/v1/placement_texts_safe?select=id" -H "apikey: ${SB_ANON:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU}" | head -c 200)"
+          echo "::warning::questions=$(curl -s -m 20 "${SB_URL:-https://ebzmkhrssgnzmixfsuso.supabase.co}/rest/v1/placement_questions_safe?select=sort_order&version=eq.v2" -H "apikey: ${SB_ANON:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU}" | head -c 120)"
