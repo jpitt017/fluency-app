@@ -19,6 +19,8 @@ on:
         default: false
       production_placement_test:
         description: 'Answer all placement questions on production, signed out and signed in'
+      placement_repro:
+        description: 'Reproduce the placement writing-step bug against production'
         type: boolean
         default: false
 
@@ -73,6 +75,24 @@ jobs:
         run: node scripts/test-production-issue.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  placement-repro:
+    if: github.event_name == 'workflow_dispatch' && inputs.placement_repro == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Walk the placement quiz on production and report what breaks
+        run: node tests/production/placement-repro.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   changes:
