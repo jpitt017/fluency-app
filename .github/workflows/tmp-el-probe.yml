@@ -8,14 +8,16 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: PCM format probe
+      - name: Speed probe
         env:
           EL: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
-          for fmt in pcm_24000 pcm_22050 pcm_44100; do
-            code=$(curl -s -o "/tmp/$fmt.pcm" -w '%{http_code}' -m 60 -X POST "https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?output_format=$fmt" \
-              -H "xi-api-key: $EL" -H 'Content-Type: application/json' \
-              -d '{"text":"The quick brown fox jumps over the lazy dog, and then reads a very ordinary sentence aloud for exactly one minute.","model_id":"eleven_multilingual_v2","voice_settings":{"stability":0.5,"similarity_boost":0.75,"speed":0.95}}')
-            echo "::warning::fmt $fmt http=$code bytes=$(wc -c <"/tmp/$fmt.pcm")"
+          T='The quick brown fox jumps over the lazy dog while the orchestra plays a long and rather ordinary tune in the background of the hall.'
+          for m in eleven_multilingual_v2 eleven_v3; do
+            for sp in 1.0 0.9; do
+              code=$(curl -s -o /tmp/o.pcm -w '%{http_code}' -m 60 -X POST "https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?output_format=pcm_24000" -H "xi-api-key: $EL" -H 'Content-Type: application/json' -d "{\"text\":\"$T\",\"model_id\":\"$m\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"speed\":$sp}}")
+              echo "::warning::speed $m $sp http=$code seconds=$(python3 -c "print(round($(wc -c </tmp/o.pcm)/48000,2))")"
+            done
           done
-          echo "::warning::chars_header=$(curl -s -D - -o /dev/null -m 60 -X POST 'https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?output_format=pcm_24000' -H "xi-api-key: $EL" -H 'Content-Type: application/json' -d '{"text":"Hi.","model_id":"eleven_multilingual_v2"}' | tr -d '\r' | grep -i 'x-character-count')"
+          curl -s -o /tmp/b.pcm -X POST "https://api.elevenlabs.io/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?output_format=pcm_44100" -H "xi-api-key: $EL" -H 'Content-Type: application/json' -d '{"text":"Hi.","model_id":"eleven_multilingual_v2"}'
+          echo "::warning::pcm44100_body=$(tr -d '\n' </tmp/b.pcm | cut -c1-160)"
