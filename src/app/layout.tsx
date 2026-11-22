@@ -13,6 +13,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import AppHeader from '@/components/b1b2/AppHeader';
 import OfflineBanner from '@/components/b1b2/OfflineBanner';
+import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { loadHeaderSummary } from '@/lib/b1b2/data';
 
 export const dynamic = 'force-dynamic';
@@ -20,28 +21,30 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Fluency Studio · English B1 → B2',
   description:
-    'Blended English B1 to B2 practice workspace with AI speaking & writing studios, prosody shadowing, and personalised FSRS error review.',
+    'Practise English speaking and writing, and review your mistakes.',
   manifest: '/manifest.webmanifest',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const summary = await loadHeaderSummary();
+  const [summary, week] = await Promise.all([loadHeaderSummary(), currentLearnerWeek()]);
+  const pricingEnabled = process.env.NEXT_PUBLIC_PILOT_PRICING_ENABLED === 'true';
+  const isStaff = summary.role === 'teacher' || summary.role === 'admin';
 
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#faf9f6] text-stone-900 antialiased">
         <OfflineBanner />
-        <AppHeader summary={summary} />
+        <AppHeader summary={summary} week={week} pricingEnabled={pricingEnabled} />
         <div className="min-h-[calc(100vh-118px)]">{children}</div>
         <footer className="border-t border-stone-200 bg-white/60 py-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 text-xs text-stone-500 sm:px-6">
             <p>Fluency Studio · English B1 → B2 (focused B2 preparation, not an exam guarantee)</p>
             <div className="flex items-center gap-4">
-              <Link href="/curriculum" className="hover:text-stone-800">Curriculum</Link>
-              <Link href="/assessments" className="hover:text-stone-800">Assessments</Link>
+              {isStaff && <><Link href="/curriculum" className="hover:text-stone-800">Curriculum</Link>
+              <Link href="/assessments" className="hover:text-stone-800">Assessments</Link></>}
               <Link href="/labs" className="hover:text-stone-800">Labs</Link>
               <Link href="/review" className="hover:text-stone-800">Review</Link>
-              <Link href="/pricing" className="hover:text-stone-800">Pricing</Link>
+              {pricingEnabled && <Link href="/pricing" className="hover:text-stone-800">Pricing</Link>}
               <Link href="/privacy" className="hover:text-stone-800">Privacy</Link>
               <Link href="/terms" className="hover:text-stone-800">Terms</Link>
             </div>

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen,
   ClipboardCheck,
+  FolderOpen,
   CreditCard,
   LayoutDashboard,
   Menu,
@@ -26,16 +27,29 @@ const BAND_LABEL: Record<string, string> = {
   B2_solid: 'B2 Solid',
 };
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+const STAFF_ITEMS = [
   { href: '/curriculum', label: 'Curriculum', icon: BookOpen },
   { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
-  { href: '/review', label: 'Review', icon: RotateCcw },
-  { href: '/labs', label: 'Labs', icon: Mic },
-  { href: '/pricing', label: 'Pricing', icon: CreditCard },
+  { href: '/teacher', label: 'Teacher', icon: ClipboardCheck },
 ];
 
-export default function AppHeader({ summary }: { summary: HeaderSummary }) {
+export default function AppHeader({ summary, week, pricingEnabled }: { summary: HeaderSummary; week: number; pricingEnabled: boolean }) {
+  const [currentWeek, setCurrentWeek] = useState(week);
+  useEffect(() => {
+    const updateWeek = (event: Event) => setCurrentWeek((event as CustomEvent<number>).detail);
+    window.addEventListener('learner-week', updateWeek);
+    return () => window.removeEventListener('learner-week', updateWeek);
+  }, []);
+  const isStaff = summary.role === 'teacher' || summary.role === 'admin';
+  const navItems = [
+    { href: `/week/${currentWeek}`, label: 'This week', icon: BookOpen },
+    { href: '/labs', label: 'Practice', icon: Mic },
+    { href: '/review', label: 'Review', icon: RotateCcw },
+    { href: '/portfolio', label: 'My work', icon: FolderOpen },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ...(isStaff ? STAFF_ITEMS : []),
+    ...(pricingEnabled ? [{ href: '/pricing', label: 'Pricing', icon: CreditCard }] : []),
+  ];
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -65,7 +79,7 @@ export default function AppHeader({ summary }: { summary: HeaderSummary }) {
               mobileOpen ? 'flex' : 'hidden'
             } order-3 w-full flex-wrap items-center gap-1 border-t border-stone-200/70 pt-2 md:order-2 md:flex md:w-auto md:flex-nowrap md:border-t-0 md:pt-0`}
           >
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -105,14 +119,6 @@ export default function AppHeader({ summary }: { summary: HeaderSummary }) {
             </>
           ) : summary.signedIn ? (
             <>
-              {(summary.role === 'teacher' || summary.role === 'admin') && (
-                <Link
-                  href="/teacher"
-                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-800 hover:bg-indigo-100"
-                >
-                  Teacher
-                </Link>
-              )}
               <Link
                 href="/dashboard"
                 className="hidden items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs shadow-2xs transition hover:border-indigo-300 lg:flex"

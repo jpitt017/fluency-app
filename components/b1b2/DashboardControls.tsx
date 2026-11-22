@@ -159,7 +159,7 @@ export function WeeklyReportCard({ report }: { report: WeeklyReportRow | null })
         </div>
       ) : (
         <p className="mt-3 text-xs leading-5 text-stone-600">
-          Generate a snapshot of your study minutes, vocabulary retention, speaking recordings, and weakest skill for this week.
+          See your study time, new words, recordings and writing.
         </p>
       )}
     </section>

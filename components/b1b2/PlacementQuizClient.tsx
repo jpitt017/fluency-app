@@ -94,7 +94,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
           body: JSON.stringify({
             text: sample,
             prompt:
-              'Diagnostic placement sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
+              'Placement writing sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
             variety: 'British',
           }),
         });
@@ -148,7 +148,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
       <div className="w-full space-y-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-            English B1 → B2 · {questions.length}-Item Diagnostic + Writing Check
+            English B1 → B2 · {questions.length}-questions and a writing task
           </span>
           {stage === 'quiz' ? (
             <div className="mt-2 flex items-center justify-between gap-2">
@@ -161,7 +161,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
             </div>
           ) : stage === 'writing' ? (
             <h1 className="mt-2 text-xl font-bold text-stone-900">
-              Optional 1-Paragraph Diagnostic Writing Sample
+              Write a short text (optional)
             </h1>
           ) : (
             <h1 className="mt-2 text-2xl font-bold text-stone-900">Placement Check Complete</h1>
@@ -234,7 +234,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 onClick={() => void finishPlacement(false)}
                 className="flex-1 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
               >
-                {loading ? 'Evaluating diagnostic…' : 'Evaluate Sample & Recommend Level'}
+                {loading ? 'Checking your writing…' : 'Evaluate Sample & Recommend Level'}
               </button>
               <button
                 type="button"

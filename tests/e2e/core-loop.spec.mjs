@@ -181,7 +181,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Question 1 of/i)).toBeVisible();
 
     for (let i = 0; i < 30; i++) {
-      const writingHeading = page.getByText(/Optional 1-Paragraph Diagnostic Writing Sample/i);
+      const writingHeading = page.getByText(/Write a short text \(optional\)/i);
       if (await writingHeading.isVisible().catch(() => false)) {
         break;
       }
@@ -190,7 +190,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
       await page.locator('button.w-full.rounded-xl.bg-indigo-700').click();
     }
 
-    await expect(page.getByText(/Optional 1-Paragraph Diagnostic Writing Sample/i)).toBeVisible();
+    await expect(page.getByText(/Write a short text \(optional\)/i)).toBeVisible();
     await page
       .getByPlaceholder(/Write a short paragraph/i)
       .fill(
@@ -250,6 +250,6 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/74 \/ 100|\/ 100/)).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
-    await expect(page.getByText(/FSRS Mistake Repair|No error review cards due/i)).toBeVisible();
+    await expect(page.getByText(/Practise your mistakes|No error review cards due/i)).toBeVisible();
   });
 });

@@ -377,7 +377,7 @@ export default function ShadowingLab({
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wide text-stone-600">
             <span className="inline-flex items-center gap-1">
               <CheckSquare className="h-3.5 w-3.5 text-indigo-700" />
-              <span>Prosody self-check checklist</span>
+              <span>Check your pronunciation</span>
             </span>
             <span>
               {completedChecks}/{DEFAULT_CHECKLIST.length} checked

@@ -4,7 +4,7 @@ import { createServerSupabase } from '@/utils/supabase/server';
 
 export type LearnerQuestion = { id: string; question: string; options: string[] };
 type Input = { title: string; text?: string; audioUrl?: string; questions: LearnerQuestion[] };
-export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; cueCard: string; writingPrompt: string; reading: Input; listening: Input };
+export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; writingPrompt: string; reading: Input; listening: Input };
 
 /** Explicit allowlist: never serialize answer keys, models or listening transcripts. */
 export async function loadLearnerWeek(number: number): Promise<LearnerWeek | null> {
@@ -34,7 +34,7 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   };
   return {
     title: week.title, canDo: week.canDo,
-    speakingPrompt: week.speaking.prompt, cueCard: week.speaking.cueCard,
+    speakingPrompt: week.speaking.prompt, speakingLength: week.speaking.flow.record.match(/\b\d+[–-]\d+\s*s\b/)?.[0].replace(/\s*s$/, ' seconds') ?? null, cueCard: week.speaking.cueCard,
     writingPrompt: week.writing.prompt,
     reading: { title: reading.title, text: reading.text, questions: questionsFor('reading', reading.questions) },
     listening: { title: listening.title, audioUrl: (listening as { audioUrl?: string }).audioUrl, questions: questionsFor('listening', listening.questions) },

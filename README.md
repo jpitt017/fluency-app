@@ -80,3 +80,7 @@ learner through the Supabase **admin API** with an `@example.test` address and
 `scripts/lib/test-user.mjs#createTestUser` and always call `deleteTestUser` in a
 `finally` block so the user and every linked learning-data row are removed.
 Never reuse a personal or long-lived account for production tests.
+
+### Pilot navigation
+
+Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. The learner's current week is the last week opened in that browser, stored in a first-party cookie; it defaults to Week 1. It does not yet sync across devices.

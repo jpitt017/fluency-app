@@ -33,7 +33,7 @@ export default async function PortfolioPage() {
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Study Portfolio</span>
           <h1 className="mt-2 text-2xl font-bold text-stone-900">Sign in to view your saved speaking &amp; writing work</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Replay your past audio recordings, inspect AI rubric scores, and revisit B2 model rewrites from your speaking and writing labs.
+            Listen to recordings and read feedback on your work.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -77,7 +77,7 @@ export default async function PortfolioPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Output Archive</p>
-          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">Speaking &amp; Writing Portfolio</h1>
+          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">My work</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
             All evaluated speaking and writing submissions with audio playback and B2 model upgrades.
           </p>

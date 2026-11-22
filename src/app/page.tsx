@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { formatBandLabel, loadDashboard } from '@/lib/b1b2/data';
+import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import type { SkillArea } from '@/lib/b1b2/types';
 
 export const dynamic = 'force-dynamic';
@@ -28,13 +29,14 @@ const LIVE_SKILLS: { key: SkillArea; label: string; href: string; icon: typeof M
 ];
 
 export default async function Home() {
-  const { signedIn, dashboard, weeklyGoalHours, telemetry } = await loadDashboard();
+  const [{ signedIn, dashboard, weeklyGoalHours, telemetry }, week] = await Promise.all([loadDashboard(), currentLearnerWeek()]);
 
   const streakDays = dashboard?.streak_days ?? 0;
   const dueErrors = telemetry.dueErrorCards;
 
   const liveSkills = LIVE_SKILLS.map((s) => ({
     ...s,
+    href: s.key === 'reading' || s.key === 'listening' ? `/week/${week}` : s.key === 'speaking' || s.key === 'writing' ? `/labs?week=${week}#${s.key}` : s.href,
     score: Math.round(Number(dashboard?.skills?.[s.key]?.score ?? 0)),
   }));
   const weakestSkill =
@@ -65,7 +67,7 @@ export default async function Home() {
                 Welcome back to Fluency Studio
               </h1>
               <p className="mt-1.5 text-sm leading-6 text-stone-600">
-                Practise B1 → B2 speaking, writing, shadowing, and conversational role-play in the AI Labs, or clear your FSRS mistake-repair queue.
+                Practise speaking and writing. Review your mistakes.
               </p>
             </div>
 
@@ -82,13 +84,13 @@ export default async function Home() {
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
               >
-                <span>Analytics &amp; Pace</span>
+                <span>Your progress</span>
               </Link>
               <Link
-                href="/curriculum"
+                href={`/week/${week}`}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
               >
-                <span>32-week plan</span>
+                <span>Start this week</span>
               </Link>
             </div>
 
@@ -212,7 +214,7 @@ export default async function Home() {
             </h1>
 
             <p className="max-w-xl text-sm leading-6 text-stone-600 sm:text-[15px]">
-              Practise with real-time AI speaking role-play, prosody shadowing, FSRS error-pattern drills, and line-by-line B2 writing feedback.
+              Practise conversations and pronunciation. Get feedback on your writing.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -231,11 +233,11 @@ export default async function Home() {
                 <span>Placement Check</span>
               </Link>
               <Link
-                href="/curriculum"
+                href={`/week/${week}`}
                 className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:border-stone-400 hover:bg-stone-50"
               >
                 <BookOpen className="h-4 w-4 text-indigo-700" />
-                <span>See the 32-week syllabus</span>
+                <span>Start this week</span>
               </Link>
             </div>
           </div>
@@ -250,7 +252,7 @@ export default async function Home() {
               <div>
                 <p className="text-xs font-bold text-stone-900">Writing &amp; Speaking Evaluator</p>
                 <p className="mt-0.5 text-xs text-stone-600">
-                  Whisper transcription, rubric scoring, and natural B2 model upgrades.
+                  See what you said and get feedback.
                 </p>
               </div>
             </Link>
@@ -260,7 +262,7 @@ export default async function Home() {
             >
               <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
               <div>
-                <p className="text-xs font-bold text-stone-900">FSRS Mistake &amp; Pattern Drill</p>
+                <p className="text-xs font-bold text-stone-900">Practise your mistakes</p>
                 <p className="mt-0.5 text-xs text-stone-600">
                   Targeted rewrite drills built automatically from your recurring errors.
                 </p>

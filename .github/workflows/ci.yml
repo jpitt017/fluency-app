@@ -42,6 +42,7 @@ jobs:
       - run: npm run test:mediation
       - run: node --experimental-strip-types --test tests/unit/mediation-fallback.test.mjs
       - run: node --test tests/unit/placement.test.mjs
+      - run: node --test tests/unit/learner-wording.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

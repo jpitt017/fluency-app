@@ -44,7 +44,7 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
       <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center">
         <p className="text-sm font-semibold text-stone-800">No error review cards due right now.</p>
         <p className="mt-1 text-xs text-stone-500">
-          Mistakes flagged in your AI writing and speaking sessions turn into deduplicated FSRS repair cards here (up to 5 new cards/day, with overflow queued for tomorrow).
+          Your speaking and writing mistakes appear here. You get up to five new cards daily.
         </p>
       </div>
     );
@@ -58,7 +58,7 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
           Error repair session complete ({reviewed} reviewed · {masteredCount} mastered)
         </h3>
         <p className="mt-1 text-xs text-emerald-800">
-          Mastered mistakes exit your active queue; remaining items are scheduled by FSRS right before forgetting.
+          Finished cards leave your list. Other cards will return later.
         </p>
       </div>
     );
@@ -162,7 +162,7 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
             <RotateCcw className="h-3 w-3" />
-            <span>FSRS Mistake Repair · {card.category.replace(/_/g, ' ')}</span>
+            <span>Practise your mistakes · {card.category.replace(/_/g, ' ')}</span>
           </span>
           {card.card_format && (
             <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-stone-600">
@@ -236,12 +236,12 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
               </div>
             ) : checkResult?.blockedByRecentReveal ? (
               <p className="text-xs font-semibold text-amber-800">
-                Good repair, but because the hint was revealed recently, grade this card below so FSRS confirms recall next session.
+                You used a hint. Choose how well you remembered below.
               </p>
             ) : attempt.trim() ? (
               <p className="text-xs font-semibold text-amber-800">
                 Your repair: &ldquo;{attempt.trim()}&rdquo;
-                {checkResult?.reason ? ` — ${checkResult.reason}` : ' — compare word-by-word below, then schedule FSRS review.'}
+                {checkResult?.reason ? ` — ${checkResult.reason}` : ' — compare your answer below, then choose a button.'}
               </p>
             ) : null}
 
@@ -274,6 +274,8 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
             </div>
 
             {!(checkResult?.fixed && checkResult.mastered) && (
+              <div>
+              <p className="mb-2 text-sm font-semibold">How well did you remember it?</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {GRADES.map((g) => (
                   <button
@@ -287,6 +289,7 @@ export default function ErrorReviewStudio({ initialCards }: { initialCards: Erro
                     <span className="mt-0.5 block text-[10px] font-normal text-stone-500">{hints[g.grade]}</span>
                   </button>
                 ))}
+              </div>
               </div>
             )}
           </div>
