@@ -38,3 +38,35 @@ test('rejects malformed and inconsistent authored keys instead of scoring the wr
   assert.throws(() => markInputAnswer({ key: 'yes', options: ['yes', 'no'] }, ''), /answer/);
   assert.deepEqual(markInputAnswer({ key: 'I would (a past habit)', options: ['I would (a past habit)', 'I had'] }, 'I would (a past habit)'), { correct: true, reason: null });
 });
+
+test('every input item has a short draft reason with an exact source quotation', () => {
+  const bank = JSON.parse(readFileSync(new URL('../../lib/curriculum/input-reasons.json', import.meta.url)));
+  assert.equal(bank.reasonStatus, 'draft, pending teacher review');
+  assert.equal(bank.items.length, 80);
+  const ids = new Set();
+  for (const skill of ['reading', 'listening']) for (const week of details[skill].weeks) for (const question of week.questions) {
+    const rows = bank.items.filter(item => item.id === question.id && item.week === week.week && item.skill === skill);
+    assert.equal(rows.length, 1, question.id);
+    const item = rows[0];
+    assert.ok(!ids.has(item.id)); ids.add(item.id);
+    assert.equal(item.reasonStatus, 'draft, pending teacher review');
+    assert.equal(item.question, question.question);
+    assert.equal(item.key, question.key);
+    assert.ok(item.reason.trim(), `${question.id} needs a reason`);
+    assert.ok(item.sourceLine.trim());
+    assert.ok((skill === 'reading' ? week.text : week.script).includes(item.sourceLine), `${question.id} quotes source exactly`);
+    assert.ok(item.reason.startsWith(`“${item.sourceLine}”`), `${question.id} begins with the quotation`);
+    assert.ok((item.reason.match(/\b[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*\b/gu) ?? []).length < 25, `${question.id} is under 25 words`);
+    const safe = JSON.stringify(projectInputQuestions([{ ...question, reason: item.reason, reasonStatus: item.reasonStatus }]));
+    assert.ok(!safe.includes(item.reason), `${question.id} reason is not in the initial projection`);
+  }
+  assert.equal(ids.size, 80);
+});
+
+test('teacher review table includes all question IDs and is labelled draft', () => {
+  const table = readFileSync(new URL('../../docs/teacher-review/reading-listening-reasons-weeks-01-04.md', import.meta.url), 'utf8');
+  assert.match(table, /draft, pending teacher review/);
+  for (const skill of ['reading', 'listening']) for (const week of details[skill].weeks) for (const q of week.questions) {
+    assert.ok(table.includes(`| ${week.week} | ${q.id} |`), q.id);
+  }
+});
