@@ -54,12 +54,18 @@ if (data?.covered !== true || problems.length > 0) {
 
 const { count, error: placementError } = await supabase
   .from('placement_questions_safe')
-  .select('*', { count: 'exact', head: true });
+  .select('*', { count: 'exact', head: true })
+  .eq('version', 'v2');
 if (placementError) throw new Error(`placement_questions_safe check failed: ${placementError.message}`);
 if (count === null || count < 24) {
   throw new Error(`placement_questions_safe has ${count ?? 'unknown'} rows; expected at least 24`);
 }
-console.log(`PASS: placement_questions_safe has ${count} rows (minimum 24).`);
+console.log(`PASS: placement_questions_safe has ${count} v2 rows (minimum 24).`);
+const { count: textCount, error: textError } = await supabase
+  .from('placement_texts_safe').select('*', { count: 'exact', head: true });
+if (textError) throw new Error(`placement_texts_safe check failed: ${textError.message}`);
+if (textCount === null || textCount < 2) throw new Error(`placement_texts_safe has ${textCount ?? 'unknown'} rows; expected at least 2`);
+console.log(`PASS: placement_texts_safe has ${textCount} rows (minimum 2).`);
 
 const checked = data?.checked ?? {};
 console.log(

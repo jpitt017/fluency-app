@@ -4,56 +4,22 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import type { PlacementQuestionRow } from '@/lib/b1b2/types';
+import type { PlacementQuestionRow, PlacementTextRow } from '@/lib/b1b2/types';
 
-function placementRecommendation(score: number, total: number, writingScore: number | null) {
-  const quizPct = total > 0 ? (score / total) * 100 : 0;
-  const combinedPct = writingScore !== null ? quizPct * 0.65 + writingScore * 0.35 : quizPct;
+type Placement = 'foundation' | 'stage1' | 'stage2';
 
-  if (combinedPct < 35) {
-    return {
-      belowB1: true,
-      band: 'Pre-B1 Foundation Recommended',
-      startLabel: 'Open Practice Labs →',
-      startHref: '/labs',
-      summary:
-        'Your diagnostic suggests locking in core A2/B1 basics (present simple/continuous, articles, quantifiers, prepositions, subject–verb agreement, and verb forms) before moving into upper-B1 fluency tasks.',
-    };
-  }
-  if (combinedPct >= 80) {
-    return {
-      belowB1: false,
-      band: 'B1+ / B2 Entry',
-      startLabel: 'Open AI Speaking & Writing Labs →',
-      startHref: '/labs',
-      summary:
-        'Strong control of B1–B1+ tenses, passives, deduction, and conditionals. Use the Speaking, Writing, and Shadowing Labs to sharpen hedging, register, and fluent interaction at B2.',
-    };
-  }
-  if (combinedPct >= 60) {
-    return {
-      belowB1: false,
-      band: 'B1 High',
-      startLabel: 'Open Practice Labs →',
-      startHref: '/labs',
-      summary:
-        'Solid B1 foundation. Practise deduction, reported speech, and extended speaking/writing tasks in the AI Labs and Review Studio on your way to B2.',
-    };
-  }
-  return {
-    belowB1: false,
-    band: 'B1 Foundation',
-    startLabel: 'Open Practice Labs →',
-    startHref: '/labs',
-    summary:
-      'Focus on consolidating narrative tenses, present perfect vs. past simple, future forms, modals, and passive voice using the AI Labs and Error Review drills.',
-  };
+function placementRecommendation(placement: Placement) {
+  if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice Labs →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
+  if (placement === 'stage1') return { belowB1: false, band: 'Stage 1', startLabel: 'Open Curriculum →', startHref: '/curriculum', summary: 'Start with Stage 1.' };
+  return { belowB1: false, band: 'Stage 2', startLabel: 'Open Curriculum →', startHref: '/curriculum', summary: 'Start with Stage 2.' };
 }
 
-export default function PlacementQuizClient({ questions }: { questions: PlacementQuestionRow[] }) {
+export default function PlacementQuizClient({ questions, texts }: { questions: PlacementQuestionRow[]; texts: PlacementTextRow[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [quizScore, setQuizScore] = useState(0);
+  const [placement, setPlacement] = useState<Placement | null>(null);
+  const [scoreError, setScoreError] = useState('');
   const [answers, setAnswers] = useState<number[]>([]);
   const [stage, setStage] = useState<'quiz' | 'writing' | 'done'>('quiz');
   const [writingSample, setWritingSample] = useState('');
@@ -96,7 +62,9 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     setLoading(true);
     let evaluatedScore: number | null = null;
     let feedbackText = '';
-    let scored = 0;
+    let scored: number;
+    let resultPlacement: Placement;
+    setScoreError('');
 
     try {
       const scoreRes = await fetch('/api/placement/score', {
@@ -104,13 +72,17 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers }),
       });
-      if (scoreRes.ok) {
-        const data = (await scoreRes.json()) as { score?: number };
-        if (typeof data.score === 'number') scored = data.score;
-      }
+      if (!scoreRes.ok) throw new Error('Scoring unavailable');
+      const data = (await scoreRes.json()) as { score: number; placement: Placement };
+      if (!Number.isInteger(data.score) || !['foundation', 'stage1', 'stage2'].includes(data.placement)) throw new Error('Invalid score');
+      scored = data.score;
+      resultPlacement = data.placement;
     } catch {
-      // Offline: fall back to a zero quiz score rather than exposing keys client-side.
+      setScoreError('Could not score your answers. Please try again.');
+      setLoading(false);
+      return;
     }
+    setPlacement(resultPlacement);
     setQuizScore(scored);
 
     const sample = writingSample.trim();
@@ -139,7 +111,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     setWritingScore(evaluatedScore);
     setWritingFeedback(feedbackText);
 
-    const rec = placementRecommendation(scored, questions.length, evaluatedScore);
+    const rec = placementRecommendation(resultPlacement);
     try {
       if (supabase) {
         const {
@@ -169,7 +141,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
     }
   }
 
-  const recommendation = placementRecommendation(quizScore, questions.length, writingScore);
+  const recommendation = placementRecommendation(placement ?? 'foundation');
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-140px)] max-w-2xl items-center justify-center px-4 py-10 sm:px-6">
@@ -205,6 +177,13 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
               />
             </div>
 
+            {questions[currentIndex].text_id && (() => {
+              const passage = texts.find((text) => text.id === questions[currentIndex].text_id);
+              return passage ? <section className="rounded-xl bg-stone-50 p-4" aria-label={`Reading ${passage.id === 'RA' ? 'A' : 'B'}`}>
+                <h2 className="font-semibold">Reading {passage.id === 'RA' ? 'A' : 'B'}: {passage.title}</h2>
+                <p className="mt-3 whitespace-pre-line text-sm leading-6">{passage.body}</p>
+              </section> : <p role="alert">Reading text is unavailable. Please try again later.</p>;
+            })()}
             <p className="text-sm font-medium leading-6 text-stone-800">{questions[currentIndex].question}</p>
 
             <div className="space-y-2.5">
@@ -227,7 +206,7 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
             <button
               type="button"
               onClick={handleNextQuestion}
-              disabled={selectedOption === null}
+              disabled={selectedOption === null || Boolean(questions[currentIndex].text_id && !texts.find((text) => text.id === questions[currentIndex].text_id))}
               className="w-full rounded-xl bg-indigo-700 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800 disabled:opacity-50"
             >
               {currentIndex + 1 === questions.length ? 'Continue to Writing Sample →' : 'Next Question'}
@@ -237,8 +216,9 @@ export default function PlacementQuizClient({ questions }: { questions: Placemen
 
         {stage === 'writing' && (
           <div className="space-y-4">
+            {scoreError && <p role="alert" className="text-red-700">{scoreError}</p>}
             <p className="text-sm leading-6 text-stone-700">
-              Grammar score: <strong>{quizScore} / {questions.length}</strong>. Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
+              Write 3–5 sentences (60–100 words) explaining why you want to reach B2 English and one topic you find difficult to discuss smoothly.
             </p>
             <textarea
               rows={4}
