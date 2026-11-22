@@ -221,7 +221,7 @@ jobs:
           trap report_failure ERR
           db='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
           for file in supabase-b1-b2/migrations/*.sql; do
-            case "$file" in *0038_*|*0039_*) continue;; esac
+            case "$file" in *0038_*|*0039_*|*0040_*) continue;; esac
             psql "$db" -v ON_ERROR_STOP=1 -f "$file"
           done
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
@@ -230,6 +230,8 @@ jobs:
           psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0038_vocabulary_attempts.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
           psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0039_repair_learning_data_deletion.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f supabase-b1-b2/migrations/0040_week_model_views.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
       - name: Stop local Supabase
         if: always()

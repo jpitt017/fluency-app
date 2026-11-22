@@ -3,9 +3,9 @@ import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { createServerSupabase } from '@/utils/supabase/server';
 
-type Skill = 'speaking' | 'writing';
+export type Skill = 'speaking' | 'writing';
 
-function modelFor(weekNumber: number, skill: Skill): string | null {
+export function modelFor(weekNumber: number, skill: Skill): string | null {
   const week = details.weeks.find((entry) => entry.number === weekNumber);
   return (skill === 'speaking' ? week?.speaking.model : week?.writing.modelAnswer) || null;
 }
