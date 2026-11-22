@@ -29,7 +29,7 @@ begin
   insert into public.writing_submissions(user_id,task_id,body) values(u,wr,'test');
   insert into public.checkpoint_attempts(user_id,checkpoint_id) values(u,cp);
   insert into public.xp_events(user_id,source,points) values(u,'lesson',1);
-  insert into public.skill_levels(user_id,skill) values(u,'grammar');
+  insert into public.skill_levels(user_id,skill) values(u,'grammar') on conflict (user_id,skill) do update set score=1;
   insert into public.user_badges(user_id,badge_id) values(u,b);
   insert into public.weekly_reports(user_id,week_start) values(u,current_date);
   insert into public.daily_sessions(user_id) values(u);
