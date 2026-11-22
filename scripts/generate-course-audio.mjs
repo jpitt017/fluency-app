@@ -493,7 +493,16 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
+  const message = err instanceof Error ? err.message : String(err);
   console.error(err);
+  // One line, so GitHub Actions shows the reason on the failed step itself.
+  const annotation = message.replace(/[\r\n]+/g, ' ').slice(0, 900).replace(/%/g, '%25');
+  console.log(`::error::${annotation}`);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await writeFile(process.env.GITHUB_STEP_SUMMARY, `## Course audio failed\n\n\`\`\`\n${message.slice(0, 4000)}\n\`\`\`\n`, {
+      flag: 'a',
+    }).catch(() => {});
+  }
   process.exit(1);
 });
