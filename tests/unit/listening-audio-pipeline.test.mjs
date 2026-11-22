@@ -304,7 +304,7 @@ test('a full week generates MP3 + WebVTT and uploads them unreleased', async (t)
   );
   assert.equal(uploaded[0].bucket, 'course-audio');
   assert.equal(uploaded[0].contentType, 'audio/mpeg');
-  assert.equal(uploaded[1].contentType, 'text/vtt; charset=utf-8');
+  assert.equal(uploaded[1].contentType, 'text/vtt');
 
   // Recorded as an unreleased AI trial with no live audio URL.
   assert.equal(rows.length, 1);

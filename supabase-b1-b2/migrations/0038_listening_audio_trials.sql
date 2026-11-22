@@ -59,4 +59,13 @@ insert into public.listening_audio_trials (week, source, released)
 values (1, 'ai-trial', false), (2, 'ai-trial', false), (3, 'ai-trial', false), (4, 'ai-trial', false)
 on conflict (week) do nothing;
 
+-- The bucket was created for audio only, but each listening track ships with a
+-- WebVTT caption file next to it, so allow the caption types as well.
+update storage.buckets b
+   set allowed_mime_types = (
+     select array_agg(distinct mime order by mime)
+     from unnest(coalesce(b.allowed_mime_types, array[]::text[]) || array['text/vtt', 'text/plain']) as mime
+   )
+ where b.id = 'course-audio';
+
 notify pgrst, 'reload schema';

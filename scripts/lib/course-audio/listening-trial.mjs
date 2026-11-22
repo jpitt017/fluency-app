@@ -127,7 +127,7 @@ export async function generateListeningTrial(options) {
     const audioUrl = await uploadToBucket(client, { key: result.audioKey, contentType: 'audio/mpeg', body: mp3 });
     const captionsUrl = await uploadToBucket(client, {
       key: result.captionsKey,
-      contentType: 'text/vtt; charset=utf-8',
+      contentType: 'text/vtt',
       body: captions,
     });
     await recordUnreleasedTrial({

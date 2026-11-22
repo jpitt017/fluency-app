@@ -417,6 +417,7 @@ async function listTrialState() {
 
 async function reviewWeek(weeks) {
   const client = requireSupabase();
+  const summary = [];
   for (const week of weeks) {
     const { data, error } = await client
       .from('listening_audio_trials')
@@ -429,8 +430,20 @@ async function reviewWeek(weeks) {
     console.log(`Week ${week} review link (valid ${REVIEW_LINK_SECONDS / 86400} days, ${data.duration_seconds ?? '?'}s):`);
     console.log(`  ${url}`);
     if (data.captions_url) console.log(`  captions: ${data.captions_url}`);
-    console.log(`  state: ${data.released ? 'already released' : 'unreleased - learners cannot hear it yet'}`);
+    const state = data.released ? 'already released' : 'unreleased - learners cannot hear it yet';
+    console.log(`  state: ${state}`);
+    summary.push(
+      `### Week ${week} — ${Math.round(Number(data.duration_seconds ?? 0))}s, ${state}`,
+      '',
+      `[Listen to the Week ${week} track](${url}) — link valid for ${REVIEW_LINK_SECONDS / 86400} days.`,
+      '',
+      data.released
+        ? 'Already approved, so it is live in /week/' + week + '.'
+        : `Not live. Approve with mode: release, weeks: "${week}".`,
+      '',
+    );
   }
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary('# Listening trial review links', '', ...summary);
 }
 
 async function releaseWeek(weeks) {
@@ -493,7 +506,16 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
+  const message = err instanceof Error ? err.message : String(err);
   console.error(err);
+  // One line, so GitHub Actions shows the reason on the failed step itself.
+  const annotation = message.replace(/[\r\n]+/g, ' ').slice(0, 900).replace(/%/g, '%25');
+  console.log(`::error::${annotation}`);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await writeFile(process.env.GITHUB_STEP_SUMMARY, `## Course audio failed\n\n\`\`\`\n${message.slice(0, 4000)}\n\`\`\`\n`, {
+      flag: 'a',
+    }).catch(() => {});
+  }
   process.exit(1);
 });
