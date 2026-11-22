@@ -40,6 +40,7 @@ jobs:
       - run: npm run lint
       - run: npm run eval:prompts -- --offline
       - run: npm run test:mediation
+      - run: node --experimental-strip-types --test tests/unit/mediation-fallback.test.mjs
       - run: node --test tests/unit/placement.test.mjs
       - run: npm run check:live-schema
         env:
