@@ -13,8 +13,15 @@ jobs:
           URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          echo "" > links.md
           for s in Host Ellie Aisha Tom Dan Marta Joanne; do
             body=$(curl -s -m 60 -X POST "$URL/storage/v1/object/sign/course-audio-review/weeks-01-04/ai-trial/voice-check-$s.mp3" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"expiresIn":86400}')
             path=$(python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('signedURL',''))" <<<"$body")
-            echo "::warning::VC $s|$URL/storage/v1$path"
+            echo "$s|$URL/storage/v1$path" >> links.md
           done
+          wc -l links.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice-check-links
+          path: links.md
+          retention-days: 1
