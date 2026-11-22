@@ -79,7 +79,7 @@ export async function proxy(request: NextRequest) {
   // Auth gate at the edge; atomic quota enforcement (with per-request audio/text
   // unit weighting) runs inside each API route via enforceAiUsage().
   if (isAiProtected && !user) {
-    return NextResponse.json({ error: 'Sign in to use AI learning features.' }, { status: 401 });
+    return NextResponse.json({ error: 'Sign in to use AI learning features. (gate)' }, { status: 401 });
   }
 
   return response;
