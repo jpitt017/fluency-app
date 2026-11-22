@@ -109,9 +109,15 @@ untouched; the new routes read the `syllabus_*` tables instead.
 ## 6. Weeks 1–4 listening audio (AI trial recordings)
 
 The four listening scripts in `weeks-01-04-details.json` need recordings. Real
-voice actors are the plan; until those exist, approved weeks play a synthetic
-**AI trial recording**. Learners are told it is synthetic, and it is easy to take
-back down.
+voice actors are the plan; until those exist, a synthetic **AI trial recording**
+can stand in, clearly labelled and easy to take back down.
+
+> **Current status (22 November 2026):** the first trial used OpenAI's voices
+> and sounded American rather than British, so it will not be used. All four
+> weeks are unreleased, the generated MP3/WebVTT files have been deleted from the
+> public `course-audio` bucket, and `/week/[n]` shows "Audio coming soon." The
+> tracks will be regenerated with ElevenLabs British voices; only the speech
+> model and voice table below need to change.
 
 ### The approval switch
 
@@ -156,9 +162,16 @@ Supabase URL and service-role key, and installs ffmpeg for MP3 encoding. It runs
 
 Nothing here sets the live `audioUrl`. Nothing here releases a track.
 
-### Speech model
+### Speech model (first trial, retired)
 
-The workflow does **not** use `POST /v1/audio/speech`. OpenAI deprecated
+The voices from this pass are not being used: `gpt-realtime-2.1-mini` produced
+American-sounding speech even with an explicit regional accent instruction, and
+the course needs British regional accents. The replacement will be ElevenLabs
+British voices; keep everything else (approval gate, captions, upload rules) and
+swap `SPEAKER_VOICES` plus the synthesis call in
+`scripts/lib/course-audio/tts.mjs`.
+
+For the record, the workflow did **not** use `POST /v1/audio/speech`. OpenAI deprecated
 `tts-1`, `tts-1-hd` and both `gpt-4o-mini-tts` snapshots with a shutdown date of
 **6 January 2027**, and the recommended replacement `gpt-realtime-2.1-mini` is not
 served by that endpoint. See
@@ -186,6 +199,13 @@ otherwise, because learners rely on the voices to tell speakers apart.
    listen for the gist task, second for detail) with the transcript hidden.
 4. `mode: revoke` un-approves a track, and learners go back to "Audio coming
    soon."
+5. `mode: delete` deletes a week's MP3 and WebVTT from the public bucket and
+   clears the public URLs on the row. Because the bucket is public, this is the
+   step to run for any trial recording that will not be used: an unreleased file
+   that stays in the bucket is still downloadable. The row itself stays,
+   unreleased, so the week keeps saying "Audio coming soon." Deletion goes
+   through the Storage API (Supabase blocks direct deletes on `storage.objects`)
+   and the command re-lists the folder afterwards to confirm the files are gone.
 
 The bucket is public, so the review link is convenience rather than access
 control; what keeps an unapproved track away from learners is the `released`
