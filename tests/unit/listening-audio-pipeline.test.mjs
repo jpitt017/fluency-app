@@ -705,6 +705,9 @@ test('the voice check reads real lines: the named step clips plus one clip per s
   assert.equal(byKey['aisha-oh-thats-great.mp3'].lines.length, 1);
   assert.match(byKey['aisha-oh-thats-great.mp3'].lines[0].text, /^Oh, that's great\./);
   assert.deepEqual(byKey['joanne-opening.mp3'].lines, [openingBlock(week4)]);
+  // The label is a script convention, never something the guide says.
+  assert.doesNotMatch(byKey['joanne-opening.mp3'].lines[0].text, /^Joanne:/);
+  assert.match(byKey['joanne-opening.mp3'].lines[0].text, /^Good morning, everyone, and welcome to York!/);
 
   // Week 3: Marta's three *longest* turns (not her interjections), then Dan.
   const week3Lines = byKey['week-3-three-lines.mp3'].lines;
@@ -740,6 +743,7 @@ test('the voice check reads real lines: the named step clips plus one clip per s
   });
   for (const request of requests) {
     assert.equal(request.body.voice_settings.speed, 0.8, 'the course speed');
+    assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
   assert.equal(new Set(requests.map((request) => request.body.text)).size > 12, true, 'a different real line each time');
 

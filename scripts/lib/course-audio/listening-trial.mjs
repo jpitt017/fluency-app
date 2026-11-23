@@ -31,6 +31,7 @@ import {
   countWords,
   encodeMp3,
   splitSentences,
+  stripSpeakerPrefix,
   parseScript,
   pauseSecondsFor,
   pcmDurationSeconds,
@@ -125,7 +126,9 @@ export function lineStartingWith(weekSpec, speaker, prefix) {
 export function openingBlock(weekSpec) {
   const blocks = String(weekSpec.script).split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
   const speaker = firstSpeaker(weekSpec);
-  return { speaker, text: blocks[0], words: countWords(blocks[0].replace(/^[A-Z][A-Za-z]+:\s*/, '')) };
+  // The label is a script convention, not something a guide says out loud.
+  const text = blocks[0].replace(/^[A-Z][A-Za-z]{1,20}:\s*/, '');
+  return { speaker, text, words: countWords(text) };
 }
 
 /**
@@ -237,7 +240,7 @@ export async function generateClip(options) {
   const turns = [];
   for (const line of lines) {
     if (!SPEAKER_VOICES[line.speaker]) throw new Error(`No voice configured for speaker "${line.speaker}"`);
-    const planned = planUtterances(line, line.speaker);
+    const planned = planUtterances({ ...line, text: stripSpeakerPrefix(line.text) }, line.speaker);
     for (const utterance of planned) {
       log(`    ${utterance.speaker}: "${utterance.text.slice(0, 48)}${utterance.text.length > 48 ? '…' : ''}"`);
       const turn = await synthesiseTurn({
