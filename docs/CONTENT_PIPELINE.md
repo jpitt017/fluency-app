@@ -181,13 +181,14 @@ Run the manual **Course audio — AI trial tracks** workflow
 `ELEVENLABS_API_KEY` repository secret plus the Supabase URL and service-role
 key, and installs ffmpeg for MP3 encoding.
 
-**Step 1 — approve the voices (`mode: voice-check`).** This records real lines
-from the weeks themselves, at the course pace and with each speaker's own voice
-settings: one clip per speaker, plus the step clips a review asks for by name
-(Ellie's longest Week 1 answer, Tom's first two Week 2 lines, Aisha's "Oh,
-that's great", three Week 3 turns, Joanne's opening paragraph). The clips go to
-the private review bucket and are attached to the run as the **`voice-check`
-artifact** (kept for three days). Every clip reports its words per minute,
+**Step 1 — approve the voices (`mode: voice-check`).** This records the clips a
+review asks for by name, at the course pace and with each speaker's own voice
+settings: one MP3 per request, each line verbatim. The current set is Tom's first
+two Week 2 lines, Marta's three longest Week 3 turns and Ellie's longest Week 1
+answer — the two replaced voices plus an unchanged one, so a single listen covers
+both the new voices and the new pauses. The clips go to the private review
+bucket and are attached to the run as the **`voice-check` artifact** (kept for
+three days). Every clip reports its words per minute,
 measured from the assembled timeline — words spoken over the wall-clock length,
 pauses included — so the pace is a number, not an impression. Download the
 artifact to listen. Short clips do not use up a normal monthly quota cycle the
@@ -204,17 +205,18 @@ any track depends on it.
    the voice itself: no instruction or prompt tries to change it. Voice settings
    are per speaker: everyone uses `VOICE_SETTINGS`, and a character may carry a
    `settings` override — Tom 0.3 / 0.4 (enthusiastic about his course), Aisha
-   0.35 / 0.3 (happy for him), Dan and Marta 0.38 / 0.25 (flatmates who get on
-   well), Joanne 0.35 / 0.35 (a guide who loves York). The Host and Ellie keep
-   0.45 / 0. Unless a speaker is named, the defaults apply. A character may also
-   override the pace's **speed** on their own: Joanne reads at 0.75, because her
-   measured Week 4 came out above the 140–150 wpm target at 0.8 — a monologue has
-   fewer turn changes to slow it down than a dialogue. Nobody else's rate moves;
+   0.35 / 0.3 (happy for him), Dan 0.38 / 0.25 and Marta 0.3 / 0.4 (flatmates who
+   get on well), Joanne 0.35 / 0.35 (a guide who loves York). The Host and Ellie
+   keep 0.45 / 0. Unless a speaker is named, the defaults apply. A character may
+   also override the pace's **speed** on their own: Joanne and Tom read at 0.75,
+   because those voices come out measurably fast — Joanne's Week 4 passed the
+   140–150 wpm target at 0.8, and Tom's replacement voice (Jack C) is fast paced.
+   Nobody else's rate moves; Marta's replacement (Katie) is a Midlands voice that
+   needs the slower delivery, not a slower tempo, so she keeps 0.8;
 3. holds the course pace (`PACE_PROFILES.b1`, the default for all four weeks):
-   `speed: 0.8` (0.75 for Joanne, see above), aiming at roughly 140–150 words a
-   minute, with a 0.5 s gap
-   between sentences inside a line, 0.7 s between two speakers and 1.0 s
-   between paragraphs. A line is split into sentences (never on "Mr." or on a
+   `speed: 0.8` (0.75 for Joanne and Tom, see above), aiming at roughly 140–150
+   words a minute, with a 0.3 s gap between sentences inside a line, 0.7 s
+   between two speakers and 0.8 s between paragraphs. A line is split into sentences (never on "Mr." or on a
    number), and each cue is one sentence;
 4. encodes one MP3 and one WebVTT file per track, with one caption cue per
    sentence timed to the audio;
@@ -237,7 +239,7 @@ token when it renders the page — a link in a summary is unusable, and a link i
 log is a link in a screenshot.
 
 **Artifacts.** `mode: generate` attaches `review` (MP3 + WebVTT per week),
-`mode: voice-check` attaches `voice-check` (one clip per speaker), and
+`mode: voice-check` attaches `voice-check` (the requested lines), and
 `mode: voice-sample` attaches `week-sample`. All are kept for three days and are
 the supported way to listen, including on a phone.
 

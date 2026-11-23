@@ -40,7 +40,6 @@ import {
   generateVoiceCheck,
   listeningTrialAudioKey,
   longestLineFor,
-  openingBlock,
   readListeningWeeks,
   week3SampleLines,
 } from '../../scripts/lib/course-audio/listening-trial.mjs';
@@ -102,9 +101,9 @@ test('SPEAKER_VOICES is exactly the seven approved ElevenLabs voices', () => {
       Host: 'sp7QaEHmiNEd5HgrXuOo',
       Ellie: 'VGEVi3E0hARQ99wIXvJG',
       Aisha: 'jUPSOpRcPt8GMPsWx5fy',
-      Tom: 'EtGAAwTx6aMveVbqUxuU',
+      Tom: 'gpYTodEbX9z98axldaGD',
       Dan: 'sBU90Bu4NCleWDoNkGog',
-      Marta: 'FmIJwVFU62n8jITpotTp',
+      Marta: 'piJjfIKBZRMkss1Ifoyo',
       Joanne: 'ZR8ruiC9tbg7bV9RmBmC',
     },
   );
@@ -132,10 +131,10 @@ test('the request carries the voice id, the PCM format and the B1 speed, and no 
 
 test('the reviewed characters carry their own voice settings, and Week 1 keeps the defaults', () => {
   const expected = {
-    Tom: { stability: 0.3, style: 0.4 },
+    Tom: { stability: 0.3, style: 0.4, speed: 0.75 },
     Aisha: { stability: 0.35, style: 0.3 },
     Dan: { stability: 0.38, style: 0.25 },
-    Marta: { stability: 0.38, style: 0.25 },
+    Marta: { stability: 0.3, style: 0.4 },
     Joanne: { stability: 0.35, style: 0.35, speed: 0.75 },
   };
   for (const [speaker, override] of Object.entries(expected)) {
@@ -162,21 +161,32 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
   assert.equal(voiceSettingsFor('Host', 0.8).stability, 0.45);
 });
 
-test("Joanne may override the pace's speed, and only she does", () => {
-  // Her measured reading was the fastest of the four weeks; the track came out
-  // above the 140-150 target, so her voice keeps its own slower rate.
+test("only the voices that read fast override the pace's speed", () => {
+  // A character may carry their own rate: Joanne was measured too fast at 0.8,
+  // and Tom's replacement voice is fast paced, so both read at 0.75. Marta's
+  // replacement is a Midlands voice that needs the slower *delivery*, not a
+  // slower tempo, so she keeps the course speed.
   assert.equal(voiceSettingsFor('Joanne', 0.8).speed, 0.75);
   assert.equal(voiceSettingsFor('Joanne', 0.9).speed, 0.75, 'her rate wins over any pace');
   assert.equal(rateForSpeaker('Joanne', 'b1'), 0.75);
-  for (const speaker of ['Host', 'Ellie', 'Aisha', 'Tom', 'Dan', 'Marta']) {
+  assert.equal(rateForSpeaker('Tom', 'b1'), 0.75, 'the new Tom voice is fast paced');
+  for (const speaker of ['Host', 'Ellie', 'Aisha', 'Dan', 'Marta']) {
     assert.equal(rateForSpeaker(speaker, 'b1'), 0.8, `${speaker} keeps the course speed`);
   }
-  // The rest of her settings are untouched by the speed override.
+  // The rest of the settings are untouched by the speed override.
   const joanne = voiceSettingsFor('Joanne', 0.8);
   assert.equal(joanne.stability, 0.35);
   assert.equal(joanne.style, 0.35);
   assert.equal(joanne.similarity_boost, 0.8);
   assert.equal(buildSpeechRequest('Joanne', 'Welcome to York!').body.voice_settings.speed, 0.75);
+  assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.75);
+});
+
+test('the replaced voices keep their accent labels, which are what a reviewer reads', () => {
+  assert.equal(SPEAKER_VOICES.Tom.name, 'Jack C');
+  assert.equal(SPEAKER_VOICES.Tom.accent, 'northern English');
+  assert.equal(SPEAKER_VOICES.Marta.name, 'Katie');
+  assert.equal(SPEAKER_VOICES.Marta.accent, 'West Midlands', 'the new voice is a Midlands voice');
 });
 
 test('an unknown speaker is refused before any request is sent', () => {
@@ -312,12 +322,12 @@ test('captions follow the audio timeline including the pauses', () => {
   assert.equal(+pcmDurationSeconds(audio).toFixed(2), +timing.durationSeconds.toFixed(2));
 });
 
-test('the course pace is 0.8 with 0.5 s / 0.7 s / 1.0 s pauses, and it is the default', () => {
+test('the course pace is 0.8 with 0.3 s / 0.7 s / 0.8 s pauses, and it is the default', () => {
   assert.deepEqual(PACE_PROFILES.b1, {
     speed: 0.8,
-    sentencePauseSeconds: 0.5,
+    sentencePauseSeconds: 0.3,
     speakerPauseSeconds: 0.7,
-    paragraphPauseSeconds: 1.0,
+    paragraphPauseSeconds: 0.8,
   });
   assert.equal(B1_SPEECH_RATE, 0.8);
   assert.deepEqual(resolvePace(), PACE_PROFILES.b1, 'every week uses it unless told otherwise');
@@ -325,9 +335,9 @@ test('the course pace is 0.8 with 0.5 s / 0.7 s / 1.0 s pauses, and it is the de
   assert.throws(() => resolvePace('warm'), /Unknown pace "warm"/, 'the old warm profile is gone');
   assert.throws(() => resolvePace('shouty'), /Unknown pace "shouty"/);
   assert.equal(pauseSecondsFor('none'), 0);
-  assert.equal(pauseSecondsFor('sentence'), 0.5);
+  assert.equal(pauseSecondsFor('sentence'), 0.3);
   assert.equal(pauseSecondsFor('speaker'), 0.7);
-  assert.equal(pauseSecondsFor('paragraph'), 1.0);
+  assert.equal(pauseSecondsFor('paragraph'), 0.8);
 
   const turns = [
     { speaker: 'Dan', text: 'One.', pcm: fakePcm(2), boundary: 'none' },
@@ -340,12 +350,12 @@ test('the course pace is 0.8 with 0.5 s / 0.7 s / 1.0 s pauses, and it is the de
     timing.cues.map((cue) => [+cue.start.toFixed(2), +cue.end.toFixed(2)]),
     [
       [0, 2],
-      [2.5, 4.5],
-      [5.2, 7.2],
-      [8.2, 10.2],
+      [2.3, 4.3],
+      [5.0, 7.0],
+      [7.8, 9.8],
     ],
   );
-  assert.equal(+timing.durationSeconds.toFixed(2), 10.2);
+  assert.equal(+timing.durationSeconds.toFixed(2), 9.8);
   assert.equal(+timing.speechSeconds.toFixed(2), 8);
   const audio = assembleTrack(turns);
   assert.equal(+pcmDurationSeconds(audio).toFixed(2), +timing.durationSeconds.toFixed(2));
@@ -666,7 +676,7 @@ test('a rejected key stops the run before anything is uploaded', async (t) => {
   assert.equal(uploads, 0, 'nothing is uploaded when synthesis fails');
 });
 
-test('the voice check reads real lines: the named step clips plus one clip per speaker', async (t) => {
+test('the voice check reads the three requested clips, at the course pace and settings', async (t) => {
   const dir = await mkdtemp(path.join(tmpdir(), 'voice-check-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
 
@@ -696,41 +706,26 @@ test('the voice check reads real lines: the named step clips plus one clip per s
     encoder: async (wav, outFile) => writeFile(outFile, wav.subarray(0, 32)),
   });
 
-  const named = clips.slice(0, 5);
-  assert.deepEqual(named.map((clip) => clip.key.split('/').pop()), [
-    'ellie-longest.mp3',
-    'tom-two-lines.mp3',
-    'aisha-oh-thats-great.mp3',
-    'week-3-three-lines.mp3',
-    'joanne-opening.mp3',
-  ]);
-  assert.equal(clips.length, 5 + Object.keys(SPEAKER_VOICES).length);
+  // Exactly the three clips a review asked for: two replaced voices and one
+  // unchanged one to hear the shorter sentence gaps on.
   assert.deepEqual(
-    clips.slice(5).map((clip) => clip.key),
-    Object.keys(SPEAKER_VOICES).map((speaker) => `weeks-01-04/ai-trial/voice-check-${speaker}.mp3`),
+    clips.map((clip) => clip.key.split('/').pop()),
+    ['tom-two-lines.mp3', 'marta-three-turns.mp3', 'ellie-longest.mp3'],
   );
+  assert.equal(uploaded.length, 3);
 
-  // The three requested lines, verbatim, and no invented text.
   const byKey = Object.fromEntries(clips.map((clip) => [clip.key.split('/').pop(), clip]));
   const week1 = weeks.find((item) => item.week === 1);
   const week2 = weeks.find((item) => item.week === 2);
-  const week4 = weeks.find((item) => item.week === 4);
-  assert.deepEqual(byKey['ellie-longest.mp3'].lines, [longestLineFor(week1, 'Ellie')]);
+  const week3 = weeks.find((item) => item.week === 3);
+
   assert.deepEqual(
     byKey['tom-two-lines.mp3'].lines.map((line) => line.text),
     parseScript(week2.script, 'Aisha').filter((line) => line.speaker === 'Tom').slice(0, 2).map((line) => line.text),
   );
-  assert.equal(byKey['aisha-oh-thats-great.mp3'].lines.length, 1);
-  assert.match(byKey['aisha-oh-thats-great.mp3'].lines[0].text, /^Oh, that's great\./);
-  assert.deepEqual(byKey['joanne-opening.mp3'].lines, [openingBlock(week4)]);
-  // The label is a script convention, never something the guide says.
-  assert.doesNotMatch(byKey['joanne-opening.mp3'].lines[0].text, /^Joanne:/);
-  assert.match(byKey['joanne-opening.mp3'].lines[0].text, /^Good morning, everyone, and welcome to York!/);
+  assert.deepEqual(byKey['ellie-longest.mp3'].lines, [longestLineFor(week1, 'Ellie')]);
 
-  // Week 3: Marta's three *longest* turns (not her interjections), then Dan.
-  const week3Lines = byKey['week-3-three-lines.mp3'].lines;
-  assert.deepEqual(week3Lines.map((line) => line.speaker), ['Marta', 'Marta', 'Marta', 'Dan', 'Dan']);
-  const authored3 = parseScript(weeks.find((item) => item.week === 3).script, 'Dan');
+  const authored3 = parseScript(week3.script, 'Dan');
   const martaLongest = authored3
     .filter((line) => line.speaker === 'Marta')
     .sort((a, b) => countWords(b.text) - countWords(a.text) || a.index - b.index)
@@ -738,34 +733,30 @@ test('the voice check reads real lines: the named step clips plus one clip per s
     .sort((a, b) => a.index - b.index)
     .map((line) => line.text);
   assert.deepEqual(
-    week3Lines.filter((line) => line.speaker === 'Marta').map((line) => line.text),
+    byKey['marta-three-turns.mp3'].lines.map((line) => line.text),
     martaLongest,
     "Marta's three longest turns, in script order",
   );
-  assert.equal(week3Lines.some((line) => line.text.startsWith('Ha! OK.')), false, 'not her interjection');
-  assert.deepEqual(
-    week3Lines.filter((line) => line.speaker === 'Dan').map((line) => line.text),
-    authored3.filter((line) => line.speaker === 'Dan').slice(0, 2).map((line) => line.text),
-  );
+  assert.deepEqual(byKey['marta-three-turns.mp3'].speakers, ['Marta']);
+  assert.equal(byKey['marta-three-turns.mp3'].lines.some((line) => line.text.startsWith('Ha! OK.')), false);
 
-  // Every request carries that speaker's reviewed settings and the course speed.
-  const settingsFor = (url) => {
-    const speaker = Object.keys(SPEAKER_VOICES).find((name) => url.includes(SPEAKER_VOICES[name].voice));
-    return { speaker, settings: requests.find((request) => request.url === url).body.voice_settings };
-  };
-  assert.deepEqual(settingsFor(byKey['joanne-opening.mp3'] && buildSpeechRequest('Joanne', 'x').url).settings, {
-    ...VOICE_SETTINGS,
-    stability: 0.35,
-    style: 0.35,
-    speed: 0.75,
-  });
+  // Tom's replacement voice and its own slower rate; Marta's new settings at the
+  // course speed; Ellie unchanged except for the pace.
+  assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.75 });
+  assert.deepEqual(byKey['marta-three-turns.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.8 });
+  assert.deepEqual(byKey['ellie-longest.mp3'].settings, { ...VOICE_SETTINGS, speed: 0.8 });
   for (const request of requests) {
-    // The course speed, except for the one character who reads faster than it.
-    const joanne = request.url.includes(SPEAKER_VOICES.Joanne.voice);
-    assert.equal(request.body.voice_settings.speed, joanne ? 0.75 : 0.8, 'the course speed');
+    const tom = request.url.includes(SPEAKER_VOICES.Tom.voice);
+    assert.equal(request.body.voice_settings.speed, tom ? 0.75 : 0.8);
     assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
-  assert.equal(new Set(requests.map((request) => request.body.text)).size > 12, true, 'a different real line each time');
+  assert.deepEqual(
+    [...new Set(requests.map((request) => request.url))].sort(),
+    [SPEAKER_VOICES.Ellie.voice, SPEAKER_VOICES.Marta.voice, SPEAKER_VOICES.Tom.voice]
+      .map((voice) => `https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=pcm_24000`)
+      .sort(),
+    'only the three auditioned voices are called',
+  );
 
   // Words per minute is reported per clip, from the timeline.
   for (const clip of clips) {
@@ -773,11 +764,7 @@ test('the voice check reads real lines: the named step clips plus one clip per s
     assert.ok(clip.durationSeconds > 0);
     assert.equal(clip.wordsPerMinute, Math.round((clip.words / clip.durationSeconds) * 60 * 10) / 10);
   }
-  assert.equal(uploaded.length, clips.length);
-  assert.deepEqual(
-    uploaded.map((item) => item.contentType),
-    Array(clips.length).fill('audio/mpeg'),
-  );
+  assert.deepEqual(uploaded.map((item) => item.contentType), ['audio/mpeg', 'audio/mpeg', 'audio/mpeg']);
 });
 
 test('the Week 3 sample reads three of each speaker\'s longest lines, at the course pace', async (t) => {
@@ -844,9 +831,13 @@ test('the Week 3 sample reads three of each speaker\'s longest lines, at the cou
     ['weeks-01-04/ai-trial/week-3-sample-Dan.mp3', 'weeks-01-04/ai-trial/week-3-sample-Marta.mp3'],
   );
   assert.deepEqual(clips.map((clip) => clip.speakers), [['Dan'], ['Marta']]);
+  const SAMPLE_SETTINGS = {
+    Dan: { stability: 0.38, style: 0.25 },
+    Marta: { stability: 0.3, style: 0.4 },
+  };
   for (const clip of clips) {
     const speaker = clip.speakers[0];
-    assert.deepEqual(clip.settings, { ...VOICE_SETTINGS, stability: 0.38, style: 0.25, speed: 0.8 });
+    assert.deepEqual(clip.settings, { ...VOICE_SETTINGS, ...SAMPLE_SETTINGS[speaker], speed: 0.8 });
     assert.deepEqual(clip.pace, resolvePace('b1'));
     // Three lines, each split into sentences: the request text is the sentences.
     assert.deepEqual(

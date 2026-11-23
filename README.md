@@ -137,11 +137,10 @@ Irish voices and land **unreleased** in the private `course-audio-review` bucket
 `course-audio` bucket and sets `audio_url` on its `listening_audio_trials` row.
 The manual `Course audio — AI trial tracks` workflow needs an `ELEVENLABS_API_KEY`
 repository secret. Start with `mode: voice-check`, which reads real lines from
-the weeks in the course pace (speed 0.8 — 0.75 for Joanne, who reads fast —
-with 0.5 s between sentences, 0.7 s between speakers and 1.0 s between
-paragraphs) with each speaker's own voice settings, and
-attaches one clip per speaker plus the named step clips as the `voice-check`
-artifact (three days). Every clip reports its words per minute, so the pace can
+the weeks in the course pace (speed 0.8 — 0.75 for Joanne and Tom, whose voices
+read fast — with 0.3 s between sentences, 0.7 s between speakers and 0.8 s
+between paragraphs) with each speaker's own voice settings, and attaches the
+requested clips as the `voice-check` artifact (three days). Every clip reports its words per minute, so the pace can
 be checked before a whole track is recorded. `mode: generate` then attaches each
 week's MP3 and captions as the `review` artifact; nothing is released until a
 week is released on purpose. `mode: voice-sample` re-auditions one week on each

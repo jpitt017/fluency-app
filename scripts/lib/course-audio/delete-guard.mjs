@@ -32,11 +32,9 @@ export const ALLOWED_BUCKETS = [DEFAULT_REVIEW_BUCKET, AUDIO_BUCKET];
  * are never named by an approval row.
  */
 export const AUDITION_CLIP_NAMES = [
-  'ellie-longest.mp3',
   'tom-two-lines.mp3',
-  'aisha-oh-thats-great.mp3',
-  'week-3-three-lines.mp3',
-  'joanne-opening.mp3',
+  'marta-three-turns.mp3',
+  'ellie-longest.mp3',
   'week-3-sample-Dan.mp3',
   'week-3-sample-Marta.mp3',
 ];
