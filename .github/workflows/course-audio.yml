@@ -81,14 +81,14 @@ concurrency:
   group: course-audio
   cancel-in-progress: false
 
+# Only the project URL is job-wide: it is not a credential and every mode needs
+# it. The service-role key and the release override are set on the individual
+# steps that need them, so neither can leak into a step that should not have it -
+# in particular the unit tests at the bottom, where an ambient
+# ALLOW_PRODUCTION_RELEASE turned "production must be refused" into a pass-through
+# and the suite failed.
 env:
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-  # Approval writes refuse production unless this run explicitly opts in with
-  # both the checkbox and the acknowledgement. A week is never marked released on
-  # production, not even briefly for a test - this is the deliberate-release path
-  # only, and the scripts enforce the same rule from their side.
-  ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
 
 jobs:
   run:
@@ -128,20 +128,27 @@ jobs:
         if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
         run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
+      # Every mode except a generate dry-run reads or writes Supabase, so a
+      # missing secret is fatal here rather than at whatever call happens to run
+      # first. The value is never printed: only its length, so an empty secret
+      # that is merely whitespace is still distinguishable from a short one.
       - name: Check SUPABASE_SERVICE_ROLE_KEY availability
         if: ${{ inputs.mode != 'generate' || !inputs.dry_run }}
         env:
           SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ -z "$SERVICE_KEY" ]; then
-            echo "::error::The SUPABASE_SERVICE_ROLE_KEY repository secret is not set."
+            echo "::error::The SUPABASE_SERVICE_ROLE_KEY repository secret is not set for this repository, so mode '${{ inputs.mode }}' cannot run. Add it in Settings > Secrets and variables > Actions."
             exit 1
           fi
+          echo "SUPABASE_SERVICE_ROLE_KEY is present (${#SERVICE_KEY} characters)."
 
       - name: Validate the authored listening scripts
         if: ${{ inputs.mode == 'generate' }}
         run: npm run validate:details
 
+      # The only mode that never touches Supabase: it reads the authored scripts
+      # and reports speakers, length and pace. No key, on purpose.
       - name: Show the planned tracks
         if: ${{ inputs.mode == 'generate' }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
@@ -156,6 +163,7 @@ jobs:
           fi
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       # The signed links in the step summary are not usable outside the run page
       # (GitHub redacts the token when it renders them), so the clips themselves
@@ -175,6 +183,7 @@ jobs:
         run: node scripts/generate-course-audio.mjs --voice-sample "${{ inputs.weeks }}" --pace "${{ inputs.pace }}"
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Voice sample clips for a listen
         if: ${{ inputs.mode == 'voice-sample' }}
@@ -189,6 +198,7 @@ jobs:
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}"
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # Signed review links stay out of the log: the tracks travel as the
           # `review` artifact below.
           SIGNED_LINKS_IN_LOG: ''
@@ -197,20 +207,32 @@ jobs:
       # listening to a track that already exists. Generate runs never print one.
       - name: Review links (signed, valid 1 hour)
         if: ${{ inputs.mode == 'review' }}
-        run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
         env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SIGNED_LINKS_IN_LOG: '1'
+        run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
 
       - name: Release approved weeks
         if: ${{ inputs.mode == 'release' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # The deliberate-release opt-in, scoped to this step alone. Both the
+          # checkbox and the phrase are required; the step below refuses a
+          # mismatch before this one can run.
+          ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
         run: node scripts/generate-course-audio.mjs --release "${{ inputs.weeks }}"
 
       - name: Revoke a track
         if: ${{ inputs.mode == 'revoke' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
         run: node scripts/generate-course-audio.mjs --revoke "${{ inputs.weeks }}"
 
       - name: Delete the three storage-check probe objects (dry run unless confirm)
         if: ${{ inputs.mode == 'delete-probes' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ "${{ inputs.confirm }}" = "true" ]; then
             node scripts/generate-course-audio.mjs --delete-probes --confirm
@@ -220,6 +242,8 @@ jobs:
 
       - name: Delete the files from both buckets (dry run unless confirm)
         if: ${{ inputs.mode == 'delete' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ "${{ inputs.confirm }}" = "true" ]; then
             node scripts/generate-course-audio.mjs --delete-trial --weeks "${{ inputs.weeks }}" --confirm
@@ -229,10 +253,19 @@ jobs:
 
       - name: Approval state
         if: ${{ inputs.mode == 'generate' && !inputs.dry_run || inputs.mode == 'release' || inputs.mode == 'revoke' || inputs.mode == 'delete' || inputs.mode == 'list' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/generate-course-audio.mjs --list
 
+      # These tests protect a rule, so they must pass whatever the surrounding
+      # job happens to export. `env -u` removes the two variables that change the
+      # rule's answer, and the approval suite also pins the answer itself instead
+      # of trusting the ambient environment - so it would pass even in a shell
+      # that exported the override.
       - name: Run the audio pipeline tests
-        run: node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-audio-approval.test.mjs
+        run: |
+          env -u ALLOW_PRODUCTION_RELEASE -u SUPABASE_SERVICE_ROLE_KEY \
+            node --test tests/unit/listening-audio-pipeline.test.mjs tests/unit/listening-trial.test.mjs tests/unit/listening-audio-delete.test.mjs tests/unit/listening-audio-approval.test.mjs
 
       # MP3 + WebVTT for each generated week, so a week can be listened to (with
       # captions) before anyone approves it.

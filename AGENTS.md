@@ -36,6 +36,15 @@ command cannot flip a live week by accident. The workflow additionally needs the
 `allow_production_release` checkbox **and** the phrase `release to learners` in
 `production_ack`; do not set either one to "see if it works".
 
+Because the variable *grants* the bypass, never give it job-wide scope in a
+workflow that also runs tests: export it on the one release/revoke step that
+needs it. A job-wide `ALLOW_PRODUCTION_RELEASE` is inherited by the test step,
+where it turns "production must be refused" into a pass-through and the suite
+fails with *Missing expected rejection* — that is exactly how course-audio run
+45258656177 broke. `tests/unit/listening-audio-approval.test.mjs` now pins the
+answer with an explicit `allowProductionRelease: false` and checks the rule holds
+for every value of the variable, so it cannot come back silently.
+
 ## This repo's other standing rules
 
 - Read the Next.js guidance block below before writing app code; this Next.js
