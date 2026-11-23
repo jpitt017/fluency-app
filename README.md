@@ -303,4 +303,38 @@ To run a single production issue-alert smoke test, manually dispatch the CI work
 
 To verify production AI feedback, manually dispatch CI with `production_ai_test` enabled. The test creates a confirmed `@example.test` user through the admin API, signs in via the real login page, submits writing and recorded speech in Labs using real AI services, checks feedback, and deletes the test user and data. It requires the production Supabase URL and service-role key as GitHub Actions secrets and incurs normal AI usage; it does not run on ordinary CI pushes or pull requests.
 
+### When the AI provider fails
+
+Learners never see a provider's own error. A raw Groq error names the model, an
+organisation id, a token-quota breakdown or "Invalid API Key" — none of which a B1
+learner can act on. Every AI route funnels its failure through
+`providerFailureResponse` (`lib/b1b2/provider-failure-response.ts`), which logs the
+detail and returns one of four sentences:
+
+| Situation | Learner sees |
+|---|---|
+| Any failure, work already stored | "Feedback isn't working right now. Your work is saved. Please try again later." |
+| Any failure, work not stored | "Feedback isn't working right now. Please copy your text before you try again." |
+| Same, but the work is a recording | "Feedback isn't working right now. Your recording isn't saved. Please try again later." |
+| Daily token quota used up (429 TPD) | "Feedback has stopped for today. Please try again tomorrow." |
+
+"The work is saved" is only said where it is true. Writing drafts, speaking
+recordings, chat replies and rewrite checks exist only inside the failing request,
+so they get the "copy your text" wording. Mediation is the exception: it inserts
+the attempt even when the assessor fails, so it says the work is saved — and sets
+confidence to 0, which routes the attempt to a teacher as `low_ai_confidence`.
+
+Alerts are emailed for the failures a learner cannot retry their way out of:
+auth (401/403), rate limit (429) and the daily quota. A timeout or a one-off 500 is
+logged and not emailed. Alerts reuse the Resend settings above, are grouped per
+endpoint and failure kind by `ai_failure_alerts` (migration 0040) for ten minutes,
+and contain no learner data — no address, text, transcript or user id. If the
+table or mail settings are missing, the alert is still attempted once per call and
+the fault is always in the server log; a broken key must never fail silently.
+
+`tests/unit/provider-errors.test.mjs` pins the wording and the classifier with a
+fake 401, a fake 429, a daily-quota 429 and a timeout;
+`provider-failure-response.test.mjs` checks the response status and body;
+`provider-alert.test.mjs` checks the grouping and that nothing throws.
+
 AI practice limits reset at midnight Europe/Madrid. Free learners receive 30 units per day, pilot learners 120, Pro subscribers 180, and teachers/admins 1,000. Staff can turn pilot access on or off for learners in the Teacher Console. Active Pro subscriptions take priority over pilot access; staff limits take priority over both. Short per-minute limits still apply. Usage events remain logged, including for staff, and a manual daily reset does not delete usage history.
