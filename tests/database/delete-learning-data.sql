@@ -68,7 +68,11 @@ begin
   for t in select c.table_name from information_schema.columns c join information_schema.tables tb using (table_schema,table_name)
     where c.table_schema='public' and c.column_name='user_id' and tb.table_type='BASE TABLE' loop
     execute format('select count(*) from public.%I where user_id=$1',t.table_name) into n using u;
-    if t.table_name in ('subscriptions','pilot_learners') then
+    -- Subscriptions are billing and survive; pilot membership follows the
+    -- account (0035 deletes it) and must go. 0024 first reported this profile
+    -- as the table's 'deleted' flag, then 0035 added the delete without
+    -- revisiting the comment or the test: live deletes it, so the test does too.
+    if t.table_name = 'subscriptions' then
       if n <> 1 then raise exception 'Retained data missing for %',t.table_name; end if;
     elsif n <> 0 then raise exception 'Learner rows remain in %: %',t.table_name,n;
     end if;
