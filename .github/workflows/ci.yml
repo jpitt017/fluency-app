@@ -79,22 +79,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      prompts: ${{ steps.filter.outputs.prompts }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          filters: |
-            prompts:
-              - 'lib/b1b2/feedback-schema.ts'
-              - 'lib/b1b2/prompt-guard.ts'
-              - 'src/app/api/**'
-              - 'scripts/eval-prompts.mjs'
-
   build-and-offline-evals:
     runs-on: ubuntu-latest
     steps:
@@ -176,13 +160,20 @@ jobs:
           '
 
 
+  # Nightly and on demand only, never on a pull request.
+  #
+  # This job and the product share one GROQ_API_KEY, and the app answers writing
+  # feedback with the same openai/gpt-oss-20b on that key. A full pass costs about
+  # 220k tokens against a 200k token-per-day organisation cap, so a run spends the
+  # day's whole budget — and learners get 429s for the rest of it. That is why it is
+  # not a merge gate: prompts still get their fast, deterministic check on every PR
+  # through `npm run eval:prompts -- --offline` in build-and-offline-evals.
+  #
+  # It is also deliberately not a required check: a quota error must not block a
+  # merge. See docs/CI.md.
   live-prompt-evals:
-    needs: changes
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      needs.changes.outputs.prompts == 'true'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Check GROQ_API_KEY availability
         id: check
