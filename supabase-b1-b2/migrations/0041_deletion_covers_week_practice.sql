@@ -31,6 +31,11 @@ begin
     'g'
   );
 
+  -- The reset block writes `xp`, and profiles has only ever had `xp_total`
+  -- (0002), so that update fails with 42703 and rolls back the whole deletion.
+  definition := replace(definition, 'xp                   = 0', 'xp_total             = 0');
+  definition := replace(definition, 'xp = 0,', 'xp_total = 0,');
+
   execute definition;
 
   -- Add the branches from the repaired definition, so an extra regexp pass
