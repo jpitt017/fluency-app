@@ -13,6 +13,11 @@ import { readFileSync } from 'node:fs';
 import {
   DEFAULT_NEXT,
   EMAIL_ACTION_TYPES,
+  EMAIL_LINKS_ENABLED_ENV,
+  RESET_LINK_REPLACEMENT,
+  SIGNUP_DESTINATION,
+  emailLinksEnabled,
+  signUpOutcome,
   TEMPLATE_NEXT,
   UPDATE_PASSWORD_PATH,
   buildRedirectTo,
@@ -134,4 +139,52 @@ test('the template variable is TokenHash, not ConfirmationURL', () => {
   for (const type of ['signup', 'magiclink', 'recovery', 'email_change', 'invite']) {
     assert.ok(docs.includes(`type=${type}`), `the template list covers type=${type}`);
   }
+});
+
+test('email links are off unless explicitly switched on', () => {
+  // A pilot without SMTP must never show a control that can only fail.
+  assert.equal(emailLinksEnabled(undefined), false);
+  assert.equal(emailLinksEnabled(''), false);
+  assert.equal(emailLinksEnabled('false'), false);
+  assert.equal(emailLinksEnabled('0'), false);
+  assert.equal(emailLinksEnabled('TRUE'), false, 'exact match only');
+  assert.equal(emailLinksEnabled('true'), true);
+  assert.equal(EMAIL_LINKS_ENABLED_ENV, 'NEXT_PUBLIC_EMAIL_LINKS_ENABLED');
+  assert.equal(RESET_LINK_REPLACEMENT, 'Forgot your password? Message your teacher.');
+});
+
+test('the login page hides both email options behind the one setting', () => {
+  const source = readFileSync(new URL('../../src/app/login/page.tsx', import.meta.url), 'utf8');
+  // Both controls test the same flag...
+  assert.equal((source.match(/!isSignUp && !isUpdatePassword && emailLinks/g) ?? []).length, 2);
+  // ...the reset replacement shows only when it is off...
+  assert.match(source, /\{!emailLinks && !isSignUp && !isUpdatePassword && \(/);
+  // ...and the setting is resolved on the server, not frozen into the bundle.
+  assert.match(source, /emailLinksEnabled\(process\.env\[EMAIL_LINKS_ENABLED_ENV\]\)/);
+  assert.match(source, /<LoginForm emailLinks=\{emailLinks\} \/>/);
+});
+
+test('sign-up with Confirm email off goes straight to placement', () => {
+  // A session in the response is what Supabase returns when confirmation is off.
+  assert.equal(signUpOutcome({ user: { identities: [{}] }, session: { access_token: 'x' } }), 'placement');
+  assert.equal(SIGNUP_DESTINATION, '/onboarding/placement');
+
+  // With Confirm email on there is no session: ask them to check their inbox.
+  assert.equal(signUpOutcome({ user: { identities: [{}] }, session: null }), 'confirm-email');
+
+  // An address that already has an account comes back with no identities.
+  assert.equal(signUpOutcome({ user: { identities: [] }, session: null }), 'existing');
+
+  // A malformed payload must not be treated as a successful sign-up.
+  assert.equal(signUpOutcome(null), 'confirm-email');
+  assert.equal(signUpOutcome({}), 'confirm-email');
+});
+
+test('the login page routes each sign-up outcome differently', () => {
+  const source = readFileSync(new URL('../../src/app/login/page.tsx', import.meta.url), 'utf8');
+  assert.match(source, /const outcome = signUpOutcome\(data\)/);
+  assert.match(source, /outcome === SIGNUP_OUTCOMES\.existing/);
+  assert.match(source, /outcome === SIGNUP_OUTCOMES\.confirmEmail/);
+  // The default branch is the signed-in one, and it must be placement.
+  assert.match(source, /window\.location\.assign\(SIGNUP_DESTINATION\)/);
 });

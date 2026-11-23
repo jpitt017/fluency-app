@@ -4,7 +4,16 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { buildRedirectTo, UPDATE_PASSWORD_PATH } from '@/lib/auth/email-links.mjs';
+import {
+  buildRedirectTo,
+  emailLinksEnabled,
+  EMAIL_LINKS_ENABLED_ENV,
+  RESET_LINK_REPLACEMENT,
+  SIGNUP_DESTINATION,
+  SIGNUP_OUTCOMES,
+  signUpOutcome,
+  UPDATE_PASSWORD_PATH,
+} from '@/lib/auth/email-links.mjs';
 
 type PendingAction = 'auth' | 'magic' | 'reset' | null;
 
@@ -17,7 +26,7 @@ function formatAuthError(err: unknown, fallback: string): string {
   return raw;
 }
 
-function LoginForm() {
+function LoginForm({ emailLinks }: { emailLinks: boolean }) {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
   const mode = searchParams.get('mode');
@@ -147,19 +156,23 @@ function LoginForm() {
 
         if (signUpError) throw signUpError;
 
-        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        const outcome = signUpOutcome(data);
+        if (outcome === SIGNUP_OUTCOMES.existing) {
           setIsSignUp(false);
           setError('An account with this email already exists. Sign in below or reset your password.');
           return;
         }
 
-        if (data.user && !data.session) {
+        if (outcome === SIGNUP_OUTCOMES.confirmEmail) {
           setMessage('Check your email for a confirmation link to activate your account.');
-        } else {
-          // Full document navigation ensures Server Components and AppHeader read fresh auth cookies immediately.
-          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-          window.location.assign('/onboarding/placement');
+          return;
         }
+
+        // "Confirm email" is off, so the account is usable now. Send the new
+        // learner to placement: they have no band yet, and the dashboard has
+        // nothing to show until the quiz has run.
+        // Full document navigation ensures Server Components and AppHeader read fresh auth cookies immediately.
+        window.location.assign(SIGNUP_DESTINATION);
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
@@ -279,7 +292,7 @@ function LoginForm() {
             <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wide text-stone-600">
               {isUpdatePassword ? 'New password' : 'Password'}
             </label>
-            {!isSignUp && !isUpdatePassword && (
+            {!isSignUp && !isUpdatePassword && emailLinks && (
               <button
                 type="button"
                 onClick={handlePasswordReset}
@@ -332,7 +345,7 @@ function LoginForm() {
                 : 'Sign in'}
         </button>
 
-        {!isSignUp && !isUpdatePassword && (
+        {!isSignUp && !isUpdatePassword && emailLinks && (
           <button
             type="button"
             onClick={handleMagicLink}
@@ -345,8 +358,15 @@ function LoginForm() {
         )}
       </form>
 
+      {/* Without SMTP a reset link can only fail, so point at a person instead. */}
+      {!emailLinks && !isSignUp && !isUpdatePassword && (
+        <p className="mt-4 text-center text-xs text-stone-600">
+          {RESET_LINK_REPLACEMENT}
+        </p>
+      )}
+
       {!isUpdatePassword && (
-        <p className="mt-6 border-t border-stone-100 pt-5 text-center text-xs text-stone-600">
+        <p className={`${emailLinks || isSignUp ? 'mt-6 border-t border-stone-100 pt-5' : 'mt-4'} text-center text-xs text-stone-600`}>
           {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
           <button
             type="button"
@@ -363,10 +383,13 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  // Read on the server and passed in, so the setting is evaluated when the page
+  // is requested rather than frozen into the client bundle at build time.
+  const emailLinks = emailLinksEnabled(process.env[EMAIL_LINKS_ENABLED_ENV]);
   return (
     <main className="flex min-h-[calc(100vh-140px)] items-start justify-center px-4 py-6 sm:items-center sm:py-10">
       <Suspense fallback={<div className="mx-auto h-80 w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8" />}>
-        <LoginForm />
+        <LoginForm emailLinks={emailLinks} />
       </Suspense>
     </main>
   );
