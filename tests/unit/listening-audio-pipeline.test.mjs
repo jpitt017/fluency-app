@@ -131,10 +131,9 @@ test('the request carries the voice id, the PCM format and the B1 speed, and no 
 
 test('the reviewed characters carry their own voice settings, and Week 1 keeps the defaults', () => {
   const expected = {
-    // Second listen: too slow and too flat at 0.75 / 0.3 / 0.4, so he now reads
-    // slightly quicker than the course pace with the lowest stability and the
-    // highest style on the course.
-    Tom: { stability: 0.25, style: 0.55, speed: 0.85 },
+    // Reviewed twice for pace and energy: quicker than the course pace, with the
+    // lowest stability and the highest style on the course.
+    Tom: { stability: 0.25, style: 0.7, speed: 0.95 },
     Aisha: { stability: 0.35, style: 0.3 },
     Dan: { stability: 0.38, style: 0.25 },
     Marta: { stability: 0.3, style: 0.4 },
@@ -166,15 +165,15 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
 
 test("only the voices with their own rate override the pace's speed", () => {
   // A character may carry their own rate: Joanne was measured too fast at 0.8 so
-  // she reads at 0.75, and Tom was reviewed as too slow so he reads at 0.85.
+  // she reads at 0.75, and Tom was reviewed as too slow so he reads at 0.95.
   // Marta's voice needs the warmth in the *delivery*, not a slower tempo, so she
   // keeps the course speed.
   assert.equal(voiceSettingsFor('Joanne', 0.8).speed, 0.75);
   assert.equal(voiceSettingsFor('Joanne', 0.9).speed, 0.75, 'her rate wins over any pace');
   assert.equal(rateForSpeaker('Joanne', 'b1'), 0.75);
-  assert.equal(voiceSettingsFor('Tom', 0.8).speed, 0.85);
-  assert.equal(voiceSettingsFor('Tom', 0.9).speed, 0.85, 'his rate wins over any pace');
-  assert.equal(rateForSpeaker('Tom', 'b1'), 0.85);
+  assert.equal(voiceSettingsFor('Tom', 0.8).speed, 0.95);
+  assert.equal(voiceSettingsFor('Tom', 0.9).speed, 0.95, 'his rate wins over any pace');
+  assert.equal(rateForSpeaker('Tom', 'b1'), 0.95);
   for (const speaker of ['Host', 'Ellie', 'Aisha', 'Dan', 'Marta']) {
     assert.equal(rateForSpeaker(speaker, 'b1'), 0.8, `${speaker} keeps the course speed`);
   }
@@ -184,7 +183,7 @@ test("only the voices with their own rate override the pace's speed", () => {
   assert.equal(joanne.style, 0.35);
   assert.equal(joanne.similarity_boost, 0.8);
   assert.equal(buildSpeechRequest('Joanne', 'Welcome to York!').body.voice_settings.speed, 0.75);
-  assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.85);
+  assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.95);
 });
 
 test('the replaced voices keep their accent labels, which are what a reviewer reads', () => {
@@ -747,12 +746,12 @@ test('the voice check reads the three requested clips, at the course pace and se
 
   // Tom's reviewed settings and his own faster rate; Marta's approved settings at
   // the course speed; Ellie unchanged except for the pace.
-  assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.25, style: 0.55, speed: 0.85 });
+  assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.25, style: 0.7, speed: 0.95 });
   assert.deepEqual(byKey['marta-three-turns.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.8 });
   assert.deepEqual(byKey['ellie-longest.mp3'].settings, { ...VOICE_SETTINGS, speed: 0.8 });
   for (const request of requests) {
     const tom = request.url.includes(SPEAKER_VOICES.Tom.voice);
-    assert.equal(request.body.voice_settings.speed, tom ? 0.85 : 0.8);
+    assert.equal(request.body.voice_settings.speed, tom ? 0.95 : 0.8);
     assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
   assert.deepEqual(
@@ -825,8 +824,8 @@ test('one named clip can be re-recorded on its own, and an unknown name is refus
   for (const request of requests) {
     assert.ok(request.url.includes(SPEAKER_VOICES.Tom.voice), 'every request is Tom');
     assert.equal(request.body.voice_settings.stability, 0.25);
-    assert.equal(request.body.voice_settings.style, 0.55);
-    assert.equal(request.body.voice_settings.speed, 0.85);
+    assert.equal(request.body.voice_settings.style, 0.7);
+    assert.equal(request.body.voice_settings.speed, 0.95);
   }
 
   // A typo must fail loudly instead of producing an empty, successful run.
