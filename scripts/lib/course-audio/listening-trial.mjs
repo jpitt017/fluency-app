@@ -187,10 +187,15 @@ export async function generateClip(options) {
   await mkdir(outputDir, { recursive: true });
 
   const turns = [];
-  for (const line of lines) {
+  for (const [linePosition, line] of lines.entries()) {
     if (!SPEAKER_VOICES[line.speaker]) throw new Error(`No voice configured for speaker "${line.speaker}"`);
     const planned = planUtterances({ ...line, text: stripSpeakerPrefix(line.text) }, line.speaker);
     for (const utterance of planned) {
+      // A sampled line is one authored turn, so the first sentence of every line
+      // after the first starts on a turn boundary: the same gap the track would
+      // put before it. Without this, sampled lines would be spliced together
+      // with no silence at all and the clip would report a pace it does not have.
+      if (linePosition > 0 && utterance.boundary === 'none') utterance.boundary = 'paragraph';
       log(`    ${utterance.speaker}: "${utterance.text.slice(0, 48)}${utterance.text.length > 48 ? '…' : ''}"`);
       const turn = await synthesiseTurn({
         speaker: utterance.speaker,
@@ -238,7 +243,8 @@ export async function generateClip(options) {
  * The utterances for one authored line, as if it were read on its own: the
  * first sentence has no gap before it, the rest use the sentence pause. A clip
  * made of several lines is built line by line so that a sentence gap and a
- * speaker gap are never confused.
+ * speaker gap are never confused; the caller re-tags each later line's first
+ * sentence as a paragraph start, so sampled turns keep a real gap between them.
  */
 function planUtterances(line, speaker) {
   const sentences = splitSentences(line.text);
