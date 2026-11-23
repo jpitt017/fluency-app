@@ -140,7 +140,28 @@ for production use. Accounts are therefore created and recovered by hand through
 the **admin API** (or the SQL editor, which reaches the same tables). Nothing
 below sends mail.
 
-### One switch for the email-based login options
+**Public sign-up is closed in Supabase** (Auth → Providers → Email → *Allow new
+users to sign up* is off, `disable_signup` in the API). GoTrue answers a public
+`signUp` with `422 signup_disabled`, and the admin API below still creates users:
+that split is the whole point, so only a teacher can create an account. The
+`/login?mode=sign-up` tab says so in one sentence and points at you, rather than
+showing GoTrue's "Signups not allowed for this instance".
+
+Two settings control what the login page offers. Both are **off unless set to
+exactly `true`**, both are read on the server per request, and both default to
+the closed state so a deployment can never offer something that cannot work.
+
+| Setting | Off (default) | On |
+|---|---|---|
+| `NEXT_PUBLIC_SIGNUPS_ENABLED` | Sign-up tab explains accounts come from the teacher | Sign-up form returns (Supabase must also allow signups) |
+| `NEXT_PUBLIC_EMAIL_LINKS_ENABLED` | No magic link, no "Forgot password?"; "Message your teacher" instead | Both email controls return (needs custom SMTP) |
+
+The login page also translates a refused sign-up even if the setting is stale:
+if Supabase answers `signup_disabled`, the learner sees the same friendly
+sentence, never the raw error. Weak-password and other validation errors are
+left alone, since those are the learner's to fix.
+
+### The email-based login options
 
 The login page reflects this: the magic-link button and the "Forgot password?"
 link are hidden behind one setting, `NEXT_PUBLIC_EMAIL_LINKS_ENABLED`. It is **off unless set to exactly `true`**, so
@@ -240,7 +261,11 @@ set their own password at **/login?mode=update-password** — that form uses
    [`docs/AUTH_EMAIL_TEMPLATES.md`](docs/AUTH_EMAIL_TEMPLATES.md).
 3. Set `NEXT_PUBLIC_EMAIL_LINKS_ENABLED=true` and redeploy: the magic link and
    "Forgot password?" come back, and "Message your teacher" disappears.
-4. Run the three-flow check in that doc (admin `generate_link`, no email sent).
+4. To let learners create their own accounts again, turn *Allow new users to
+   sign up* back on **and** set `NEXT_PUBLIC_SIGNUPS_ENABLED=true`. Doing only
+   one of the two is safe — the page and Supabase both refuse, and the learner
+   sees "Sign-up is closed".
+5. Run the three-flow check in that doc (admin `generate_link`, no email sent).
 
 ### Pilot navigation
 

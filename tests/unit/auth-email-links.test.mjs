@@ -16,8 +16,12 @@ import {
   EMAIL_LINKS_ENABLED_ENV,
   RESET_LINK_REPLACEMENT,
   SIGNUP_DESTINATION,
+  SIGNUPS_CLOSED_MESSAGE,
+  SIGNUPS_ENABLED_ENV,
   emailLinksEnabled,
+  isSignupsClosedError,
   signUpOutcome,
+  signupsEnabled,
   TEMPLATE_NEXT,
   UPDATE_PASSWORD_PATH,
   buildRedirectTo,
@@ -161,7 +165,7 @@ test('the login page hides both email options behind the one setting', () => {
   assert.match(source, /\{!emailLinks && !isSignUp && !isUpdatePassword && \(/);
   // ...and the setting is resolved on the server, not frozen into the bundle.
   assert.match(source, /emailLinksEnabled\(process\.env\[EMAIL_LINKS_ENABLED_ENV\]\)/);
-  assert.match(source, /<LoginForm emailLinks=\{emailLinks\} \/>/);
+  assert.match(source, /<LoginForm emailLinks=\{emailLinks\} signupsOpen=\{signupsOpen\} \/>/);
 });
 
 test('sign-up with Confirm email off goes straight to placement', () => {
@@ -187,4 +191,64 @@ test('the login page routes each sign-up outcome differently', () => {
   assert.match(source, /outcome === SIGNUP_OUTCOMES\.confirmEmail/);
   // The default branch is the signed-in one, and it must be placement.
   assert.match(source, /window\.location\.assign\(SIGNUP_DESTINATION\)/);
+});
+
+test('public sign-up is closed unless a deployment explicitly opens it', () => {
+  // The pilot creates accounts through the admin API; signup stays shut.
+  for (const raw of [undefined, null, '', 'false', '0', 'no', 'TRUE', 'yes', ' true']) {
+    assert.equal(signupsEnabled(raw), false, `signupsEnabled(${JSON.stringify(raw)})`);
+  }
+  for (const raw of ['true', '1']) {
+    assert.equal(signupsEnabled(raw), true, `signupsEnabled(${JSON.stringify(raw)})`);
+  }
+  assert.equal(SIGNUPS_ENABLED_ENV, 'NEXT_PUBLIC_SIGNUPS_ENABLED');
+});
+
+test('a closed signup is recognised from the shape GoTrue returns', () => {
+  // What @supabase/auth-js throws: the response's error_code is copied to code.
+  assert.equal(isSignupsClosedError(Object.assign(new Error('Signups not allowed'), { code: 'signup_disabled', status: 422 })), true);
+  // The code may arrive under either name.
+  assert.equal(isSignupsClosedError({ error_code: 'signup_disabled' }), true);
+  // GoTrue's own wording, when no code is present.
+  assert.equal(isSignupsClosedError(new Error('Signups not allowed for this instance')), true);
+
+  // A real fault must not be disguised as "sign-up is closed". Weak-password is
+  // also a 422: the learner needs to fix their password, not be told to ask a teacher.
+  assert.equal(isSignupsClosedError(Object.assign(new Error('boom'), { status: 500 })), false);
+  assert.equal(isSignupsClosedError(Object.assign(new Error('Password should be at least 6 characters'), { code: 'weak_password', status: 422 })), false);
+  assert.equal(isSignupsClosedError(new Error('network down')), false);
+  assert.equal(isSignupsClosedError(null), false);
+  assert.equal(isSignupsClosedError(undefined), false);
+});
+
+test('the closed message says what to do, in words a B1 learner knows', () => {
+  assert.equal(SIGNUPS_CLOSED_MESSAGE, 'Sign-up is closed during the pilot. Ask your teacher for an account.');
+  // Two short sentences: no jargon, no error code, no "instance".
+  assert.ok(SIGNUPS_CLOSED_MESSAGE.split('.').filter(Boolean).length <= 2);
+  assert.doesNotMatch(SIGNUPS_CLOSED_MESSAGE, /signup_disabled|instance|422|supabase/i);
+  assert.match(SIGNUPS_CLOSED_MESSAGE, /Ask your teacher/);
+});
+
+test('the login page refuses a closed signup and shows the message instead of GoTrue text', () => {
+  const source = readFileSync(new URL('../../src/app/login/page.tsx', import.meta.url), 'utf8');
+
+  // The setting is read on the server like the email-links one, not inlined.
+  assert.match(source, /signupsEnabled\(process\.env\[SIGNUPS_ENABLED_ENV\]\)/);
+  assert.match(source, /<LoginForm emailLinks=\{emailLinks\} signupsOpen=\{signupsOpen\} \/>/);
+  assert.match(source, /function LoginForm\(\{ emailLinks, signupsOpen \}/);
+
+  // No request is sent when the deployment knows signup is closed.
+  assert.match(source, /if \(!signupsOpen\) \{\s*setError\(SIGNUPS_CLOSED_MESSAGE\);\s*return;/);
+
+  // A stale tab or an unknown setting still lands on the friendly sentence.
+  assert.match(source, /isSignupsClosedError\(err\)\s*\? SIGNUPS_CLOSED_MESSAGE/);
+
+  // And the panel replaces the form rather than inviting input that cannot work.
+  assert.match(source, /isSignUp && !signupsOpen \? \(/);
+  assert.match(source, /Go to sign in/);
+
+  // The sign-in page keeps its "Sign up" toggle: that link is how a visitor
+  // finds out sign-up exists and is closed. Only the sign-up tab changes.
+  assert.match(source, /\{isSignUp \? 'Already have an account\? ' : "Don't have an account\? "\}/);
+  assert.match(source, /\{isSignUp \? 'Switch to login' : 'Sign up'\}/);
 });
