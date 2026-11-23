@@ -258,12 +258,16 @@ jobs:
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
-          # Order independence, without a second replay: 0041 and 0043 are
-          # additive, so applying them again on a database that already has them
-          # must change nothing, and the deletion test must still pass. That is
-          # the property the two-order version was really checking.
+          # Idempotency, without a second replay: applying the later additive
+          # migrations again on a database that already has them must change
+          # nothing, and the deletion test must still pass. That is the property
+          # the two-order version was really checking.
+          #
+          # 0041 is deliberately not in this list. It anchors on the *unguarded*
+          # spelling of the week_output_submissions delete, which 0044 rewrites
+          # by design, so 0041-after-0044 is not a state that can occur: the real
+          # order is 0041 then 0044, which the replay above already exercises.
           echo "re-applying the additive migrations (must be no-ops)"
-          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0044_repair_deletion_function.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
