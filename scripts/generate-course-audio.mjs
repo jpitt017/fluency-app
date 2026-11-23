@@ -678,7 +678,7 @@ function runUrl() {
  * Same week, same script lines, but the pace and the per-speaker voice settings
  * can be changed and heard before a full track is re-recorded. One clip per
  * speaker; the three lines are that speaker's three longest turns, so a voice is
- * judged on a real answer rather than on "Ha! OK.". Nothing is released and no
+ * judged on a real answer rather than on "Oh no! OK.". Nothing is released and no
  * approval row is touched.
  */
 async function voiceSample(week, mode = 'b1') {

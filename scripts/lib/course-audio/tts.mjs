@@ -21,7 +21,7 @@
  * a slightly slower pace.
  *
  * Speech is synthesised one *sentence* at a time, not one script line at a time.
- * A line like "Ha! OK. Is there a cleaning rota?" is three sentences, and the
+ * A line like "Oh no! OK. Is there a cleaning rota?" is three sentences, and the
  * pause between them (0.5 s) is different from the pause between two speakers
  * (0.7 s) or between two paragraphs (1.0 s). Only per-sentence requests can put
  * those pauses exactly where they belong, so the timeline, the audio and the
@@ -120,12 +120,21 @@ export const SPEAKER_VOICES = {
     accent: 'Yorkshire',
     // A tour guide who loves the city she is showing off.
     //
-    // `speed` is the one setting a character may override on the *pace*: her
-    // measured speech was the fastest of the four weeks (Week 4 projected
-    // 153 wpm at 0.8, against a 140-150 target), and a monologue has fewer turn
-    // changes to slow it down than a dialogue. 0.75 brings the track to ~145
-    // wpm; every other speaker keeps the course pace.
-    settings: { stability: 0.35, style: 0.35, speed: 0.75 },
+    // `speed` is the one delivery setting a character may override on the
+    // *pace*: her measured speech was the fastest of the four weeks (Week 4
+    // projected 153 wpm at 0.8, against a 140-150 target), and a monologue has
+    // fewer turn changes to slow it down than a dialogue. 0.75 brings the track
+    // to the middle of the band; every other speaker keeps the course pace.
+    //
+    // Reviewed for energy: the flatness was her stability, not her tempo, so
+    // stability drops to 0.25 and style rises to 0.6 while the speed stays put.
+    // She also asked for less air between her sentences, which is a *pause*
+    // override rather than a delivery one — see `sentencePauseSeconds` below.
+    settings: { stability: 0.25, style: 0.6, speed: 0.75 },
+    // 0.15 s between her sentences instead of the course 0.3 s. Scoped to the
+    // speaker on purpose: a tour guide talking in one flowing block is the
+    // character, and it must not shorten anyone else's sentence gaps.
+    sentencePauseSeconds: 0.15,
   },
 };
 
@@ -149,6 +158,10 @@ export const VOICE_SETTINGS = {
  *   sentencePauseSeconds  0.3 s between sentences inside one line
  *   speakerPauseSeconds   0.7 s between two speakers
  *   paragraphPauseSeconds 0.8 s between two paragraphs
+ *
+ * A character may override the *sentence* gap only (Joanne reads her
+ * monologue in one flowing block). The speaker and paragraph pauses stay the
+ * course's, so a dialogue never loses its beat.
  *
  * A pause is picked by the *kind of boundary* the line starts on, not by a
  * single line gap: a line that changes speaker gets the speaker pause, a line
@@ -185,12 +198,22 @@ export function resolvePace(pace = DEFAULT_PACE) {
 /** The four kinds of boundary a spoken sentence can start on. */
 export const BREAKS = ['none', 'sentence', 'speaker', 'paragraph'];
 
-/** How long the silence before a sentence of the given boundary kind is. */
-export function pauseSecondsFor(kind, pace = PACE_PROFILES[DEFAULT_PACE]) {
+/**
+ * How long the silence before a sentence of the given boundary kind is.
+ *
+ * Only the `sentence` gap can be overridden per speaker (see
+ * `sentencePauseSeconds` in SPEAKER_VOICES): it is the gap inside one
+ * character's own turn, so shortening it changes that character's flow and
+ * nobody else's. Speaker and paragraph gaps stay the course's, because they are
+ * what separates two people or two blocks.
+ */
+export function pauseSecondsFor(kind, pace = PACE_PROFILES[DEFAULT_PACE], speaker = null) {
   const resolved = resolvePace(pace);
   switch (kind) {
-    case 'sentence':
-      return resolved.sentencePauseSeconds;
+    case 'sentence': {
+      const own = speaker ? SPEAKER_VOICES[speaker]?.sentencePauseSeconds : undefined;
+      return own ?? resolved.sentencePauseSeconds;
+    }
     case 'speaker':
       return resolved.speakerPauseSeconds;
     case 'paragraph':
@@ -559,7 +582,11 @@ export function scheduleTrack(utterances, options = {}) {
   let cursor = 0;
   let speechSeconds = 0;
   utterances.forEach((utterance, position) => {
-    cursor += pauseSecondsFor(utterance.boundary ?? (position === 0 ? 'none' : 'sentence'), pace);
+    cursor += pauseSecondsFor(
+      utterance.boundary ?? (position === 0 ? 'none' : 'sentence'),
+      pace,
+      utterance.speaker,
+    );
     const duration = pcmDurationSeconds(utterance.pcm, sampleRate);
     cues.push({
       index: options.lineIndexes?.[position] ?? position + 1,
@@ -578,7 +605,11 @@ export function scheduleTrack(utterances, options = {}) {
 export function assembleTrack(utterances, pace = PACE_PROFILES[DEFAULT_PACE]) {
   const parts = [];
   utterances.forEach((utterance, position) => {
-    const pause = pauseSecondsFor(utterance.boundary ?? (position === 0 ? 'none' : 'sentence'), pace);
+    const pause = pauseSecondsFor(
+      utterance.boundary ?? (position === 0 ? 'none' : 'sentence'),
+      pace,
+      utterance.speaker,
+    );
     if (pause > 0) parts.push(silence(pause));
     parts.push(utterance.pcm);
   });

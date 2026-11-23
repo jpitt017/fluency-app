@@ -35,6 +35,7 @@ export const AUDITION_CLIP_NAMES = [
   'tom-two-lines.mp3',
   'marta-three-turns.mp3',
   'ellie-longest.mp3',
+  'joanne-opening.mp3',
   'week-3-sample-Dan.mp3',
   'week-3-sample-Marta.mp3',
 ];

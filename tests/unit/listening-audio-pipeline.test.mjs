@@ -137,7 +137,8 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
     Aisha: { stability: 0.35, style: 0.3 },
     Dan: { stability: 0.38, style: 0.25 },
     Marta: { stability: 0.3, style: 0.4 },
-    Joanne: { stability: 0.35, style: 0.35, speed: 0.75 },
+    // Reviewed for energy: stability down, style up, speed unchanged.
+    Joanne: { stability: 0.25, style: 0.6, speed: 0.75 },
   };
   for (const [speaker, override] of Object.entries(expected)) {
     const request = buildSpeechRequest(speaker, 'Hello there.');
@@ -177,10 +178,10 @@ test("only the voices with their own rate override the pace's speed", () => {
   for (const speaker of ['Host', 'Ellie', 'Aisha', 'Dan', 'Marta']) {
     assert.equal(rateForSpeaker(speaker, 'b1'), 0.8, `${speaker} keeps the course speed`);
   }
-  // The rest of the settings are untouched by the speed override.
+  // Her energy settings are her own and unrelated to the rate override.
   const joanne = voiceSettingsFor('Joanne', 0.8);
-  assert.equal(joanne.stability, 0.35);
-  assert.equal(joanne.style, 0.35);
+  assert.equal(joanne.stability, 0.25);
+  assert.equal(joanne.style, 0.6);
   assert.equal(joanne.similarity_boost, 0.8);
   assert.equal(buildSpeechRequest('Joanne', 'Welcome to York!').body.voice_settings.speed, 0.75);
   assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.95);
@@ -342,6 +343,14 @@ test('the course pace is 0.8 with 0.3 s / 0.7 s / 0.8 s pauses, and it is the de
   assert.equal(pauseSecondsFor('sentence'), 0.3);
   assert.equal(pauseSecondsFor('speaker'), 0.7);
   assert.equal(pauseSecondsFor('paragraph'), 0.8);
+  // Joanne reads her monologue with less air between sentences, and only she
+  // does: the speaker and paragraph gaps stay the course's.
+  assert.equal(pauseSecondsFor('sentence', 'b1', 'Joanne'), 0.15);
+  assert.equal(pauseSecondsFor('speaker', 'b1', 'Joanne'), 0.7);
+  assert.equal(pauseSecondsFor('paragraph', 'b1', 'Joanne'), 0.8);
+  for (const speaker of ['Host', 'Ellie', 'Aisha', 'Tom', 'Dan', 'Marta']) {
+    assert.equal(pauseSecondsFor('sentence', 'b1', speaker), 0.3, `${speaker} keeps 0.3 s`);
+  }
 
   const turns = [
     { speaker: 'Dan', text: 'One.', pcm: fakePcm(2), boundary: 'none' },
@@ -366,8 +375,8 @@ test('the course pace is 0.8 with 0.3 s / 0.7 s / 0.8 s pauses, and it is the de
 });
 
 test('lines are split into sentences, but not on titles, initials or numbers', () => {
-  assert.deepEqual(splitSentences('Ha! OK. Is there a cleaning rota?'), [
-    'Ha!',
+  assert.deepEqual(splitSentences('Oh no! OK. Is there a cleaning rota?'), [
+    'Oh no!',
     'OK.',
     'Is there a cleaning rota?',
   ]);
@@ -710,13 +719,13 @@ test('the voice check reads the three requested clips, at the course pace and se
     encoder: async (wav, outFile) => writeFile(outFile, wav.subarray(0, 32)),
   });
 
-  // Exactly the three clips a review asked for: two replaced voices and one
-  // unchanged one to hear the shorter sentence gaps on.
+  // Exactly the clips a review asked for, plus Joanne's opening paragraph, which
+  // is the read her new settings and her shorter sentence gaps are judged on.
   assert.deepEqual(
     clips.map((clip) => clip.key.split('/').pop()),
-    ['tom-two-lines.mp3', 'marta-three-turns.mp3', 'ellie-longest.mp3'],
+    ['tom-two-lines.mp3', 'marta-three-turns.mp3', 'ellie-longest.mp3', 'joanne-opening.mp3'],
   );
-  assert.equal(uploaded.length, 3);
+  assert.equal(uploaded.length, 4);
 
   const byKey = Object.fromEntries(clips.map((clip) => [clip.key.split('/').pop(), clip]));
   const week1 = weeks.find((item) => item.week === 1);
@@ -742,24 +751,29 @@ test('the voice check reads the three requested clips, at the course pace and se
     "Marta's three longest turns, in script order",
   );
   assert.deepEqual(byKey['marta-three-turns.mp3'].speakers, ['Marta']);
-  assert.equal(byKey['marta-three-turns.mp3'].lines.some((line) => line.text.startsWith('Ha! OK.')), false);
+  // Her three longest turns, and no shorter interjection ("Perfect. Thanks, Dan."
+  // is 3 words), which is what makes a fair clip to judge a voice on.
+  assert.equal(byKey['marta-three-turns.mp3'].lines.some((line) => line.text.startsWith('Perfect. Thanks')), false);
 
   // Tom's reviewed settings and his own faster rate; Marta's approved settings at
-  // the course speed; Ellie unchanged except for the pace.
+  // the course speed; Ellie unchanged except for the pace; Joanne's new energy
+  // settings with her unchanged rate.
   assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.25, style: 0.7, speed: 0.95 });
   assert.deepEqual(byKey['marta-three-turns.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.8 });
   assert.deepEqual(byKey['ellie-longest.mp3'].settings, { ...VOICE_SETTINGS, speed: 0.8 });
+  assert.deepEqual(byKey['joanne-opening.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.25, style: 0.6, speed: 0.75 });
   for (const request of requests) {
     const tom = request.url.includes(SPEAKER_VOICES.Tom.voice);
-    assert.equal(request.body.voice_settings.speed, tom ? 0.95 : 0.8);
+    const joanneRequest = request.url.includes(SPEAKER_VOICES.Joanne.voice);
+    assert.equal(request.body.voice_settings.speed, tom ? 0.95 : joanneRequest ? 0.75 : 0.8);
     assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
   assert.deepEqual(
     [...new Set(requests.map((request) => request.url))].sort(),
-    [SPEAKER_VOICES.Ellie.voice, SPEAKER_VOICES.Marta.voice, SPEAKER_VOICES.Tom.voice]
+    [SPEAKER_VOICES.Ellie.voice, SPEAKER_VOICES.Marta.voice, SPEAKER_VOICES.Tom.voice, SPEAKER_VOICES.Joanne.voice]
       .map((voice) => `https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=pcm_24000`)
       .sort(),
-    'only the three auditioned voices are called',
+    'only the four auditioned voices are called',
   );
 
   // Words per minute is reported per clip, from the timeline.
@@ -768,7 +782,7 @@ test('the voice check reads the three requested clips, at the course pace and se
     assert.ok(clip.durationSeconds > 0);
     assert.equal(clip.wordsPerMinute, Math.round((clip.words / clip.durationSeconds) * 60 * 10) / 10);
   }
-  assert.deepEqual(uploaded.map((item) => item.contentType), ['audio/mpeg', 'audio/mpeg', 'audio/mpeg']);
+  assert.deepEqual(uploaded.map((item) => item.contentType), Array(clips.length).fill('audio/mpeg'));
 });
 
 test('one named clip can be re-recorded on its own, and an unknown name is refused', async (t) => {
@@ -892,7 +906,8 @@ test('the Week 3 sample reads three of each speaker\'s longest lines, at the cou
     assert.deepEqual(chosen[speaker].map((line) => line.text), longest.map((line) => line.text));
     assert.equal(chosen[speaker].length, 3);
   }
-  assert.equal(chosen.Marta.some((line) => line.text === 'Ha! OK. Is there a cleaning rota?'), false);
+  // The short closes are what a reviewer must not have to judge her on.
+  assert.equal(chosen.Marta.some((line) => line.text.startsWith('Perfect. Thanks')), false);
 
   const requests = [];
   const uploaded = [];
