@@ -121,6 +121,13 @@ jobs:
       - run: node --test tests/unit/listening-audio-delete.test.mjs
       - run: node --test tests/unit/listening-audio-approval.test.mjs
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/issue-email.test.mjs
+      # A provider failure must never reach a learner in the provider's words.
+      # classifier: fake 401, fake 429, daily-quota 429, timeout, raw-text leaks.
+      - run: node --test tests/unit/provider-errors.test.mjs
+      # The handler's status/body, and that only the four approved sentences ship.
+      - run: node --conditions=react-server --experimental-strip-types --test tests/unit/provider-failure-response.test.mjs
+      # Alerting: groups per endpoint and kind, never throws, sends no learner data.
+      - run: node --conditions=react-server --experimental-strip-types --test tests/unit/provider-alert.test.mjs
       - run: npm run check:live-schema
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}

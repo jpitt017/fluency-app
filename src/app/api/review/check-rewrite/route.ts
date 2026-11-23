@@ -6,6 +6,7 @@ import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { computeWordDiff, normalizeSentenceForCompare } from '@/lib/b1b2/diff';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import {
   sanitizeLearnerText,
   UNTRUSTED_DATA_SYSTEM_RULE,
@@ -234,9 +235,18 @@ export async function POST(request: NextRequest) {
       { headers: responseHeaders },
     );
   } catch (err: unknown) {
-    statusCode = 500;
-    errorMessage = err instanceof Error ? err.message : 'Failed to check rewrite';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // The learner's rewrite is posted to this route and nowhere else until the
+    // card is updated, so nothing of theirs is stored if the check fails.
+    const failure = await providerFailureResponse({
+      admin: supabase,
+      endpoint: '/api/review/check-rewrite',
+      model: MODEL_ID,
+      error: err,
+      workSaved: false,
+    });
+    statusCode = failure.status;
+    errorMessage = failure.errorMessage;
+    return failure.response;
   } finally {
     if (usedLlm) {
       await logAiRequest(supabase, {

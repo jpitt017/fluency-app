@@ -3,6 +3,7 @@ import { transcribeAudio } from '@/lib/b1b2/transcription';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 
 // Transcription only: no speaking rubric, no corrections. Costs 2 units vs 6 for /api/speaking/evaluate.
 const QUOTA_ENDPOINT = '/api/speaking/evaluate';
@@ -48,9 +49,19 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ transcript, transcribeOnly: true, units: 2 }, { headers: guard.headers });
   } catch (error) {
-    statusCode = 500;
-    errorMessage = error instanceof Error ? error.message : 'Transcription failed';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // The audio arrived with this request and is not stored, so there is nothing
+    // to retry from: the learner has to keep their recording.
+    const failure = await providerFailureResponse({
+      admin: supabase,
+      endpoint: LOG_ENDPOINT,
+      model: MODEL_ID,
+      error,
+      workSaved: false,
+      workKind: 'recording',
+    });
+    statusCode = failure.status;
+    errorMessage = failure.errorMessage;
+    return failure.response;
   } finally {
     await logAiRequest(supabase, {
       endpoint: LOG_ENDPOINT,
