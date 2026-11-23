@@ -1,0 +1,482 @@
+{
+  "version": "v1",
+  "date": "2026-11-22",
+  "status": "draft, pending teacher review",
+  "style": "B1 English, 12 words or fewer, no word harder than the word defined",
+  "weeks": [
+    {
+      "week": 1,
+      "definitions": [
+        {
+          "target": "adapt",
+          "kind": "core",
+          "use": "B",
+          "definition": "change the way you do things to fit a new situation"
+        },
+        {
+          "target": "turning point",
+          "kind": "core",
+          "use": "B",
+          "definition": "a time when something important changes"
+        },
+        {
+          "target": "challenge",
+          "kind": "core",
+          "use": "P",
+          "definition": "something new and difficult that needs effort"
+        },
+        {
+          "target": "get used to",
+          "kind": "core",
+          "use": "P",
+          "definition": "start to feel that something new is normal"
+        },
+        {
+          "target": "look back on",
+          "kind": "core",
+          "use": "B",
+          "definition": "think about something in the past"
+        },
+        {
+          "target": "regret",
+          "kind": "core",
+          "use": "P",
+          "definition": "feel sorry about something you did or didn't do"
+        },
+        {
+          "target": "gradually",
+          "kind": "core",
+          "use": "B",
+          "definition": "slowly, a little at a time"
+        },
+        {
+          "target": "memorable",
+          "kind": "core",
+          "use": "B",
+          "definition": "easy to remember because it was special"
+        },
+        {
+          "target": "make a big decision",
+          "kind": "collocation",
+          "definition": "decide something important"
+        },
+        {
+          "target": "take a risk",
+          "kind": "collocation",
+          "definition": "do something even though it might go wrong"
+        },
+        {
+          "target": "make a change",
+          "kind": "collocation",
+          "definition": "start doing something in a new or different way"
+        },
+        {
+          "target": "keep in touch",
+          "kind": "collocation",
+          "definition": "continue to talk or write to someone"
+        },
+        {
+          "target": "make progress",
+          "kind": "collocation",
+          "definition": "get better at something, step by step"
+        },
+        {
+          "target": "take up",
+          "kind": "collocation",
+          "definition": "start a new hobby or activity"
+        },
+        {
+          "target": "decision",
+          "kind": "family",
+          "definition": "a choice you make"
+        },
+        {
+          "target": "decisive",
+          "kind": "family",
+          "definition": "able to decide quickly and clearly"
+        },
+        {
+          "target": "indecisive",
+          "kind": "family",
+          "definition": "finding it hard to decide"
+        },
+        {
+          "target": "adaptable",
+          "kind": "family",
+          "definition": "able to change easily in new situations"
+        },
+        {
+          "target": "unchanged",
+          "kind": "family",
+          "definition": "the same as before"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "definitions": [
+        {
+          "target": "ambition",
+          "kind": "core",
+          "use": "P",
+          "definition": "something you really want to do in your life"
+        },
+        {
+          "target": "goal",
+          "kind": "core",
+          "use": "P",
+          "definition": "something you want to do and plan for"
+        },
+        {
+          "target": "achieve",
+          "kind": "core",
+          "use": "P",
+          "definition": "succeed in doing something after trying hard"
+        },
+        {
+          "target": "intend",
+          "kind": "core",
+          "use": "P",
+          "definition": "plan to do something"
+        },
+        {
+          "target": "career",
+          "kind": "core",
+          "use": "P",
+          "definition": "the jobs you do during your working life"
+        },
+        {
+          "target": "deadline",
+          "kind": "core",
+          "use": "B",
+          "definition": "the last day or time when you can do something"
+        },
+        {
+          "target": "apply",
+          "kind": "core",
+          "use": "P",
+          "definition": "ask formally for a job, a course or a place"
+        },
+        {
+          "target": "look forward to",
+          "kind": "core",
+          "use": "P",
+          "definition": "feel happy about something that is going to happen"
+        },
+        {
+          "target": "determined",
+          "kind": "core",
+          "use": "B",
+          "definition": "very sure you will do something, even if it's difficult"
+        },
+        {
+          "target": "work towards",
+          "kind": "collocation",
+          "definition": "try to reach a goal, step by step"
+        },
+        {
+          "target": "take the first step",
+          "kind": "collocation",
+          "definition": "do the first thing to start something"
+        },
+        {
+          "target": "improve your skills",
+          "kind": "collocation",
+          "definition": "get better at the things you can do"
+        },
+        {
+          "target": "put (something) off",
+          "kind": "collocation",
+          "definition": "decide to do something later"
+        },
+        {
+          "target": "set a goal",
+          "kind": "collocation",
+          "definition": "decide what you want to do and when"
+        },
+        {
+          "target": "meet a deadline",
+          "kind": "collocation",
+          "definition": "finish something on time"
+        },
+        {
+          "target": "ambitious",
+          "kind": "family",
+          "definition": "wanting very much to be successful"
+        },
+        {
+          "target": "achievement",
+          "kind": "family",
+          "definition": "something good you did after working hard"
+        },
+        {
+          "target": "achievable",
+          "kind": "family",
+          "definition": "possible to do"
+        },
+        {
+          "target": "succeed",
+          "kind": "family",
+          "definition": "do what you tried to do"
+        },
+        {
+          "target": "success",
+          "kind": "family",
+          "definition": "a good result that you wanted"
+        },
+        {
+          "target": "successful",
+          "kind": "family",
+          "definition": "getting the result you wanted"
+        },
+        {
+          "target": "successfully",
+          "kind": "family",
+          "definition": "in a way that works well"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "definitions": [
+        {
+          "target": "get on with",
+          "kind": "core",
+          "use": "P",
+          "definition": "have a friendly relationship with someone"
+        },
+        {
+          "target": "catch up (with)",
+          "kind": "core",
+          "use": "B",
+          "definition": "meet someone and tell each other your news"
+        },
+        {
+          "target": "arrange",
+          "kind": "core",
+          "use": "P",
+          "definition": "plan the time and details of something"
+        },
+        {
+          "target": "routine",
+          "kind": "core",
+          "use": "P",
+          "definition": "the usual things you do every day"
+        },
+        {
+          "target": "rely on",
+          "kind": "core",
+          "use": "B",
+          "definition": "trust someone to help you"
+        },
+        {
+          "target": "misunderstanding",
+          "kind": "core",
+          "use": "B",
+          "definition": "a problem because people understand something in different ways"
+        },
+        {
+          "target": "invite (someone) round",
+          "kind": "core",
+          "use": "P",
+          "definition": "ask someone to visit your home"
+        },
+        {
+          "target": "awkward (situation)",
+          "kind": "core",
+          "use": "B",
+          "definition": "uncomfortable or a little embarrassing"
+        },
+        {
+          "target": "politely",
+          "kind": "core",
+          "use": "P",
+          "definition": "in a kind way that shows respect"
+        },
+        {
+          "target": "make an effort",
+          "kind": "collocation",
+          "definition": "try hard to do something"
+        },
+        {
+          "target": "have a lot in common",
+          "kind": "collocation",
+          "definition": "share many interests or opinions"
+        },
+        {
+          "target": "get in touch",
+          "kind": "collocation",
+          "definition": "contact someone by phone, message or email"
+        },
+        {
+          "target": "come over",
+          "kind": "collocation",
+          "definition": "visit someone at their home"
+        },
+        {
+          "target": "keep a promise",
+          "kind": "collocation",
+          "definition": "do what you said you would do"
+        },
+        {
+          "target": "unfriendly",
+          "kind": "family",
+          "definition": "not kind or friendly to people"
+        },
+        {
+          "target": "friendship",
+          "kind": "family",
+          "definition": "a relationship between friends"
+        },
+        {
+          "target": "politeness",
+          "kind": "family",
+          "definition": "polite behaviour"
+        },
+        {
+          "target": "impolite",
+          "kind": "family",
+          "definition": "not polite; a little rude"
+        },
+        {
+          "target": "reliable",
+          "kind": "family",
+          "definition": "you can trust them to do things"
+        },
+        {
+          "target": "unreliable",
+          "kind": "family",
+          "definition": "you can't trust them to do things"
+        },
+        {
+          "target": "reliably",
+          "kind": "family",
+          "definition": "in a way that you can trust"
+        },
+        {
+          "target": "pop round",
+          "kind": "optional",
+          "definition": "visit someone's home for a short time (informal)"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "definitions": [
+        {
+          "target": "tradition",
+          "kind": "core",
+          "use": "B",
+          "definition": "something people in a place have done for a long time"
+        },
+        {
+          "target": "custom",
+          "kind": "core",
+          "use": "P",
+          "definition": "something people in a place usually do"
+        },
+        {
+          "target": "destination",
+          "kind": "core",
+          "use": "P",
+          "definition": "the place where you are going"
+        },
+        {
+          "target": "set off",
+          "kind": "core",
+          "use": "B",
+          "definition": "start a journey"
+        },
+        {
+          "target": "get around",
+          "kind": "core",
+          "use": "P",
+          "definition": "travel from place to place"
+        },
+        {
+          "target": "unfamiliar",
+          "kind": "core",
+          "use": "B",
+          "definition": "new to you; you don't know it well"
+        },
+        {
+          "target": "welcoming",
+          "kind": "core",
+          "use": "B",
+          "definition": "friendly to visitors"
+        },
+        {
+          "target": "local",
+          "kind": "core",
+          "use": "P",
+          "definition": "from or in the area where you are"
+        },
+        {
+          "target": "take a guided tour",
+          "kind": "collocation",
+          "definition": "visit a place with a guide who explains things"
+        },
+        {
+          "target": "try the local food",
+          "kind": "collocation",
+          "definition": "eat dishes that people from the area make"
+        },
+        {
+          "target": "travel light",
+          "kind": "collocation",
+          "definition": "take very little luggage"
+        },
+        {
+          "target": "stop overnight",
+          "kind": "collocation",
+          "definition": "stay one night somewhere during a journey"
+        },
+        {
+          "target": "miss a connection",
+          "kind": "collocation",
+          "definition": "arrive too late for your next train, bus or plane"
+        },
+        {
+          "target": "culture",
+          "kind": "family",
+          "definition": "the art, music and way of life of a group"
+        },
+        {
+          "target": "cultural",
+          "kind": "family",
+          "definition": "connected with art, music and a way of life"
+        },
+        {
+          "target": "culturally",
+          "kind": "family",
+          "definition": "in a way that is connected with culture"
+        },
+        {
+          "target": "traditional",
+          "kind": "family",
+          "definition": "following customs from the past"
+        },
+        {
+          "target": "traditionally",
+          "kind": "family",
+          "definition": "in the way people have done for a long time"
+        },
+        {
+          "target": "tourism",
+          "kind": "family",
+          "definition": "the business of people visiting places on holiday"
+        },
+        {
+          "target": "touristy",
+          "kind": "family",
+          "definition": "full of tourists (often said in a negative way)"
+        },
+        {
+          "target": "break your journey",
+          "kind": "optional",
+          "definition": "stop somewhere for a while on a long trip"
+        }
+      ]
+    }
+  ]
+}

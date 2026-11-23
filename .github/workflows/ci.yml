@@ -213,6 +213,67 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
+  isolated-deletion:
+    name: Isolated migration and learner-data deletion
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+      - name: Start local Supabase without project migrations
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/supabase-start.log) 2>&1
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 12 /tmp/supabase-start.log); }
+          trap report_failure ERR
+          supabase init
+          supabase start
+      - name: Replay every migration, then test both application orders
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/deletion-ci.log) 2>&1
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 8 /tmp/deletion-ci.log); }
+          trap report_failure ERR
+          db='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          # A real replay: nothing is skipped, so the fresh database is exactly
+          # what a new environment would build from this repo.
+          for file in supabase-b1-b2/migrations/*.sql; do
+            echo "replaying $file"
+            psql "$db" -v ON_ERROR_STOP=1 -q -f "$file"
+          done
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
+
+          # Two application orders, because live is not the only shape that
+          # exists: an instance that ran an earlier copy of this work already
+          # holds the vocabulary table, and only the grammar table is new.
+          echo "order A: vocabulary then grammar"
+          psql "$db" -v ON_ERROR_STOP=1 -q -c 'drop table if exists public.week_vocabulary_attempts, public.week_grammar_attempts'
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0040_vocabulary_attempts.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0042_week_grammar_attempts.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+
+          echo "order B: grammar first, then vocabulary"
+          psql "$db" -v ON_ERROR_STOP=1 -q -c 'drop table if exists public.week_vocabulary_attempts, public.week_grammar_attempts'
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0042_week_grammar_attempts.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0040_vocabulary_attempts.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
+
   rls-isolation:
     runs-on: ubuntu-latest
     steps:

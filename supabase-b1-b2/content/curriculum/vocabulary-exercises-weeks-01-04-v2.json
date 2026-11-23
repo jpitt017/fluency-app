@@ -1,0 +1,208 @@
+{
+  "version": "v2",
+  "date": "2026-11-22",
+  "status": "pilot draft, pending second-teacher review",
+  "source": "Fluency Studio: Vocabulary Exercises, Weeks 1-4 (Claude Doc), revised for full coverage and recall",
+  "rules": {
+    "minutes": 15,
+    "markedItemsPerWeek": 18,
+    "affectsUnlocking": false,
+    "aiUnitsPerSentence": 2,
+    "typeTheWord": "accept the key case-insensitively, ignoring extra spaces; one wrong letter in a word of 6+ letters counts as right with 'Nearly! Check the spelling: <key>'; show the key after one wrong try",
+    "reviewAfterSet": "every card word goes into Review as a gapped example sentence; wrong items scheduled sooner",
+    "careful": "show on the card in step 1 and again in feedback when the learner makes that mistake"
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Personal experiences and change",
+      "careful": [
+        { "target": "get used to", "note": "Careful! After get used to, use -ing: I got used to living alone (not get used to live). Spanish acostumbrarse a + infinitive is different." }
+      ],
+      "match": {
+        "instruction": "Match each word to its meaning.",
+        "items": [
+          { "id": "V1-M1", "word": "turning point", "meaning": "a time when something important changes" },
+          { "id": "V1-M2", "word": "look back on", "meaning": "think about something in the past" },
+          { "id": "V1-M3", "word": "memorable", "meaning": "easy to remember because it was special" }
+        ]
+      },
+      "text": {
+        "instruction": "Complete the text with words from the box. Two words are not used.",
+        "body": "Two years ago, I (1) ___: I left Valencia and moved to Bristol. At first, life was a real (2) ___. It took me months to (3) ___ the weather! But my English (4) ___ improved, and I still (5) ___ with my friends at home.",
+        "wordBox": ["challenge", "get used to", "gradually", "keep in touch", "made a big decision", "memorable", "took up"],
+        "items": [
+          { "id": "V1-T1", "gap": 1, "key": "made a big decision" },
+          { "id": "V1-T2", "gap": 2, "key": "challenge" },
+          { "id": "V1-T3", "gap": 3, "key": "get used to" },
+          { "id": "V1-T4", "gap": 4, "key": "gradually" },
+          { "id": "V1-T5", "gap": 5, "key": "keep in touch" }
+        ],
+        "notUsed": ["memorable", "took up"]
+      },
+      "chooseVerb": [
+        { "id": "V1-C1", "question": "I ___ a risk and applied for a job abroad.", "options": ["made", "took", "did", "kept"], "answer_index": 1, "reason": "The collocation is take a risk (past: took)." },
+        { "id": "V1-C2", "question": "I've been ___ good progress since September.", "options": ["doing", "taking", "making", "getting"], "answer_index": 2, "reason": "The collocation is make progress." },
+        { "id": "V1-C3", "question": "I decided to ___ a change and cycle to work.", "options": ["make", "do", "take", "have"], "answer_index": 0, "reason": "The collocation is make a change." }
+      ],
+      "wordForms": [
+        { "id": "V1-F1", "question": "My sister can never choose what to eat. She's very ___.", "options": ["decision", "decisive", "decide", "indecisive"], "answer_index": 3, "reason": "Indecisive means finding it difficult to decide; decisive is the opposite." },
+        { "id": "V1-F2", "question": "Good teachers are ___: they change their plans when something isn't working.", "options": ["adapt", "adaptable", "adaptation", "adapts"], "answer_index": 1, "reason": "After are we need an adjective: adaptable." }
+      ],
+      "typeTheWord": {
+        "instruction": "Type the word or phrase from its meaning. The first letters are given.",
+        "items": [
+          { "id": "V1-R1", "meaning": "start a new hobby or activity", "hint": "t___ u_", "key": "take up", "accept": ["take up"] },
+          { "id": "V1-R2", "meaning": "feel sorry about something you did or didn't do", "hint": "r_____", "key": "regret", "accept": ["regret"] },
+          { "id": "V1-R3", "meaning": "get better at something, step by step", "hint": "m___ p_______", "key": "make progress", "accept": ["make progress"] }
+        ]
+      },
+      "yourSentence": [
+        { "id": "V1-S1", "prompt": "Write one sentence about something that was difficult at first. Use get used to + a noun or -ing.", "model": "It took me a few weeks to get used to working from home.", "onTargetWhen": "get used to is followed by a noun or an -ing form (not the infinitive), and the sentence is about the learner" },
+        { "id": "V1-S2", "prompt": "Write one sentence about a decision you made. Use regret or challenge.", "model": "I've never regretted learning to drive.", "onTargetWhen": "regret or challenge is used with a natural meaning, and the sentence is about the learner" }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Plans, goals and ambitions",
+      "careful": [
+        { "target": "career", "note": "Careful! A career is your working life. A university course (Spanish carrera) is a degree: I'm doing a degree in nursing." },
+        { "target": "intend", "note": "Careful! Intend means plan. Spanish intentar means try: I tried to call you (not I intended to call you)." }
+      ],
+      "match": {
+        "instruction": "Match each word to its meaning.",
+        "items": [
+          { "id": "V2-M1", "word": "deadline", "meaning": "the last day or time when you can do something" },
+          { "id": "V2-M2", "word": "determined", "meaning": "very sure you will do something, even if it's difficult" },
+          { "id": "V2-M3", "word": "achieve", "meaning": "succeed in doing something after trying hard" }
+        ]
+      },
+      "text": {
+        "instruction": "Complete the text with words from the box. Two words are not used.",
+        "body": "My (1) ___ is to start a (2) ___ in nursing. I (3) ___ to apply for a course next spring, so this winter I'm going to (4) ___ in maths. I'm really (5) ___ to starting!",
+        "wordBox": ["career", "deadline", "goal", "improve my skills", "intend", "looking forward", "put off"],
+        "items": [
+          { "id": "V2-T1", "gap": 1, "key": "goal" }, { "id": "V2-T2", "gap": 2, "key": "career" },
+          { "id": "V2-T3", "gap": 3, "key": "intend" }, { "id": "V2-T4", "gap": 4, "key": "improve my skills" },
+          { "id": "V2-T5", "gap": 5, "key": "looking forward" }
+        ],
+        "notUsed": ["deadline", "put off"]
+      },
+      "chooseVerb": [
+        { "id": "V2-C1", "question": "I'm going to ___ myself a goal of reading one book a month.", "options": ["make", "do", "set", "put"], "answer_index": 2, "reason": "The collocation is set (yourself) a goal." },
+        { "id": "V2-C2", "question": "We'll need to finish on Thursday to ___ Friday's deadline.", "options": ["meet", "do", "take", "keep"], "answer_index": 0, "reason": "The collocation is meet a deadline." },
+        { "id": "V2-C3", "question": "Don't ___ off booking the course. Do it today!", "options": ["take", "put", "keep", "set"], "answer_index": 1, "reason": "Put off means delay doing something." }
+      ],
+      "wordForms": [
+        { "id": "V2-F1", "question": "She works very hard and wants to be a manager by 30. She's very ___.", "options": ["ambitious", "ambition", "ambitiously", "ambitions"], "answer_index": 0, "reason": "After very we need an adjective: ambitious." },
+        { "id": "V2-F2", "question": "Getting my driving licence was a big ___ for me.", "options": ["achieve", "achievable", "achieving", "achievement"], "answer_index": 3, "reason": "After a big we need a noun: achievement." }
+      ],
+      "typeTheWord": {
+        "instruction": "Type the word or phrase from its meaning. The first letters are given.",
+        "items": [
+          { "id": "V2-R1", "meaning": "ask formally for a job, a course or a place", "hint": "a____", "key": "apply", "accept": ["apply"] },
+          { "id": "V2-R2", "meaning": "try to reach a goal, step by step", "hint": "w___ t______", "key": "work towards", "accept": ["work towards", "work toward"] },
+          { "id": "V2-R3", "meaning": "do the first thing to start something", "hint": "t___ t__ f____ s___", "key": "take the first step", "accept": ["take the first step"] }
+        ]
+      },
+      "yourSentence": [
+        { "id": "V2-S1", "prompt": "Write one sentence about a goal you have for this year. Use intend to or going to.", "model": "I intend to take an English exam in June.", "onTargetWhen": "intend to + infinitive, or be going to + infinitive, for a future plan, and the sentence is about the learner" },
+        { "id": "V2-S2", "prompt": "Write one sentence about something you're excited about. Use look forward to + a noun or -ing.", "model": "I'm looking forward to visiting my cousins in May.", "onTargetWhen": "look forward to is followed by a noun or an -ing form, and the sentence is about the learner" }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Daily life and social interaction",
+      "careful": [
+        { "target": "arrange", "note": "Careful! Arrange means plan or organise. Spanish arreglar means fix or repair: I need to fix my bike (not arrange my bike)." }
+      ],
+      "match": {
+        "instruction": "Match each word to its meaning.",
+        "items": [
+          { "id": "V3-M1", "word": "catch up (with)", "meaning": "meet someone and tell each other your news" },
+          { "id": "V3-M2", "word": "misunderstanding", "meaning": "a problem because people understand something in different ways" },
+          { "id": "V3-M3", "word": "awkward (situation)", "meaning": "uncomfortable or a little embarrassing" }
+        ]
+      },
+      "text": {
+        "instruction": "Complete the text with words from the box. Two words are not used.",
+        "body": "Welcome to the flat! I'm sure you'll (1) ___ everyone here. We have a cleaning (2) ___: everyone has to clean the kitchen once a week. If you want to (3) ___ on Saturday, that's fine, but please tell us first. You don't have to (4) ___ anything for our Sunday dinner. And if you disagree with something, just say so (5) ___.",
+        "wordBox": ["arrange", "awkward", "catch up", "get on with", "invite friends round", "politely", "routine"],
+        "items": [
+          { "id": "V3-T1", "gap": 1, "key": "get on with" }, { "id": "V3-T2", "gap": 2, "key": "routine" },
+          { "id": "V3-T3", "gap": 3, "key": "invite friends round" }, { "id": "V3-T4", "gap": 4, "key": "arrange" },
+          { "id": "V3-T5", "gap": 5, "key": "politely" }
+        ],
+        "notUsed": ["catch up", "awkward"]
+      },
+      "chooseVerb": [
+        { "id": "V3-C1", "question": "We should ___ an effort to welcome new colleagues.", "options": ["do", "make", "take", "give"], "answer_index": 1, "reason": "The collocation is make an effort." },
+        { "id": "V3-C2", "question": "If you say you'll help, you should ___ your promise.", "options": ["make", "hold", "give", "keep"], "answer_index": 3, "reason": "The collocation is keep a promise." },
+        { "id": "V3-C3", "question": "You should ___ in touch with the organiser before Friday.", "options": ["get", "make", "take", "have"], "answer_index": 0, "reason": "Get in touch means contact someone." }
+      ],
+      "wordForms": [
+        { "id": "V3-F1", "question": "Tom is always late and forgets things. He's very ___.", "options": ["reliable", "rely", "unreliable", "reliably"], "answer_index": 2, "reason": "Unreliable means you can't trust someone to do what they say." },
+        { "id": "V3-F2", "question": "It's ___ to interrupt someone when they're speaking.", "options": ["polite", "politely", "politeness", "impolite"], "answer_index": 3, "reason": "Impolite means not polite; after It's we need an adjective." }
+      ],
+      "typeTheWord": {
+        "instruction": "Type the word or phrase from its meaning. The first letters are given.",
+        "items": [
+          { "id": "V3-R1", "meaning": "share many interests or opinions", "hint": "h___ a l__ i_ c_____", "key": "have a lot in common", "accept": ["have a lot in common"] },
+          { "id": "V3-R2", "meaning": "visit someone at their home", "hint": "c___ o___", "key": "come over", "accept": ["come over"] },
+          { "id": "V3-R3", "meaning": "plan the time and details of something", "hint": "a______", "key": "arrange", "accept": ["arrange"] }
+        ]
+      },
+      "yourSentence": [
+        { "id": "V3-S1", "prompt": "Write one house rule for a shared flat. Use have to, don't have to or should, and arrange or routine.", "model": "We should arrange a time to clean the kitchen together.", "onTargetWhen": "a modal (have to / don't have to / should) + infinitive is used, with arrange or routine, and the rule suits a shared flat" },
+        { "id": "V3-S2", "prompt": "Write one sentence about someone you know. Use get on with.", "model": "I get on well with my neighbours, so we often chat in the lift.", "onTargetWhen": "get on (well) with + a person, and the sentence is about the learner's own life" }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Travel and cultural experiences",
+      "careful": [
+        { "target": "custom", "note": "Careful! Customs, with an s, is the place at an airport where bags are checked (Spanish aduana)." }
+      ],
+      "match": {
+        "instruction": "Match each word to its meaning.",
+        "items": [
+          { "id": "V4-M1", "word": "set off", "meaning": "start a journey" },
+          { "id": "V4-M2", "word": "unfamiliar", "meaning": "new to you; you don't know it well" },
+          { "id": "V4-M3", "word": "welcoming", "meaning": "friendly to visitors" }
+        ]
+      },
+      "text": {
+        "instruction": "Complete the text with words from the box. Two words are not used.",
+        "body": "Our town is a popular (1) ___ in summer. It's easy to (2) ___, because free buses are provided for visitors. You can (3) ___ of the castle, and (4) ___ food is sold at the market every Saturday. There's also an interesting (5) ___: on New Year's Day, everyone is invited to swim in the sea.",
+        "wordBox": ["custom", "destination", "get around", "local", "miss a connection", "take a guided tour", "welcoming"],
+        "items": [
+          { "id": "V4-T1", "gap": 1, "key": "destination" }, { "id": "V4-T2", "gap": 2, "key": "get around" },
+          { "id": "V4-T3", "gap": 3, "key": "take a guided tour" }, { "id": "V4-T4", "gap": 4, "key": "local" },
+          { "id": "V4-T5", "gap": 5, "key": "custom" }
+        ],
+        "notUsed": ["welcoming", "miss a connection"]
+      },
+      "chooseVerb": [
+        { "id": "V4-C1", "question": "Our flight was delayed, so we ___ our connection.", "options": ["lost", "left", "missed", "dropped"], "answer_index": 2, "reason": "The collocation is miss a connection." },
+        { "id": "V4-C2", "question": "We ___ light because there wasn't much room for luggage.", "options": ["travelled", "carried", "took", "brought"], "answer_index": 0, "reason": "Travel light means take very little luggage." },
+        { "id": "V4-C3", "question": "We ___ overnight in York before driving on.", "options": ["stood", "stopped", "kept", "left"], "answer_index": 1, "reason": "Stop overnight means stay one night on a journey." }
+      ],
+      "wordForms": [
+        { "id": "V4-F1", "question": "Spain has a rich ___ life, with lots of festivals.", "options": ["culture", "culturally", "cultured", "cultural"], "answer_index": 3, "reason": "Before a noun (life) we need an adjective: cultural." },
+        { "id": "V4-F2", "question": "On 5 November, people in Britain ___ light fireworks.", "options": ["tradition", "traditionally", "traditional", "traditions"], "answer_index": 1, "reason": "Before a verb (light) we need an adverb: traditionally." }
+      ],
+      "typeTheWord": {
+        "instruction": "Type the word or phrase from its meaning. The first letters are given.",
+        "items": [
+          { "id": "V4-R1", "meaning": "eat dishes that people from the area make", "hint": "t__ t__ l____ f___", "key": "try the local food", "accept": ["try the local food"] },
+          { "id": "V4-R2", "meaning": "the place where you are going", "hint": "d__________", "key": "destination", "accept": ["destination"] },
+          { "id": "V4-R3", "meaning": "travel from place to place", "hint": "g__ a_____", "key": "get around", "accept": ["get around"] }
+        ]
+      },
+      "yourSentence": [
+        { "id": "V4-S1", "prompt": "Write one sentence about a place you know. Use the passive (is / are + past participle) and local.", "model": "Fresh fish is sold at the local market every morning.", "onTargetWhen": "the present simple passive (is / are + past participle) is used, with local, about a real place" },
+        { "id": "V4-S2", "prompt": "Write one sentence to tell a visitor about a custom or tradition in your town.", "model": "In my town, visitors are invited to join the summer festival in August.", "onTargetWhen": "custom or tradition is used correctly, with a clear meaning, about the learner's own town" }
+      ]
+    }
+  ]
+}

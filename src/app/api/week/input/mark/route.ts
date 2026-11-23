@@ -1,0 +1,77 @@
+import { NextResponse } from 'next/server';
+import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
+import reasons from '@/lib/curriculum/input-reasons.json';
+import { markInputAnswer } from '@/lib/curriculum/input-marking.mjs';
+import { createServerSupabase } from '@/utils/supabase/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
+
+type Skill = 'reading' | 'listening';
+type Item = { id: string; step: string; question: string; options: string[]; key: string; reason?: string };
+
+/**
+ * Mark one reading or listening answer.
+ *
+ * The item bank stays here: the response says whether the answer is right, the
+ * reason for the correct answer, and where in the text it comes from. It never
+ * returns the key of a question the learner did not answer, so a single request
+ * cannot harvest the set.
+ */
+export async function POST(request: Request) {
+  const client = await createServerSupabase();
+  const user = client ? (await client.auth.getUser()).data.user : null;
+  if (!client || !user) return NextResponse.json({ error: 'Sign in to check your answers.' }, { status: 401 });
+
+  const body = (await request.json().catch(() => null)) as { week?: unknown; skill?: unknown; id?: unknown; answer?: unknown } | null;
+  if (
+    !body ||
+    !Number.isInteger(body.week) ||
+    (body.skill !== 'reading' && body.skill !== 'listening') ||
+    typeof body.id !== 'string' ||
+    typeof body.answer !== 'string'
+  ) {
+    return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 });
+  }
+
+  const skill = body.skill as Skill;
+  const weekNumber = body.week as number;
+  const weekQuestions = details[skill].weeks.find((week) => week.week === weekNumber)?.questions as Item[] | undefined;
+  const item = weekQuestions?.find((entry) => entry.id === body.id);
+  if (!item) return NextResponse.json({ error: 'This question is not available.' }, { status: 404 });
+
+  // A question only opens with its week.
+  const progress = await client.rpc('refresh_current_week');
+  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (weekNumber > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+
+  let marked: { correct: boolean; reason: string | null };
+  try {
+    marked = markInputAnswer(item, body.answer);
+  } catch {
+    return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 });
+  }
+
+  // The authored reason lives in the item; input-reasons.json holds the teacher
+  // review copy (key, reason, source line) for items whose reason is still a
+  // draft. Prefer the authored reason, fall back to the reviewed one.
+  const reviewed = (reasons.items as { week: number; skill: Skill; id: string; reason?: string; sourceLine?: string }[])
+    .find((entry) => entry.week === weekNumber && entry.skill === skill && entry.id === item.id);
+  const reason = marked.reason ?? reviewed?.reason ?? null;
+  const sourceLine = (reviewed?.sourceLine as string | undefined) ?? null;
+
+  // Keep the attempt, so "Delete my data" has something real to erase.
+  const admin = createAdminSupabase();
+  if (admin) {
+    const { error } = await admin.from('week_input_answers').upsert(
+      { user_id: user.id, week_number: weekNumber, skill, item_id: item.id, answer: body.answer.slice(0, 500), correct: marked.correct },
+      { onConflict: 'user_id,week_number,skill,item_id' },
+    );
+    if (error) {
+      console.error('[input] Failed to save attempt:', error.message);
+    }
+  }
+
+  return NextResponse.json(
+    { correct: marked.correct, reason, sourceLine },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+}
