@@ -144,6 +144,43 @@ test('a slow writing evaluation falls back to the quiz result', async ({ page })
   await expect(page.getByText('Suggested Band: Stage 2')).toBeVisible();
 });
 
+/**
+ * The watchdog must not fire at a learner who simply has not clicked yet.
+ *
+ * The timer used to be armed by `selectedOption` changing, so picking an answer
+ * and then thinking for four seconds produced "The page did not move to the next
+ * question" — a false alarm, because nothing had been asked of the page.
+ */
+test('selecting an answer and waiting does not show the stuck warning', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/onboarding/placement');
+  await expect(page.getByRole('heading', { name: 'Question 1 of 24' })).toBeVisible();
+
+  await page.getByTestId('placement-option').first().click();
+  await expect(page.getByTestId('placement-continue')).toBeEnabled();
+
+  // Well past the 4 s watchdog: no click happened, so there is nothing to warn about.
+  await page.waitForTimeout(5000);
+  await expect(page.getByTestId('placement-stuck-warning')).toHaveCount(0);
+  await expect(page.getByText(/did not move to the next question/)).toHaveCount(0);
+  // And the quiz is still where it was, ready for the learner to decide.
+  await expect(page.getByRole('heading', { name: 'Question 1 of 24' })).toBeVisible();
+});
+
+test('a normal Continue click advances and never shows the warning', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/onboarding/placement');
+  await expect(page.getByRole('heading', { name: 'Question 1 of 24' })).toBeVisible();
+
+  await page.getByTestId('placement-option').first().click();
+  await page.getByTestId('placement-continue').click();
+  await expect(page.getByRole('heading', { name: 'Question 2 of 24' })).toBeVisible();
+
+  // The timer was cleared when the question changed, so nothing fires later.
+  await page.waitForTimeout(5000);
+  await expect(page.getByTestId('placement-stuck-warning')).toHaveCount(0);
+});
+
 test('the answer key never reaches the browser', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/onboarding/placement');
