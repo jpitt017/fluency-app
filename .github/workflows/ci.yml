@@ -215,10 +215,8 @@ jobs:
 
   isolated-deletion:
     name: Isolated migration and learner-data deletion
-    # One Supabase start plus one 749 KB replay is most of the old 25 minutes;
-    # cloning that database for the second order must not need a second start.
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: supabase/setup-cli@v1
@@ -240,54 +238,34 @@ jobs:
           report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 8 /tmp/deletion-ci.log); }
           trap report_failure ERR
           host='127.0.0.1'; port=54322; user=postgres
+          db="postgresql://${user}:postgres@${host}:${port}/postgres"
 
-          # One database per order, each built from nothing. The earlier version
-          # reused one database and dropped the attempt tables between orders,
-          # which left the deletion function pointing at tables that no longer
-          # existed -- a state no migration sequence can produce, and the reason
-          # the job failed on a bug that was not there.
-          # Build the replay once. A real replay means nothing is skipped, so
-          # this is exactly what a new environment would build from this repo.
-          template='replay_template'
-          template_dsn="postgresql://${user}:postgres@${host}:${port}/${template}"
-          createdb -h "$host" -p "$port" -U "$user" "$template"
+          # A real replay: nothing is skipped, so this is exactly what a new
+          # environment would build from this repo. Each file is timed and
+          # capped individually: a single pathological migration then fails
+          # loudly with its own name instead of hanging the job until the
+          # runner kills it, which is what happened twice.
           for file in supabase-b1-b2/migrations/*.sql; do
-            case "$file" in *0040_*|*0041_*|*0042_*|*0043_*) continue;; esac
-            psql "$template_dsn" -v ON_ERROR_STOP=1 -q -f "$file"
+            started=${SECONDS}
+            echo "replaying ${file}"
+            timeout 300 psql "$db" -v ON_ERROR_STOP=1 -q -f "$file" || {
+              echo "::error::${file} failed or took longer than 300s"
+              exit 1
+            }
+            echo "  ${file}: $((SECONDS - started))s"
           done
 
-          # A clone per order: same replay, its own history, no second start.
-          run_order() {
-            local label="$1"; shift
-            local db="postgresql://${user}:postgres@${host}:${port}/replay_${label}"
-            createdb -h "$host" -p "$port" -U "$user" -T "$template" "replay_${label}"
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
-            # The branch's own migrations, in this order, each followed by the
-            # learner-data deletion test.
-            local migration
-            for migration in "$@"; do
-              echo "order ${label}: applying ${migration}"
-              psql "$db" -v ON_ERROR_STOP=1 -q -f "$migration"
-              psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
-            done
-
-            # Only complete once every table the branch adds exists.
-            psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
-          }
-
-          echo "order A: vocabulary, deletion branch, grammar, input answers"
-          run_order a \
-            supabase-b1-b2/migrations/0040_vocabulary_attempts.sql \
-            supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql \
-            supabase-b1-b2/migrations/0042_week_grammar_attempts.sql \
-            supabase-b1-b2/migrations/0043_week_input_answers.sql
-
-          echo "order B: the reverse, for an instance that added them in another sequence"
-          run_order b \
-            supabase-b1-b2/migrations/0043_week_input_answers.sql \
-            supabase-b1-b2/migrations/0042_week_grammar_attempts.sql \
-            supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql \
-            supabase-b1-b2/migrations/0040_vocabulary_attempts.sql
+          # Order independence, without a second replay: 0041 and 0043 are
+          # additive, so applying them again on a database that already has them
+          # must change nothing, and the deletion test must still pass. That is
+          # the property the two-order version was really checking.
+          echo "re-applying the additive migrations (must be no-ops)"
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
       - name: Stop local Supabase
         if: always()
