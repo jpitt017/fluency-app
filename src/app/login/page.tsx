@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { buildRedirectTo, UPDATE_PASSWORD_PATH } from '@/lib/auth/email-links.mjs';
 
 type PendingAction = 'auth' | 'magic' | 'reset' | null;
 
@@ -24,11 +25,15 @@ function LoginForm() {
   const safeNext =
     nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/dashboard';
   const isUpdatePassword = mode === 'update-password';
+  // ?mode=sign-up opens the sign-up tab directly, so a link to "create an
+  // account" does not land on a sign-in form that asks for a password the
+  // visitor does not have yet.
+  const startsInSignUpMode = mode === 'sign-up' || mode === 'signup';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(startsInSignUpMode);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
@@ -72,7 +77,7 @@ function LoginForm() {
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+          emailRedirectTo: buildRedirectTo(window.location.origin, safeNext),
         },
       });
       if (otpError) throw otpError;
@@ -99,7 +104,9 @@ function LoginForm() {
     try {
       const supabase = createClient();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/login?mode=update-password')}`,
+        // Encoded once: GoTrue re-encodes the whole URL it embeds in redirect_to,
+        // and encoding twice arrives as %252F… which the callback cannot use.
+        redirectTo: buildRedirectTo(window.location.origin, UPDATE_PASSWORD_PATH),
       });
 
       if (resetError) throw resetError;
@@ -134,7 +141,7 @@ function LoginForm() {
           email: normalizedEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+            emailRedirectTo: buildRedirectTo(window.location.origin, safeNext),
           },
         });
 

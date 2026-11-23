@@ -106,6 +106,9 @@ jobs:
       # A test must never send an auth email: fake addresses bounce, and a high
       # bounce rate damages the project's sending domain.
       - run: node --test tests/unit/no-auth-email.test.mjs
+      # Pins where an emailed auth link lands: the `type` per flow, `next`
+      # encoded once, and no off-site redirect.
+      - run: node --test tests/unit/auth-email-links.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
