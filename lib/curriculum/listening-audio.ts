@@ -108,12 +108,19 @@ export interface PlayableTrial {
   captionsUrl: string | null;
   label: string;
   speakers: string | null;
-  /** The learner may play it twice: one first listen, one for detail. */
-  playsAllowed: number;
+  /**
+   * How many listens the page *suggests*: one for the main idea, one for detail.
+   * It is guidance, not a limit — the player no longer stops at it, and the count
+   * is reported to the teacher so repeated listening is visible.
+   */
+  playsSuggested: number;
 }
 
-/** How many times a trial track may be played before the page stops offering it. */
-export const TRIAL_PLAYS_ALLOWED = 2;
+/**
+ * The suggested number of listens. Kept as a name so the guidance sentence and
+ * the counting agree; it must never be used to block playback.
+ */
+export const TRIAL_PLAYS_SUGGESTED = 2;
 
 /**
  * Fails closed. A week with no scheduled trial, a missing row, a row that is
@@ -135,7 +142,7 @@ export function resolveTrialAudio(week: number, rows: readonly TrialRow[] | null
     captionsUrl: row.captions_url?.trim() || null,
     label: AI_TRIAL_LABEL,
     speakers: describeTrialSpeakers(week),
-    playsAllowed: TRIAL_PLAYS_ALLOWED,
+    playsSuggested: TRIAL_PLAYS_SUGGESTED,
   };
 }
 
@@ -143,13 +150,27 @@ export function trialPlayKey(week: number): string {
   return `fluency:listening-trial-plays:week-${week}`;
 }
 
-/** Reading a stored counter must never throw, even when storage is blocked. */
+/**
+ * Reading a stored counter must never throw, even when storage is blocked.
+ *
+ * There is no upper clamp any more: the old one capped the count at the play
+ * limit so a tampered counter could not unlock a third listen. With no limit to
+ * unlock, clamping would only hide how often the track was really played, which
+ * is the number the teacher now sees. A sane upper bound stays so a corrupt value
+ * cannot overflow the display.
+ */
+export const PLAYS_COUNT_MAX = 1000;
+
 export function playsUsed(raw: string | null | undefined): number {
   const parsed = Number.parseInt(String(raw ?? '0'), 10);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  return Math.min(parsed, TRIAL_PLAYS_ALLOWED);
+  return Math.min(parsed, PLAYS_COUNT_MAX);
 }
 
-export function canPlayAgain(used: number): boolean {
-  return used < TRIAL_PLAYS_ALLOWED;
+/** A play is worth reporting to the teacher only when it is a real number in range. */
+export function isReportablePlay(week: unknown, count: unknown): boolean {
+  return (
+    Number.isInteger(week) && (week as number) >= 1 && (week as number) <= 4 &&
+    Number.isInteger(count) && (count as number) >= 1 && (count as number) <= PLAYS_COUNT_MAX
+  );
 }

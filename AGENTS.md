@@ -52,6 +52,12 @@ for every value of the variable, so it cannot come back silently.
 - One branch per task, from `main`; open a small PR and let CI run.
 - Each new behaviour gets a test. `course-audio` is a **public** bucket, so
   `released` is the only learner-side gate and nothing untested ships there.
+- **Before adding a migration, check the newest number on `main`, in
+  `supabase_migrations.schema_migrations` on live, and in every open PR that
+  touches `supabase-b1-b2/migrations/`** — a version number must be unique
+  across all three. Two migrations once claimed `0040` (`ai_failure_alerts`
+  and `vocabulary_attempts`): live could record only one, so a fresh replay
+  could never reproduce it. `ai_failure_alerts` is now `0045`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
