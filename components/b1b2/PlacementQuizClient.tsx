@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -13,6 +13,12 @@ const SCORE_TIMEOUT_MS = 20_000;
 const WRITING_TIMEOUT_MS = 20_000;
 const MIN_WRITING_WORDS = 15;
 const TARGET_WRITING_WORDS = 60;
+/**
+ * How long after a Continue click the page may sit on the same question before
+ * the learner is told nothing happened. Only a click arms this: picking an answer
+ * is not a request to advance, and waiting on a difficult question is normal.
+ */
+const STUCK_TIMEOUT_MS = 4000;
 
 function placementRecommendation(placement: Placement) {
   if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice Labs →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
@@ -32,7 +38,13 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   const [writingScore, setWritingScore] = useState<number | null>(null);
   const [writingFeedback, setWritingFeedback] = useState('');
   const [loading, setLoading] = useState(false);
-  const [stuck, setStuck] = useState(false);
+  // The index the "did not move" warning belongs to, not a bare boolean: when the
+  // question changes the warning stops matching on its own, with no setState in an
+  // effect (and so no cascading render).
+  const [stuckAt, setStuckAt] = useState<number | null>(null);
+  // The Continue click arms the watchdog; unmounting the timer clears it. Kept in
+  // a ref so a re-render cannot leave an orphaned timeout behind.
+  const stuckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   // Kept for auth checks only: creating the Supabase client inside a click handler
   // would add fetches between the click and the visible state change.
@@ -43,14 +55,16 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   const question = questions[currentIndex];
   const missingPassage = Boolean(question?.text_id && !texts.some((text) => text.id === question.text_id));
 
-  // Watchdog: never leave the learner on a button that produces no change.
-  // Advancing is synchronous, so if the question has not changed 4 seconds after
-  // an answer was picked and Continue is enabled, something swallowed the click.
-  useEffect(() => {
-    if (selectedOption === null) return;
-    const timer = window.setTimeout(() => setStuck(true), 4000);
-    return () => window.clearTimeout(timer);
-  }, [currentIndex, selectedOption]);
+  function clearStuckTimer() {
+    if (stuckTimer.current !== null) {
+      clearTimeout(stuckTimer.current);
+      stuckTimer.current = null;
+    }
+  }
+
+  // Cancel the timer whenever the question changes, and on unmount, so a stale
+  // timer cannot fire against a question the learner has already left.
+  useEffect(() => clearStuckTimer, [currentIndex]);
 
   const counter = writingWordCounter(writingSample, MIN_WRITING_WORDS, 100, TARGET_WRITING_WORDS);
   const hint = writingHint(counter.words, MIN_WRITING_WORDS);
@@ -69,13 +83,21 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   }
 
   function selectOption(index: number) {
-    setStuck(false);
+    // Choosing an answer is not a request to advance, so it does not arm the
+    // watchdog; it only clears a warning left over from an earlier click.
+    setStuckAt(null);
     setSelectedOption(index);
   }
 
   function handleNextQuestion() {
     if (selectedOption === null) return;
-    setStuck(false);
+    // Advancing is synchronous, so if this question is still showing when the
+    // timer fires, the click was swallowed by something (a covered button, an
+    // interrupted paint) and the learner needs to know.
+    setStuckAt(null);
+    clearStuckTimer();
+    const clickedAt = currentIndex;
+    stuckTimer.current = setTimeout(() => setStuckAt(clickedAt), STUCK_TIMEOUT_MS);
     setAnswers((previous) => [...previous, selectedOption]);
     setSelectedOption(null);
 
@@ -251,8 +273,12 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 The reading passage for this question is unavailable, so it cannot be answered. Reload the page; if it keeps happening, use &quot;Problem? Tell us&quot;.
               </p>
             )}
-            {stuck && (
-              <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {stuckAt === currentIndex && (
+              <p
+                role="status"
+                data-testid="placement-stuck-warning"
+                className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              >
                 The page did not move to the next question. Nothing was lost — press {continueLabel} again, or use &quot;Problem? Tell us&quot; if it keeps happening.
               </p>
             )}
