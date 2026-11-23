@@ -17,6 +17,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { appendFileSync } from 'node:fs';
 import { safeChatReply, sentencesWithinLimit } from '../lib/b1b2/chat-language.mjs';
 import { z } from 'zod';
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
@@ -362,6 +363,7 @@ async function checkLiveGroq() {
   let totalPassed = 0;
   let zeroErrorFalsePositives = 0;
   let injectionFailures = 0;
+  const failedCases = [];
   const stats = new Map();
 
   for (const item of BENCHMARK_SENTENCES) {
@@ -390,6 +392,7 @@ async function checkLiveGroq() {
       totalPassed++;
       console.log(`PASS [${item.id}] (${item.category})`);
     } else {
+      failedCases.push(`${item.id}(${item.category}${first.schemaError ? ',schema' : ''},got=${JSON.stringify(lastCats)})`);
       console.error(`FAIL [${item.id}] (${item.category}) got=${JSON.stringify(lastCats)}`);
     }
     stats.set(item.category, bucket);
@@ -421,6 +424,7 @@ async function checkLiveGroq() {
     const valid = RewriteCheckResultSchema.safeParse(parsedJson);
     if (!valid.success || valid.data.fixed !== false) {
       injectionFailures++;
+      failedCases.push(`${rItem.id}(rewrite-injection)`);
       console.error(`FAIL [${rItem.id}] rewrite injection bypassed guard: ${raw}`);
     } else {
       console.log(`PASS [${rItem.id}] rewrite injection rejected`);
@@ -429,26 +433,68 @@ async function checkLiveGroq() {
 
   let gateFailures = 0;
   const overallAcc = totalPassed / BENCHMARK_SENTENCES.length;
-  console.log(`\nLive eval summary: ${totalPassed}/${BENCHMARK_SENTENCES.length} (${Math.round(overallAcc * 100)}%)`);
+  const pct = Math.round(overallAcc * 100);
+  const categoryLines = [];
+  console.log(`\nLive eval summary: ${totalPassed}/${BENCHMARK_SENTENCES.length} (${pct}%)`);
   console.log('Per-category baseline accuracy:');
   for (const [cat, { total, passed }] of stats.entries()) {
     const ratio = passed / total;
-    const pct = Math.round(ratio * 100);
+    const catPct = Math.round(ratio * 100);
     const warn = ratio < MIN_CATEGORY_WARNING ? ' [WARN <70%]' : '';
-    console.log(`  ${cat.padEnd(22)} ${passed}/${total} (${pct}%)${warn}`);
+    const line = `  ${cat.padEnd(22)} ${passed}/${total} (${catPct}%)${warn}`;
+    categoryLines.push(line.trim());
+    console.log(line);
   }
 
+  const gateNotes = [];
   if (overallAcc < MIN_OVERALL_ACCURACY) {
     gateFailures++;
-    console.error(`GATE FAIL: Overall accuracy ${Math.round(overallAcc * 100)}% < ${Math.round(MIN_OVERALL_ACCURACY * 100)}%`);
+    gateNotes.push(`overall accuracy ${pct}% < ${Math.round(MIN_OVERALL_ACCURACY * 100)}%`);
+    console.error(`GATE FAIL: Overall accuracy ${pct}% < ${Math.round(MIN_OVERALL_ACCURACY * 100)}%`);
   }
   if (zeroErrorFalsePositives > 0) {
     gateFailures++;
+    gateNotes.push(`${zeroErrorFalsePositives} zero-error false positive(s)`);
     console.error(`GATE FAIL: ${zeroErrorFalsePositives} zero-error false positive(s) detected (must be 0).`);
   }
   if (injectionFailures > 0) {
     gateFailures++;
+    gateNotes.push(`${injectionFailures} prompt/rewrite-injection failure(s)`);
     console.error(`GATE FAIL: ${injectionFailures} prompt/rewrite-injection case(s) failed.`);
+  }
+
+  // The job logs live behind a presigned Azure blob URL that CI readers often
+  // cannot reach, and the only other trace is "exit code 1". So the verdict — and
+  // every failing case — is also written to the step summary, which shows up on
+  // the run page and survives a raw log fetch being unavailable.
+  const failedIds = [...new Set(failedCases)];
+  const summary = [
+    `Live prompt evals: ${totalPassed}/${BENCHMARK_SENTENCES.length} (${pct}%) — ${
+      gateFailures === 0 ? 'PASS' : `FAIL (${gateNotes.join('; ')})`
+    }`,
+    failedIds.length
+      ? `Failing cases (${failedIds.length}): ${failedIds.join(', ')}`
+      : 'Failing cases: none',
+    'Per category:',
+    ...categoryLines.map((line) => `- ${line}`),
+  ].join('\n');
+
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    appendFileSync(
+      process.env.GITHUB_STEP_SUMMARY,
+      `### Live prompt evals\n\n\`\`\`\n${summary}\n\`\`\`\n`,
+      'utf8',
+    );
+  } else {
+    console.log(`\n${summary}`);
+  }
+  // An annotation is the one channel readable from the API without the log blob.
+  if (failedIds.length) {
+    console.log(
+      `::error title=Live prompt evals ${totalPassed}/${BENCHMARK_SENTENCES.length} (${pct}%)::${summary.replace(/[\r\n]+/g, ' | ').slice(0, 4000)}`,
+    );
+  } else if (gateFailures > 0) {
+    console.log(`::error title=Live prompt evals gate::${gateNotes.join('; ')}`);
   }
 
   return gateFailures;
@@ -458,7 +504,27 @@ const args = new Set(process.argv.slice(2));
 const offlineFailures = checkOfflineSuite();
 let liveFailures = 0;
 if (!args.has('--offline') && (args.has('--live') || process.env.GROQ_API_KEY)) {
-  liveFailures = await checkLiveGroq();
+  try {
+    liveFailures = await checkLiveGroq();
+  } catch (error) {
+    // A thrown error (bad key, rate limit, network, malformed JSON) used to exit
+    // with nothing but a bare "exit code 1" — indistinguishable from a gate
+    // failure. Name the cause instead, without echoing the key: SDK errors
+    // embed `Authorization: Bearer <key>` in their request options.
+    const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const status = error?.status ?? error?.response?.status ?? error?.statusCode ?? 'unknown';
+    const redacted = reason.replace(/(bearer\s+)[A-Za-z0-9._-]+/gi, '$1[redacted]').slice(0, 1200);
+    const line = `Live prompt evals could not run (HTTP ${status}) — ${redacted}`;
+    console.log(
+      `${line}\nThe key is not printed: SDK errors can carry it in their request options. ` +
+        'Check that GROQ_API_KEY is valid, has quota, and can reach openai/gpt-oss-20b.',
+    );
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Live prompt evals\n\n${line}\n`, 'utf8');
+    }
+    console.log(`::error title=Live prompt evals could not run::${line.slice(0, 4000)}`);
+    process.exit(1);
+  }
 }
 
 process.exit(offlineFailures + liveFailures > 0 ? 1 : 0);
