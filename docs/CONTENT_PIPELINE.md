@@ -69,19 +69,43 @@ review checklist. The item bank keeps the IDs from the source document (for
 example `W1-L3`, `W1-C5`, `W4-G5`) and stores accepted variants in their own
 `accepted` list; two-gap items store one key and one variants list per gap.
 
-Validate and regenerate their migration after edits:
+Validate any edit to those files:
 
 ```bash
 npm run validate:details
-npm run build:details-seed
 ```
 
-This writes `supabase-b1-b2/migrations/0020_weeks_1_4_and_assessments.sql`,
-which seeds `syllabus_week_details`, `syllabus_assessments` (now including
-`speaking-descriptors`), `syllabus_vocab_items`, `syllabus_grammar_items` (120
-rows), `syllabus_input_items` (80 listening/reading questions) and
-`syllabus_checkpoint_items`. Cut scores and thresholds are provisional
-until the pilot calibrates them.
+### 4.0 `0020` is applied, so it is frozen
+
+`npm run build:details-seed` regenerates
+`supabase-b1-b2/migrations/0020_weeks_1_4_and_assessments.sql` from the JSONs.
+That migration is **already applied to production**, and an applied migration
+must never change — so the generator must not be run against content edits
+that are meant to reach the live database. Do not edit `0020` by hand either.
+
+What the rule actually costs is small, because `0020` seeds a frozen snapshot
+and nothing re-reads it:
+
+- the app imports the JSON files directly (`lib/curriculum/details.ts`), so a
+  content edit is live on the next deploy without touching the database;
+- `syllabus_week_details` holds the same payloads, but **only the week-detail
+  sections** — `canDo`, `title`, `cefr`, `grammar`, `vocabulary`, `speaking`,
+  `conversation`, `writing`, `checkpoint1`. It has no `listening` key: the
+  listening dialogues exist only in `weeks-01-04-details.json` and are read
+  from there by `scripts/lib/course-audio/listening-trial.mjs`.
+- `syllabus_input_items` stores the comprehension **questions** (`id`, `step`,
+  `question`, `options`, `key`), never the moved script or its speaker lines.
+
+So a change to a listening line reaches learners through the JSON and the
+regenerated audio, not through a migration. If a future edit does change
+seeded week-detail content that the database copy must match, add a **new**
+migration that `update`s the affected row; never rewrite the one that created
+it. Note also that `0020` is stale relative to its generator: regenerating from
+the current `HEAD` JSON does not reproduce the committed file (the
+`syllabus_week_details` insert would gain `cefr` blocks). That drift is a
+separate cleanup, not something to fix by regenerating.
+
+Cut scores and thresholds are provisional until the pilot calibrates them.
 
 ### 4.1 Answer isolation
 
