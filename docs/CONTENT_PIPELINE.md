@@ -206,9 +206,13 @@ any track depends on it.
    `settings` override — Tom 0.3 / 0.4 (enthusiastic about his course), Aisha
    0.35 / 0.3 (happy for him), Dan and Marta 0.38 / 0.25 (flatmates who get on
    well), Joanne 0.35 / 0.35 (a guide who loves York). The Host and Ellie keep
-   0.45 / 0. Unless a speaker is named, the defaults apply;
+   0.45 / 0. Unless a speaker is named, the defaults apply. A character may also
+   override the pace's **speed** on their own: Joanne reads at 0.75, because her
+   measured Week 4 came out above the 140–150 wpm target at 0.8 — a monologue has
+   fewer turn changes to slow it down than a dialogue. Nobody else's rate moves;
 3. holds the course pace (`PACE_PROFILES.b1`, the default for all four weeks):
-   `speed: 0.8`, aiming at roughly 140–150 words a minute, with a 0.5 s gap
+   `speed: 0.8` (0.75 for Joanne, see above), aiming at roughly 140–150 words a
+   minute, with a 0.5 s gap
    between sentences inside a line, 0.7 s between two speakers and 1.0 s
    between paragraphs. A line is split into sentences (never on "Mr." or on a
    number), and each cue is one sentence;

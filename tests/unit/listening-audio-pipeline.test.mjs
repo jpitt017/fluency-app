@@ -12,6 +12,7 @@ import {
   TTS_PROVIDER,
   PACE_PROFILES,
   VOICE_SETTINGS,
+  rateForSpeaker,
   assembleTrack,
   assertDistinctVoices,
   assertKnownSpeakers,
@@ -135,19 +136,19 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
     Aisha: { stability: 0.35, style: 0.3 },
     Dan: { stability: 0.38, style: 0.25 },
     Marta: { stability: 0.38, style: 0.25 },
-    Joanne: { stability: 0.35, style: 0.35 },
+    Joanne: { stability: 0.35, style: 0.35, speed: 0.75 },
   };
   for (const [speaker, override] of Object.entries(expected)) {
     const request = buildSpeechRequest(speaker, 'Hello there.');
     assert.deepEqual(
       request.body.voice_settings,
-      { ...VOICE_SETTINGS, ...override, speed: B1_SPEECH_RATE },
+      { ...VOICE_SETTINGS, ...override, speed: override.speed ?? B1_SPEECH_RATE },
       `${speaker} sends ${override.stability}/${override.style}`,
     );
     assert.equal(request.body.voice_settings.similarity_boost, 0.8);
     assert.equal(request.body.voice_settings.use_speaker_boost, true);
     // The character, not the week: the same settings wherever they speak.
-    assert.deepEqual(voiceSettingsFor(speaker, 0.8), { ...VOICE_SETTINGS, ...override, speed: 0.8 });
+    assert.deepEqual(voiceSettingsFor(speaker, 0.8), { ...VOICE_SETTINGS, ...override, speed: override.speed ?? 0.8 });
   }
   for (const speaker of ['Host', 'Ellie']) {
     assert.deepEqual(
@@ -159,6 +160,23 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
   // The pace still comes from the caller, not from the voice.
   assert.equal(voiceSettingsFor('Host', 0.8).speed, 0.8);
   assert.equal(voiceSettingsFor('Host', 0.8).stability, 0.45);
+});
+
+test("Joanne may override the pace's speed, and only she does", () => {
+  // Her measured reading was the fastest of the four weeks; the track came out
+  // above the 140-150 target, so her voice keeps its own slower rate.
+  assert.equal(voiceSettingsFor('Joanne', 0.8).speed, 0.75);
+  assert.equal(voiceSettingsFor('Joanne', 0.9).speed, 0.75, 'her rate wins over any pace');
+  assert.equal(rateForSpeaker('Joanne', 'b1'), 0.75);
+  for (const speaker of ['Host', 'Ellie', 'Aisha', 'Tom', 'Dan', 'Marta']) {
+    assert.equal(rateForSpeaker(speaker, 'b1'), 0.8, `${speaker} keeps the course speed`);
+  }
+  // The rest of her settings are untouched by the speed override.
+  const joanne = voiceSettingsFor('Joanne', 0.8);
+  assert.equal(joanne.stability, 0.35);
+  assert.equal(joanne.style, 0.35);
+  assert.equal(joanne.similarity_boost, 0.8);
+  assert.equal(buildSpeechRequest('Joanne', 'Welcome to York!').body.voice_settings.speed, 0.75);
 });
 
 test('an unknown speaker is refused before any request is sent', () => {
@@ -739,10 +757,12 @@ test('the voice check reads real lines: the named step clips plus one clip per s
     ...VOICE_SETTINGS,
     stability: 0.35,
     style: 0.35,
-    speed: 0.8,
+    speed: 0.75,
   });
   for (const request of requests) {
-    assert.equal(request.body.voice_settings.speed, 0.8, 'the course speed');
+    // The course speed, except for the one character who reads faster than it.
+    const joanne = request.url.includes(SPEAKER_VOICES.Joanne.voice);
+    assert.equal(request.body.voice_settings.speed, joanne ? 0.75 : 0.8, 'the course speed');
     assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
   assert.equal(new Set(requests.map((request) => request.body.text)).size > 12, true, 'a different real line each time');

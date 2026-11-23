@@ -110,7 +110,13 @@ export const SPEAKER_VOICES = {
     name: 'Miri',
     accent: 'Yorkshire',
     // A tour guide who loves the city she is showing off.
-    settings: { stability: 0.35, style: 0.35 },
+    //
+    // `speed` is the one setting a character may override on the *pace*: her
+    // measured speech was the fastest of the four weeks (Week 4 projected
+    // 153 wpm at 0.8, against a 140-150 target), and a monologue has fewer turn
+    // changes to slow it down than a dialogue. 0.75 brings the track to ~145
+    // wpm; every other speaker keeps the course pace.
+    settings: { stability: 0.35, style: 0.35, speed: 0.75 },
   },
 };
 
@@ -185,11 +191,24 @@ export function pauseSecondsFor(kind, pace = PACE_PROFILES[DEFAULT_PACE]) {
   }
 }
 
-/** The settings actually sent for a speaker: defaults, then the voice's override. */
+/**
+ * The settings actually sent for a speaker: defaults, then the voice's override,
+ * then the pace's speed unless the character overrides that too.
+ *
+ * `speed` is the one key a per-speaker override may win: the pace profile says
+ * how the course reads, but a voice that comes out measurably fast can be given
+ * its own slower rate without changing anyone else's.
+ */
 export function voiceSettingsFor(speaker, rate) {
   const config = SPEAKER_VOICES[speaker];
   if (!config) throw new Error(`No voice configured for speaker "${speaker}"`);
-  return { ...VOICE_SETTINGS, ...(config.settings ?? {}), speed: rate };
+  const merged = { ...VOICE_SETTINGS, ...(config.settings ?? {}) };
+  return { ...merged, speed: merged.speed ?? rate };
+}
+
+/** The rate a speaker is actually spoken at, given the pace. */
+export function rateForSpeaker(speaker, pace) {
+  return voiceSettingsFor(speaker, resolvePace(pace).speed).speed;
 }
 
 /** Gap between two sentences inside one line, on the default pace. */

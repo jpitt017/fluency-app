@@ -29,6 +29,7 @@ import {
   buildTrackVtt,
   buildUtterances,
   countWords,
+  rateForSpeaker,
   encodeMp3,
   splitSentences,
   stripSpeakerPrefix,
@@ -247,7 +248,7 @@ export async function generateClip(options) {
         speaker: utterance.speaker,
         text: utterance.text,
         apiKey,
-        rate: resolved.speed,
+        rate: rateForSpeaker(utterance.speaker, resolved),
         fetchImpl: options.fetchImpl,
         log,
       });
@@ -412,7 +413,7 @@ export async function generateListeningTrial(options) {
       speaker: utterance.speaker,
       text: utterance.text,
       apiKey,
-      rate: resolved.speed,
+      rate: rateForSpeaker(utterance.speaker, resolved),
       fetchImpl: options.fetchImpl,
       log,
     });
@@ -450,6 +451,9 @@ export async function generateListeningTrial(options) {
     reviewBucket,
     model,
     rate: resolved.speed,
+    rates: Object.fromEntries(
+      [...new Set(lines.map((line) => line.speaker))].map((speaker) => [speaker, rateForSpeaker(speaker, resolved)]),
+    ),
     pace: resolved,
     settings: Object.fromEntries(
       [...new Set(lines.map((line) => line.speaker))].map((speaker) => [speaker, voiceSettingsFor(speaker, resolved.speed)]),
@@ -530,11 +534,13 @@ export const SPEAKING_WPM_AT_SPEED_1 = 200;
 export function estimateDurationSeconds(lines, pace = DEFAULT_PACE) {
   const resolved = resolvePace(pace);
   const utterances = buildUtterances(lines);
-  const wordsPerSecond = (SPEAKING_WPM_AT_SPEED_1 * resolved.speed) / 60;
   let speech = 0;
   let total = 0;
   for (const utterance of utterances) {
     total += pauseSecondsFor(utterance.boundary, resolved);
+    // A character may carry their own speed, so the estimate follows the rate
+    // the voice will actually be spoken at, not the profile's.
+    const wordsPerSecond = (SPEAKING_WPM_AT_SPEED_1 * rateForSpeaker(utterance.speaker, resolved)) / 60;
     const seconds = utterance.words / wordsPerSecond;
     speech += seconds;
     total += seconds;
