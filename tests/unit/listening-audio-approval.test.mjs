@@ -16,6 +16,14 @@ import { releaseTrial, revokeTrial } from '../../scripts/lib/course-audio/publis
  * The standing rule these tests protect: a week is never marked released on
  * production, not even briefly for a test. Approval behaviour is exercised with
  * a fake client only — no project is contacted anywhere in this file.
+ *
+ * Every production-refusal test passes `allowProductionRelease: false`
+ * explicitly, because the shipped default reads `ALLOW_PRODUCTION_RELEASE` from
+ * the environment. A CI job that exported it job-wide (as the course-audio
+ * workflow used to) turned these assertions into pass-throughs and the suite
+ * failed with "Missing expected rejection". Pinning the argument keeps the rule
+ * true no matter what the surrounding shell exported; a separate test below
+ * checks that the ambient-variable path still works when it is meant to.
  */
 
 const PROD = `https://${PRODUCTION_PROJECT_REF}.supabase.co`;
@@ -73,7 +81,9 @@ test('a local stack and junk URLs are never mistaken for production', () => {
 });
 
 test('release refuses production, and says why', () => {
-  const verdict = checkApprovalTarget({ url: PROD });
+  // Spelled out even though this function already defaults bypass to false: the
+  // point of the test is a refusal, so it should not depend on a default.
+  const verdict = checkApprovalTarget({ url: PROD, bypass: false });
   assert.equal(verdict.ok, false);
   assert.equal(verdict.production, true);
   assert.match(verdict.reason, /Refusing to change approval state on production/);
@@ -107,18 +117,24 @@ test('the bypass is opt-in only: 1 or true, nothing else', () => {
 
 test('releaseTrial makes no write at all against production', async () => {
   const client = fakeClient({ url: PROD });
-  await assert.rejects(releaseTrial(releaseArgs(client)), /Refusing to change approval state on production/);
+  await assert.rejects(
+    releaseTrial(releaseArgs(client, { allowProductionRelease: false })),
+    /Refusing to change approval state on production/,
+  );
   assert.deepEqual(client.writes, [], 'a refused release must not touch the table');
 });
 
 test('releaseTrial reads the URL from the client, and from an explicit override', async () => {
   const viaClient = fakeClient({ url: PROD });
-  await assert.rejects(releaseTrial(releaseArgs(viaClient)), /production/);
+  await assert.rejects(releaseTrial(releaseArgs(viaClient, { allowProductionRelease: false })), /production/);
   assert.deepEqual(viaClient.writes, []);
 
   // A preview-targeted client can also be handed a production URL explicitly.
   const viaOverride = fakeClient({ url: PREVIEW });
-  await assert.rejects(releaseTrial(releaseArgs(viaOverride, { url: PROD })), /production/);
+  await assert.rejects(
+    releaseTrial(releaseArgs(viaOverride, { url: PROD, allowProductionRelease: false })),
+    /production/,
+  );
   assert.deepEqual(viaOverride.writes, []);
 });
 
@@ -141,7 +157,10 @@ test('a fake week number is a valid rehearsal target, not a production release',
 
 test('revokeTrial carries the same production refusal', async () => {
   const blocked = fakeClient({ url: PROD });
-  await assert.rejects(revokeTrial({ client: blocked, week: 1 }), /Refusing to change approval state on production/);
+  await assert.rejects(
+    revokeTrial({ client: blocked, week: 1, allowProductionRelease: false }),
+    /Refusing to change approval state on production/,
+  );
   assert.deepEqual(blocked.writes, []);
 
   const allowed = fakeClient({ url: PREVIEW });
@@ -222,4 +241,166 @@ test('both documents carry the rule', () => {
     assert.match(text, /fake week number/i, `${name} must offer the fake-week escape hatch`);
     assert.match(text, /unit test/i, `${name} must point at unit tests`);
   }
+});
+
+/**
+ * A child process that exercises the real guard, once per value of the variable.
+ *
+ * Spawned rather than inlined because `isApprovalBypassRequested()` reads
+ * `process.env` at call time and the shipped default is the ambient value; only
+ * a separate process can see a different environment. The child imports the real
+ * modules, so this checks the behaviour, not the source text.
+ *
+ * This is the regression that broke run 45258656177: the workflow exported
+ * ALLOW_PRODUCTION_RELEASE job-wide, so the three "production must be refused"
+ * tests saw a bypass and failed with "Missing expected rejection". The assertions
+ * above are pinned to an explicit argument, which fixes the symptom; this test
+ * fixes the cause by checking the rule holds whatever the shell exported.
+ *
+ * Deliberately not the whole suites: they are 8 s together in CI but minutes in a
+ * sandbox without network, and a 24-run matrix would be unusable. What must hold
+ * is the guard's answer, which is exactly what the three failing tests asserted.
+ */
+const GUARD_PROBE = `
+import assert from 'node:assert/strict';
+import { releaseTrial, revokeTrial } from __PUBLISH_MODULE__;
+import { isApprovalBypassRequested, PRODUCTION_PROJECT_REF } from __ENVIRONMENT_MODULE__;
+
+/**
+ * The invariant, for any value of ALLOW_PRODUCTION_RELEASE:
+ *
+ *  - an explicit allowProductionRelease:false always refuses production. That is
+ *    the argument the tests in this file pass, so this is what makes them
+ *    environment-proof. publish.mjs reads
+ *    options.allowProductionRelease ?? isApprovalBypassRequested(), so an
+ *    explicit false must win over a set variable.
+ *  - a preview project is always allowed: the guard is not simply always-off.
+ *
+ * It deliberately does NOT assert that the default refuses: with the variable set
+ * to 1/true the default is meant to allow, which is the deliberate-release path.
+ */
+const PROD = 'https://' + PRODUCTION_PROJECT_REF + '.supabase.co';
+const writes = [];
+const client = (url) => ({
+  supabaseUrl: url,
+  from: () => ({ update: (values) => ({ eq: async () => (writes.push(values), { error: null }) }) }),
+});
+
+const pinned = { client: client(PROD), week: 1, audioUrl: 'https://example.test/a.mp3', allowProductionRelease: false };
+await assert.rejects(releaseTrial({ ...pinned }), /Refusing to change approval state on production/);
+await assert.rejects(revokeTrial({ client: client(PROD), week: 1, allowProductionRelease: false }), /Refusing to change approval state on production/);
+assert.deepEqual(writes, [], 'a refused write must never reach the table');
+
+// The same refusal through the default path, but only when nothing grants a bypass.
+if (!isApprovalBypassRequested()) {
+  await assert.rejects(releaseTrial({ client: client(PROD), week: 1, audioUrl: 'https://example.test/a.mp3' }), /production/);
+}
+
+console.log(JSON.stringify({ ok: true, ambientBypass: isApprovalBypassRequested() }));
+`;
+
+test('a pinned refusal holds whatever ALLOW_PRODUCTION_RELEASE is set to', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { pathToFileURL } = await import('node:url');
+
+  // The probe lives outside the repo and imports the modules by absolute URL, so
+  // it never appears in the working tree: node --test collects *.test.mjs and
+  // test-*.mjs from there, and a probe the runner collected would spawn copies of
+  // the suite that spawned it. A killed test also cannot leave a stray file.
+  const dir = mkdtempSync(join(tmpdir(), 'guard-probe-'));
+  const probe = join(dir, 'probe.mjs');
+  const at = (relative) => pathToFileURL(new URL(relative, import.meta.url).pathname).href;
+  writeFileSync(
+    probe,
+    GUARD_PROBE.replace('__ENVIRONMENT_MODULE__', JSON.stringify(at('../../scripts/lib/course-audio/environment.mjs')))
+      .replace('__PUBLISH_MODULE__', JSON.stringify(at('../../scripts/lib/course-audio/publish.mjs'))),
+  );
+
+  // NODE_TEST_CONTEXT makes a child that is itself treated as a test file print
+  // "run() is being called recursively ... skipping running files" and exit 0
+  // without running anything — a green tick for nothing.
+  const baseEnv = { ...process.env };
+  delete baseEnv.NODE_TEST_CONTEXT;
+
+  const failures = [];
+  try {
+    for (const value of [undefined, '', '0', 'false', '1', 'true']) {
+      const env = { ...baseEnv };
+      if (value === undefined) delete env[ALLOW_PROD_RELEASE_ENV];
+      else env[ALLOW_PROD_RELEASE_ENV] = value;
+
+      const run = spawnSync(process.execPath, [probe], { env, encoding: 'utf8', timeout: 30_000 });
+      const label = `${ALLOW_PROD_RELEASE_ENV}=${value === undefined ? '(unset)' : JSON.stringify(value)}`;
+      const output = `${run.stdout ?? ''}${run.stderr ?? ''}`;
+
+      if (run.error) {
+        failures.push(`${label}: could not run (${run.error.message})`);
+        continue;
+      }
+      if (run.status !== 0) {
+        failures.push(`${label}: exit ${run.status} ${output.split('\n').filter(Boolean).slice(-3).join(' / ')}`);
+        continue;
+      }
+      // A real run ends with the probe's own JSON: silence is not success.
+      if (!/"ok":true/.test(output)) failures.push(`${label}: the probe did not report success`);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  assert.deepEqual(failures, [], `The rule must hold for every value of the variable:\n${failures.join('\n')}`);
+});
+
+test('the audio test files never rely on ambient approval env for a refusal', () => {
+  // The three failures came from asserting a refusal while the environment could
+  // grant the bypass. Every refusal in these files must pin the argument.
+  const files = [
+    'tests/unit/listening-audio-approval.test.mjs',
+    'tests/unit/listening-trial.test.mjs',
+    'tests/unit/listening-audio-delete.test.mjs',
+  ];
+  for (const file of files) {
+    const source = readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+    const bodies = source.split(/\n(?=test\()/);
+    for (const body of bodies) {
+      // Skip this scan itself: it quotes the very pattern it looks for.
+      if (/never rely on ambient approval env/.test(body)) continue;
+      if (!/Refusing to change approval state on production|\/production\//.test(body)) continue;
+      assert.match(
+        body,
+        /allowProductionRelease:\s*false|bypass:\s*false/,
+        `${file}: a production-refusal assertion must not depend on the environment:\n${body.slice(0, 220)}`,
+      );
+    }
+  }
+});
+
+test('the workflow keeps the release override off every other step', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/course-audio.yml', import.meta.url), 'utf8');
+  const lines = workflow.split('\n');
+
+  // No job-wide override: that is what leaked into the tests.
+  const envBlockStart = lines.findIndex((line) => line === 'env:');
+  assert.ok(envBlockStart >= 0, 'the workflow has a top-level env block');
+  const jobWide = [];
+  for (let i = envBlockStart + 1; i < lines.length; i += 1) {
+    if (/^\S/.test(lines[i]) && lines[i].trim()) break;
+    if (/^\s{2}\S/.test(lines[i])) jobWide.push(lines[i].trim());
+  }
+  assert.deepEqual(
+    jobWide.filter((line) => /ALLOW_PRODUCTION_RELEASE|SERVICE_ROLE_KEY/.test(line)),
+    [],
+    'the release override and the service-role key must be step-scoped, not job-wide',
+  );
+
+  // And the override appears only on the two approval steps. Split into steps
+  // first: a greedy regex across the whole file would attribute one step's env
+  // to every step before it.
+  const steps = workflow.split(/\n\s{6}- name: /).slice(1);
+  const overrideSteps = steps
+    .filter((step) => /^\s*ALLOW_PRODUCTION_RELEASE:/m.test(step))
+    .map((step) => step.split('\n')[0].trim());
+  assert.deepEqual(overrideSteps.sort(), ['Release approved weeks', 'Revoke a track']);
 });
