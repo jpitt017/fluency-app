@@ -25,6 +25,10 @@ on:
         description: 'Walk the placement quiz on production, phone and desktop, signed out and in'
         type: boolean
         default: false
+      live_prompt_evals:
+        description: 'Run the live Groq prompt gate (spends the day''s Groq quota for the app)'
+        type: boolean
+        default: false
 
 jobs:
   production-ai-test:
@@ -172,7 +176,8 @@ jobs:
           '
 
 
-  # Nightly and on demand only, never on a pull request.
+  # Manual dispatch only, and only with its input ticked. Never on a pull request,
+  # and no longer nightly (see docs/CI.md for why and how to bring the schedule back).
   #
   # This job and the product share one GROQ_API_KEY, and the app answers writing
   # feedback with the same openai/gpt-oss-20b on that key. A full pass costs about
@@ -182,10 +187,11 @@ jobs:
   # through `npm run eval:prompts -- --offline` in build-and-offline-evals.
   #
   # It is also deliberately not a required check: a quota error must not block a
-  # merge. See docs/CI.md.
+  # merge. The input default keeps a routine dispatch cheap: someone triggering the
+  # workflow to smoke-test production does not spend the quota by accident.
   live-prompt-evals:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.live_prompt_evals == true
     steps:
       - name: Check GROQ_API_KEY availability
         id: check
