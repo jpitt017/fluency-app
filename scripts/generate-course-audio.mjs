@@ -655,6 +655,13 @@ async function voiceCheck(onlyKeys = null) {
     ].join(' '),
   });
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
+  // Also as an annotation, so the measured pace is readable from the API on a
+  // headless run: the step log sits behind a presigned blob URL that some
+  // clients cannot fetch, and the step summary has no API endpoint.
+  const measured = clips
+    .map((clip) => `${clip.title}: ${clip.wordsPerMinute} wpm wall clock (${clip.speechSeconds} s speech)`)
+    .join(' | ');
+  console.log(`::notice title=Voice check pace::${measured.replace(/[\r\n]+/g, ' ').slice(0, 4000)}`);
   console.log(`\n${clips.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
 }
 
