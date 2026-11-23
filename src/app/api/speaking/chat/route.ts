@@ -5,6 +5,7 @@ import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { languageRules, safeChatReply } from '@/lib/b1b2/chat-language.mjs';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import {
   sanitizeLearnerText,
   UNTRUSTED_DATA_SYSTEM_RULE,
@@ -56,10 +57,18 @@ export async function POST(req: NextRequest) {
     let groq: Groq;
     try {
       groq = getGroqClient();
-    } catch (err: unknown) {
+    } catch {
       statusCode = 503;
-      errorMessage = err instanceof Error ? err.message : 'Groq API is not configured on the server';
-      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
+      const failure = await providerFailureResponse({
+        admin: supabase,
+        endpoint: ENDPOINT,
+        model: MODEL_ID,
+        error: Object.assign(new Error('GROQ_API_KEY is not configured'), { status: 401 }),
+        workSaved: false,
+        headers: guard.headers,
+      });
+      errorMessage = failure.errorMessage;
+      return failure.response;
     }
 
     const body = (await req.json().catch(() => ({}))) as SpeakingChatBody;
@@ -121,9 +130,18 @@ Guidelines:
 
     return NextResponse.json({ reply }, { headers: guard.headers });
   } catch (err: unknown) {
-    statusCode = 500;
-    errorMessage = err instanceof Error ? err.message : 'Failed to generate conversation reply';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // Chat history is held by the browser and this route stores nothing, so the
+    // conversation survives on screen while the reply fails.
+    const failure = await providerFailureResponse({
+      admin: supabase,
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      error: err,
+      workSaved: false,
+    });
+    statusCode = failure.status;
+    errorMessage = failure.errorMessage;
+    return failure.response;
   } finally {
     await logAiRequest(supabase, {
       endpoint: ENDPOINT,

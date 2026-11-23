@@ -11,6 +11,7 @@ import {
 } from '@/lib/b1b2/feedback-schema';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { recordWeekSubmission } from '@/lib/curriculum/week-models';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
@@ -58,10 +59,20 @@ export async function POST(req: NextRequest) {
     let groq: Groq;
     try {
       groq = getGroqClient();
-    } catch (err: unknown) {
+    } catch {
+      // A missing key is a deployment fault, not something to explain to a
+      // learner, and the message names an env var they cannot change.
       statusCode = 503;
-      errorMessage = err instanceof Error ? err.message : 'Groq API is not configured';
-      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
+      const failure = await providerFailureResponse({
+        admin: supabase,
+        endpoint: ENDPOINT,
+        model: MODEL_ID,
+        error: Object.assign(new Error('GROQ_API_KEY is not configured'), { status: 401 }),
+        workSaved: false,
+        headers: guard.headers,
+      });
+      errorMessage = failure.errorMessage;
+      return failure.response;
     }
 
     const body = (await req.json().catch(() => ({}))) as WritingCorrectBody;
@@ -235,9 +246,19 @@ ${wrapLearnerSubmission(text)}`;
       { headers: guard.headers },
     );
   } catch (err: unknown) {
-    statusCode = 500;
-    errorMessage = err instanceof Error ? err.message : 'Failed to evaluate writing';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // The learner's text lives only in this request until the row is inserted
+    // below, and a failure means it never was. Saying "your work is saved" here
+    // would be a lie, so they are asked to keep it.
+    const failure = await providerFailureResponse({
+      admin: supabase,
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      error: err,
+      workSaved: false,
+    });
+    statusCode = failure.status;
+    errorMessage = failure.errorMessage;
+    return failure.response;
   } finally {
     await logAiRequest(supabase, {
       endpoint: ENDPOINT,

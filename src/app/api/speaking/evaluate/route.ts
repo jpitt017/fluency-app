@@ -11,6 +11,7 @@ import {
 } from '@/lib/b1b2/feedback-schema';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { recordWeekSubmission } from '@/lib/curriculum/week-models';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
@@ -38,10 +39,12 @@ export async function POST(req: NextRequest) {
   let promptTokens = 0;
   let completionTokens = 0;
   let errorMessage: string | null = null;
+  // Declared outside the try so the catch can tell a recording from typed text
+  // and choose wording the learner can actually act on.
+  const audioRequested = (req.headers.get('content-type') || '').includes('multipart/form-data');
 
   try {
-    const contentType = req.headers.get('content-type') || '';
-    const isAudio = contentType.includes('multipart/form-data');
+    const isAudio = audioRequested;
 
     // Speaking with Whisper audio transcription costs 6 units vs 3 for text-only (writing = 2)
     const guard = await enforceAiUsage(supabase, ENDPOINT, isAudio ? 6 : 3);
@@ -53,10 +56,21 @@ export async function POST(req: NextRequest) {
     let groq: Groq;
     try {
       groq = getGroqClient();
-    } catch (err: unknown) {
+    } catch {
+      // Deployment fault, not something to explain to a learner: the message names
+      // an env var they cannot change. Same wording and alert as any other 401.
       statusCode = 503;
-      errorMessage = err instanceof Error ? err.message : 'Groq API is not configured on the server';
-      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
+      const failure = await providerFailureResponse({
+        admin: supabase,
+        endpoint: ENDPOINT,
+        model: MODEL_ID,
+        error: Object.assign(new Error('GROQ_API_KEY is not configured'), { status: 401 }),
+        workSaved: false,
+        workKind: audioRequested ? 'recording' : 'text',
+        headers: guard.headers,
+      });
+      errorMessage = failure.errorMessage;
+      return failure.response;
     }
 
     let weekNumber: number | null = null;
@@ -276,9 +290,23 @@ ${wrapLearnerSubmission(transcript)}`;
       { headers: guard.headers },
     );
   } catch (err: unknown) {
-    statusCode = 500;
-    errorMessage = err instanceof Error ? err.message : 'Failed to evaluate speaking submission';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // The recording is uploaded only as part of this request and the attempt row
+    // is written after evaluation, so a failure leaves nothing stored to retry
+    // from: the learner still has to keep their own copy. (They record in the
+    // browser, so "copy your text" means "keep your recording" in practice; the
+    // sentence is shared so it stays short and consistent.) A typed transcript
+    // is likewise only in this request.
+    const failure = await providerFailureResponse({
+      admin: supabase,
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      error: err,
+      workSaved: false,
+      workKind: audioRequested ? 'recording' : 'text',
+    });
+    statusCode = failure.status;
+    errorMessage = failure.errorMessage;
+    return failure.response;
   } finally {
     await logAiRequest(supabase, {
       endpoint: ENDPOINT,

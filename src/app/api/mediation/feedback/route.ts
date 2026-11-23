@@ -10,6 +10,7 @@ import {
 } from '@/lib/b1b2/feedback-schema';
 import { MEDIATION_FEEDBACK_UNITS, buildMediationAttempt } from '@/lib/b1b2/mediation';
 import { logAiRequest } from '@/lib/b1b2/observability';
+import { providerFailureResponse, reportProviderFailure } from '@/lib/b1b2/provider-failure-response';
 import { UNTRUSTED_DATA_SYSTEM_RULE, sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
 const QUOTA_ENDPOINT = '/api/writing/correct'; // reuse the writing AI quota bucket
@@ -112,8 +113,16 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       statusCode = 503;
-      errorMessage = 'GROQ_API_KEY is not configured';
-      return NextResponse.json({ error: errorMessage }, { status: 503, headers: guard.headers });
+      const failure = await providerFailureResponse({
+        admin: supabase,
+        endpoint: LOG_ENDPOINT,
+        model: MODEL_ID,
+        error: Object.assign(new Error('GROQ_API_KEY is not configured'), { status: 401 }),
+        workSaved: false,
+        headers: guard.headers,
+      });
+      errorMessage = failure.errorMessage;
+      return failure.response;
     }
 
     const body = (await req.json().catch(() => ({}))) as FeedbackBody;
@@ -174,10 +183,22 @@ export async function POST(req: NextRequest) {
       confidence = parseConfidence(parsed.confidence);
       corrections = parseCorrections(parsed.corrections);
     } catch (error) {
-      // An unavailable assessor is a low-confidence signal, never a lost submission.
-      errorMessage = error instanceof Error ? error.message : 'Mediation feedback failed';
+      // An unavailable assessor is a low-confidence signal, never a lost submission:
+      // the attempt is still inserted below and the learner keeps their work, so
+      // this path says "saved" truthfully. A dead key still needs to reach a human,
+      // which reportProviderFailure does (log + alert for 401/429/daily quota).
+      const reported = await reportProviderFailure({
+        admin: supabase,
+        endpoint: LOG_ENDPOINT,
+        model: MODEL_ID,
+        error,
+        workSaved: true,
+      });
+      errorMessage = reported.errorMessage;
+      // Zero confidence already routes this attempt to a teacher through
+      // decideMediationReview (low_ai_confidence), which is exactly right when the
+      // criteria below are placeholders rather than real feedback.
       confidence = 0;
-      console.error(`${LOG_ENDPOINT} assessor failed`, error);
     }
 
     const { count: priorAttempts } = await supabase
@@ -268,8 +289,18 @@ export async function POST(req: NextRequest) {
       { headers: guard.headers },
     );
   } catch (error) {
+    // Failures before the insert are things like a bad body or a rejected write,
+    // not the provider: describe them, but keep the learner's copy generic and
+    // never echo err.message, which can quote SQL or an env var name.
+    const reported = await reportProviderFailure({
+      admin: supabase,
+      endpoint: LOG_ENDPOINT,
+      model: MODEL_ID,
+      error,
+      workSaved: false,
+    });
     statusCode = 500;
-    errorMessage = error instanceof Error ? error.message : 'Mediation feedback failed';
+    errorMessage = reported.errorMessage;
     console.error(`${LOG_ENDPOINT} failed`, error);
     return NextResponse.json(
       { error: 'Mediation feedback is temporarily unavailable. Please try again.' },
