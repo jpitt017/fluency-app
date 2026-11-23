@@ -265,6 +265,7 @@ jobs:
           echo "re-applying the additive migrations (must be no-ops)"
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0044_repair_deletion_function.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
       - name: Stop local Supabase

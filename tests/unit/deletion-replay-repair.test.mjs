@@ -6,8 +6,9 @@ import { readFileSync } from 'node:fs';
  * 0011/0013/0024 build delete_my_learning_data() as a list of plain deletes that
  * name four tables no migration creates, and a reset block that writes `xp`
  * where the column is `xp_total`. A database replayed from this repo therefore
- * cannot delete anything, while live can. 0041 repairs the definition as it
- * runs; these tests pin the rules it applies, using the real 0024 body.
+ * cannot delete anything, while live can. 0044 repairs the definition -- 0040
+ * and 0041 are already applied on live, so they stay as they are. These tests
+ * pin the rules 0044 applies, using the real 0024 body.
  */
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -17,7 +18,7 @@ const body = source.slice(start, source.indexOf('$$;', source.indexOf('as $$', s
 
 const OPTIONAL = ['vocabulary_review_items', 'cefr_checkpoint_attempts', 'cefr_objective_progress', 'progress_logs'];
 
-/** The SQL 0041 runs, applied to a function definition the way Postgres would. */
+/** The SQL 0044 runs, applied to a function definition the way Postgres would. */
 function repair(text) {
   const guarded = text.replace(
     /delete from public\.([a-z_]+) where user_id = v_uid;/g,
@@ -66,10 +67,23 @@ test('the repair is idempotent: running it twice changes nothing', () => {
   assert.equal(repair(once), once);
 });
 
-test('0041 applies both repairs, and adds only its own branch', () => {
-  const migration = read('supabase-b1-b2/migrations/0041_deletion_covers_week_practice.sql');
+test('0044 applies the repairs and covers every practice table', () => {
+  const migration = read('supabase-b1-b2/migrations/0044_repair_deletion_function.sql');
   assert.match(migration, /if to_regclass\(''public\.\\1''\) is not null then/);
   assert.match(migration, /xp_total             = 0/);
-  assert.match(migration, /'week_vocabulary_attempts'/);
-  assert.ok(!migration.includes("'week_grammar_attempts'"), '0042 owns the grammar branch');
+  for (const table of ['week_vocabulary_attempts', 'week_grammar_attempts', 'week_input_answers']) {
+    assert.ok(migration.includes(`'${table}'`), `0044 does not cover ${table}`);
+  }
+  // The reset must match live, which restarts the learner's journey.
+  assert.match(migration, /current_week         = 1/);
+});
+
+test('the applied migrations 0040 and 0041 are left alone', () => {
+  for (const file of ['0040_vocabulary_attempts.sql', '0041_deletion_covers_week_practice.sql']) {
+    const migration = read(`supabase-b1-b2/migrations/${file}`);
+    assert.ok(
+      !migration.includes('to_regclass'),
+      `${file} is already applied on live; the repair belongs in a new migration`,
+    );
+  }
 });

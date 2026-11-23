@@ -17,15 +17,12 @@ drop policy if exists "read own vocabulary attempts" on public.week_vocabulary_a
 create policy "read own vocabulary attempts" on public.week_vocabulary_attempts for select to authenticated using (user_id = auth.uid());
 
 do $$
-declare
-  definition text;
-  anchor_pattern text := 'delete from public\.ai_usage_events where user_id = [^;]*;';
+declare definition text; anchor text := 'delete from public.ai_usage_events where user_id = v_uid;';
 begin
   select pg_get_functiondef('public.delete_my_learning_data()'::regprocedure) into definition;
   if position('public.week_vocabulary_attempts' in definition) = 0 then
-    if definition !~ anchor_pattern then raise exception 'Deletion RPC anchor missing'; end if;
-    definition := regexp_replace(definition, anchor_pattern,
-      '\&' || chr(10) || '  delete from public.week_vocabulary_attempts where user_id = v_uid;');
+    if position(anchor in definition) = 0 then raise exception 'Deletion RPC anchor missing'; end if;
+    definition := replace(definition, anchor, anchor || chr(10) || '  delete from public.week_vocabulary_attempts where user_id = v_uid;');
     execute definition;
   end if;
 end $$;

@@ -16,33 +16,9 @@ begin
     raise exception 'Deletion RPC anchor missing';
   end if;
 
-  -- 0011 and 0024 both build this function as a list of plain deletes, and some
-  -- of the tables they name (vocabulary_review_items, cefr_checkpoint_attempts,
-  -- cefr_objective_progress, progress_logs) are never created by any migration.
-  -- Live's function guards each optional delete with to_regclass, but that guard
-  -- exists in no migration here, so a freshly built database cannot delete
-  -- anything: the first missing table aborts the transaction. Repair the deletes
-  -- in place, then add the new branches the same way.
-  definition := regexp_replace(
-    definition,
-    'delete from public\.([a-z_]+) where user_id = v_uid;',
-    'if to_regclass(''public.\1'') is not null then '
-      || 'execute ''delete from public.\1 where user_id = $1'' using v_uid; end if;',
-    'g'
-  );
-
-  -- The reset block writes `xp`, and profiles has only ever had `xp_total`
-  -- (0002), so that update fails with 42703 and rolls back the whole deletion.
-  definition := replace(definition, 'xp                   = 0', 'xp_total             = 0');
-  definition := replace(definition, 'xp = 0,', 'xp_total = 0,');
-
-  execute definition;
-
-  -- Add the branches from the repaired definition, so an extra regexp pass
-  -- cannot turn the new lines into a second guard around themselves.
-  select pg_get_functiondef('public.delete_my_learning_data()'::regprocedure) into definition;
   foreach branch in array array[
-    'week_vocabulary_attempts'
+    'week_vocabulary_attempts',
+    'week_grammar_attempts'
   ] loop
     if position('public.' || branch in definition) = 0 then
       definition := replace(
