@@ -767,6 +767,33 @@ test('the voice check reads the three requested clips, at the course pace and se
   assert.deepEqual(uploaded.map((item) => item.contentType), ['audio/mpeg', 'audio/mpeg', 'audio/mpeg']);
 });
 
+test('a multi-turn clip keeps a real gap between its turns', async (t) => {
+  // Without a boundary between sampled lines, three turns would be spliced into
+  // one breathless run and the clip would report a pace it does not have.
+  const dir = await mkdtemp(path.join(tmpdir(), 'clip-gaps-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const week3 = weeks.find((item) => item.week === 3);
+  const marta = parseScript(week3.script, 'Dan').filter((line) => line.speaker === 'Marta').slice(1, 3);
+  const lines = marta.map((line) => ({ speaker: 'Marta', text: line.text, lineIndex: line.index }));
+
+  const clip = await generateClip({
+    key: 'gap-check',
+    title: 'gap check',
+    lines,
+    outputDir: dir,
+    apiKey: 'k',
+    fetchImpl: async () => new Response(fakePcm(2), { status: 200 }),
+    encoder: async (wav, outFile) => writeFile(outFile, wav.subarray(0, 32)),
+  });
+
+  const sentenceCount = lines.reduce((sum, line) => sum + splitSentences(line.text).length, 0);
+  const expected =
+    sentenceCount * 2 + // two seconds of PCM per sentence
+    (sentenceCount - lines.length) * PACE_PROFILES.b1.sentencePauseSeconds +
+    (lines.length - 1) * PACE_PROFILES.b1.paragraphPauseSeconds;
+  assert.equal(clip.durationSeconds, +expected.toFixed(2), 'one paragraph gap between turns, sentences inside them');
+});
+
 test('the Week 3 sample reads three of each speaker\'s longest lines, at the course pace', async (t) => {
   const dir = await mkdtemp(path.join(tmpdir(), 'week-sample-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
