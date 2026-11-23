@@ -91,11 +91,12 @@ export const SPEAKER_VOICES = {
     accent: 'northern English',
     // Clearly enthusiastic about the course: the most animated voice here.
     //
-    // Replaced after the Week 1-4 listen. That pass was then reviewed and came
-    // out too slow and too flat, so this voice now reads slightly *quicker* than
-    // the course pace (0.85) with the lowest stability and the highest style on
-    // the course: `speed` alone was not the problem — the delivery was even.
-    settings: { stability: 0.25, style: 0.55, speed: 0.85 },
+    // Replaced after the Week 1-4 listen, then twice reviewed for pace and
+    // energy. He is the only voice faster than the course pace (0.95), and
+    // carries both the lowest stability and the highest style on the course:
+    // flatness was as much of the problem as tempo, so this is deliberately the
+    // liveliest read in the course rather than merely the quickest.
+    settings: { stability: 0.25, style: 0.7, speed: 0.95 },
   },
   Dan: {
     voice: 'sBU90Bu4NCleWDoNkGog',
