@@ -240,6 +240,22 @@ jobs:
           trap report_failure ERR
           supabase init
           supabase start
+      - name: Check every migration number is unique
+        shell: bash
+        # Two files shared 0040 for a while (ai_failure_alerts and
+        # vocabulary_attempts). Both replayed cleanly on their own, so nothing
+        # failed until someone tried to record them in a migration history keyed
+        # by that number. Catch the next one at the point it is introduced.
+        run: |
+          set -euo pipefail
+          dups=$(ls supabase-b1-b2/migrations/*.sql | xargs -n1 basename \
+                 | sed 's/_.*//' | sort | uniq -d)
+          if [ -n "$dups" ]; then
+            echo "::error::Duplicate migration numbers: $dups"
+            exit 1
+          fi
+          echo "all $(ls supabase-b1-b2/migrations/*.sql | wc -l) migration numbers are unique"
+
       - name: Replay every migration, then test both application orders
         shell: bash
         run: |
