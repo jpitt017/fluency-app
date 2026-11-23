@@ -327,7 +327,7 @@ confidence to 0, which routes the attempt to a teacher as `low_ai_confidence`.
 Alerts are emailed for the failures a learner cannot retry their way out of:
 auth (401/403), rate limit (429) and the daily quota. A timeout or a one-off 500 is
 logged and not emailed. Alerts reuse the Resend settings above, are grouped per
-endpoint and failure kind by `ai_failure_alerts` (migration 0040) for ten minutes,
+endpoint and failure kind by `ai_failure_alerts` (migration 0045) for ten minutes,
 and contain no learner data — no address, text, transcript or user id. If the
 table or mail settings are missing, the alert is still attempted once per call and
 the fault is always in the server log; a broken key must never fail silently.
