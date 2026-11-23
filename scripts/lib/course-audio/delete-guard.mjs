@@ -109,12 +109,21 @@ export function assertTrialTrackKey(key, bucket = AUDIO_BUCKET) {
 
 /**
  * Anything the pipeline uploads to, or signs from, the review bucket. That is the
- * track files plus the per-speaker voice-check clips, and nothing else.
+ * track files, the per-speaker voice-check clips, and the per-speaker sample
+ * clips (week 3's warmer read), and nothing else. Samples are audition material
+ * only: they are never released and never referenced by an approval row.
  */
 export function assertReviewKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
   assertTrialObjectKey(key, bucket);
   const name = key.slice(TRIAL_PREFIX.length);
-  if (/^voice-check-[A-Za-z]+\.mp3$/.test(name)) return key;
+  // Audition clips only exist in the private review bucket: a voice check or a
+  // sample is never a learner-facing file.
+  if (/^voice-check-[A-Za-z]+\.mp3$/.test(name) || /^week-[1-4]-sample-[A-Za-z]+\.mp3$/.test(name)) {
+    if (bucket !== DEFAULT_REVIEW_BUCKET) {
+      throw new Error(`Refusing "${key}": audition clips only live in ${DEFAULT_REVIEW_BUCKET}`);
+    }
+    return key;
+  }
   return assertTrialTrackKey(key, bucket);
 }
 

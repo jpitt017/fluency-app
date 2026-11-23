@@ -11,6 +11,9 @@
 #                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
 #                attach them as the `review` artifact (MP3 + WebVTT, 3 days) and
 #                print the state. Never prints a signed link.
+#   voice-sample re-audition one week on a few of each speaker's own lines, at a
+#                given pace (default `warm`: speed 0.8, longer pauses), with that
+#                week's voice settings. Nothing is re-recorded or released.
 #   review       print a 1-hour signed listening link for the weeks chosen
 #   release      approve reviewed weeks: copy them to the public `course-audio`
 #                bucket, set audio_url + released = true, so /week/[n] shows the
@@ -36,14 +39,19 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'voice-check | generate | review | release | revoke | delete | list'
+        description: 'voice-check | voice-sample | generate | review | release | revoke | delete | list'
         type: choice
-        options: [voice-check, generate, review, release, revoke, delete, list]
+        options: [voice-check, voice-sample, generate, review, release, revoke, delete, list]
         default: voice-check
       weeks:
-        description: 'Weeks to act on (comma separated, 1–4; ignored by voice-check)'
+        description: 'Weeks to act on (comma separated, 1–4; ignored by voice-check, one week only for voice-sample)'
         type: string
         default: '1,2,3,4'
+      pace:
+        description: 'voice-sample: pace profile (warm | b1)'
+        type: choice
+        options: [warm, b1]
+        default: warm
       dry_run:
         description: 'generate: report speakers and length, generate nothing'
         type: boolean
@@ -89,11 +97,11 @@ jobs:
       - run: npm ci
 
       - name: Install ffmpeg (MP3 encoding)
-        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' }}
+        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' }}
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Check ELEVENLABS_API_KEY availability
-        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' }}
+        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' }}
         env:
           ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
@@ -145,6 +153,22 @@ jobs:
         with:
           name: voice-check
           path: voice-check/
+          retention-days: 3
+
+      # Three of each speaker's own lines, at the week's pace and voice settings,
+      # before a whole track is re-recorded. No approval row is touched.
+      - name: Voice sample — a few of each speaker's lines
+        if: ${{ inputs.mode == 'voice-sample' }}
+        run: node scripts/generate-course-audio.mjs --voice-sample "${{ inputs.weeks }}" --pace "${{ inputs.pace }}"
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
+      - name: Voice sample clips for a listen
+        if: ${{ inputs.mode == 'voice-sample' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: week-sample
+          path: voice-samples/
           retention-days: 3
 
       - name: Generate, upload unreleased, record approval state

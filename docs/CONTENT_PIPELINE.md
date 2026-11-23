@@ -196,9 +196,15 @@ replacing is replaced before any track depends on it.
 2. speaks every line with that speaker's own ElevenLabs voice — Host = southern
    English, Ellie = Scottish, Aisha = London, Tom = northern English, Dan =
    Welsh, Marta = West Midlands, Joanne = Yorkshire. The accent comes from the
-   voice itself: no instruction or prompt tries to change it;
-3. holds a slightly slower B1 pace (`speed: 0.9`, about 135 words a minute) and
-   inserts a 0.35 s gap between lines and 0.6 s between paragraphs;
+   voice itself: no instruction or prompt tries to change it. Voice settings are
+   per speaker: everyone uses `VOICE_SETTINGS`, and a speaker may carry a
+   `settings` override. Week 3 is two flatmates who get on well, so Dan and Marta
+   sit at `stability: 0.38, style: 0.25` (less even, more life in the line);
+   every other speaker keeps 0.45 / 0;
+3. holds a slightly slower B1 pace (`speed: 0.9`) and inserts a 0.35 s gap
+   between lines and 0.6 s between paragraphs. The pace is a named profile in
+   `PACE_PROFILES` (`scripts/lib/course-audio/tts.mjs`): `b1` is that original,
+   and `warm` is 0.8 speed with 0.55 s / 0.9 s gaps for conversational scenes;
 4. encodes one MP3 and one WebVTT file per track, with one caption cue per line
    timed to the audio;
 5. uploads both to the **private** `course-audio-review` bucket under
@@ -219,9 +225,18 @@ one. They are never written into the step summary, because GitHub redacts the
 token when it renders the page — a link in a summary is unusable, and a link in a
 log is a link in a screenshot.
 
-**Artifacts.** `<mode> generate` attaches `review` (MP3 + WebVTT per week) and
-`mode: voice-check` attaches `voice-check` (one clip per speaker). Both are kept
-for three days and are the supported way to listen, including on a phone.
+**Artifacts.** `mode: generate` attaches `review` (MP3 + WebVTT per week),
+`mode: voice-check` attaches `voice-check` (one clip per speaker), and
+`mode: voice-sample` attaches `week-sample`. All are kept for three days and are
+the supported way to listen, including on a phone.
+
+**Changing a voice before re-recording.** `mode: voice-sample` takes exactly one
+week. It speaks the first three authored lines of each of that week's speakers —
+verbatim, in script order, one MP3 per speaker — with that week's voice settings
+and the chosen `pace` input (`warm` by default). The clips land in the private
+review bucket as `weeks-01-04/ai-trial/week-N-sample-<Speaker>.mp3`, are attached
+as the `week-sample` artifact, and touch neither the week's track nor its
+approval row. The listening script is never edited to make a sample.
 
 ### Speech model
 

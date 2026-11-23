@@ -11,6 +11,7 @@ import {
   isConfirmed,
   isTrialFileName,
   trialObjectKeys,
+  assertReviewKey,
 } from '../../scripts/lib/course-audio/delete-guard.mjs';
 import { planTrialDeletion, runTrialDeletion } from '../../scripts/lib/course-audio/delete-plan.mjs';
 
@@ -131,6 +132,33 @@ test('object keys are confined to weeks-01-04/ai-trial and reject traversal', ()
   assert.throws(() => assertDeletableKeys([]), /Refusing to delete nothing/);
   assert.throws(() => assertDeletableKeys(['weeks-01-04/ai-trial/../../x']), /Refusing/);
   assert.deepEqual(assertDeletableKeys(trialObjectKeys(3)), trialObjectKeys(3));
+});
+
+test('a review key is a track, a voice check, or a per-speaker sample — nothing else', () => {
+  for (const key of [
+    'weeks-01-04/ai-trial/week-3-listening.mp3',
+    'weeks-01-04/ai-trial/week-3-listening.vtt',
+    'weeks-01-04/ai-trial/voice-check-Marta.mp3',
+    'weeks-01-04/ai-trial/week-3-sample-Dan.mp3',
+    'weeks-01-04/ai-trial/week-3-sample-Marta.mp3',
+  ]) {
+    assert.equal(assertReviewKey(key), key);
+  }
+  for (const key of [
+    'weeks-01-04/ai-trial/week-3-sample-Dan.wav',
+    'weeks-01-04/ai-trial/week-5-sample-Dan.mp3',
+    'weeks-01-04/ai-trial/week-3-sample-Dan.mp3.bak',
+    'weeks-01-04/ai-trial/sample-Dan.mp3',
+    'weeks-01-04/ai-trial/voice-check-Marta.wav',
+    'weeks-01-04/ai-trial/notes.txt',
+  ]) {
+    assert.throws(() => assertReviewKey(key), /Refusing/, `should refuse ${key}`);
+  }
+  // A sample is audition material, so it can never be uploaded to the live bucket.
+  assert.throws(
+    () => assertReviewKey('weeks-01-04/ai-trial/week-3-sample-Dan.mp3', 'course-audio'),
+    /Refusing/,
+  );
 });
 
 test('a week must be a whole number from 1 to 4, so it cannot smuggle a path', () => {

@@ -53,22 +53,39 @@ export const PCM_BYTES_PER_SAMPLE = 2;
  * regional accents, and no two speakers sharing a voice inside one track.
  *
  * The IDs are fixed by the course spec. `name` and `accent` are for reviewers;
- * nothing here is sent to the API except the ID.
+ * only `voice` and an optional `settings` override reach the API.
+ *
+ * `settings` is per speaker, on purpose: one scene needs a warmer register than
+ * another, and that is a property of the character, not of the track. Week 3 is
+ * two flatmates who get on well, so Dan and Marta sit at a lower stability (more
+ * expressive, less even) with some style (more life in the line) than the
+ * default voices. Everything unset falls back to VOICE_SETTINGS.
  */
 export const SPEAKER_VOICES = {
   Host: { voice: 'sp7QaEHmiNEd5HgrXuOo', name: 'Jack Anthony', accent: 'southern English' },
   Ellie: { voice: 'VGEVi3E0hARQ99wIXvJG', name: 'Jenny', accent: 'Scottish' },
   Aisha: { voice: 'jUPSOpRcPt8GMPsWx5fy', name: 'Ruby B', accent: 'London' },
   Tom: { voice: 'EtGAAwTx6aMveVbqUxuU', name: 'Joseph', accent: 'northern English' },
-  Dan: { voice: 'sBU90Bu4NCleWDoNkGog', name: 'Richard', accent: 'Welsh' },
-  Marta: { voice: 'FmIJwVFU62n8jITpotTp', name: 'Susie', accent: 'West Midlands' },
+  Dan: {
+    voice: 'sBU90Bu4NCleWDoNkGog',
+    name: 'Richard',
+    accent: 'Welsh',
+    // Friendly, warm flatmate: a little less even, a little more animated.
+    settings: { stability: 0.38, style: 0.25 },
+  },
+  Marta: {
+    voice: 'FmIJwVFU62n8jITpotTp',
+    name: 'Susie',
+    accent: 'West Midlands',
+    settings: { stability: 0.38, style: 0.25 },
+  },
   Joanne: { voice: 'ZR8ruiC9tbg7bV9RmBmC', name: 'Miri', accent: 'Yorkshire' },
 };
 
 /**
  * Voice settings shared by every line. Stability sits mid-range so repeated
- * lines sound the same without flattening the delivery; `speed` is set per
- * request from the rate above.
+ * lines sound the same without flattening the delivery; `speed` comes from the
+ * pace profile below, and any per-speaker override is applied on top.
  */
 export const VOICE_SETTINGS = {
   stability: 0.45,
@@ -77,10 +94,44 @@ export const VOICE_SETTINGS = {
   use_speaker_boost: true,
 };
 
-/** How long a silent gap is inserted between two spoken lines. */
-export const LINE_PAUSE_SECONDS = 0.35;
-/** A little longer where the script starts a new paragraph. */
-export const PARAGRAPH_PAUSE_SECONDS = 0.6;
+/**
+ * The pace and pause profile a run uses.
+ *
+ * `b1` is the original: 0.9 speed, 0.35 s between lines, 0.6 s between
+ * paragraphs. `warm` is the slower, roomier reading for a conversational scene:
+ * 0.8 speed with longer gaps, so learners get a beat between turns. Both are
+ * exported so the workflow can pass one by name and the tests can pin both.
+ */
+export const PACE_PROFILES = {
+  b1: { speed: B1_SPEECH_RATE, linePauseSeconds: 0.35, paragraphPauseSeconds: 0.6 },
+  warm: { speed: 0.8, linePauseSeconds: 0.55, paragraphPauseSeconds: 0.9 },
+};
+
+export const DEFAULT_PACE = 'b1';
+
+/** Resolves a profile name, or a partial object, into a complete pace. */
+export function resolvePace(pace = DEFAULT_PACE) {
+  if (pace && typeof pace === 'object') {
+    return { ...PACE_PROFILES[DEFAULT_PACE], ...pace };
+  }
+  const profile = PACE_PROFILES[pace];
+  if (!profile) {
+    throw new Error(`Unknown pace "${pace}": use one of ${Object.keys(PACE_PROFILES).join(', ')}`);
+  }
+  return { ...profile };
+}
+
+/** The settings actually sent for a speaker: defaults, then the voice's override. */
+export function voiceSettingsFor(speaker, rate) {
+  const config = SPEAKER_VOICES[speaker];
+  if (!config) throw new Error(`No voice configured for speaker "${speaker}"`);
+  return { ...VOICE_SETTINGS, ...(config.settings ?? {}), speed: rate };
+}
+
+/** How long a silent gap is inserted between two spoken lines (the `b1` pace). */
+export const LINE_PAUSE_SECONDS = PACE_PROFILES.b1.linePauseSeconds;
+/** A little longer where the script starts a new paragraph (the `b1` pace). */
+export const PARAGRAPH_PAUSE_SECONDS = PACE_PROFILES.b1.paragraphPauseSeconds;
 
 /**
  * Splits an authored script ("Host: …\n\nEllie: …") into speaker turns.
@@ -162,7 +213,7 @@ export function buildSpeechRequest(speaker, text, rate = B1_SPEECH_RATE) {
     body: {
       text,
       model_id: TTS_MODEL,
-      voice_settings: { ...VOICE_SETTINGS, speed: rate },
+      voice_settings: voiceSettingsFor(speaker, rate),
     },
   };
 }
@@ -299,11 +350,12 @@ export function pcmDurationSeconds(pcm, sampleRate = PCM_SAMPLE_RATE) {
  */
 export function scheduleTrack(turns, options = {}) {
   const sampleRate = options.sampleRate ?? PCM_SAMPLE_RATE;
+  const pace = resolvePace(options.pace);
   const cues = [];
   let cursor = 0;
   turns.forEach((turn, position) => {
     const newParagraph = options.paragraphStarts?.[position] ?? turn.newParagraph ?? false;
-    cursor += pauseBeforeLine(position + 1, newParagraph);
+    cursor += pauseBeforeLine(position + 1, newParagraph, pace);
     const duration = pcmDurationSeconds(turn.pcm, sampleRate);
     cues.push({
       index: options.lineIndexes?.[position] ?? position + 1,
@@ -321,16 +373,17 @@ export function scheduleTrack(turns, options = {}) {
  * Total gap in seconds before the given line position (1-based, as in the
  * published captions), used to build the audio.
  */
-export function pauseBeforeLine(linePosition, newParagraph) {
+export function pauseBeforeLine(linePosition, newParagraph, pace = PACE_PROFILES[DEFAULT_PACE]) {
   if (linePosition <= 1) return 0;
-  return newParagraph ? PARAGRAPH_PAUSE_SECONDS : LINE_PAUSE_SECONDS;
+  const resolved = resolvePace(pace);
+  return newParagraph ? resolved.paragraphPauseSeconds : resolved.linePauseSeconds;
 }
 
 /** Assembles the finished PCM track with the same gaps used by scheduleTrack. */
-export function assembleTrack(turns) {
+export function assembleTrack(turns, pace = PACE_PROFILES[DEFAULT_PACE]) {
   const parts = [];
   turns.forEach((turn, position) => {
-    const pause = pauseBeforeLine(position + 1, turn.newParagraph);
+    const pause = pauseBeforeLine(position + 1, turn.newParagraph, pace);
     if (pause > 0) parts.push(silence(pause));
     parts.push(turn.pcm);
   });
