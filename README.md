@@ -132,6 +132,116 @@ also sends nothing. Nothing under `tests/` or `scripts/` may call `signUp`,
 the app's own `/login` page may, for real people. `tests/unit/no-auth-email.test.mjs`
 enforces this in CI, for scripts and for `.github/workflows/`.
 
+## Creating and managing pilot learners
+
+While the project is a pilot without custom SMTP, **no auth email can be sent**:
+Supabase's built-in mailer is limited to a couple of messages an hour and is not
+for production use. Accounts are therefore created and recovered by hand through
+the **admin API** (or the SQL editor, which reaches the same tables). Nothing
+below sends mail.
+
+### One switch for the email-based login options
+
+The login page reflects this: the magic-link button and the "Forgot password?"
+link are hidden behind one setting, `NEXT_PUBLIC_EMAIL_LINKS_ENABLED`. It is **off unless set to exactly `true`**, so
+a pilot deployment never offers a control that can only fail. While it is off,
+learners see "Forgot your password? Message your teacher." Turn both buttons back
+on only after custom SMTP is configured and the templates in
+[`docs/AUTH_EMAIL_TEMPLATES.md`](docs/AUTH_EMAIL_TEMPLATES.md) are pasted.
+
+### Create a pilot learner
+
+Prerequisites: the production service-role key and project URL. The address must
+be one the learner actually owns; a temporary password is handed over out of band
+and changed on first sign-in.
+
+```bash
+export SUPABASE_URL="https://ebzmkhrssgnzmixfsuso.supabase.co"
+export SERVICE_ROLE_KEY="…"   # Supabase → Settings → API → service_role
+export LEARNER_EMAIL="learner@example.com"
+export TEMP_PASSWORD="Pilot-$(openssl rand -hex 6)"
+```
+
+1. **Create the user, confirmed, so no email is queued:**
+
+```bash
+curl -sS -X POST "$SUPABASE_URL/auth/v1/admin/users" \
+  -H "apikey: $SERVICE_ROLE_KEY" \
+  -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$LEARNER_EMAIL\",\"password\":\"$TEMP_PASSWORD\",\"email_confirm\":true}" \
+  | jq '{id, email, email_confirmed_at, confirmation_sent_at}'
+```
+
+`email_confirm: true` is the whole point: the account is usable immediately and
+`confirmation_sent_at` stays **null**. The `on_auth_user_created` trigger inserts
+the `profiles`, `skill_levels` and `enrollments` rows automatically.
+
+2. **Confirm the role and grant the pilot tier.** The role must be `learner`, or
+`teacher_set_pilot` refuses it. Pilot membership is a row in `pilot_learners`,
+not a column:
+
+```sql
+-- Replace the address.
+with learner as (
+  select id from public.profiles where email = 'learner@example.com' and role = 'learner'
+)
+insert into public.pilot_learners (user_id, assigned_by)
+select l.id, (select id from public.profiles where role = 'admin' order by created_at limit 1)
+from learner l
+on conflict (user_id) do nothing;
+```
+
+3. **Verify what the learner will actually get.** This calls the same function the
+app calls:
+
+```sql
+-- profiles has the app-side fields; auth.users has the auth-side ones
+-- (email_confirmed_at, confirmation_sent_at). Join both.
+select p.email, p.role, (pl.user_id is not null) as is_pilot,
+       u.email_confirmed_at, u.confirmation_sent_at
+from public.profiles p
+left join public.pilot_learners pl on pl.user_id = p.id
+left join auth.users u on u.id = p.id
+where p.email = 'learner@example.com';
+-- email_confirmed_at set and confirmation_sent_at null == no email was sent.
+-- Tier comes from get_ai_usage_status(): pilot = 120 units/day, 12 requests/minute.
+```
+
+Then hand over the address and `$TEMP_PASSWORD`, and ask them to change it at
+**/login?mode=update-password** on first sign-in.
+
+### Reset a learner's password
+
+There is no self-service reset without SMTP, so set a new temporary password
+through the admin API. Nothing is emailed; give the new password to the learner
+directly.
+
+```bash
+USER_ID=$(curl -sS "$SUPABASE_URL/auth/v1/admin/users?page=1&per_page=200" \
+  -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  | jq -r '.users[] | select(.email=="'"$LEARNER_EMAIL"'") | .id')
+
+curl -sS -X PUT "$SUPABASE_URL/auth/v1/admin/users/$USER_ID" \
+  -H "apikey: $SERVICE_ROLE_KEY" \
+  -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$TEMP_PASSWORD\"}"
+```
+
+The learner's data, band, streak and pilot membership are untouched. Ask them to
+set their own password at **/login?mode=update-password** — that form uses
+`updateUser`, which needs the session they already have and sends no email.
+
+### When email is available again
+
+1. Configure custom SMTP for a domain you control.
+2. Paste the five templates from
+   [`docs/AUTH_EMAIL_TEMPLATES.md`](docs/AUTH_EMAIL_TEMPLATES.md).
+3. Set `NEXT_PUBLIC_EMAIL_LINKS_ENABLED=true` and redeploy: the magic link and
+   "Forgot password?" come back, and "Message your teacher" disappears.
+4. Run the three-flow check in that doc (admin `generate_link`, no email sent).
+
 ### Pilot navigation
 
 Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. Signed-in learners use their server-calculated current week across devices. Signed-out visitors use the last week opened in this browser, defaulting to Week 1.
