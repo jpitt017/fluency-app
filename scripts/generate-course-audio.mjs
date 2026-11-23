@@ -3,11 +3,10 @@
  * Audio pipeline for Fluency Studio.
  *
  * Weeks 1-4 listening (the current production path, ElevenLabs voices):
- *   --voice-check       a few real lines per speaker -> private review bucket:
- *                       one clip per speaker plus the named step clips (Ellie's
- *                       longest Week 1 answer, Tom's first two Week 2 lines,
- *                       Aisha's "Oh, that's great", three Week 3 turns, Joanne's
- *                       opening paragraph), at the course pace and settings
+ *   --voice-check       the reviewed lines -> private review bucket: Tom's first
+ *                       two Week 2 lines, Marta's three longest Week 3 turns and
+ *                       Ellie's longest Week 1 answer, at the course pace and
+ *                       settings
  *   --voice-sample N    three of Week N's own lines per speaker, at the given
  *                       pace and with that speaker's voice settings, so a
  *                       warmer or slower reading can be approved before the
@@ -563,14 +562,13 @@ function reviewReport(report) {
 }
 
 /**
- * Auditions all seven voices on real lines from the weeks they speak in, at the
- * course pace and with each speaker's own settings.
+ * Auditions the lines a listening review asks for by name, at the course pace
+ * and with each speaker's own settings.
  *
- * One MP3 per speaker, plus the named step clips a review asks for by name:
- * Ellie's longest Week 1 answer, Tom's first two Week 2 lines, Aisha's "Oh,
- * that's great", three Week 3 turns and Joanne's opening paragraph. Each clip's
- * words per minute is reported, measured from the assembled timeline (words
- * actually spoken over the wall-clock length, pauses included), not estimated.
+ * One MP3 per request: Tom's first two Week 2 lines, Marta's three longest Week 3
+ * turns and Ellie's longest Week 1 answer. Each clip's words per minute is
+ * reported, measured from the assembled timeline (words actually spoken over the
+ * wall-clock length, pauses included), not estimated.
  *
  * The MP3s go to ./voice-check/, which the workflow uploads as the
  * `voice-check` artifact for three days: that is the route to listen to them,
@@ -603,15 +601,16 @@ async function voiceCheck() {
     );
   }
   const summary = reviewReport({
-    title: 'Voice check — real lines, course pace',
+    title: 'Voice check — real lines, new pace',
     artifact: 'voice-check',
     rows: clips.map((clip) => ({
       label: clip.title,
       detail: `${clip.durationSeconds}s · ${clip.words} words · ${clip.wordsPerMinute} wpm`,
     })),
     footer: [
-      'Tom 0.3/0.4, Aisha 0.35/0.3, Joanne 0.35/0.35, Dan and Marta 0.38/0.25,',
-      'Host and Ellie unchanged. Nothing is released: these clips are for approval only.',
+      'New voices: Tom (Jack C) 0.3/0.4 at 0.75, Marta (Katie) 0.3/0.4 at 0.8.',
+      'Pace: 0.3 s between sentences, 0.7 s between speakers, 0.8 s between paragraphs.',
+      'Nothing is released: these clips are for approval only.',
     ].join(' '),
   });
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);

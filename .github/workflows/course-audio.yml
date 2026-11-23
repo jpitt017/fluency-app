@@ -3,11 +3,11 @@
 # Manual only: nothing here runs on a push or a pull request.
 #
 # `mode` is the approval workflow:
-#   voice-check  synthesise a few real lines per speaker (one clip per speaker
-#                plus the named step clips), upload them to the private review
-#                bucket and attach them as the `voice-check` artifact, so the
-#                voices and their settings can be approved before a whole week is
-#                recorded. Reports words per minute per clip.
+#   voice-check  synthesise the lines a review asks for by name (one clip per
+#                request), upload them to the private review bucket and attach
+#                them as the `voice-check` artifact, so the voices and their
+#                settings can be approved before a whole week is recorded.
+#                Reports words per minute per clip.
 #   generate     synthesise the tracks, upload them to `course-audio-review`
 #                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
 #                attach them as the `review` artifact (MP3 + WebVTT, 3 days) and

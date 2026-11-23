@@ -86,11 +86,6 @@ export async function readListeningWeeks(file = DEFAULT_CURRICULUM) {
   return weeks;
 }
 
-/** The speaker named in the first line of a week's script. */
-function firstSpeaker(weekSpec) {
-  return parseScript(weekSpec.script, defaultSpeakerFor(weekSpec))[0]?.speaker ?? null;
-}
-
 /**
  * The longest spoken line of one speaker in a week: the read with the most words
  * to judge a voice's warmth and energy on. Ties keep the earlier line, so the
@@ -111,60 +106,20 @@ export function longestLineFor(weekSpec, speaker) {
   return best;
 }
 
-/** The authored line that starts with `prefix`, verbatim (first match). */
-export function lineStartingWith(weekSpec, speaker, prefix) {
-  const lines = parseScript(weekSpec.script, defaultSpeakerFor(weekSpec));
-  const line = lines.find((item) => item.speaker === speaker && item.text.startsWith(prefix));
-  if (!line) throw new Error(`Week ${weekSpec.week} has no ${speaker} line starting "${prefix}"`);
-  return { speaker, text: line.text, words: countWords(line.text), lineIndex: line.index };
-}
-
 /**
- * The opening block of a week's script: every authored paragraph up to the
- * first blank line. Week 4 is a monologue whose opening block is the guide's
- * greeting and the Minster stop.
- */
-export function openingBlock(weekSpec) {
-  const blocks = String(weekSpec.script).split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
-  const speaker = firstSpeaker(weekSpec);
-  // The label is a script convention, not something a guide says out loud.
-  const text = blocks[0].replace(/^[A-Z][A-Za-z]{1,20}:\s*/, '');
-  return { speaker, text, words: countWords(text) };
-}
-
-/**
- * The speakers of every week that has an authored script, in week order.
- * `--voice-check` reads this: a review of all four weeks needs every voice that
- * actually speaks, which is all seven.
- */
-export function allSpeakers(weekSpecs) {
-  const seen = [];
-  for (const spec of weekSpecs) {
-    for (const line of parseScript(spec.script, defaultSpeakerFor(spec))) {
-      if (line.speaker && !seen.includes(line.speaker)) seen.push(line.speaker);
-    }
-  }
-  return seen;
-}
-
-/**
- * The voice check: a few *real* lines per speaker, at the course pace and with
- * that speaker's own settings, so the voice a reviewer approves is the voice the
- * track will use.
+ * The voice check: the lines a listening review asks for by name, read at the
+ * course pace with each speaker's own settings, so what is approved is exactly
+ * what the track will use.
  *
- * Every speaker gets one or more lines; the clip is their lines joined as one
- * continuous read, one MP3 per speaker:
+ * One MP3 per request, each line verbatim:
  *
- *   voice-check-<Speaker>.mp3   one clip per speaker, every line they read
- *   ellie-longest.mp3           Ellie's longest Week 1 answer
- *   tom-two-lines.mp3           Tom's first two Week 2 lines
- *   aisha-oh-thats-great.mp3    Aisha's "Oh, that's great" line from Week 2
- *   week-3-three-lines.mp3      Marta's three longest Week 3 turns, then Dan's
- *   joanne-opening.mp3          Joanne's opening paragraph of Week 4
+ *   tom-two-lines.mp3       Tom's first two Week 2 lines
+ *   marta-three-turns.mp3   Marta's three longest Week 3 turns
+ *   ellie-longest.mp3       Ellie's longest Week 1 answer
  *
- * The step clips are what a listening review asks for by name; the per-speaker
- * clip is there so no voice is left unheard. Nothing here touches a track or an
- * approval row.
+ * Three speakers, one per week that changed or that carries the new pace, so a
+ * single listen covers the two replaced voices and the shorter sentence gaps.
+ * Nothing here touches a track or an approval row.
  */
 export function voiceCheckScript(weekSpecs) {
   const week = (number) => weekSpecs.find((spec) => spec.week === number);
@@ -176,42 +131,35 @@ export function voiceCheckScript(weekSpecs) {
     throw new Error('The voice check reads Weeks 1-4; all four scripts must be present');
   }
 
-  // Week 3: the three longest Marta turns (her short interjections are not a
-  // fair read of a voice), then Dan's first two lines so the pair is heard
-  // together.
-  const martaLongest = parseScript(week3.script, defaultSpeakerFor(week3))
+  const toLine = (line) => ({
+    speaker: line.speaker,
+    text: line.text,
+    words: countWords(line.text),
+    lineIndex: line.index,
+  });
+
+  // Marta's three *longest* turns: her short interjections ("Ha! OK.") are not a
+  // fair read of a voice, and the order is script order so the clip flows.
+  const martaTurns = parseScript(week3.script, defaultSpeakerFor(week3))
     .filter((line) => line.speaker === 'Marta')
     .sort((a, b) => countWords(b.text) - countWords(a.text) || a.index - b.index)
     .slice(0, 3)
     .sort((a, b) => a.index - b.index)
-    .map((line) => ({ speaker: line.speaker, text: line.text, words: countWords(line.text), lineIndex: line.index }));
-  const danFirstTwo = parseScript(week3.script, defaultSpeakerFor(week3))
-    .filter((line) => line.speaker === 'Dan')
+    .map(toLine);
+
+  const tomTwo = parseScript(week2.script, defaultSpeakerFor(week2))
+    .filter((line) => line.speaker === 'Tom')
     .slice(0, 2)
-    .map((line) => ({ speaker: line.speaker, text: line.text, words: countWords(line.text), lineIndex: line.index }));
+    .map(toLine);
 
-  const named = [
-    { key: 'ellie-longest', title: "Ellie's longest Week 1 answer", lines: [longestLineFor(week1, 'Ellie')] },
-    { key: 'tom-two-lines', title: "Tom's first two Week 2 lines", lines: parseScript(week2.script, defaultSpeakerFor(week2)).filter((line) => line.speaker === 'Tom').slice(0, 2).map((line) => ({ speaker: line.speaker, text: line.text, words: countWords(line.text), lineIndex: line.index })) },
-    { key: 'aisha-oh-thats-great', title: 'Aisha — "Oh, that\'s great"', lines: [lineStartingWith(week2, 'Aisha', "Oh, that's great")] },
-    { key: 'week-3-three-lines', title: "Week 3: Marta's three longest turns, then Dan", lines: [...martaLongest, ...danFirstTwo] },
-    { key: 'joanne-opening', title: "Joanne's opening paragraph of Week 4", lines: [openingBlock(week4)] },
-  ];
-
-  const speakers = allSpeakers(weekSpecs);
-  const perSpeaker = speakers.map((speaker) => {
-    const lines = [];
-    for (const spec of weekSpecs) {
-      for (const line of parseScript(spec.script, defaultSpeakerFor(spec))) {
-        if (line.speaker === speaker) {
-          lines.push({ speaker, text: line.text, words: countWords(line.text), lineIndex: line.index, week: spec.week });
-        }
-      }
-    }
-    return { key: `voice-check-${speaker}`, title: `${speaker} — every authored line`, speaker, lines };
-  });
-
-  return { speakers, named, perSpeaker };
+  return {
+    speakers: [...new Set([...tomTwo, ...martaTurns].map((line) => line.speaker))],
+    clips: [
+      { key: 'tom-two-lines', title: "Tom's first two Week 2 lines", lines: tomTwo },
+      { key: 'marta-three-turns', title: "Marta's three longest Week 3 turns", lines: martaTurns },
+      { key: 'ellie-longest', title: "Ellie's longest Week 1 answer", lines: [longestLineFor(week1, 'Ellie')] },
+    ],
+  };
 }
 
 /**
@@ -315,23 +263,7 @@ export async function generateVoiceCheck(options) {
   const specs = options.weekSpecs ?? (await readListeningWeeks(options.curriculum));
   const plan = voiceCheckScript(specs);
   const clips = [];
-  for (const entry of plan.named) {
-    log(`  ${entry.title}`);
-    clips.push(
-      await generateClip({
-        ...entry,
-        outputDir,
-        apiKey,
-        client,
-        upload,
-        pace,
-        encoder: options.encoder,
-        fetchImpl: options.fetchImpl,
-        log,
-      }),
-    );
-  }
-  for (const entry of plan.perSpeaker) {
+  for (const entry of plan.clips) {
     log(`  ${entry.title}`);
     clips.push(
       await generateClip({

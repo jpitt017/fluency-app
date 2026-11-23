@@ -86,11 +86,15 @@ export const SPEAKER_VOICES = {
     settings: { stability: 0.35, style: 0.3 },
   },
   Tom: {
-    voice: 'EtGAAwTx6aMveVbqUxuU',
-    name: 'Joseph',
+    voice: 'gpYTodEbX9z98axldaGD',
+    name: 'Jack C',
     accent: 'northern English',
     // Clearly enthusiastic about the course: the most animated voice here.
-    settings: { stability: 0.3, style: 0.4 },
+    //
+    // Replaced after the Week 1-4 listen. This voice reads fast, so it carries
+    // its own slower rate like Joanne's; the enthusiasm is in the settings, not
+    // in the tempo.
+    settings: { stability: 0.3, style: 0.4, speed: 0.75 },
   },
   Dan: {
     voice: 'sBU90Bu4NCleWDoNkGog',
@@ -100,10 +104,13 @@ export const SPEAKER_VOICES = {
     settings: { stability: 0.38, style: 0.25 },
   },
   Marta: {
-    voice: 'FmIJwVFU62n8jITpotTp',
-    name: 'Susie',
+    voice: 'piJjfIKBZRMkss1Ifoyo',
+    name: 'Katie',
     accent: 'West Midlands',
-    settings: { stability: 0.38, style: 0.25 },
+    // Replaced after the Week 1-4 listen: the new voice needs its warmth from a
+    // lower stability and some style, not from a slower read, so it keeps the
+    // course speed.
+    settings: { stability: 0.3, style: 0.4 },
   },
   Joanne: {
     voice: 'ZR8ruiC9tbg7bV9RmBmC',
@@ -137,9 +144,9 @@ export const VOICE_SETTINGS = {
  * the default for every week:
  *
  *   speed                 0.8, aiming at roughly 140-150 words a minute
- *   sentencePauseSeconds  0.5 s between sentences inside one line
+ *   sentencePauseSeconds  0.3 s between sentences inside one line
  *   speakerPauseSeconds   0.7 s between two speakers
- *   paragraphPauseSeconds 1.0 s between two paragraphs
+ *   paragraphPauseSeconds 0.8 s between two paragraphs
  *
  * A pause is picked by the *kind of boundary* the line starts on, not by a
  * single line gap: a line that changes speaker gets the speaker pause, a line
@@ -153,9 +160,9 @@ export const VOICE_SETTINGS = {
 export const PACE_PROFILES = {
   b1: {
     speed: B1_SPEECH_RATE,
-    sentencePauseSeconds: 0.5,
+    sentencePauseSeconds: 0.3,
     speakerPauseSeconds: 0.7,
-    paragraphPauseSeconds: 1.0,
+    paragraphPauseSeconds: 0.8,
   },
 };
 
