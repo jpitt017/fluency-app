@@ -63,12 +63,15 @@ before learners wake up, which breaks writing feedback for that day — includin
 for a manual dispatch of the same job later on. That is a high price for an
 unattended canary, and the run it produces has to be read by a person anyway.
 
-The schedule's recent record is not encouraging either: in the three nights
-before it was switched off, [run 45107954616](https://github.com/jpitt017/fluency-app/actions/runs/45107954616)
-(23 Nov 2026) ended in `exit code 1` while `build-and-offline-evals`,
-`playwright-e2e` and `rls-isolation` all passed. A job that fails unattended,
-spends the quota to do it, and gates nothing is worth turning off until its
-budget is no longer shared with the product.
+In its last three nights the job passed twice and failed once.
+[Run 45107954616](https://github.com/jpitt017/fluency-app/actions/runs/45107954616)
+(23 Nov 2026) ended in `exit code 1` — the only detail its annotation exposes —
+while `build-and-offline-evals`, `playwright-e2e` and `rls-isolation` all passed
+on the same commit. That 03:46 run also exhausted the day's Groq budget: the
+repo records it as the reason "every writing submission after it failed" (see
+the commit that first scoped this job to the schedule). So the canary failed
+unattended, spent the budget it shares with the product to do it, and gated
+nothing — none of which is worth leaving switched on while the key is metered.
 
 ### Re-enabling it
 
