@@ -31,7 +31,13 @@ function watch(page, label) {
   page.on('pageerror', (error) => problems.push(`page: ${error.name}: ${error.message}`));
   page.on('requestfailed', (request) => problems.push(`request: ${request.method()} ${request.url()} :: ${request.failure()?.errorText}`));
   return () => {
-    const relevant = problems.filter((entry) => !/favicon|manifest|ServiceWorker/i.test(entry));
+    // Next prefetches route payloads (?_rsc=…) on link hover/viewport. Superseded
+    // prefetches are cancelled by design and surface as ERR_ABORTED, which is not
+    // a failure; a real one would be a 4xx/5xx or a non-aborted network error.
+    const relevant = problems.filter(
+      (entry) => !/favicon|manifest|ServiceWorker/i.test(entry)
+        && !(/_rsc=/.test(entry) && /ERR_ABORTED/.test(entry)),
+    );
     announce(`${label}_problems=${relevant.slice(0, 5).join(' || ') || 'none'}`);
     assert.deepEqual(relevant, [], `${label} produced console errors, page errors or failed requests`);
   };
@@ -63,6 +69,26 @@ async function walk(page, label, viewport) {
   await page.getByRole('heading', { name: /Write a short text/ }).waitFor({ timeout: 20_000 });
   announce(`${label}_writing_step=visible`);
   finish();
+}
+
+/**
+ * Regression on the deployed build: the "did not move" warning must not appear
+ * just because the learner picked an answer and paused to think.
+ */
+async function checkWatchdogStaysQuiet(page) {
+  await page.goto(`${BASE}/onboarding/placement`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await page.getByRole('heading', { name: /Question 1 of \d+/ }).waitFor({ timeout: 30_000 });
+  const options = page.getByTestId('placement-option');
+  if (!(await options.count())) {
+    announce('watchdog_check=skipped (no placement-option test ids on the deployed build)');
+    return;
+  }
+  await options.first().click();
+  // The watchdog fires 4 s after a *click*; giving it 5 s with no click must stay silent.
+  await page.waitForTimeout(5000);
+  const warned = await page.getByTestId('placement-stuck-warning').count();
+  announce(`watchdog_quiet_after_idle=${warned === 0 ? 'yes' : `NO — ${warned} warning(s)`}`);
+  assert.equal(warned, 0, 'picking an answer and waiting must not show the stuck warning');
 }
 
 /** On a small phone a fixed report pill used to cover the last Continue button. */
@@ -109,6 +135,7 @@ try {
   const signedOutPage = await signedOut.newPage();
   await walk(signedOutPage, 'signedout', { width: 1280, height: 720 });
   await checkSmallPhoneLayout(signedOutPage);
+  await checkWatchdogStaysQuiet(signedOutPage);
   await signedOut.close();
 
   if (!admin) {
