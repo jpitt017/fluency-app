@@ -84,14 +84,14 @@ export default function WeekDetailPanel({
       </section>
 
       <section className="space-y-3">
-        <SectionHeading icon={Sparkles} title="Grammar: main and light points" note="20-minute task · 25 auto-marked items" />
+        <SectionHeading icon={Sparkles} title="Grammar: main and extra points" note="20-minute task · 25 auto-marked items" />
         <div className="grid gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-stone-200 bg-white p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Main point</p>
             <p className="mt-2 text-xs leading-6 text-stone-700">{detail.grammar.main}</p>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Light point</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Extra point</p>
             <p className="mt-2 text-xs leading-6 text-stone-700">{detail.grammar.light}</p>
           </div>
         </div>
