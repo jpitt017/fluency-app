@@ -8,10 +8,14 @@ import {
   buildRedirectTo,
   emailLinksEnabled,
   EMAIL_LINKS_ENABLED_ENV,
+  isSignupsClosedError,
   RESET_LINK_REPLACEMENT,
   SIGNUP_DESTINATION,
   SIGNUP_OUTCOMES,
+  SIGNUPS_CLOSED_MESSAGE,
+  SIGNUPS_ENABLED_ENV,
   signUpOutcome,
+  signupsEnabled,
   UPDATE_PASSWORD_PATH,
 } from '@/lib/auth/email-links.mjs';
 
@@ -26,7 +30,7 @@ function formatAuthError(err: unknown, fallback: string): string {
   return raw;
 }
 
-function LoginForm({ emailLinks }: { emailLinks: boolean }) {
+function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOpen: boolean }) {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
   const mode = searchParams.get('mode');
@@ -146,6 +150,13 @@ function LoginForm({ emailLinks }: { emailLinks: boolean }) {
       const normalizedEmail = email.trim();
 
       if (isSignUp) {
+        // Closed signup: say what to do instead of posting a request that
+        // GoTrue answers with "Signups not allowed for this instance".
+        if (!signupsOpen) {
+          setError(SIGNUPS_CLOSED_MESSAGE);
+          return;
+        }
+
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: normalizedEmail,
           password,
@@ -194,7 +205,14 @@ function LoginForm({ emailLinks }: { emailLinks: boolean }) {
         window.location.assign(safeNext);
       }
     } catch (err: unknown) {
-      setError(formatAuthError(err, 'An unexpected authentication error occurred.'));
+      // The setting can be stale in a long-open tab, and the server is the real
+      // authority either way, so translate the refusal here too rather than
+      // showing a learner GoTrue's own wording.
+      setError(
+        isSignupsClosedError(err)
+          ? SIGNUPS_CLOSED_MESSAGE
+          : formatAuthError(err, 'An unexpected authentication error occurred.'),
+      );
     } finally {
       setPendingAction(null);
     }
@@ -216,14 +234,18 @@ function LoginForm({ emailLinks }: { emailLinks: boolean }) {
           {isUpdatePassword
             ? 'Set a new password'
             : isSignUp
-              ? 'Create your account'
+              ? signupsOpen
+                ? 'Create your account'
+                : 'Sign-up is closed'
               : 'Welcome back'}
         </h1>
         <p className="mt-1.5 text-sm text-stone-600">
           {isUpdatePassword
             ? 'Choose a new password (at least 6 characters) for your account'
             : isSignUp
-              ? 'Start your B1 → B2 study workspace'
+              ? signupsOpen
+                ? 'Start your B1 → B2 study workspace'
+                : 'Pilot accounts are made by your teacher'
               : 'Sign in to practise and review your mistakes'}
         </p>
       </div>
@@ -267,6 +289,25 @@ function LoginForm({ emailLinks }: { emailLinks: boolean }) {
         </div>
       )}
 
+      {/* Closed signup shows the reason and a way forward instead of a form
+          that cannot submit: one short sentence, then the form that works. */}
+      {isSignUp && !signupsOpen ? (
+        <div className="space-y-4">
+          <div
+            role="status"
+            className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-900"
+          >
+            {SIGNUPS_CLOSED_MESSAGE}
+          </div>
+          <button
+            type="button"
+            onClick={toggleAuthMode}
+            className="w-full cursor-pointer rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-800"
+          >
+            Go to sign in
+          </button>
+        </div>
+      ) : (
       <form onSubmit={handleAuth} className="space-y-4">
         {!isUpdatePassword && (
           <div className="space-y-1.5">
@@ -357,6 +398,7 @@ function LoginForm({ emailLinks }: { emailLinks: boolean }) {
           </button>
         )}
       </form>
+      )}
 
       {/* Without SMTP a reset link can only fail, so point at a person instead. */}
       {!emailLinks && !isSignUp && !isUpdatePassword && (
@@ -386,10 +428,11 @@ export default function LoginPage() {
   // Read on the server and passed in, so the setting is evaluated when the page
   // is requested rather than frozen into the client bundle at build time.
   const emailLinks = emailLinksEnabled(process.env[EMAIL_LINKS_ENABLED_ENV]);
+  const signupsOpen = signupsEnabled(process.env[SIGNUPS_ENABLED_ENV]);
   return (
     <main className="flex min-h-[calc(100vh-140px)] items-start justify-center px-4 py-6 sm:items-center sm:py-10">
       <Suspense fallback={<div className="mx-auto h-80 w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8" />}>
-        <LoginForm emailLinks={emailLinks} />
+        <LoginForm emailLinks={emailLinks} signupsOpen={signupsOpen} />
       </Suspense>
     </main>
   );
