@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration 0040: group AI provider failure alerts.
+-- Migration 0045: group AI provider failure alerts.
 --
 -- A bad key or an exhausted daily quota fails every request from every learner.
 -- The application emails the operator once per failure kind per endpoint, then

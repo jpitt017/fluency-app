@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   AI_TRIAL_LABEL,
-  TRIAL_PLAYS_ALLOWED,
+  PLAYS_COUNT_MAX,
+  TRIAL_PLAYS_SUGGESTED,
   TRIAL_TRACKS,
   TRIAL_WEEKS,
-  canPlayAgain,
+  isReportablePlay,
   describeTrialSpeakers,
   isTrialWeek,
   playsUsed,
@@ -68,7 +69,7 @@ test('a released AI trial row resolves to a playable track with accent metadata'
   assert.ok(playable);
   assert.equal(playable.label, AI_TRIAL_LABEL);
   assert.equal(playable.label, 'AI voice – trial recording');
-  assert.equal(playable.playsAllowed, 2);
+  assert.equal(playable.playsSuggested, 2);
   assert.equal(playable.speakers, 'Host (southern English) · Ellie (Scottish)');
   assert.match(playable.audioUrl, /weeks-01-04\/ai-trial\/week-1-listening\.mp3$/);
   assert.match(playable.captionsUrl, /week-1-listening\.vtt$/);
@@ -92,16 +93,44 @@ test('trial storage keys are fixed, never built from input', () => {
   assert.equal(describeTrialSpeakers(4), 'Joanne (Yorkshire)');
 });
 
-test('the play limit is two, and a tampered counter cannot unlock more', () => {
-  assert.equal(TRIAL_PLAYS_ALLOWED, 2);
+test('two listens is guidance, not a limit: the counter keeps counting', () => {
+  assert.equal(TRIAL_PLAYS_SUGGESTED, 2);
   assert.equal(playsUsed(null), 0);
   assert.equal(playsUsed(''), 0);
   assert.equal(playsUsed('1'), 1);
   assert.equal(playsUsed('2'), 2);
+  // The old cap clamped this to 2, which would now hide how often a learner
+  // really replayed. Nothing is unlocked by counting higher, so keep counting.
+  assert.equal(playsUsed('3'), 3);
+  assert.equal(playsUsed('99'), 99);
   assert.equal(playsUsed('-4'), 0);
   assert.equal(playsUsed('nonsense'), 0);
-  assert.equal(playsUsed('99'), 2, 'clamped to the allowed number of listens');
-  assert.equal(canPlayAgain(0), true);
-  assert.equal(canPlayAgain(1), true);
-  assert.equal(canPlayAgain(2), false);
+});
+
+test('a corrupt counter cannot overflow the display', () => {
+  assert.equal(playsUsed('999999999999'), PLAYS_COUNT_MAX);
+  assert.equal(playsUsed(String(Number.MAX_SAFE_INTEGER)), PLAYS_COUNT_MAX);
+});
+
+test('no code offers or blocks a play by a limit any more', () => {
+  // The hard cap is gone from the library and the player. Guardian test: it
+  // fails if someone reintroduces canPlayAgain/TRIAL_PLAYS_ALLOWED, which is
+  // exactly how the old two-play gate would come back.
+  const lib = readFileSync(new URL('../../lib/curriculum/listening-audio.ts', import.meta.url), 'utf8');
+  const player = readFileSync(new URL('../../components/b1b2/ListeningTrialPlayer.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(lib, /canPlayAgain|TRIAL_PLAYS_ALLOWED/);
+  assert.doesNotMatch(player, /canPlayAgain|TRIAL_PLAYS_ALLOWED|disabled=\{!playing/);
+  assert.match(player, /Play again/, 'replay is always offered');
+});
+
+test('only a sane play report reaches the server', () => {
+  assert.equal(isReportablePlay(1, 1), true);
+  assert.equal(isReportablePlay(4, 12), true);
+  assert.equal(isReportablePlay(1, 0), false, 'a play count starts at 1');
+  assert.equal(isReportablePlay(5, 1), false, 'there is no Week 5 track');
+  assert.equal(isReportablePlay(0, 1), false);
+  assert.equal(isReportablePlay(1, -2), false);
+  assert.equal(isReportablePlay(1, 1.5), false, 'counts are whole numbers');
+  assert.equal(isReportablePlay('1', 1), false, 'the week must be a number');
+  assert.equal(isReportablePlay(1, PLAYS_COUNT_MAX + 1), false);
 });
