@@ -103,6 +103,9 @@ jobs:
       - run: node --test tests/unit/placement-questions.test.mjs
       - run: node --test tests/unit/vercel-ignore-build.test.mjs
       - run: node --test tests/unit/placement-watchdog.test.mjs
+      # A test must never send an auth email: fake addresses bounce, and a high
+      # bounce rate damages the project's sending domain.
+      - run: node --test tests/unit/no-auth-email.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -132,6 +135,9 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
+      # Every user these tests sign in as is created with
+      # auth.admin.createUser({ email_confirm: true }); the guard earlier in this
+      # job fails the build if a test ever goes back to an email-sending flow.
       - name: Run Playwright E2E tests
         # Includes the placement walk that answers all 24 v2 questions through to
         # the writing step on a phone viewport, the writing-step word counter and

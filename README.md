@@ -123,6 +123,15 @@ learner through the Supabase **admin API** with an `@example.test` address and
 `finally` block so the user and every linked learning-data row are removed.
 Never reuse a personal or long-lived account for production tests.
 
+A test must never send an auth email. A fake address cannot receive mail, so
+every message sent to one bounces, and a project that keeps bouncing mail is
+flagged by Supabase and damages its sending domain. Admin creation with
+`email_confirm: true` queues nothing; tests then sign in with a password, which
+also sends nothing. Nothing under `tests/` or `scripts/` may call `signUp`,
+`signInWithOtp`, `resetPasswordForEmail`, `inviteUserByEmail` or `resend` — only
+the app's own `/login` page may, for real people. `tests/unit/no-auth-email.test.mjs`
+enforces this in CI, for scripts and for `.github/workflows/`.
+
 ### Pilot navigation
 
 Pricing links are hidden by default. Set `NEXT_PUBLIC_PILOT_PRICING_ENABLED=true` at build time to show them. The direct pricing page remains available for existing subscribers. Signed-in learners use their server-calculated current week across devices. Signed-out visitors use the last week opened in this browser, defaulting to Week 1.
