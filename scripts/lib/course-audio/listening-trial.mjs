@@ -107,6 +107,17 @@ export function longestLineFor(weekSpec, speaker) {
 }
 
 /**
+ * A monologue's opening paragraph as one line: the block a listener hears first,
+ * which is the part a review judges a tour guide's energy on.
+ */
+export function openingBlock(weekSpec) {
+  const lines = parseScript(weekSpec.script, defaultSpeakerFor(weekSpec));
+  const first = lines[0];
+  if (!first) throw new Error(`Week ${weekSpec.week} has an empty listening script`);
+  return { speaker: first.speaker, text: first.text, words: countWords(first.text), lineIndex: first.index };
+}
+
+/**
  * The voice check: the lines a listening review asks for by name, read at the
  * course pace with each speaker's own settings, so what is approved is exactly
  * what the track will use.
@@ -116,6 +127,7 @@ export function longestLineFor(weekSpec, speaker) {
  *   tom-two-lines.mp3       Tom's first two Week 2 lines
  *   marta-three-turns.mp3   Marta's three longest Week 3 turns
  *   ellie-longest.mp3       Ellie's longest Week 1 answer
+ *   joanne-opening.mp3      Joanne's opening paragraph of Week 4
  *
  * Three speakers, one per week that changed or that carries the new pace, so a
  * single listen covers the two replaced voices and the shorter sentence gaps.
@@ -138,7 +150,7 @@ export function voiceCheckScript(weekSpecs) {
     lineIndex: line.index,
   });
 
-  // Marta's three *longest* turns: her short interjections ("Ha! OK.") are not a
+  // Marta's three *longest* turns: her short interjections ("Oh no! OK.") are not a
   // fair read of a voice, and the order is script order so the clip flows.
   const martaTurns = parseScript(week3.script, defaultSpeakerFor(week3))
     .filter((line) => line.speaker === 'Marta')
@@ -158,6 +170,7 @@ export function voiceCheckScript(weekSpecs) {
       { key: 'tom-two-lines', title: "Tom's first two Week 2 lines", lines: tomTwo },
       { key: 'marta-three-turns', title: "Marta's three longest Week 3 turns", lines: martaTurns },
       { key: 'ellie-longest', title: "Ellie's longest Week 1 answer", lines: [longestLineFor(week1, 'Ellie')] },
+      { key: 'joanne-opening', title: "Joanne's opening paragraph of Week 4", lines: [openingBlock(week4)] },
     ],
   };
 }
@@ -318,7 +331,7 @@ export function week3SampleLines(weekSpec, perSpeaker = 3) {
 }
 
 /**
- * The `perSpeaker` longest lines, in script order: an interjection like "Ha! OK."
+ * The `perSpeaker` longest lines, in script order: an interjection like "Oh no! OK."
  * is a poor second of audio to judge a voice on.
  */
 function speechyLines(lines, count) {
@@ -487,7 +500,7 @@ export function estimateDurationSeconds(lines, pace = DEFAULT_PACE) {
   let speech = 0;
   let total = 0;
   for (const utterance of utterances) {
-    total += pauseSecondsFor(utterance.boundary, resolved);
+    total += pauseSecondsFor(utterance.boundary, resolved, utterance.speaker);
     // A character may carry their own speed, so the estimate follows the rate
     // the voice will actually be spoken at, not the profile's.
     const wordsPerSecond = (SPEAKING_WPM_AT_SPEED_1 * rateForSpeaker(utterance.speaker, resolved)) / 60;
