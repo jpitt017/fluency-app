@@ -215,8 +215,10 @@ jobs:
 
   isolated-deletion:
     name: Isolated migration and learner-data deletion
+    # One Supabase start plus one 749 KB replay is most of the old 25 minutes;
+    # cloning that database for the second order must not need a second start.
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
       - uses: supabase/setup-cli@v1
@@ -244,18 +246,21 @@ jobs:
           # which left the deletion function pointing at tables that no longer
           # existed -- a state no migration sequence can produce, and the reason
           # the job failed on a bug that was not there.
+          # Build the replay once. A real replay means nothing is skipped, so
+          # this is exactly what a new environment would build from this repo.
+          template='replay_template'
+          template_dsn="postgresql://${user}:postgres@${host}:${port}/${template}"
+          createdb -h "$host" -p "$port" -U "$user" "$template"
+          for file in supabase-b1-b2/migrations/*.sql; do
+            case "$file" in *0040_*|*0041_*|*0042_*|*0043_*) continue;; esac
+            psql "$template_dsn" -v ON_ERROR_STOP=1 -q -f "$file"
+          done
+
+          # A clone per order: same replay, its own history, no second start.
           run_order() {
             local label="$1"; shift
             local db="postgresql://${user}:postgres@${host}:${port}/replay_${label}"
-            createdb -h "$host" -p "$port" -U "$user" "replay_${label}"
-
-            # A real replay: nothing is skipped, so the database a new
-            # environment would build from this repo is what gets tested.
-            local file
-            for file in supabase-b1-b2/migrations/*.sql; do
-              case "$file" in *0040_*|*0041_*|*0042_*|*0043_*) continue;; esac
-              psql "$db" -v ON_ERROR_STOP=1 -q -f "$file"
-            done
+            createdb -h "$host" -p "$port" -U "$user" -T "$template" "replay_${label}"
 
             # The branch's own migrations, in this order, each followed by the
             # learner-data deletion test.
