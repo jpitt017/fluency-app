@@ -3,17 +3,21 @@
 # Manual only: nothing here runs on a push or a pull request.
 #
 # `mode` is the approval workflow:
-#   voice-check  synthesise one line per speaker, upload the seven clips to the
-#                private review bucket and attach them as the `voice-check`
-#                artifact, so the accents can be approved before a whole week is
-#                recorded
+#   voice-check  synthesise a few real lines per speaker (one clip per speaker
+#                plus the named step clips), upload them to the private review
+#                bucket and attach them as the `voice-check` artifact, so the
+#                voices and their settings can be approved before a whole week is
+#                recorded. Reports words per minute per clip.
 #   generate     synthesise the tracks, upload them to `course-audio-review`
 #                (private) as UNRELEASED (source "ai-trial", no live audioUrl),
 #                attach them as the `review` artifact (MP3 + WebVTT, 3 days) and
 #                print the state. Never prints a signed link.
-#   voice-sample re-audition one week on a few of each speaker's own lines, at a
-#                given pace (default `warm`: speed 0.8, longer pauses), with that
-#                week's voice settings. Nothing is re-recorded or released.
+#   voice-sample re-audition one week on each speaker's three longest lines, at
+#                a given pace (default `b1`: speed 0.8, 0.5/0.7/1.0 s pauses),
+#                with that week's voice settings. Nothing is re-recorded or
+#                released.
+#   delete-probes delete the three storage-check probe objects by exact name,
+#                through the Storage API (dry run unless confirm)
 #   review       print a 1-hour signed listening link for the weeks chosen
 #   release      approve reviewed weeks: copy them to the public `course-audio`
 #                bucket, set audio_url + released = true, so /week/[n] shows the
@@ -39,25 +43,25 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'voice-check | voice-sample | generate | review | release | revoke | delete | list'
+        description: 'voice-check | voice-sample | generate | review | release | revoke | delete | delete-probes | list'
         type: choice
-        options: [voice-check, voice-sample, generate, review, release, revoke, delete, list]
+        options: [voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list]
         default: voice-check
       weeks:
         description: 'Weeks to act on (comma separated, 1–4; ignored by voice-check, one week only for voice-sample)'
         type: string
         default: '1,2,3,4'
       pace:
-        description: 'voice-sample: pace profile (warm | b1)'
+        description: 'voice-sample: pace profile (b1 is the course pace)'
         type: choice
-        options: [warm, b1]
-        default: warm
+        options: [b1]
+        default: b1
       dry_run:
         description: 'generate: report speakers and length, generate nothing'
         type: boolean
         default: false
       confirm:
-        description: 'delete: actually delete (off = dry run). Never applies to a released week'
+        description: 'delete / delete-probes: actually delete (off = dry run). Never applies to a released week'
         type: boolean
         default: false
       allow_production_release:
@@ -138,7 +142,7 @@ jobs:
         if: ${{ inputs.mode == 'generate' }}
         run: node scripts/generate-course-audio.mjs --weeks "${{ inputs.weeks }}" --dry-run
 
-      - name: Voice check — one line per speaker
+      - name: Voice check — real lines per speaker, words per minute reported
         if: ${{ inputs.mode == 'voice-check' }}
         run: node scripts/generate-course-audio.mjs --voice-check
         env:
@@ -155,9 +159,9 @@ jobs:
           path: voice-check/
           retention-days: 3
 
-      # Three of each speaker's own lines, at the week's pace and voice settings,
-      # before a whole track is re-recorded. No approval row is touched.
-      - name: Voice sample — a few of each speaker's lines
+      # Each speaker's three longest lines, at the week's pace and voice
+      # settings, before a whole track is re-recorded. No approval row is touched.
+      - name: Voice sample — each speaker's three longest lines
         if: ${{ inputs.mode == 'voice-sample' }}
         run: node scripts/generate-course-audio.mjs --voice-sample "${{ inputs.weeks }}" --pace "${{ inputs.pace }}"
         env:
@@ -195,6 +199,15 @@ jobs:
       - name: Revoke a track
         if: ${{ inputs.mode == 'revoke' }}
         run: node scripts/generate-course-audio.mjs --revoke "${{ inputs.weeks }}"
+
+      - name: Delete the three storage-check probe objects (dry run unless confirm)
+        if: ${{ inputs.mode == 'delete-probes' }}
+        run: |
+          if [ "${{ inputs.confirm }}" = "true" ]; then
+            node scripts/generate-course-audio.mjs --delete-probes --confirm
+          else
+            node scripts/generate-course-audio.mjs --delete-probes
+          fi
 
       - name: Delete the files from both buckets (dry run unless confirm)
         if: ${{ inputs.mode == 'delete' }}

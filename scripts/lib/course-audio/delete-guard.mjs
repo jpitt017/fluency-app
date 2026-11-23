@@ -27,6 +27,39 @@ export const TRIAL_WEEKS = [1, 2, 3, 4];
 export const ALLOWED_BUCKETS = [DEFAULT_REVIEW_BUCKET, AUDIO_BUCKET];
 
 /**
+ * Audition clips: a voice check or a Week 3 sample. They exist to be listened to
+ * before a track is recorded, so they are only ever in the private bucket and
+ * are never named by an approval row.
+ */
+export const AUDITION_CLIP_NAMES = [
+  'ellie-longest.mp3',
+  'tom-two-lines.mp3',
+  'aisha-oh-thats-great.mp3',
+  'week-3-three-lines.mp3',
+  'joanne-opening.mp3',
+  'week-3-sample-Dan.mp3',
+  'week-3-sample-Marta.mp3',
+];
+
+/**
+ * The three probe objects from the 2026-11-22 storage check, by exact name. They
+ * are not audio and not pipeline output, so they are deleted through the Storage
+ * API by name rather than through any pattern: the list is the whole permission.
+ */
+export const PROBE_OBJECTS = [
+  { bucket: DEFAULT_REVIEW_BUCKET, key: `${TRIAL_PREFIX}probe-big.mp3` },
+  { bucket: DEFAULT_REVIEW_BUCKET, key: `${TRIAL_PREFIX}probe-course-audio-review.txt` },
+  { bucket: AUDIO_BUCKET, key: `${TRIAL_PREFIX}probe-course-audio.txt` },
+];
+
+/** Accepts only an exact probe entry: same bucket, same key, nothing else. */
+export function assertProbeObject(bucket, key) {
+  const match = PROBE_OBJECTS.find((item) => item.bucket === bucket && item.key === key);
+  if (!match) throw new Error(`Refusing "${bucket}/${key}": it is not one of the probe objects`);
+  return match;
+}
+
+/**
  * A file name under the prefix: starts with an alphanumeric, then letters,
  * digits, `_` or `-`, with at most one short extension. No leading dot, no `..`,
  * no slashes, no spaces.
@@ -118,7 +151,8 @@ export function assertReviewKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
   const name = key.slice(TRIAL_PREFIX.length);
   // Audition clips only exist in the private review bucket: a voice check or a
   // sample is never a learner-facing file.
-  if (/^voice-check-[A-Za-z]+\.mp3$/.test(name) || /^week-[1-4]-sample-[A-Za-z]+\.mp3$/.test(name)) {
+  const audition = /^voice-check-[A-Za-z]+\.mp3$/.test(name) || AUDITION_CLIP_NAMES.includes(name);
+  if (audition) {
     if (bucket !== DEFAULT_REVIEW_BUCKET) {
       throw new Error(`Refusing "${key}": audition clips only live in ${DEFAULT_REVIEW_BUCKET}`);
     }

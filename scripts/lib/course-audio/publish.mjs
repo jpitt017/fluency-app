@@ -19,8 +19,10 @@
 import {
   AUDIO_BUCKET,
   DEFAULT_REVIEW_BUCKET,
+  PROBE_OBJECTS,
   TRIAL_PREFIX,
   assertDeletableKeys,
+  assertProbeObject,
   assertReviewKey,
   assertTrialTrackKey,
   assertTrialWeek,
@@ -98,6 +100,42 @@ export async function deleteReleasedFiles(client, week) {
   const { data, error } = await client.storage.from(AUDIO_BUCKET).remove(keys);
   if (error) throw new Error(`Could not delete week ${week} from ${AUDIO_BUCKET}: ${JSON.stringify(error)}`);
   return (data ?? []).map((item) => item.name ?? item.path ?? '');
+}
+
+/**
+ * Removes the probe objects left by the 2026-11-22 storage check.
+ *
+ * A probe is not a track and not an audition clip: it is a 400 kB MP3 and two
+ * 6-byte text files that were only ever there to prove a bucket accepted an
+ * upload. They are deleted by exact (bucket, key) through the Storage API, one
+ * entry at a time, and each is only attempted if a listing shows it is there.
+ * Nothing else can be named by this function.
+ */
+export async function deleteProbeObjects(client, log = () => {}) {
+  const removed = [];
+  const missing = [];
+  for (const entry of PROBE_OBJECTS) {
+    assertProbeObject(entry.bucket, entry.key);
+    const folder = entry.key.split('/').slice(0, -1).join('/');
+    const name = entry.key.split('/').pop();
+    const { data, error } = await client.storage.from(entry.bucket).list(folder, { limit: 100 });
+    if (error) throw new Error(`Could not list ${entry.bucket}: ${JSON.stringify(error)}`);
+    const present = (data ?? []).some((item) => item.name === name);
+    if (!present) {
+      missing.push(entry);
+      log(`  already gone: ${entry.bucket}/${entry.key}`);
+      continue;
+    }
+    const { data: deleted, error: deleteError } = await client.storage.from(entry.bucket).remove([entry.key]);
+    if (deleteError) {
+      throw new Error(`Could not delete ${entry.bucket}/${entry.key}: ${JSON.stringify(deleteError)}`);
+    }
+    const confirmed = (deleted ?? []).some((item) => (item.name ?? item.path) === entry.key);
+    if (!confirmed) throw new Error(`Storage did not delete ${entry.bucket}/${entry.key}`);
+    removed.push(entry);
+    log(`  deleted: ${entry.bucket}/${entry.key} (${name})`);
+  }
+  return { removed, missing, checked: PROBE_OBJECTS.length };
 }
 
 /** Confirms what is actually left in the review bucket for a week. */

@@ -181,32 +181,39 @@ Run the manual **Course audio — AI trial tracks** workflow
 `ELEVENLABS_API_KEY` repository secret plus the Supabase URL and service-role
 key, and installs ffmpeg for MP3 encoding.
 
-**Step 1 — approve the voices (`mode: voice-check`).** This records one short
-line per speaker with the same words, uploads the seven clips to the private
-review bucket, and attaches them to the run as the **`voice-check` artifact**
-(kept for three days), so the accents can be compared before a whole week is
-recorded. Download the artifact to listen. Short clips do not use up a normal
-monthly quota cycle the way four full tracks would, and a voice that needs
-replacing is replaced before any track depends on it.
+**Step 1 — approve the voices (`mode: voice-check`).** This records real lines
+from the weeks themselves, at the course pace and with each speaker's own voice
+settings: one clip per speaker, plus the step clips a review asks for by name
+(Ellie's longest Week 1 answer, Tom's first two Week 2 lines, Aisha's "Oh,
+that's great", three Week 3 turns, Joanne's opening paragraph). The clips go to
+the private review bucket and are attached to the run as the **`voice-check`
+artifact** (kept for three days). Every clip reports its words per minute,
+measured from the assembled timeline — words spoken over the wall-clock length,
+pauses included — so the pace is a number, not an impression. Download the
+artifact to listen. Short clips do not use up a normal monthly quota cycle the
+way four full tracks would, and a voice that needs replacing is replaced before
+any track depends on it.
 
 **Step 2 — generate the tracks (`mode: generate`).** Runs
 `scripts/generate-course-audio.mjs --weeks 1,2,3,4`, which:
 
 1. parses each authored script into speaker turns;
-2. speaks every line with that speaker's own ElevenLabs voice — Host = southern
-   English, Ellie = Scottish, Aisha = London, Tom = northern English, Dan =
-   Welsh, Marta = West Midlands, Joanne = Yorkshire. The accent comes from the
-   voice itself: no instruction or prompt tries to change it. Voice settings are
-   per speaker: everyone uses `VOICE_SETTINGS`, and a speaker may carry a
-   `settings` override. Week 3 is two flatmates who get on well, so Dan and Marta
-   sit at `stability: 0.38, style: 0.25` (less even, more life in the line);
-   every other speaker keeps 0.45 / 0;
-3. holds a slightly slower B1 pace (`speed: 0.9`) and inserts a 0.35 s gap
-   between lines and 0.6 s between paragraphs. The pace is a named profile in
-   `PACE_PROFILES` (`scripts/lib/course-audio/tts.mjs`): `b1` is that original,
-   and `warm` is 0.8 speed with 0.55 s / 0.9 s gaps for conversational scenes;
-4. encodes one MP3 and one WebVTT file per track, with one caption cue per line
-   timed to the audio;
+2. speaks every *sentence* with that speaker's own ElevenLabs voice — Host =
+   southern English, Ellie = Scottish, Aisha = London, Tom = northern English,
+   Dan = Welsh, Marta = West Midlands, Joanne = Yorkshire. The accent comes from
+   the voice itself: no instruction or prompt tries to change it. Voice settings
+   are per speaker: everyone uses `VOICE_SETTINGS`, and a character may carry a
+   `settings` override — Tom 0.3 / 0.4 (enthusiastic about his course), Aisha
+   0.35 / 0.3 (happy for him), Dan and Marta 0.38 / 0.25 (flatmates who get on
+   well), Joanne 0.35 / 0.35 (a guide who loves York). The Host and Ellie keep
+   0.45 / 0. Unless a speaker is named, the defaults apply;
+3. holds the course pace (`PACE_PROFILES.b1`, the default for all four weeks):
+   `speed: 0.8`, aiming at roughly 140–150 words a minute, with a 0.5 s gap
+   between sentences inside a line, 0.7 s between two speakers and 1.0 s
+   between paragraphs. A line is split into sentences (never on "Mr." or on a
+   number), and each cue is one sentence;
+4. encodes one MP3 and one WebVTT file per track, with one caption cue per
+   sentence timed to the audio;
 5. uploads both to the **private** `course-audio-review` bucket under
    `weeks-01-04/ai-trial/` and writes the row **unreleased** with
    `source: "ai-trial"` and no `audio_url`;
@@ -231,12 +238,12 @@ log is a link in a screenshot.
 the supported way to listen, including on a phone.
 
 **Changing a voice before re-recording.** `mode: voice-sample` takes exactly one
-week. It speaks the first three authored lines of each of that week's speakers —
+week. It speaks each of that week's speakers on their three longest lines —
 verbatim, in script order, one MP3 per speaker — with that week's voice settings
-and the chosen `pace` input (`warm` by default). The clips land in the private
-review bucket as `weeks-01-04/ai-trial/week-N-sample-<Speaker>.mp3`, are attached
-as the `week-sample` artifact, and touch neither the week's track nor its
-approval row. The listening script is never edited to make a sample.
+and the chosen `pace` input (`b1`, the course pace, by default). The clips land
+in the private review bucket as `weeks-01-04/ai-trial/week-N-sample-<Speaker>.mp3`,
+are attached as the `week-sample` artifact, and touch neither the week's track
+nor its approval row. The listening script is never edited to make a sample.
 
 ### Speech model
 
