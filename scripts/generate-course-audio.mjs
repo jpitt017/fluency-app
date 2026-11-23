@@ -6,6 +6,10 @@
  *   --voice-check       one short line per speaker -> private review bucket, so
  *                       the seven accents can be compared before anything else
  *                       is recorded
+ *   --voice-sample N    three of Week N's own lines per speaker, at the given
+ *                       pace and with that speaker's voice settings, so a
+ *                       warmer or slower reading can be approved before the
+ *                       whole track is re-recorded
  *   --week 1            synthesise one AI trial track: MP3 + WebVTT, one voice per
  *                       speaker, B1 pace, unreleased upload to `course-audio-review`
  *   --weeks 1,2,3,4     the same for several weeks
@@ -51,12 +55,14 @@ import {
   estimateDurationSeconds,
   generateListeningTrial,
   generateVoiceCheck,
+  generateWeekSpeakerClips,
   publishReleasedTrial,
   readListeningWeeks,
 } from './lib/course-audio/listening-trial.mjs';
 import {
   B1_SPEECH_RATE,
   encodeMp3Buffer,
+  resolvePace,
   parseScript,
   pcmToWav,
   synthesiseTurn,
@@ -594,6 +600,52 @@ function runUrl() {
   return `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}`;
 }
 
+/**
+ * Re-auditions one week's voices on their own lines.
+ *
+ * Same week, same script lines, but the pace and the per-speaker voice settings
+ * can be changed and heard before a full track is re-recorded. Nothing is
+ * released and no approval row is touched.
+ */
+async function voiceSample(week, mode = 'warm') {
+  if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice sample.');
+  const client = requireSupabase();
+  const specs = await readListeningWeeks();
+  const spec = specs.find((item) => item.week === week);
+  if (!spec) throw new Error(`No authored listening script for week ${week}`);
+
+  const outputDir = path.join(process.cwd(), 'voice-samples');
+  const pace = resolvePace(mode);
+  console.log(`Week ${week} sample — ${spec.title} (${pace.speed} speed, ${pace.linePauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)`);
+  const { clips } = await generateWeekSpeakerClips({
+    weekSpec: spec,
+    outputDir,
+    apiKey: elevenLabsKey,
+    client,
+    upload: true,
+    pace: mode,
+    log: (message) => console.log(message),
+  });
+
+  for (const clip of clips) {
+    console.log(`  ${clip.speaker}: ${clip.mp3Path} (${clip.durationSeconds}s)`);
+  }
+  const summary = reviewReport({
+    title: `Week ${week} voice sample — ${spec.title}`,
+    artifact: 'week-sample',
+    rows: clips.map((clip) => ({
+      label: `${clip.speaker} — ${clip.name} (${clip.accent})`,
+      detail: `${clip.durationSeconds}s, speed ${clip.settings.speed}, stability ${clip.settings.stability}, style ${clip.settings.style}`,
+    })),
+    footer: [
+      'Three of each speaker\'s own lines, in script order, read once each.',
+      'Nothing is released and the full tracks are unchanged.',
+    ].join(' '),
+  });
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
+  console.log(`\n${clips.length} samples uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
+}
+
 async function releaseWeek(weeks) {
   // Check the target before any database work: a production release is refused
   // outright, so this must fail on the rule rather than on some later read.
@@ -648,8 +700,15 @@ async function main() {
   const deleteTrial = args.includes('--delete-trial');
   const confirmDelete = confirmRequested();
   const checkVoices = args.includes('--voice-check');
+  const sampleWeekList = listArg('--voice-sample');
+  const paceIdx = args.indexOf('--pace');
+  const paceMode = paceIdx !== -1 ? args[paceIdx + 1] : 'warm';
 
   if (checkVoices) return voiceCheck();
+  if (sampleWeekList) {
+    if (sampleWeekList.length !== 1) throw new Error('--voice-sample takes exactly one week');
+    return voiceSample(sampleWeekList[0], paceMode);
+  }
 
   if (deleteTrial || listTrials || reviewWeekList || releaseWeekList || revokeWeekList || weekList) {
     if (deleteTrial) return deleteTrialFiles(weekList ?? [], confirmDelete);

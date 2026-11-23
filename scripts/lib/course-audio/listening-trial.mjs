@@ -18,6 +18,7 @@ import {
   B1_SPEECH_RATE,
   SPEAKER_VOICES,
   TTS_MODEL,
+  resolvePace,
   assembleTrack,
   assertDistinctVoices,
   buildTrackVtt,
@@ -29,6 +30,7 @@ import {
   scheduleTrack,
   silence,
   synthesiseTurn,
+  voiceSettingsFor,
 } from './tts.mjs';
 import {
   downloadFromReview,
@@ -123,6 +125,108 @@ export async function generateVoiceCheck(options) {
     results.push(entry);
   }
   return results;
+}
+
+/**
+ * How many script lines per speaker a week-3 sample carries. Three each is
+ * enough to hear a whole exchange turn-taking without listening to the track.
+ */
+export const WEEK3_SAMPLE_LINES_PER_SPEAKER = 3;
+
+/**
+ * The lines a week-3 style sample carries: the first N authored lines for one
+ * speaker, in script order, copied verbatim.
+ *
+ * This is a test script built for auditioning a voice, not a rewrite of the
+ * listening script: weeks-01-04-details.json is never modified.
+ *
+ * @returns {{speaker: string, text: string}[]}
+ */
+export function speakerSampleLines(weekSpec, speaker, perSpeaker = WEEK3_SAMPLE_LINES_PER_SPEAKER) {
+  if (!SPEAKER_VOICES[speaker]) throw new Error(`No voice configured for speaker "${speaker}"`);
+  const lines = parseScript(weekSpec.script, defaultSpeakerFor(weekSpec));
+  return lines
+    .filter((line) => line.speaker === speaker)
+    .slice(0, perSpeaker)
+    .map((line) => ({ speaker: line.speaker, text: line.text }));
+}
+
+/**
+ * Auditions speakers on a handful of their own lines from a week, with that
+ * week's voices and per-speaker settings, at the given pace.
+ *
+ * One MP3 per speaker, one continuous clip each, so two voices can be compared
+ * side by side: same week, same settings, same pace, different lines (their own).
+ * The clips are uploaded next to the other review files — private bucket,
+ * unreleased. Nothing here touches the week's track or its approval row.
+ */
+export async function generateWeekSpeakerClips(options) {
+  const {
+    weekSpec,
+    outputDir,
+    apiKey,
+    client = null,
+    upload = false,
+    pace = 'warm',
+    encoder = encodeMp3,
+    log = () => {},
+  } = options;
+  const resolved = resolvePace(pace);
+  const speakers = options.speakers ?? [...new Set(
+    parseScript(weekSpec.script, defaultSpeakerFor(weekSpec)).map((line) => line.speaker),
+  )];
+  await mkdir(outputDir, { recursive: true });
+
+  const results = [];
+  for (const speaker of speakers) {
+    const lines = speakerSampleLines(weekSpec, speaker, options.linesPerSpeaker);
+    if (!lines.length) throw new Error(`Week ${weekSpec.week} has no lines for ${speaker}`);
+    const settings = voiceSettingsFor(speaker, resolved.speed);
+    log(
+      `  ${speaker} (${SPEAKER_VOICES[speaker].name}) — ${lines.length} line(s), ` +
+        `speed ${settings.speed}, stability ${settings.stability}, style ${settings.style}`,
+    );
+    const turns = [];
+    for (const line of lines) {
+      const result = await synthesiseTurn({
+        speaker,
+        text: line.text,
+        apiKey,
+        rate: resolved.speed,
+        fetchImpl: options.fetchImpl,
+        log,
+      });
+      // Each sampled line is its own turn: a new paragraph, so the wider gap
+      // applies between them.
+      turns.push({ ...result, newParagraph: true });
+    }
+    const timing = scheduleTrack(turns, { pace: resolved });
+    const wav = pcmToWav(assembleTrack(turns, resolved));
+    const key = `${TRIAL_PREFIX}week-${weekSpec.week}-sample-${speaker}.mp3`;
+    const mp3Path = path.join(outputDir, `week-${weekSpec.week}-sample-${speaker}.mp3`);
+    await encoder(wav, mp3Path);
+    if (upload) {
+      if (!client) throw new Error('Uploading a week sample needs a Supabase service-role client');
+      await uploadToBucket(client, {
+        bucket: DEFAULT_REVIEW_BUCKET,
+        key,
+        contentType: 'audio/mpeg',
+        body: await readFile(mp3Path),
+      });
+    }
+    results.push({
+      week: weekSpec.week,
+      speaker,
+      name: SPEAKER_VOICES[speaker].name,
+      accent: SPEAKER_VOICES[speaker].accent,
+      key,
+      mp3Path,
+      lines,
+      settings,
+      durationSeconds: Number(timing.durationSeconds.toFixed(2)),
+    });
+  }
+  return { week: weekSpec.week, pace: resolved, clips: results };
 }
 
 /**
