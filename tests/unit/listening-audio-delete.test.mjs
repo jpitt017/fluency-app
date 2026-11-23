@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  PROBE_OBJECTS,
   TRIAL_PREFIX,
   assertDeletableKeys,
+  assertProbeObject,
   assertNotReleased,
   assertTrialObjectKey,
   assertTrialTrackKey,
@@ -14,6 +16,7 @@ import {
   assertReviewKey,
 } from '../../scripts/lib/course-audio/delete-guard.mjs';
 import { planTrialDeletion, runTrialDeletion } from '../../scripts/lib/course-audio/delete-plan.mjs';
+import { deleteProbeObjects } from '../../scripts/lib/course-audio/publish.mjs';
 
 const workflow = readFileSync(new URL('../../.github/workflows/course-audio.yml', import.meta.url), 'utf8');
 const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', import.meta.url), 'utf8');
@@ -161,6 +164,93 @@ test('a review key is a track, a voice check, or a per-speaker sample — nothin
   );
 });
 
+test('the probe objects are named exactly, in the bucket each one is in', () => {
+  assert.deepEqual(PROBE_OBJECTS, [
+    { bucket: 'course-audio-review', key: 'weeks-01-04/ai-trial/probe-big.mp3' },
+    { bucket: 'course-audio-review', key: 'weeks-01-04/ai-trial/probe-course-audio-review.txt' },
+    { bucket: 'course-audio', key: 'weeks-01-04/ai-trial/probe-course-audio.txt' },
+  ]);
+  // Only those three pairs are accepted; a probe name in the wrong bucket is not.
+  assert.deepEqual(
+    assertProbeObject('course-audio', 'weeks-01-04/ai-trial/probe-course-audio.txt'),
+    PROBE_OBJECTS[2],
+  );
+  for (const [bucket, key] of [
+    ['course-audio', 'weeks-01-04/ai-trial/probe-big.mp3'],
+    ['course-audio-review', 'weeks-01-04/ai-trial/week-1-listening.mp3'],
+    ['course-audio-review', 'weeks-01-04/ai-trial/probe-big.wav'],
+    ['course-audio-review', 'weeks-01-04/ai-trial/../../probe-big.mp3'],
+  ]) {
+    assert.throws(() => assertProbeObject(bucket, key), /Refusing/, `should refuse ${bucket}/${key}`);
+  }
+});
+
+test('a probe delete goes through the Storage API, one exact key at a time', async () => {
+  const removed = [];
+  const listed = [];
+  const files = new Map(PROBE_OBJECTS.map((entry) => [`${entry.bucket}/${entry.key}`, entry]));
+  // The public text file is already gone: the delete reports it, deletes nothing.
+  files.delete('course-audio/weeks-01-04/ai-trial/probe-course-audio.txt');
+  const client = {
+    storage: {
+      from(bucket) {
+        return {
+          async list(folder) {
+            listed.push({ bucket, folder });
+            return {
+              data: PROBE_OBJECTS.filter(
+                (entry) => entry.bucket === bucket && entry.key.startsWith(`${folder}/`) && files.has(`${entry.bucket}/${entry.key}`),
+              ).map((entry) => ({ name: entry.key.split('/').pop() })),
+              error: null,
+            };
+          },
+          async remove(keys) {
+            removed.push({ bucket, keys });
+            return { data: keys.filter((key) => files.delete(`${bucket}/${key}`)).map((key) => ({ name: key })), error: null };
+          },
+        };
+      },
+    },
+  };
+  const lines = [];
+  const result = await deleteProbeObjects(client, (message) => lines.push(message));
+  assert.equal(result.checked, 3);
+  assert.deepEqual(
+    result.removed.map((entry) => `${entry.bucket}/${entry.key}`),
+    ['course-audio-review/weeks-01-04/ai-trial/probe-big.mp3', 'course-audio-review/weeks-01-04/ai-trial/probe-course-audio-review.txt'],
+  );
+  assert.deepEqual(
+    result.missing.map((entry) => entry.key),
+    ['weeks-01-04/ai-trial/probe-course-audio.txt'],
+  );
+  assert.deepEqual(
+    removed.map((item) => `${item.bucket}:${item.keys[0]}`),
+    [
+      'course-audio-review:weeks-01-04/ai-trial/probe-big.mp3',
+      'course-audio-review:weeks-01-04/ai-trial/probe-course-audio-review.txt',
+    ],
+    'an object that is already gone is never sent to remove()',
+  );
+  assert.ok(lines.some((line) => line.includes('already gone')));
+  assert.equal(files.size, 0, 'nothing is left');
+});
+
+test('a probe delete that Storage does not confirm is an error', async () => {
+  const client = {
+    storage: {
+      from: () => ({
+        async list() {
+          return { data: [{ name: 'probe-big.mp3' }], error: null };
+        },
+        async remove() {
+          return { data: [], error: null };
+        },
+      }),
+    },
+  };
+  await assert.rejects(() => deleteProbeObjects(client), /Storage did not delete/);
+});
+
 test('a week must be a whole number from 1 to 4, so it cannot smuggle a path', () => {
   for (const good of [1, 2, 3, 4]) assert.equal(assertTrialWeek(good), good);
   const bad = [
@@ -282,8 +372,8 @@ test('a week with no approval row counts as unreleased and can be cleaned up', a
 // ------------------------------------------------------------- wiring checks
 
 test('the workflow cannot delete without an explicit confirm input', () => {
-  assert.match(workflow, /confirm:\n\s+description: 'delete: actually delete.*\n\s+type: boolean\n\s+default: false/);
-  const step = workflow.split('Delete the files from both buckets')[1].split('- name: Approval state')[0];
+  assert.match(workflow, /confirm:\n\s+description: 'delete \/ delete-probes: actually delete.*\n\s+type: boolean\n\s+default: false/);
+  const step = workflow.split('- name: Delete the files from both buckets')[1].split('- name: Approval state')[0];
   assert.match(step, /if \[ "\$\{\{ inputs\.confirm \}\}" = "true" \]/);
   assert.match(step, /--delete-trial --weeks "\$\{\{ inputs\.weeks \}\}" --confirm/, 'confirm is only passed in that branch');
   assert.match(step, /--delete-trial --weeks "\$\{\{ inputs\.weeks \}\}"\n/, 'the default branch has no --confirm');

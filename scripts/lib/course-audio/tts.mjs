@@ -20,6 +20,13 @@
  * tracks. `speed` is the only delivery control, and it is what gives B1 learners
  * a slightly slower pace.
  *
+ * Speech is synthesised one *sentence* at a time, not one script line at a time.
+ * A line like "Ha! OK. Is there a cleaning rota?" is three sentences, and the
+ * pause between them (0.5 s) is different from the pause between two speakers
+ * (0.7 s) or between two paragraphs (1.0 s). Only per-sentence requests can put
+ * those pauses exactly where they belong, so the timeline, the audio and the
+ * captions are all built from the same list of sentence utterances.
+ *
  * `eleven_multilingual_v2` is the default because it honours `speed` and reads
  * authored scripts verbatim. `eleven_v3` is more expressive but ignores `speed`
  * and adds its own pauses, so it is not used for graded listening material.
@@ -42,8 +49,12 @@ export const TTS_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
  */
 export const OUTPUT_FORMAT = 'pcm_24000';
 
-/** B1 learners: slightly slower than a natural pace, without sounding robotic. */
-export const B1_SPEECH_RATE = 0.9;
+/**
+ * B1 learners: slower than a natural pace, without sounding robotic. 0.8 is the
+ * reviewed rate (the first trial used 0.9 and measured 168-194 wpm overall,
+ * which was too quick for the gist task).
+ */
+export const B1_SPEECH_RATE = 0.8;
 
 export const PCM_SAMPLE_RATE = 24_000;
 export const PCM_BYTES_PER_SAMPLE = 2;
@@ -55,17 +66,32 @@ export const PCM_BYTES_PER_SAMPLE = 2;
  * The IDs are fixed by the course spec. `name` and `accent` are for reviewers;
  * only `voice` and an optional `settings` override reach the API.
  *
- * `settings` is per speaker, on purpose: one scene needs a warmer register than
- * another, and that is a property of the character, not of the track. Week 3 is
- * two flatmates who get on well, so Dan and Marta sit at a lower stability (more
- * expressive, less even) with some style (more life in the line) than the
- * default voices. Everything unset falls back to VOICE_SETTINGS.
+ * `settings` is per speaker, on purpose: one scene needs a warmer or more
+ * animated register than another, and that is a property of the character, not
+ * of the track. Everything unset falls back to VOICE_SETTINGS.
+ *
+ * The values come from the Week 1-4 review: Tom is enthusiastic about his
+ * course, Aisha is happy for him, Joanne is a tour guide who loves York, and
+ * Dan and Marta are flatmates who get on well. The Host and Ellie read straight,
+ * so they keep the defaults.
  */
 export const SPEAKER_VOICES = {
   Host: { voice: 'sp7QaEHmiNEd5HgrXuOo', name: 'Jack Anthony', accent: 'southern English' },
   Ellie: { voice: 'VGEVi3E0hARQ99wIXvJG', name: 'Jenny', accent: 'Scottish' },
-  Aisha: { voice: 'jUPSOpRcPt8GMPsWx5fy', name: 'Ruby B', accent: 'London' },
-  Tom: { voice: 'EtGAAwTx6aMveVbqUxuU', name: 'Joseph', accent: 'northern English' },
+  Aisha: {
+    voice: 'jUPSOpRcPt8GMPsWx5fy',
+    name: 'Ruby B',
+    accent: 'London',
+    // Friendly and upbeat, happy for Tom: a touch more life than the defaults.
+    settings: { stability: 0.35, style: 0.3 },
+  },
+  Tom: {
+    voice: 'EtGAAwTx6aMveVbqUxuU',
+    name: 'Joseph',
+    accent: 'northern English',
+    // Clearly enthusiastic about the course: the most animated voice here.
+    settings: { stability: 0.3, style: 0.4 },
+  },
   Dan: {
     voice: 'sBU90Bu4NCleWDoNkGog',
     name: 'Richard',
@@ -79,7 +105,13 @@ export const SPEAKER_VOICES = {
     accent: 'West Midlands',
     settings: { stability: 0.38, style: 0.25 },
   },
-  Joanne: { voice: 'ZR8ruiC9tbg7bV9RmBmC', name: 'Miri', accent: 'Yorkshire' },
+  Joanne: {
+    voice: 'ZR8ruiC9tbg7bV9RmBmC',
+    name: 'Miri',
+    accent: 'Yorkshire',
+    // A tour guide who loves the city she is showing off.
+    settings: { stability: 0.35, style: 0.35 },
+  },
 };
 
 /**
@@ -95,16 +127,30 @@ export const VOICE_SETTINGS = {
 };
 
 /**
- * The pace and pause profile a run uses.
+ * The pace and pause profile a run uses. `b1` is the reviewed course pace and
+ * the default for every week:
  *
- * `b1` is the original: 0.9 speed, 0.35 s between lines, 0.6 s between
- * paragraphs. `warm` is the slower, roomier reading for a conversational scene:
- * 0.8 speed with longer gaps, so learners get a beat between turns. Both are
- * exported so the workflow can pass one by name and the tests can pin both.
+ *   speed                 0.8, aiming at roughly 140-150 words a minute
+ *   sentencePauseSeconds  0.5 s between sentences inside one line
+ *   speakerPauseSeconds   0.7 s between two speakers
+ *   paragraphPauseSeconds 1.0 s between two paragraphs
+ *
+ * A pause is picked by the *kind of boundary* the line starts on, not by a
+ * single line gap: a line that changes speaker gets the speaker pause, a line
+ * where the same speaker carries on after a paragraph break gets the longer
+ * paragraph pause. In the two-handers almost every turn is a speaker change
+ * (0.7 s); in Week 4's monologue every block is a paragraph (1.0 s).
+ *
+ * The profile is a plain object so a future pace can be a one-line addition and
+ * the workflow can still pass one by name.
  */
 export const PACE_PROFILES = {
-  b1: { speed: B1_SPEECH_RATE, linePauseSeconds: 0.35, paragraphPauseSeconds: 0.6 },
-  warm: { speed: 0.8, linePauseSeconds: 0.55, paragraphPauseSeconds: 0.9 },
+  b1: {
+    speed: B1_SPEECH_RATE,
+    sentencePauseSeconds: 0.5,
+    speakerPauseSeconds: 0.7,
+    paragraphPauseSeconds: 1.0,
+  },
 };
 
 export const DEFAULT_PACE = 'b1';
@@ -121,6 +167,24 @@ export function resolvePace(pace = DEFAULT_PACE) {
   return { ...profile };
 }
 
+/** The four kinds of boundary a spoken sentence can start on. */
+export const BREAKS = ['none', 'sentence', 'speaker', 'paragraph'];
+
+/** How long the silence before a sentence of the given boundary kind is. */
+export function pauseSecondsFor(kind, pace = PACE_PROFILES[DEFAULT_PACE]) {
+  const resolved = resolvePace(pace);
+  switch (kind) {
+    case 'sentence':
+      return resolved.sentencePauseSeconds;
+    case 'speaker':
+      return resolved.speakerPauseSeconds;
+    case 'paragraph':
+      return resolved.paragraphPauseSeconds;
+    default:
+      return 0;
+  }
+}
+
 /** The settings actually sent for a speaker: defaults, then the voice's override. */
 export function voiceSettingsFor(speaker, rate) {
   const config = SPEAKER_VOICES[speaker];
@@ -128,9 +192,11 @@ export function voiceSettingsFor(speaker, rate) {
   return { ...VOICE_SETTINGS, ...(config.settings ?? {}), speed: rate };
 }
 
-/** How long a silent gap is inserted between two spoken lines (the `b1` pace). */
-export const LINE_PAUSE_SECONDS = PACE_PROFILES.b1.linePauseSeconds;
-/** A little longer where the script starts a new paragraph (the `b1` pace). */
+/** Gap between two sentences inside one line, on the default pace. */
+export const SENTENCE_PAUSE_SECONDS = PACE_PROFILES.b1.sentencePauseSeconds;
+/** Gap between two speakers, on the default pace. */
+export const SPEAKER_PAUSE_SECONDS = PACE_PROFILES.b1.speakerPauseSeconds;
+/** Gap between two paragraphs, on the default pace. */
 export const PARAGRAPH_PAUSE_SECONDS = PACE_PROFILES.b1.paragraphPauseSeconds;
 
 /**
@@ -197,6 +263,116 @@ export function assertKnownSpeakers(lines) {
   for (const line of lines) {
     if (!SPEAKER_VOICES[line.speaker]) throw new Error(`No voice configured for speaker "${line.speaker}"`);
   }
+}
+
+/**
+ * Abbreviations that end in a full stop without ending the sentence. Compared
+ * lower-cased and without trailing dots, so "Mr." -> "mr" and "e.g." -> "e.g".
+ */
+const ABBREVIATIONS = new Set([
+  'mr', 'mrs', 'ms', 'dr', 'prof', 'st', 'sr', 'jr', 'vs', 'etc', 'eg', 'ie',
+  'no', 'nos', 'approx', 'fig', 'al', 'ca', 'cf', 'ed', 'eds', 'vol', 'pp', 'p',
+  'e.g', 'i.e', 'a.m', 'p.m',
+]);
+
+/**
+ * True when the full stop at `index` is part of an abbreviation or an initial
+ * ("Mr. Smith", "J. K. Rowling") rather than the end of a sentence.
+ */
+function isAbbreviationStop(text, index) {
+  const before = text.slice(0, index);
+  const match = /([A-Za-z][A-Za-z.]*)$/.exec(before);
+  if (!match) return false;
+  const word = match[1].replace(/\.+$/, '');
+  if (ABBREVIATIONS.has(word.toLowerCase())) return true;
+  // A single capital letter is an initial, not a one-letter sentence.
+  return /^[A-Z]$/.test(word);
+}
+
+/**
+ * Splits one script line into the sentences it is spoken as.
+ *
+ * A sentence ends at `.`, `!`, `?` or an ellipsis, optionally followed by a
+ * closing quote or bracket, and only when the next character is whitespace or
+ * the end of the line. That one lookahead is what keeps "1472" and "3.5" whole:
+ * a full stop with a digit on both sides never has a space after it. "Mr.",
+ * "Dr.", "e.g." and initials like "J." are held back by the abbreviation list,
+ * so a title cannot break a sentence in half.
+ *
+ * @returns {string[]} the sentences, in order, with their terminators, trimmed
+ */
+export function splitSentences(text) {
+  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (!clean) return [];
+  const sentences = [];
+  let start = 0;
+  const boundary = /[.!?…]+["'”’)\]]*(?=\s|$)/g;
+  let match;
+  while ((match = boundary.exec(clean)) !== null) {
+    if (match[0].startsWith('.') && isAbbreviationStop(clean, match.index)) continue;
+    const end = match.index + match[0].length;
+    const sentence = clean.slice(start, end).trim();
+    if (sentence) sentences.push(sentence);
+    start = end;
+  }
+  const rest = clean.slice(start).trim();
+  if (rest) sentences.push(rest);
+  return sentences;
+}
+
+/** Words that are actually spoken in a piece of text. */
+export function countWords(text) {
+  return String(text ?? '')
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+/** What a listener actually hears per minute: spoken words over elapsed time. */
+export function wordsPerMinute(words, seconds) {
+  if (!(seconds > 0)) return 0;
+  return Number(((words / seconds) * 60).toFixed(1));
+}
+
+/**
+ * Turns parsed lines into the utterances that get synthesised: one per
+ * sentence, each tagged with the kind of pause that comes *before* it.
+ *
+ *   none       the very first sentence of the track, no gap at all
+ *   sentence   0.5 s: the same speaker carries on inside one line
+ *   speaker    0.7 s: the next line belongs to someone else
+ *   paragraph  1.0 s: the same speaker carries on after a paragraph break
+ *
+ * A paragraph break that also changes speaker counts as a speaker change: in
+ * the two-handers nearly every authored paragraph is a new turn, and the
+ * dialogue beat (0.7 s) is the one a learner should hear there. The 1.0 s
+ * paragraph pause is for a single voice moving on to its next block (Week 4).
+ *
+ * @returns {{speaker: string, text: string, boundary: string, lineIndex: number, sentenceIndex: number, sentenceCount: number, words: number}[]}
+ */
+export function buildUtterances(lines) {
+  const utterances = [];
+  let previousSpeaker = null;
+  for (const line of lines) {
+    const sentences = splitSentences(line.text);
+    sentences.forEach((text, position) => {
+      let boundary;
+      if (!utterances.length) boundary = 'none';
+      else if (position > 0) boundary = 'sentence';
+      else if (line.speaker !== previousSpeaker) boundary = 'speaker';
+      else boundary = 'paragraph';
+      utterances.push({
+        speaker: line.speaker,
+        text,
+        boundary,
+        lineIndex: line.index,
+        sentenceIndex: position + 1,
+        sentenceCount: sentences.length,
+        words: countWords(text),
+      });
+    });
+    previousSpeaker = line.speaker;
+  }
+  return utterances;
 }
 
 /**
@@ -342,50 +518,41 @@ export function pcmDurationSeconds(pcm, sampleRate = PCM_SAMPLE_RATE) {
 }
 
 /**
- * Lays the lines out on the finished timeline. The pauses inserted between
- * lines are the same ones added to the audio, so cue times match what a learner
- * hears.
+ * Lays the utterances out on the finished timeline. The pauses inserted before
+ * each sentence are the same ones added to the audio, so cue times match what a
+ * learner hears.
  *
- * @returns {{cues: {index: number, speaker: string, text: string, start: number, end: number}[], durationSeconds: number}}
+ * @returns {{cues: {index: number, speaker: string, text: string, start: number, end: number}[], durationSeconds: number, speechSeconds: number}}
  */
-export function scheduleTrack(turns, options = {}) {
+export function scheduleTrack(utterances, options = {}) {
   const sampleRate = options.sampleRate ?? PCM_SAMPLE_RATE;
   const pace = resolvePace(options.pace);
   const cues = [];
   let cursor = 0;
-  turns.forEach((turn, position) => {
-    const newParagraph = options.paragraphStarts?.[position] ?? turn.newParagraph ?? false;
-    cursor += pauseBeforeLine(position + 1, newParagraph, pace);
-    const duration = pcmDurationSeconds(turn.pcm, sampleRate);
+  let speechSeconds = 0;
+  utterances.forEach((utterance, position) => {
+    cursor += pauseSecondsFor(utterance.boundary ?? (position === 0 ? 'none' : 'sentence'), pace);
+    const duration = pcmDurationSeconds(utterance.pcm, sampleRate);
     cues.push({
       index: options.lineIndexes?.[position] ?? position + 1,
-      speaker: turn.speaker,
-      text: turn.text,
+      speaker: utterance.speaker,
+      text: utterance.text,
       start: cursor,
       end: cursor + duration,
     });
     cursor += duration;
+    speechSeconds += duration;
   });
-  return { cues, durationSeconds: cursor };
-}
-
-/**
- * Total gap in seconds before the given line position (1-based, as in the
- * published captions), used to build the audio.
- */
-export function pauseBeforeLine(linePosition, newParagraph, pace = PACE_PROFILES[DEFAULT_PACE]) {
-  if (linePosition <= 1) return 0;
-  const resolved = resolvePace(pace);
-  return newParagraph ? resolved.paragraphPauseSeconds : resolved.linePauseSeconds;
+  return { cues, durationSeconds: cursor, speechSeconds };
 }
 
 /** Assembles the finished PCM track with the same gaps used by scheduleTrack. */
-export function assembleTrack(turns, pace = PACE_PROFILES[DEFAULT_PACE]) {
+export function assembleTrack(utterances, pace = PACE_PROFILES[DEFAULT_PACE]) {
   const parts = [];
-  turns.forEach((turn, position) => {
-    const pause = pauseBeforeLine(position + 1, turn.newParagraph, pace);
+  utterances.forEach((utterance, position) => {
+    const pause = pauseSecondsFor(utterance.boundary ?? (position === 0 ? 'none' : 'sentence'), pace);
     if (pause > 0) parts.push(silence(pause));
-    parts.push(turn.pcm);
+    parts.push(utterance.pcm);
   });
   return Buffer.concat(parts);
 }

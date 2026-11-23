@@ -136,14 +136,16 @@ Irish voices and land **unreleased** in the private `course-audio-review` bucket
 (`source: "ai-trial"`, no live `audioUrl`); approving one copies it to the public
 `course-audio` bucket and sets `audio_url` on its `listening_audio_trials` row.
 The manual `Course audio — AI trial tracks` workflow needs an `ELEVENLABS_API_KEY`
-repository secret. Start with `mode: voice-check`, which records one line per
-speaker and attaches the seven clips as the `voice-check` artifact (three days),
-so the accents can be approved before any full track is recorded. `mode: generate`
-then attaches each week's MP3 and captions as the `review` artifact; nothing is
-released until a week is released on purpose. `mode: voice-sample` re-auditions
-one week first: three of each speaker's own lines, at a chosen pace (`warm` is
-slower with longer gaps), attached as the `week-sample` artifact, so a change of
-voice settings can be heard before a whole track is re-recorded. A week only shows the player, labelled **AI voice – trial
+repository secret. Start with `mode: voice-check`, which reads real lines from
+the weeks in the course pace (speed 0.8, 0.5 s between sentences, 0.7 s between
+speakers, 1.0 s between paragraphs) with each speaker's own voice settings, and
+attaches one clip per speaker plus the named step clips as the `voice-check`
+artifact (three days). Every clip reports its words per minute, so the pace can
+be checked before a whole track is recorded. `mode: generate` then attaches each
+week's MP3 and captions as the `review` artifact; nothing is released until a
+week is released on purpose. `mode: voice-sample` re-auditions one week on each
+speaker's three longest lines, attached as the `week-sample` artifact, so a
+change of voice settings can be heard before a whole track is re-recorded. A week only shows the player, labelled **AI voice – trial
 recording**, once its row is released; see
 [`docs/CONTENT_PIPELINE.md`](docs/CONTENT_PIPELINE.md) section 6.
 

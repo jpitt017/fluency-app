@@ -3,13 +3,17 @@
  * Audio pipeline for Fluency Studio.
  *
  * Weeks 1-4 listening (the current production path, ElevenLabs voices):
- *   --voice-check       one short line per speaker -> private review bucket, so
- *                       the seven accents can be compared before anything else
- *                       is recorded
+ *   --voice-check       a few real lines per speaker -> private review bucket:
+ *                       one clip per speaker plus the named step clips (Ellie's
+ *                       longest Week 1 answer, Tom's first two Week 2 lines,
+ *                       Aisha's "Oh, that's great", three Week 3 turns, Joanne's
+ *                       opening paragraph), at the course pace and settings
  *   --voice-sample N    three of Week N's own lines per speaker, at the given
  *                       pace and with that speaker's voice settings, so a
  *                       warmer or slower reading can be approved before the
  *                       whole track is re-recorded
+ *   --delete-probes     delete the three storage-check probe objects by exact
+ *                       name, through the Storage API (dry run unless --confirm)
  *   --week 1            synthesise one AI trial track: MP3 + WebVTT, one voice per
  *                       speaker, B1 pace, unreleased upload to `course-audio-review`
  *   --weeks 1,2,3,4     the same for several weeks
@@ -50,32 +54,33 @@ import {
   DEFAULT_REVIEW_BUCKET,
   SPEAKER_VOICES,
   TTS_MODEL,
-  VOICE_CHECK_LINE,
   defaultSpeakerFor,
   estimateDurationSeconds,
+  generateClip,
   generateListeningTrial,
   generateVoiceCheck,
-  generateWeekSpeakerClips,
   publishReleasedTrial,
   readListeningWeeks,
+  week3SampleLines,
 } from './lib/course-audio/listening-trial.mjs';
 import {
-  B1_SPEECH_RATE,
+  buildUtterances,
   encodeMp3Buffer,
-  resolvePace,
   parseScript,
+  resolvePace,
   pcmToWav,
   synthesiseTurn,
 } from './lib/course-audio/tts.mjs';
 import {
   REVIEW_LINK_SECONDS,
+  deleteProbeObjects,
   deleteReleasedFiles,
   releaseTrial,
   revokeTrial,
   signReviewUrl,
 } from './lib/course-audio/publish.mjs';
 import { checkApprovalTarget, isApprovalBypassRequested } from './lib/course-audio/environment.mjs';
-import { assertTrialWeek, isConfirmed, reviewObjectKeys } from './lib/course-audio/delete-guard.mjs';
+import { PROBE_OBJECTS, assertTrialWeek, isConfirmed, reviewObjectKeys } from './lib/course-audio/delete-guard.mjs';
 import { runTrialDeletion } from './lib/course-audio/delete-plan.mjs';
 
 const args = process.argv.slice(2);
@@ -357,11 +362,14 @@ function describeWeek(weekSpec) {
   const fallback = defaultSpeakerFor(weekSpec);
   const lines = parseScript(weekSpec.script, fallback);
   const speakers = [...new Set(lines.map((line) => line.speaker))];
+  const estimate = estimateDurationSeconds(lines);
   return {
     lines,
     speakers,
     voices: speakers.map((name) => `${name}=${SPEAKER_VOICES[name].voice} (${SPEAKER_VOICES[name].accent})`),
-    estimate: Math.round(estimateDurationSeconds(lines)),
+    estimate: Math.round(estimate.seconds),
+    estimateWpm: Math.round(estimate.words / (estimate.seconds / 60)),
+    sentences: buildUtterances(lines).length,
   };
 }
 
@@ -377,7 +385,10 @@ async function generateWeeks(weeks) {
     for (const spec of wanted) {
       const info = describeWeek(spec);
       console.log(`Week ${spec.week}: ${spec.title}`);
-      console.log(`  ${info.lines.length} lines, ${info.speakers.length} speaker(s), ~${info.estimate}s at B1 pace`);
+      console.log(
+        `  ${info.lines.length} lines / ${info.sentences} sentences, ${info.speakers.length} speaker(s), ` +
+          `~${info.estimate}s (~${info.estimateWpm} wpm) at the B1 pace`,
+      );
       for (const voice of info.voices) console.log(`  voice: ${voice}`);
     }
     console.log('Dry run: no audio generated, nothing uploaded, nothing released.');
@@ -402,13 +413,15 @@ async function generateWeeks(weeks) {
     });
     uploaded += 1;
     console.log(
-      `  ${result.lines} lines -> ${result.mp3Path} (${result.durationSeconds}s, ${result.cues} caption cues)`,
+      `  ${result.lines} lines / ${result.sentences} sentences -> ${result.mp3Path} ` +
+        `(${result.durationSeconds}s, ${result.words} words, ${result.wordsPerMinute} wpm, ${result.cues} caption cues)`,
     );
     console.log(`  uploaded unreleased: ${result.audioKey}`);
     console.log(`  approved? no - run --review ${spec.week} to listen, then --release ${spec.week}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
       await appendSummary(
-        `| Week ${spec.week} | ${result.durationSeconds}s | ${result.speakers.join(', ')} | \`${result.audioKey}\` | unreleased |`,
+        `| Week ${spec.week} | ${result.durationSeconds}s | ${result.wordsPerMinute} wpm | ` +
+          `${result.speakers.join(', ')} | \`${result.audioKey}\` | unreleased |`,
       );
     }
   }
@@ -550,47 +563,59 @@ function reviewReport(report) {
 }
 
 /**
- * Auditions the seven voices. Each clip is one line, the same words for every
- * speaker, so the accents can be compared side by side before a full week is
- * recorded.
+ * Auditions all seven voices on real lines from the weeks they speak in, at the
+ * course pace and with each speaker's own settings.
  *
- * The MP3s are written to ./voice-check/, which the workflow uploads as the
+ * One MP3 per speaker, plus the named step clips a review asks for by name:
+ * Ellie's longest Week 1 answer, Tom's first two Week 2 lines, Aisha's "Oh,
+ * that's great", three Week 3 turns and Joanne's opening paragraph. Each clip's
+ * words per minute is reported, measured from the assembled timeline (words
+ * actually spoken over the wall-clock length, pauses included), not estimated.
+ *
+ * The MP3s go to ./voice-check/, which the workflow uploads as the
  * `voice-check` artifact for three days: that is the route to listen to them,
- * because GitHub redacts the signed token from anything it renders. The signed
- * links are still printed to the step log, and drive the summary table, but they
- * expire in an hour and are not readable outside the run page.
+ * because GitHub redacts a signed token from anything it renders.
  */
 async function voiceCheck() {
   if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice check.');
   const client = requireSupabase();
-  // Kept outside audio-out on purpose: this is the folder the workflow uploads
-  // as the `voice-check` artifact, so a reviewer can download the seven MP3s
-  // instead of relying on signed links.
+  const specs = await readListeningWeeks();
   const outputDir = path.join(process.cwd(), 'voice-check');
-  console.log(`Voice check (${TTS_MODEL}, rate ${B1_SPEECH_RATE}): "${VOICE_CHECK_LINE}"`);
-  const results = await generateVoiceCheck({
+  const pace = resolvePace('b1');
+  console.log(
+    `Voice check (${TTS_MODEL}, speed ${pace.speed}, ${pace.sentencePauseSeconds}s / ` +
+      `${pace.speakerPauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)`,
+  );
+  const clips = await generateVoiceCheck({
     outputDir,
     apiKey: elevenLabsKey,
     client,
     upload: true,
+    pace: 'b1',
+    weekSpecs: specs,
     log: (message) => console.log(message),
   });
 
-  for (const entry of results) {
-    console.log(`${entry.speaker} (${entry.name}, ${entry.accent}) ${entry.durationSeconds}s -> ${entry.mp3Path}`);
+  for (const clip of clips) {
+    console.log(
+      `${clip.title}: ${clip.words} words in ${clip.durationSeconds}s ` +
+        `(${clip.wordsPerMinute} wpm wall clock, ${clip.speechSeconds}s speech) -> ${clip.mp3Path}`,
+    );
   }
   const summary = reviewReport({
-    title: 'Voice check — one line per speaker',
+    title: 'Voice check — real lines, course pace',
     artifact: 'voice-check',
-    rows: results.map((entry) => ({
-      label: `${entry.speaker} — ${entry.name} (${entry.accent})`,
-      detail: `${entry.durationSeconds}s`,
+    rows: clips.map((clip) => ({
+      label: clip.title,
+      detail: `${clip.durationSeconds}s · ${clip.words} words · ${clip.wordsPerMinute} wpm`,
     })),
-    footer: 'Nothing is released: these clips are for approval only.',
+    footer: [
+      'Tom 0.3/0.4, Aisha 0.35/0.3, Joanne 0.35/0.35, Dan and Marta 0.38/0.25,',
+      'Host and Ellie unchanged. Nothing is released: these clips are for approval only.',
+    ].join(' '),
   });
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
-  console.log(`\n${results.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
-  void client;
+  console.log(`\n${clips.length} clips uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
 }
 
 /** This run's page, so the summary can point at the artifact. */
@@ -604,10 +629,12 @@ function runUrl() {
  * Re-auditions one week's voices on their own lines.
  *
  * Same week, same script lines, but the pace and the per-speaker voice settings
- * can be changed and heard before a full track is re-recorded. Nothing is
- * released and no approval row is touched.
+ * can be changed and heard before a full track is re-recorded. One clip per
+ * speaker; the three lines are that speaker's three longest turns, so a voice is
+ * judged on a real answer rather than on "Ha! OK.". Nothing is released and no
+ * approval row is touched.
  */
-async function voiceSample(week, mode = 'warm') {
+async function voiceSample(week, mode = 'b1') {
   if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice sample.');
   const client = requireSupabase();
   const specs = await readListeningWeeks();
@@ -616,34 +643,68 @@ async function voiceSample(week, mode = 'warm') {
 
   const outputDir = path.join(process.cwd(), 'voice-samples');
   const pace = resolvePace(mode);
-  console.log(`Week ${week} sample — ${spec.title} (${pace.speed} speed, ${pace.linePauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)`);
-  const { clips } = await generateWeekSpeakerClips({
-    weekSpec: spec,
-    outputDir,
-    apiKey: elevenLabsKey,
-    client,
-    upload: true,
-    pace: mode,
-    log: (message) => console.log(message),
-  });
+  console.log(
+    `Week ${week} sample — ${spec.title} (speed ${pace.speed}, ${pace.sentencePauseSeconds}s / ` +
+      `${pace.speakerPauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)`,
+  );
+  const chosen = week3SampleLines(spec);
+  const clips = [];
+  for (const [speaker, lines] of Object.entries(chosen)) {
+    clips.push(
+      await generateClip({
+        key: `week-${week}-sample-${speaker}`,
+        title: `${speaker} — three lines from Week ${week}`,
+        lines,
+        outputDir,
+        apiKey: elevenLabsKey,
+        client,
+        upload: true,
+        pace: mode,
+        log: (message) => console.log(message),
+      }),
+    );
+  }
 
   for (const clip of clips) {
-    console.log(`  ${clip.speaker}: ${clip.mp3Path} (${clip.durationSeconds}s)`);
+    console.log(
+      `  ${clip.speaker}: ${clip.words} words in ${clip.durationSeconds}s (${clip.wordsPerMinute} wpm) -> ${clip.mp3Path}`,
+    );
   }
   const summary = reviewReport({
     title: `Week ${week} voice sample — ${spec.title}`,
     artifact: 'week-sample',
     rows: clips.map((clip) => ({
-      label: `${clip.speaker} — ${clip.name} (${clip.accent})`,
-      detail: `${clip.durationSeconds}s, speed ${clip.settings.speed}, stability ${clip.settings.stability}, style ${clip.settings.style}`,
+      label: `${clip.speaker} — ${clip.title}`,
+      detail: `${clip.durationSeconds}s · ${clip.words} words · ${clip.wordsPerMinute} wpm`,
     })),
-    footer: [
-      'Three of each speaker\'s own lines, in script order, read once each.',
-      'Nothing is released and the full tracks are unchanged.',
-    ].join(' '),
+    footer: 'Three of each speaker\'s longest lines, at the course pace. Nothing is released and the full tracks are unchanged.',
   });
   if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...summary);
   console.log(`\n${clips.length} samples uploaded to ${DEFAULT_REVIEW_BUCKET}, unreleased.`);
+}
+
+/**
+ * Deletes the three storage-check probe objects by exact name.
+ *
+ * They are a leftover from proving a bucket accepted an upload, not audio for
+ * learners: a 400 kB MP3 and two 6-byte text files. The delete goes through the
+ * Storage API (Supabase refuses direct deletes on storage.objects) and each
+ * object is re-listed afterwards. Dry run unless --confirm.
+ */
+async function deleteProbes(confirmed) {
+  if (!confirmed) {
+    console.log('Probe objects (dry run: nothing is deleted):');
+    for (const entry of PROBE_OBJECTS) console.log(`  ${entry.bucket}/${entry.key}`);
+    console.log('Re-run with --confirm to delete exactly these three objects.');
+    return;
+  }
+  const client = requireSupabase();
+  const result = await deleteProbeObjects(client, (message) => console.log(message));
+  console.log(
+    `\nProbe cleanup: ${result.removed.length} deleted, ${result.missing.length} already gone, ` +
+      `${result.checked} checked.`,
+  );
+  for (const entry of result.removed) console.log(`  ${entry.bucket}: ${entry.key}`);
 }
 
 async function releaseWeek(weeks) {
@@ -702,9 +763,11 @@ async function main() {
   const checkVoices = args.includes('--voice-check');
   const sampleWeekList = listArg('--voice-sample');
   const paceIdx = args.indexOf('--pace');
-  const paceMode = paceIdx !== -1 ? args[paceIdx + 1] : 'warm';
+  const paceMode = paceIdx !== -1 ? args[paceIdx + 1] : 'b1';
+  const deleteProbesFlag = args.includes('--delete-probes');
 
   if (checkVoices) return voiceCheck();
+  if (deleteProbesFlag) return deleteProbes(confirmDelete);
   if (sampleWeekList) {
     if (sampleWeekList.length !== 1) throw new Error('--voice-sample takes exactly one week');
     return voiceSample(sampleWeekList[0], paceMode);
