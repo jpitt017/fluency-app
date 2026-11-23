@@ -70,6 +70,30 @@ import {
   pcmToWav,
   synthesiseTurn,
 } from './lib/course-audio/tts.mjs';
+
+/**
+ * The voice settings a summary reports, read from the config.
+ *
+ * A hand-written list here went stale the moment Tom's settings changed, and a
+ * summary that misstates the settings is worse than no summary.
+ */
+function describedVoiceSettings() {
+  const overridden = [];
+  const defaults = [];
+  for (const [speaker, config] of Object.entries(SPEAKER_VOICES)) {
+    if (!config.settings) {
+      defaults.push(speaker);
+      continue;
+    }
+    const parts = [];
+    if (config.settings.stability !== undefined) parts.push(`stability ${config.settings.stability}`);
+    if (config.settings.style !== undefined) parts.push(`style ${config.settings.style}`);
+    if (config.settings.speed !== undefined) parts.push(`speed ${config.settings.speed}`);
+    overridden.push(`${speaker} (${config.name}) ${parts.join(', ')}`);
+  }
+  const tail = defaults.length ? `; ${defaults.join(' and ')} unchanged on the defaults.` : '.';
+  return `Voices: ${overridden.join('; ')}${tail}`;
+}
 import {
   REVIEW_LINK_SECONDS,
   deleteProbeObjects,
@@ -97,6 +121,20 @@ const uploadDir = uploadIdx !== -1 ? args[uploadIdx + 1] : null;
  * (letters, signs, decimals, exponents, `..`) is refused rather than coerced, so a
  * crafted value cannot reach a storage path.
  */
+/** One or more clip names, e.g. `--only tom-two-lines` or `--only a,b`. */
+function nameListArg(flag) {
+  const index = args.indexOf(flag);
+  if (index === -1) return null;
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${flag} needs at least one clip name`);
+  const names = value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!names.length) throw new Error(`${flag} needs at least one clip name`);
+  return names;
+}
+
 function listArg(flag) {
   const index = args.indexOf(flag);
   if (index === -1) return null;
@@ -574,7 +612,7 @@ function reviewReport(report) {
  * `voice-check` artifact for three days: that is the route to listen to them,
  * because GitHub redacts a signed token from anything it renders.
  */
-async function voiceCheck() {
+async function voiceCheck(onlyKeys = null) {
   if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the voice check.');
   const client = requireSupabase();
   const specs = await readListeningWeeks();
@@ -582,7 +620,8 @@ async function voiceCheck() {
   const pace = resolvePace('b1');
   console.log(
     `Voice check (${TTS_MODEL}, speed ${pace.speed}, ${pace.sentencePauseSeconds}s / ` +
-      `${pace.speakerPauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)`,
+      `${pace.speakerPauseSeconds}s / ${pace.paragraphPauseSeconds}s pauses)` +
+      (onlyKeys ? ` — only ${onlyKeys.join(', ')}` : ''),
   );
   const clips = await generateVoiceCheck({
     outputDir,
@@ -591,6 +630,7 @@ async function voiceCheck() {
     upload: true,
     pace: 'b1',
     weekSpecs: specs,
+    onlyKeys,
     log: (message) => console.log(message),
   });
 
@@ -608,8 +648,9 @@ async function voiceCheck() {
       detail: `${clip.durationSeconds}s · ${clip.words} words · ${clip.wordsPerMinute} wpm`,
     })),
     footer: [
-      'New voices: Tom (Jack C) 0.3/0.4 at 0.75, Marta (Katie) 0.3/0.4 at 0.8.',
-      'Pace: 0.3 s between sentences, 0.7 s between speakers, 0.8 s between paragraphs.',
+      describedVoiceSettings(),
+      `Pace: ${pace.sentencePauseSeconds} s between sentences, ${pace.speakerPauseSeconds} s between` +
+        ` speakers, ${pace.paragraphPauseSeconds} s between paragraphs.`,
       'Nothing is released: these clips are for approval only.',
     ].join(' '),
   });
@@ -760,12 +801,14 @@ async function main() {
   const deleteTrial = args.includes('--delete-trial');
   const confirmDelete = confirmRequested();
   const checkVoices = args.includes('--voice-check');
+  // `--only tom-two-lines` re-records one named clip instead of all of them.
+  const onlyKeys = nameListArg('--only');
   const sampleWeekList = listArg('--voice-sample');
   const paceIdx = args.indexOf('--pace');
   const paceMode = paceIdx !== -1 ? args[paceIdx + 1] : 'b1';
   const deleteProbesFlag = args.includes('--delete-probes');
 
-  if (checkVoices) return voiceCheck();
+  if (checkVoices) return voiceCheck(onlyKeys);
   if (deleteProbesFlag) return deleteProbes(confirmDelete);
   if (sampleWeekList) {
     if (sampleWeekList.length !== 1) throw new Error('--voice-sample takes exactly one week');

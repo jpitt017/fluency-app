@@ -268,8 +268,13 @@ export async function generateVoiceCheck(options) {
   const { outputDir, apiKey, client = null, upload = false, pace = DEFAULT_PACE, log = () => {} } = options;
   const specs = options.weekSpecs ?? (await readListeningWeeks(options.curriculum));
   const plan = voiceCheckScript(specs);
+  // A single named clip can be re-recorded on its own: when one character's
+  // settings change, re-synthesising the other eleven clips would spend the
+  // ElevenLabs quota to produce audio nobody asked to hear again.
+  const only = options.onlyKeys ?? null;
+  const entries = only ? plan.clips.filter((entry) => only.includes(entry.key)) : plan.clips;
   const clips = [];
-  for (const entry of plan.clips) {
+  for (const entry of entries) {
     log(`  ${entry.title}`);
     clips.push(
       await generateClip({
@@ -284,6 +289,13 @@ export async function generateVoiceCheck(options) {
         log,
       }),
     );
+  }
+  // An unknown name would otherwise produce an empty run that looks like success.
+  // A clip's `key` is its storage path, so compare on the name inside it.
+  if (only) {
+    const produced = new Set(clips.map((clip) => path.basename(clip.key, '.mp3')));
+    const missing = only.filter((key) => !produced.has(key));
+    if (missing.length) throw new Error(`No voice-check clip named ${missing.join(', ')}`);
   }
   return clips;
 }

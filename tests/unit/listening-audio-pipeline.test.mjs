@@ -131,7 +131,10 @@ test('the request carries the voice id, the PCM format and the B1 speed, and no 
 
 test('the reviewed characters carry their own voice settings, and Week 1 keeps the defaults', () => {
   const expected = {
-    Tom: { stability: 0.3, style: 0.4, speed: 0.75 },
+    // Second listen: too slow and too flat at 0.75 / 0.3 / 0.4, so he now reads
+    // slightly quicker than the course pace with the lowest stability and the
+    // highest style on the course.
+    Tom: { stability: 0.25, style: 0.55, speed: 0.85 },
     Aisha: { stability: 0.35, style: 0.3 },
     Dan: { stability: 0.38, style: 0.25 },
     Marta: { stability: 0.3, style: 0.4 },
@@ -161,15 +164,17 @@ test('the reviewed characters carry their own voice settings, and Week 1 keeps t
   assert.equal(voiceSettingsFor('Host', 0.8).stability, 0.45);
 });
 
-test("only the voices that read fast override the pace's speed", () => {
-  // A character may carry their own rate: Joanne was measured too fast at 0.8,
-  // and Tom's replacement voice is fast paced, so both read at 0.75. Marta's
-  // replacement is a Midlands voice that needs the slower *delivery*, not a
-  // slower tempo, so she keeps the course speed.
+test("only the voices with their own rate override the pace's speed", () => {
+  // A character may carry their own rate: Joanne was measured too fast at 0.8 so
+  // she reads at 0.75, and Tom was reviewed as too slow so he reads at 0.85.
+  // Marta's voice needs the warmth in the *delivery*, not a slower tempo, so she
+  // keeps the course speed.
   assert.equal(voiceSettingsFor('Joanne', 0.8).speed, 0.75);
   assert.equal(voiceSettingsFor('Joanne', 0.9).speed, 0.75, 'her rate wins over any pace');
   assert.equal(rateForSpeaker('Joanne', 'b1'), 0.75);
-  assert.equal(rateForSpeaker('Tom', 'b1'), 0.75, 'the new Tom voice is fast paced');
+  assert.equal(voiceSettingsFor('Tom', 0.8).speed, 0.85);
+  assert.equal(voiceSettingsFor('Tom', 0.9).speed, 0.85, 'his rate wins over any pace');
+  assert.equal(rateForSpeaker('Tom', 'b1'), 0.85);
   for (const speaker of ['Host', 'Ellie', 'Aisha', 'Dan', 'Marta']) {
     assert.equal(rateForSpeaker(speaker, 'b1'), 0.8, `${speaker} keeps the course speed`);
   }
@@ -179,7 +184,7 @@ test("only the voices that read fast override the pace's speed", () => {
   assert.equal(joanne.style, 0.35);
   assert.equal(joanne.similarity_boost, 0.8);
   assert.equal(buildSpeechRequest('Joanne', 'Welcome to York!').body.voice_settings.speed, 0.75);
-  assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.75);
+  assert.equal(buildSpeechRequest('Tom', 'I am!').body.voice_settings.speed, 0.85);
 });
 
 test('the replaced voices keep their accent labels, which are what a reviewer reads', () => {
@@ -740,14 +745,14 @@ test('the voice check reads the three requested clips, at the course pace and se
   assert.deepEqual(byKey['marta-three-turns.mp3'].speakers, ['Marta']);
   assert.equal(byKey['marta-three-turns.mp3'].lines.some((line) => line.text.startsWith('Ha! OK.')), false);
 
-  // Tom's replacement voice and its own slower rate; Marta's new settings at the
-  // course speed; Ellie unchanged except for the pace.
-  assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.75 });
+  // Tom's reviewed settings and his own faster rate; Marta's approved settings at
+  // the course speed; Ellie unchanged except for the pace.
+  assert.deepEqual(byKey['tom-two-lines.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.25, style: 0.55, speed: 0.85 });
   assert.deepEqual(byKey['marta-three-turns.mp3'].settings, { ...VOICE_SETTINGS, stability: 0.3, style: 0.4, speed: 0.8 });
   assert.deepEqual(byKey['ellie-longest.mp3'].settings, { ...VOICE_SETTINGS, speed: 0.8 });
   for (const request of requests) {
     const tom = request.url.includes(SPEAKER_VOICES.Tom.voice);
-    assert.equal(request.body.voice_settings.speed, tom ? 0.75 : 0.8);
+    assert.equal(request.body.voice_settings.speed, tom ? 0.85 : 0.8);
     assert.doesNotMatch(request.body.text, /^(Host|Ellie|Aisha|Tom|Dan|Marta|Joanne):\s/, 'no label reaches the voice');
   }
   assert.deepEqual(
@@ -765,6 +770,79 @@ test('the voice check reads the three requested clips, at the course pace and se
     assert.equal(clip.wordsPerMinute, Math.round((clip.words / clip.durationSeconds) * 60 * 10) / 10);
   }
   assert.deepEqual(uploaded.map((item) => item.contentType), ['audio/mpeg', 'audio/mpeg', 'audio/mpeg']);
+});
+
+test('one named clip can be re-recorded on its own, and an unknown name is refused', async (t) => {
+  // Tom's settings changed and the other two clips were already approved, so the
+  // run must not spend the quota re-synthesising audio nobody asked to hear.
+  const dir = await mkdtemp(path.join(tmpdir(), 'voice-only-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+
+  const requests = [];
+  const uploaded = [];
+  const client = {
+    storage: {
+      from: () => ({
+        async upload(key) {
+          uploaded.push(key);
+          return { error: null };
+        },
+      }),
+    },
+  };
+  const fetchImpl = async (url, init) => {
+    requests.push({ url, body: JSON.parse(init.body) });
+    return new Response(fakePcm(2), { status: 200 });
+  };
+  const encoder = async (wav, outFile) => writeFile(outFile, wav.subarray(0, 32));
+
+  const clips = await generateVoiceCheck({
+    outputDir: dir,
+    apiKey: 'k',
+    client,
+    upload: true,
+    fetchImpl,
+    encoder,
+    onlyKeys: ['tom-two-lines'],
+  });
+
+  // Exactly one clip, one upload, and no audio for anyone else.
+  assert.equal(clips.length, 1);
+  assert.equal(clips[0].key, 'weeks-01-04/ai-trial/tom-two-lines.mp3');
+  assert.deepEqual(uploaded, ['weeks-01-04/ai-trial/tom-two-lines.mp3']);
+  assert.deepEqual(clips[0].speakers, ['Tom']);
+  assert.ok(clips[0].words > 0 && clips[0].durationSeconds > 0);
+  assert.ok(clips[0].wordsPerMinute > 0);
+
+  // It is Tom's own first two Week 2 lines, and only his voice is called.
+  const week2 = weeks.find((item) => item.week === 2);
+  const tomLines = parseScript(week2.script, 'Aisha')
+    .filter((line) => line.speaker === 'Tom')
+    .slice(0, 2)
+    .map((line) => line.text);
+  assert.deepEqual(clips[0].lines.map((line) => line.text), tomLines);
+  assert.ok(requests.length > 0);
+  for (const request of requests) {
+    assert.ok(request.url.includes(SPEAKER_VOICES.Tom.voice), 'every request is Tom');
+    assert.equal(request.body.voice_settings.stability, 0.25);
+    assert.equal(request.body.voice_settings.style, 0.55);
+    assert.equal(request.body.voice_settings.speed, 0.85);
+  }
+
+  // A typo must fail loudly instead of producing an empty, successful run.
+  await assert.rejects(
+    () =>
+      generateVoiceCheck({
+        outputDir: dir,
+        apiKey: 'k',
+        client,
+        upload: false,
+        fetchImpl,
+        encoder,
+        onlyKeys: ['tom-two-line'],
+      }),
+    /No voice-check clip named tom-two-line/,
+  );
 });
 
 test('a multi-turn clip keeps a real gap between its turns', async (t) => {

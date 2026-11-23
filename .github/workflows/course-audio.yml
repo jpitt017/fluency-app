@@ -60,6 +60,10 @@ on:
         description: 'generate: report speakers and length, generate nothing'
         type: boolean
         default: false
+      only:
+        description: 'voice-check: named clips to re-record (e.g. tom-two-lines); empty = all of them'
+        type: string
+        default: ''
       confirm:
         description: 'delete / delete-probes: actually delete (off = dry run). Never applies to a released week'
         type: boolean
@@ -144,7 +148,12 @@ jobs:
 
       - name: Voice check — real lines per speaker, words per minute reported
         if: ${{ inputs.mode == 'voice-check' }}
-        run: node scripts/generate-course-audio.mjs --voice-check
+        run: |
+          if [ -n "${{ inputs.only }}" ]; then
+            node scripts/generate-course-audio.mjs --voice-check --only "${{ inputs.only }}"
+          else
+            node scripts/generate-course-audio.mjs --voice-check
+          fi
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
 
