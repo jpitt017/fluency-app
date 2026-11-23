@@ -39,6 +39,48 @@ An AI-powered British English learning platform focused on CEFR B1 speaking and 
 - **Payments:** Stripe Subscriptions & Webhooks
 - **Hosting & CI/CD:** Vercel (auto-deploys from `main`)
 
+### Deployments: docs, tests and content-review pushes do not build
+
+`vercel.json` sets `ignoreCommand` to [`scripts/vercel-ignore-build.sh`](scripts/vercel-ignore-build.sh),
+so Vercel skips a deployment when a push changes nothing the site is built from.
+
+**Skipped** (exit 0 — no deployment):
+
+- `docs/`, `tests/` and anything at the repo root ending in `.md`
+  (`README.md`, `AGENTS.md`)
+- `.github/` — CI configuration
+- `supabase-b1-b2/scripts/` and `supabase-b1-b2/migrations/` and the
+  `supabase-b1-b2/README.md` — content-review and database bookkeeping
+
+**Always builds** (exit 1):
+
+- `supabase-b1-b2/content/**`. This looks like content, but
+  `lib/curriculum/*.ts` **imports** the JSON at build time, so editing it changes
+  the shipped bundle. This is the entry most likely to be added to a skip list by
+  mistake; `tests/unit/vercel-ignore-build.test.mjs` pins it.
+- `src/`, `components/`, `lib/`, `public/`, `scripts/`, and every config file
+  (`package.json`, the lockfile, `next.config.ts`, `vercel.json`, …).
+- Anything unrecognised, including a newly added top-level directory. The list
+  is a *skip* list on purpose: a missing entry costs one extra build, whereas an
+  allow-list that misses a path ships stale code with nothing red to notice.
+
+The comparison is against `VERCEL_GIT_PREVIOUS_SHA` (the last successful
+deployment for the branch), never `HEAD^`, so a docs commit stacked on top of a
+real change still deploys. Every uncertain case builds: the branch's first
+deployment, a base commit outside Vercel's shallow clone, or a git error.
+
+Two things worth knowing:
+
+- A skipped build still **counts against the plan's deployment quota** — Vercel
+  counts canceled builds too. The step saves build minutes, not deployments.
+- `ignoreCommand` in `vercel.json` overrides the dashboard's *Ignored Build Step*,
+  so nothing needs configuring by hand. To force a build that was skipped
+  (e.g. after changing an environment variable): **Deployments → … → Redeploy**
+  and untick *Use project's Ignore Build Step*.
+
+Run the tests after editing the script or the list:
+`node --test tests/unit/vercel-ignore-build.test.mjs`
+
 ---
 
 ## Local Development Setup
