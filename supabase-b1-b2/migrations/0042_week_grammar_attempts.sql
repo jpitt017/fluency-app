@@ -16,12 +16,17 @@ drop policy if exists "learner or staff read grammar attempts" on public.week_gr
 create policy "learner or staff read grammar attempts" on public.week_grammar_attempts for select to authenticated using (user_id = auth.uid() or public.is_staff());
 
 do $$
-declare definition text; anchor text := 'delete from public.week_output_submissions where user_id = v_uid;';
+declare
+  definition text;
+  -- 0041 may already have wrapped this delete in a to_regclass guard, so anchor
+  -- on the table name rather than one exact spelling of the statement.
+  anchor_pattern text := 'delete from public\.week_output_submissions where user_id = [^;]*;';
 begin
   select pg_get_functiondef('public.delete_my_learning_data()'::regprocedure) into definition;
   if position('public.week_grammar_attempts' in definition) = 0 then
-    if position(anchor in definition) = 0 then raise exception 'Deletion RPC anchor missing'; end if;
-    definition := replace(definition, anchor, anchor || chr(10) || '  delete from public.week_grammar_attempts where user_id = v_uid;');
+    if definition !~ anchor_pattern then raise exception 'Deletion RPC anchor missing'; end if;
+    definition := regexp_replace(definition, anchor_pattern,
+      '\&' || chr(10) || '  delete from public.week_grammar_attempts where user_id = v_uid;');
     execute definition;
   end if;
 end $$;

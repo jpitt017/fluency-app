@@ -38,15 +38,18 @@ create trigger week_input_answers_touch before update on public.week_input_answe
 do $$
 declare
   definition text;
-  anchor text := 'delete from public.week_input_submissions where user_id = v_uid;';
+  -- 0041 may already have turned this delete into a guarded execute($1) form,
+  -- so anchor on the table name and insert the new branch after the matching
+  -- statement rather than on one exact spelling of it.
+  anchor_pattern text := 'delete from public\.week_input_submissions where user_id = [^;]*;';
 begin
   select pg_get_functiondef('public.delete_my_learning_data()'::regprocedure) into definition;
   if position('public.week_input_answers' in definition) = 0 then
-    if position(anchor in definition) = 0 then raise exception 'Deletion RPC anchor missing'; end if;
-    definition := replace(
+    if definition !~ anchor_pattern then raise exception 'Deletion RPC anchor missing'; end if;
+    definition := regexp_replace(
       definition,
-      anchor,
-      anchor || chr(10) || '  delete from public.week_input_answers where user_id = v_uid;'
+      anchor_pattern,
+      '\&' || chr(10) || '  delete from public.week_input_answers where user_id = v_uid;'
     );
     execute definition;
   end if;
