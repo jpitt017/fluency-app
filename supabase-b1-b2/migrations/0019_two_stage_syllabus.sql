@@ -164,7 +164,12 @@ on conflict (checkpoint_number) do update set
 insert into public.syllabus_skill_ladders (skill_key, week_range, label, value, sort_order)
 select
   ladder.value->>'key', level.value->>'weeks', ladder.value->>'label', level.value->>'value',
-  (ordinality)::int
+  -- Both joins expose a column called ordinality, so this must be qualified:
+  -- unqualified, PostgreSQL rejects the whole insert as ambiguous and no fresh
+  -- database can be built. The ladder's ordinal is the one that reproduces live
+  -- (sort_order 1,2,3 across the six skills of a phase); the level's would write
+  -- 1 for every level.
+  (ladder.ordinality)::int
 from public.syllabus_course doc
 cross join lateral jsonb_array_elements(doc.payload->'skillLadders') with ordinality as ladder(value, ordinality)
 cross join lateral jsonb_array_elements(ladder.value->'levels') with ordinality as level(value, ordinality)
