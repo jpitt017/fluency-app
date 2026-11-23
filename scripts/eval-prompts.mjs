@@ -504,7 +504,27 @@ const args = new Set(process.argv.slice(2));
 const offlineFailures = checkOfflineSuite();
 let liveFailures = 0;
 if (!args.has('--offline') && (args.has('--live') || process.env.GROQ_API_KEY)) {
-  liveFailures = await checkLiveGroq();
+  try {
+    liveFailures = await checkLiveGroq();
+  } catch (error) {
+    // A thrown error (bad key, rate limit, network, malformed JSON) used to exit
+    // with nothing but a bare "exit code 1" — indistinguishable from a gate
+    // failure. Name the cause instead, without echoing the key: SDK errors
+    // embed `Authorization: Bearer <key>` in their request options.
+    const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const status = error?.status ?? error?.response?.status ?? error?.statusCode ?? 'unknown';
+    const redacted = reason.replace(/(bearer\s+)[A-Za-z0-9._-]+/gi, '$1[redacted]').slice(0, 1200);
+    const line = `Live prompt evals could not run (HTTP ${status}) — ${redacted}`;
+    console.log(
+      `${line}\nThe key is not printed: SDK errors can carry it in their request options. ` +
+        'Check that GROQ_API_KEY is valid, has quota, and can reach openai/gpt-oss-20b.',
+    );
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Live prompt evals\n\n${line}\n`, 'utf8');
+    }
+    console.log(`::error title=Live prompt evals could not run::${line.slice(0, 4000)}`);
+    process.exit(1);
+  }
 }
 
 process.exit(offlineFailures + liveFailures > 0 ? 1 : 0);
