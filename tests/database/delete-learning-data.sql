@@ -53,6 +53,10 @@ begin
   if to_regclass('public.week_vocabulary_attempts') is not null then
     execute 'insert into public.week_vocabulary_attempts(user_id,week_number,item_id,answer,correct) values ($1,1,''V1-R1'',''test'',false)' using u;
   end if;
+  if to_regclass('public.week_skill_completions') is not null then
+    execute 'insert into public.week_skill_completions(user_id,week_number,skill,answered,correct,total,review_count) values ($1,1,''grammar'',22,18,22,4)' using u;
+    execute 'insert into public.week_skill_completions(user_id,week_number,skill,answered,correct,total,review_count) values ($1,1,''vocabulary'',16,13,16,3)' using u;
+  end if;
   if to_regclass('public.week_input_answers') is not null then
     execute 'insert into public.week_input_answers(user_id,week_number,skill,item_id,answer,correct) values ($1,1,''reading'',''R1-G1'',''test'',false)' using u;
     -- A gloss-check answer. It shares this table but has its own id shape

@@ -3,7 +3,16 @@
 import { useMemo, useState } from 'react';
 import type { LearnerGrammar, LearnerGrammarItem, LearnerGrammarStep } from '@/lib/curriculum/learner-grammar';
 import { visibleItems } from '@/lib/curriculum/grammar-branch.mjs';
+import {
+  canFinish as canFinishRule,
+  finishHint,
+  nextTaskAfter,
+  resumeStep,
+  unmarkedRequired,
+} from '@/lib/curriculum/week-practice.mjs';
+import type { PracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import SentenceBox from './SentenceBox';
+import { FinishSummary, SavedTick } from './PracticeFeedback';
 
 type Marked = { correct: boolean; reason: string | null };
 
@@ -32,17 +41,31 @@ function Item({
   item,
   week,
   signedIn,
+  saved,
   onMarked,
 }: {
   item: LearnerGrammarItem;
   week: number;
   signedIn: boolean;
+  /** The saved answer from the server, when there is one. */
+  saved?: Marked & { answer: string };
   onMarked: (id: string, correct: boolean) => void;
 }) {
-  const [answer, setAnswer] = useState<string[]>(Array(Math.max(1, item.blankCount)).fill(''));
-  const [marked, setMarked] = useState<Marked | null>(null);
+  const [answer, setAnswer] = useState<string[]>(() => {
+    const blanks = Array(Math.max(1, item.blankCount)).fill('');
+    if (!saved) return blanks;
+    // A multi-blank answer is stored as one string joined by an ellipsis, the
+    // same way a multiple-choice option writes it ("Have ... lived").
+    if (item.blankCount > 1) {
+      const parts = saved.answer.split(/\s*\.{3}\s*/);
+      return blanks.map((value, index) => parts[index] ?? value);
+    }
+    return [saved.answer];
+  });
+  const [marked, setMarked] = useState<Marked | null>(saved ? { correct: saved.correct, reason: saved.reason } : null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [savedAt, setSavedAt] = useState(false);
 
   // Rewrite items and the "Use it" sentences are marked by the app, against the
   // week's target grammar rather than one key. Both get the same box, and the
@@ -55,7 +78,11 @@ function Item({
         prompt={item.prompt}
         signedIn={signedIn}
         rows={item.step === 'Use it' ? 3 : 2}
-        onChecked={(onTarget) => onMarked(item.id, onTarget)}
+        initialAnswer={saved?.answer}
+        onChecked={(onTarget) => {
+          setSavedAt(true);
+          onMarked(item.id, onTarget);
+        }}
       />
     );
   }
@@ -65,6 +92,7 @@ function Item({
   async function check() {
     setError('');
     setBusy(true);
+    setSavedAt(false);
     try {
       const value = item.blankCount > 1 && !isChoice ? answer : answer[0];
       const response = await fetch('/api/week/grammar/mark', {
@@ -75,6 +103,7 @@ function Item({
       const data = (await response.json()) as Marked & { error?: string };
       if (!response.ok) throw new Error(data.error || 'Could not check your answer.');
       setMarked(data);
+      setSavedAt(true);
       onMarked(item.id, data.correct);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not check your answer.');
@@ -97,6 +126,7 @@ function Item({
                 onChange={() => {
                   setAnswer([option]);
                   setMarked(null);
+                  setSavedAt(false);
                 }}
               />
               {option}
@@ -116,13 +146,14 @@ function Item({
                 next[index] = event.target.value;
                 setAnswer(next);
                 setMarked(null);
+                setSavedAt(false);
               }}
               className="min-w-40 flex-1 rounded-lg border border-stone-300 bg-white p-2"
             />
           ))}
         </div>
       )}
-      {item.needsAi ? null : (
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           disabled={!signedIn || busy || answer.every((part) => !part.trim())}
@@ -131,7 +162,8 @@ function Item({
         >
           {busy ? 'Checking…' : 'Check'}
         </button>
-      )}
+        <SavedTick saved={savedAt} error={error || undefined} saving={busy} />
+      </div>
       {marked && (
         <div role="status" className={marked.correct ? 'text-emerald-800' : 'text-amber-900'}>
           <strong>{marked.correct ? 'Correct! ' : 'Not quite. '}</strong>
@@ -151,24 +183,91 @@ export default function GrammarPractice({
   grammar,
   week,
   signedIn,
+  progress,
+  hasVocabulary,
 }: {
   grammar: LearnerGrammar;
   week: number;
   signedIn: boolean;
+  /** What the server has saved for this learner, so a reload starts where they stopped. */
+  progress?: PracticeProgress | null;
+  hasVocabulary?: boolean;
 }) {
-  const [index, setIndex] = useState(0);
-  const [results, setResults] = useState<Record<string, boolean>>({});
   const steps = grammar.steps;
+  const restored = useMemo<Record<string, boolean>>(() => {
+    const results: Record<string, boolean> = {};
+    for (const [id, saved] of Object.entries(progress?.answers ?? {})) results[id] = saved.correct;
+    return results;
+  }, [progress]);
+  // Open where the learner stopped. With nothing saved the saved results are
+  // empty, so resumeStep returns 0 and the section starts at "See it".
+  const [index, setIndex] = useState(() =>
+    Math.min(progress?.step ?? resumeStep(steps, restored), Math.max(0, steps.length - 1)),
+  );
+  const [results, setResults] = useState<Record<string, boolean>>(restored);
+  const [summary, setSummary] = useState(progress?.summary ?? null);
+  const [busy, setBusy] = useState(false);
+  const [finishError, setFinishError] = useState('');
   const current: LearnerGrammarStep = steps[Math.min(index, steps.length - 1)];
 
   /**
-   * The adaptive rules are applied silently and live in grammar-branch.mjs, so
-   * the component and the unit tests cannot disagree about them.
+   * The adaptive rules are applied to the results the server restored, not only
+   * to what the browser has seen: a learner who reloads mid-practice gets the
+   * same silent branch they were on.
    */
   const shown = useMemo(() => visibleItems(current, steps, results), [current, steps, results]);
 
+  const allItems = useMemo(
+    () => steps.flatMap((step) => step.items),
+    [steps],
+  );
+  // The plan's optional/counted flags, matching week-practice-plan.ts.
+  const planned = useMemo(
+    () =>
+      allItems.map((item) => ({
+        id: item.id,
+        optional: item.needsAi || item.target === 'Extra',
+        counted: !item.needsAi && item.target !== 'Extra',
+      })),
+    [allItems],
+  );
+  const remaining = unmarkedRequired(planned, results).length;
+  const lastStep = index === steps.length - 1;
+  const next = nextTaskAfter('grammar', { hasVocabulary });
+
+  async function finish() {
+    setBusy(true);
+    setFinishError('');
+    try {
+      const response = await fetch('/api/week/practice/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ week, skill: 'grammar' }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        summary?: { correct: number; total: number; reviewMistakes: number; sentence: string };
+      };
+      if (!response.ok || !data.summary) throw new Error(data.error || 'Could not save your progress.');
+      setSummary({ ...data.summary, next: hasVocabulary ? 'vocabulary' : 'reading' });
+    } catch (err) {
+      setFinishError(err instanceof Error ? err.message : 'Could not save your progress.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function goToNextTask() {
+    const anchor = document.getElementById(next.href.replace('#', ''));
+    anchor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   return (
-    <section className="space-y-4 rounded-xl border border-stone-200 p-5" aria-label="Grammar practice">
+    <section
+      id="grammar-practice"
+      className="space-y-4 rounded-xl border border-stone-200 p-5"
+      aria-label="Grammar practice"
+    >
       <h2 className="text-xl font-semibold">Grammar practice</h2>
       <ProgressBar current={current.number} total={steps.length} title={current.title} />
       <p className="text-sm text-stone-600">{current.instruction}</p>
@@ -180,7 +279,14 @@ export default function GrammarPractice({
       )}
       <div className="space-y-3">
         {shown.map((item: LearnerGrammarItem) => (
-          <Item key={item.id} item={item} week={week} signedIn={signedIn} onMarked={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))} />
+          <Item
+            key={item.id}
+            item={item}
+            week={week}
+            signedIn={signedIn}
+            saved={progress?.answers[item.id]}
+            onMarked={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))}
+          />
         ))}
       </div>
       <div className="flex justify-between gap-2">
@@ -192,15 +298,44 @@ export default function GrammarPractice({
         >
           Previous
         </button>
-        <button
-          type="button"
-          disabled={index === steps.length - 1}
-          onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}
-          className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-        >
-          Next
-        </button>
+        {lastStep ? (
+          <div className="flex flex-col items-end gap-1">
+            <button
+              type="button"
+              disabled={!signedIn || busy || !canFinishRule(planned, results)}
+              onClick={finish}
+              className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              {busy ? 'Saving…' : 'Finish grammar'}
+            </button>
+            {!summary && finishHint(remaining) && (
+              <span className="text-xs text-stone-600">{finishHint(remaining)}</span>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}
+            className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Next
+          </button>
+        )}
       </div>
+      {finishError && (
+        <p role="alert" className="text-sm text-red-700">
+          {finishError}
+        </p>
+      )}
+      {summary && (
+        <FinishSummary
+          title="Grammar practice finished"
+          summary={summary}
+          nextLabel={next.label}
+          nextHref={next.href}
+          onNext={goToNextTask}
+        />
+      )}
     </section>
   );
 }
