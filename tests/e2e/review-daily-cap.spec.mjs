@@ -155,8 +155,10 @@ test.describe('with a signed-in learner', () => {
       // match anchors at the start of the line: the queue may also hold vocabulary
       // cards the app gave this learner, which correctly makes the count larger,
       // but the number offered from the twenty seeded here must still be twenty.
+      // The page shows the same line twice: once as the header, once as the plan
+      // summary beside it. Either is fine, so take the first.
       await expect(page.getByText(/^Today's review: 2\d cards, about \d+ minutes?$/).first()).toBeVisible();
-      const heading = await page.getByText(/^Today's review:/).innerText();
+      const heading = await page.getByText(/^Today's review:/).first().innerText();
       // Plain JS, so no non-null assertion: .mjs is parsed by Node, not tsc.
       const offeredMatch = heading.match(/(\d+) cards/);
       expect(offeredMatch, `no card count in "${heading}"`).not.toBeNull();

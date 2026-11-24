@@ -28,7 +28,6 @@ interface CheckRewriteResponse {
   diffToTarget: DiffToken[];
   correctedSentence: string;
   explanation: string;
-  correct?: boolean;
   error?: string;
 }
 
@@ -130,7 +129,9 @@ export default function ErrorReviewStudio({
 
   const card = cards[index];
   const hints = previewFsrsIntervals(card);
-  const typedResult = checkResult && 'correct' in checkResult;
+  // A reveal has no mark to report; a real attempt does. `fixed` is the field the
+  // route actually sends, so it is what decides whether marking sets the rating.
+  const typedResult = Boolean(checkResult && 'fixed' in checkResult);
 
   async function revealWithoutTrying() {
     setError('');
@@ -213,7 +214,7 @@ export default function ErrorReviewStudio({
 
   /** The typed answer decides the grade; the learner only chooses Easy or not. */
   async function gradeFromMarking(easy: boolean) {
-    const correct = typedResult ? Boolean(checkResult?.correct) : false;
+    const correct = typedResult ? Boolean(checkResult?.fixed) : false;
     const grade: ReviewGrade = correct ? (easy ? 'easy' : gradeForTypedAnswer(true)) : gradeForTypedAnswer(false);
     await gradeCard(grade);
   }
@@ -386,7 +387,7 @@ export default function ErrorReviewStudio({
             */}
             {card.type === 'error' && typedResult ? (
               <div>
-                {checkResult?.correct ? (
+                {checkResult?.fixed ? (
                   <>
                     <p className="mb-2 text-sm font-semibold text-emerald-900">
                       That is right. This card moves on as <strong>Good</strong>.
