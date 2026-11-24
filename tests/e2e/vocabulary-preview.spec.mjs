@@ -26,7 +26,12 @@ test('week vocabulary shows safe cards and exercise steps before reading', async
   for (let i = 0; i < 3; i++) await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(vocabulary.getByText(/first letters are given/)).toBeVisible();
   await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(vocabulary.getByText(/Personal sentence feedback is coming soon/)).toBeVisible();
+  // Step 7 used to say feedback was "coming soon". It now asks for the sentence.
+  await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
+  await expect(vocabulary.getByText(/Write one sentence about something that was difficult at first/)).toBeVisible();
+  await expect(vocabulary.locator('textarea').first()).toBeVisible();
+  await expect(vocabulary.getByText(/Write your sentences and press Check/).first()).toBeVisible();
+  expect(await vocabulary.getByText(/coming soon/i).count()).toBe(0);
 });
 
 test('draft on-demand model route is not exposed', async ({ request }) => {
