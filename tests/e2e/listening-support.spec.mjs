@@ -28,7 +28,6 @@ const listeningIds = week1Listening.questions.map((question) => question.id);
 
 test('the intro replaces the old predict line and shows the key words', async ({ page }) => {
   await page.goto('/week/1');
-  const listening = page.getByRole('region', { name: /Listening/ }).or(page.locator('section').filter({ hasText: 'Two words to know' })).first();
 
   // The new intro: title, context, prediction, ideas and two key words.
   await expect(page.getByRole('heading', { name: 'Fresh Starts, a podcast about big changes' })).toBeVisible();
@@ -36,17 +35,23 @@ test('the intro replaces the old predict line and shows the key words', async ({
   await expect(page.getByText('What could be difficult about moving from a big city to a small village?')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Two words to know' })).toBeVisible();
   await expect(page.getByTestId('listening-picture-placeholder')).toBeVisible();
-  expect(listening).toBeDefined();
 
-  // Ideas are behind a tap, and the key word meanings are behind another.
+  // Ideas are not rendered at all until asked for, which also keeps them out of
+  // the initial payload rather than merely hiding them.
   await expect(page.getByText('no shops nearby')).toHaveCount(0);
   await page.getByRole('button', { name: 'Show some ideas' }).click();
   await expect(page.getByText('no shops nearby')).toBeVisible();
 
-  await expect(page.getByText('when there is no sound at all')).toHaveCount(0);
+  // A key word meaning is in the markup but closed: the reveal is the `hidden`
+  // attribute, so the assertion is on visibility, not on presence.
+  await expect(page.getByText('when there is no sound at all')).not.toBeVisible();
   await page.getByRole('button', { name: 'silence', exact: true }).click();
   await expect(page.getByText('when there is no sound at all')).toBeVisible();
   await expect(page.getByText('el silencio')).toBeVisible();
+
+  // Tapping the same word again closes it.
+  await page.getByRole('button', { name: 'silence', exact: true }).click();
+  await expect(page.getByText('when there is no sound at all')).not.toBeVisible();
 
   // The old copy is gone.
   const html = await page.content();
@@ -65,7 +70,8 @@ test('the transcript is not in the page before the listening questions are answe
   expect(html).not.toContain('me di cuenta');
 
   await expect(page.getByText('Answer the listening questions first', { exact: false })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Go further (3–4 min)' })).toBeAttached();
+  // A <details> summary is a button in the accessibility tree, not a heading.
+  await expect(page.getByText('Go further (3–4 min)', { exact: true })).toBeAttached();
 });
 
 test('no answer key reaches the browser, in markup or in page data', async ({ page }) => {
@@ -93,8 +99,13 @@ test('no answer key reaches the browser, in markup or in page data', async ({ pa
  */
 async function answerListeningQuestions(page) {
   for (const question of week1Listening.questions) {
+    // L1-X3 has no options: it is a short typed answer, and the route rejects a
+    // choice that is not offered. The first option is right for the multiple
+    // choice items, which is all this needs -- the gate counts saved answers,
+    // not correct ones.
+    const answer = question.options.length ? question.options[0] : 'get used to';
     const response = await page.request.post('/api/week/input/mark', {
-      data: { week: 1, skill: 'listening', id: question.id, answer: question.options[0] },
+      data: { week: 1, skill: 'listening', id: question.id, answer },
     });
     expect(response.ok(), `marking ${question.id}`).toBe(true);
   }
