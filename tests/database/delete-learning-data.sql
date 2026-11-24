@@ -55,6 +55,10 @@ begin
   end if;
   if to_regclass('public.week_input_answers') is not null then
     execute 'insert into public.week_input_answers(user_id,week_number,skill,item_id,answer,correct) values ($1,1,''reading'',''R1-G1'',''test'',false)' using u;
+    -- A gloss-check answer. It shares this table but has its own id shape
+    -- ("gloss-1-1"), which is why 0046 widened the length check; deletion must
+    -- cover it like any other row here.
+    execute 'insert into public.week_input_answers(user_id,week_number,skill,item_id,answer,correct) values ($1,1,''listening'',''gloss-1-1'',''suddenly understood'',true)' using u;
   end if;
   -- Fail if schema gains a learner-owned table for which this test has no fixture.
   for t in select c.table_name from information_schema.columns c join information_schema.tables tb using (table_schema,table_name)

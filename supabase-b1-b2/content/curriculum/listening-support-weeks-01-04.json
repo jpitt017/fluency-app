@@ -1,0 +1,506 @@
+{
+  "version": "listening-support-v1",
+  "status": "pilot draft: second-teacher review pending (especially Spanish)",
+  "rules": {
+    "keyWordsPerWeek": 2,
+    "glossesPerWeek": 7,
+    "definitionMaxWords": 11,
+    "glossCheckItems": 4,
+    "scriptHiddenUntilQuestionsAnswered": true,
+    "cardWordsHighlightedNoGloss": true,
+    "answerIndexServerOnly": true
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "intro": {
+        "title": "Fresh Starts, a podcast about big changes",
+        "context": "Ellie lived in London. Three years ago, she moved to a small village in Scotland, near the city of Inverness.",
+        "predict": "What could be difficult about moving from a big city to a small village?",
+        "ideas": [
+          "no shops nearby",
+          "no friends there",
+          "bad weather",
+          "nothing to do in the evenings"
+        ],
+        "picture": "Map of the UK with London and Inverness marked, or a licence-free photo of a quiet Scottish village. No photos of real people."
+      },
+      "keyWords": [
+        {
+          "word": "silence",
+          "meaning": "when there is no sound at all",
+          "es": "el silencio",
+          "example": "There was silence in the room after the news."
+        },
+        {
+          "word": "realise",
+          "meaning": "suddenly understand or notice something",
+          "es": "darse cuenta",
+          "example": "I realised I had left my keys at home.",
+          "note": "realise ≠ realizar"
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "realised",
+          "meaning": "suddenly understood or noticed something",
+          "es": "me di cuenta",
+          "why": "key word; false friend (≠ realizar)"
+        },
+        {
+          "tap": "had left me",
+          "meaning": "gave to me after she died",
+          "es": "me había dejado (en herencia)",
+          "why": "everyday word, unusual meaning"
+        },
+        {
+          "tap": "faced",
+          "meaning": "had to deal with something difficult",
+          "es": "afronté",
+          "why": "above B1 in this meaning"
+        },
+        {
+          "tap": "silence",
+          "meaning": "when there is no sound at all",
+          "es": "el silencio",
+          "why": "key word"
+        },
+        {
+          "tap": "came over",
+          "meaning": "came to my house from his house",
+          "es": "vino a casa",
+          "why": "phrasal verb, hard to guess"
+        },
+        {
+          "tap": "introduced me to",
+          "meaning": "helped me meet someone for the first time",
+          "es": "me presentó a",
+          "why": "false friend (≠ introducir)"
+        },
+        {
+          "tap": "nearly",
+          "meaning": "almost, but it didn't happen",
+          "es": "casi",
+          "why": "often confused with near"
+        }
+      ],
+      "cardWords": [
+        "challenge",
+        "get used to",
+        "Gradually",
+        "look back on"
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"I realised I had forgotten my phone.\" Realised means:",
+          "options": [
+            "suddenly understood",
+            "made something happen",
+            "remembered to do"
+          ],
+          "answerIndex": 0,
+          "feedback": "Realise = darse cuenta. Realizar = carry out."
+        },
+        {
+          "stem": "\"My friend introduced me to her brother.\" This means she:",
+          "options": [
+            "put me inside his house",
+            "helped me meet him for the first time",
+            "told me about him"
+          ],
+          "answerIndex": 1,
+          "feedback": "Introduce someone = presentar. Introducir = put in."
+        },
+        {
+          "stem": "\"I nearly missed the bus.\" Did I miss it?",
+          "options": [
+            "yes",
+            "no, but almost",
+            "we don't know"
+          ],
+          "answerIndex": 1,
+          "feedback": "Nearly = casi: it almost happened."
+        },
+        {
+          "stem": "\"It took me weeks to get used to the cold.\" At the end, the cold:",
+          "options": [
+            "felt normal",
+            "stopped",
+            "felt worse"
+          ],
+          "answerIndex": 0,
+          "feedback": "Get used to = start to feel something new is normal."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "intro": {
+        "title": "Plans in the office kitchen",
+        "context": "Aisha and Tom work together. It's morning, and they meet in the office kitchen. Tom looks very happy.",
+        "predict": "Why do you think Tom is happy? What plans could he have?",
+        "ideas": [
+          "a new job",
+          "a holiday",
+          "moving house",
+          "a wedding"
+        ],
+        "picture": "Licence-free photo of an office kitchen with two colleagues and coffee mugs."
+      },
+      "keyWords": [
+        {
+          "word": "book (verb)",
+          "meaning": "arrange to have a place or ticket",
+          "es": "reservar",
+          "example": "I booked a table for two.",
+          "note": "book (verb) ≠ libro"
+        },
+        {
+          "word": "scholarship",
+          "meaning": "money to help you pay for a course",
+          "es": "una beca",
+          "example": "She got a scholarship to study in Leeds."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "booked my place",
+          "meaning": "arranged to have a place on",
+          "es": "he reservado plaza",
+          "why": "key word"
+        },
+        {
+          "tap": "portfolio",
+          "meaning": "a collection of your best work to show people",
+          "es": "un portafolio",
+          "why": "above B1"
+        },
+        {
+          "tap": "HR",
+          "meaning": "the department that looks after staff",
+          "es": "Recursos Humanos",
+          "why": "abbreviation"
+        },
+        {
+          "tap": "though",
+          "meaning": "but; used at the end of a sentence",
+          "es": "aunque, eso sí",
+          "why": "hard in end position"
+        },
+        {
+          "tap": "saving",
+          "meaning": "keeping money to use later",
+          "es": "ahorrando",
+          "why": "useful, often confused"
+        },
+        {
+          "tap": "scholarship",
+          "meaning": "money to help you pay for a course",
+          "es": "una beca",
+          "why": "key word"
+        },
+        {
+          "tap": "You're a star",
+          "meaning": "you're very kind and helpful",
+          "es": "eres un sol",
+          "why": "idiom"
+        }
+      ],
+      "cardWords": [
+        "goal",
+        "career",
+        "intend",
+        "looking forward to",
+        "apply",
+        "deadline"
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"I booked a table for Friday.\" Booked means:",
+          "options": [
+            "arranged to have it",
+            "read about it",
+            "paid for it later"
+          ],
+          "answerIndex": 0,
+          "feedback": "Book (verb) = reservar."
+        },
+        {
+          "stem": "\"She got a scholarship to study in Leeds.\" A scholarship is:",
+          "options": [
+            "money to help pay for studying",
+            "a place to live",
+            "a prize for sport"
+          ],
+          "answerIndex": 0,
+          "feedback": "Scholarship = beca."
+        },
+        {
+          "stem": "\"Thanks for helping me move. You're a star!\" This means:",
+          "options": [
+            "you're famous",
+            "you're very kind",
+            "you're very late"
+          ],
+          "answerIndex": 1,
+          "feedback": "You're a star = eres un sol."
+        },
+        {
+          "stem": "\"I'm looking forward to the weekend.\" This means:",
+          "options": [
+            "I feel happy about it",
+            "I'm worried about it",
+            "I've forgotten it"
+          ],
+          "answerIndex": 0,
+          "feedback": "Look forward to = feel happy about something in the future."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "intro": {
+        "title": "A new flatmate's first day",
+        "context": "Marta moved into a shared flat yesterday. Dan, one of her new flatmates, is showing her around.",
+        "predict": "What rules might people have in a shared flat?",
+        "ideas": [
+          "paying the bills",
+          "parking",
+          "pets",
+          "loud music"
+        ],
+        "picture": "Licence-free photo of a shared kitchen with a fridge."
+      },
+      "keyWords": [
+        {
+          "word": "rota",
+          "meaning": "a list that shows whose turn it is",
+          "es": "un cuadrante de turnos",
+          "example": "The cooking rota is on the wall."
+        },
+        {
+          "word": "bin",
+          "meaning": "a container for rubbish",
+          "es": "el cubo de basura",
+          "example": "Put the paper in the blue bin."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "label",
+          "meaning": "write your name on something",
+          "es": "ponerle tu nombre",
+          "why": "key to question D1"
+        },
+        {
+          "tap": "rota",
+          "meaning": "a list that shows whose turn it is",
+          "es": "un cuadrante de turnos",
+          "why": "key word"
+        },
+        {
+          "tap": "bins",
+          "meaning": "containers for rubbish",
+          "es": "los cubos de basura",
+          "why": "key word"
+        },
+        {
+          "tap": "The council",
+          "meaning": "the local government of a town",
+          "es": "el ayuntamiento",
+          "why": "British use"
+        },
+        {
+          "tap": "staying the night",
+          "meaning": "sleeping at your home until the morning",
+          "es": "quedarse a dormir",
+          "why": "chunk, hard to guess"
+        },
+        {
+          "tap": "Apart from that",
+          "meaning": "except for that",
+          "es": "aparte de eso",
+          "why": "useful linker"
+        },
+        {
+          "tap": "heating",
+          "meaning": "the system that makes a home warm",
+          "es": "la calefacción",
+          "why": "useful, often unknown"
+        }
+      ],
+      "cardWords": [
+        "get on with",
+        "routine",
+        "arrange",
+        "politely",
+        "have friends round"
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"Please label your bags with your name.\" Label means:",
+          "options": [
+            "write your name on them",
+            "carry them",
+            "open them"
+          ],
+          "answerIndex": 0,
+          "feedback": "Label = write a name on something."
+        },
+        {
+          "stem": "\"I can't come on Saturday. Apart from that, I'm free all week.\" This means:",
+          "options": [
+            "except for Saturday",
+            "including Saturday",
+            "only on Saturday"
+          ],
+          "answerIndex": 0,
+          "feedback": "Apart from that = aparte de eso."
+        },
+        {
+          "stem": "\"Can my brother stay the night?\" This means:",
+          "options": [
+            "sleep at your home until morning",
+            "stay for dinner",
+            "stay up late"
+          ],
+          "answerIndex": 0,
+          "feedback": "Stay the night = quedarse a dormir."
+        },
+        {
+          "stem": "\"I get on with my flatmates.\" This means:",
+          "options": [
+            "I have a friendly relationship with them",
+            "I live with them",
+            "I argue with them"
+          ],
+          "answerIndex": 0,
+          "feedback": "Get on with = have a friendly relationship."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "intro": {
+        "title": "A walking tour of York",
+        "context": "Joanne is a tour guide in York, a very old city in the north of England. Her group is about to start a walking tour.",
+        "predict": "What can visitors usually see and do in an old city?",
+        "ideas": [
+          "museums",
+          "river boats",
+          "old buildings",
+          "shopping"
+        ],
+        "picture": "Simple drawn map of York marking York Minster (a cathedral), the city walls and the Shambles (an old street), or a licence-free photo."
+      },
+      "keyWords": [
+        {
+          "word": "stop (noun)",
+          "meaning": "a place where a tour or bus stops",
+          "es": "una parada",
+          "example": "The next stop is the museum."
+        },
+        {
+          "word": "walls (of a city)",
+          "meaning": "old stone walls around a city",
+          "es": "las murallas",
+          "example": "You can walk around the city walls.",
+          "note": "city walls = murallas, not paredes"
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "first stop",
+          "meaning": "the first place where the tour stops",
+          "es": "primera parada",
+          "why": "key word"
+        },
+        {
+          "tap": "city walls",
+          "meaning": "old stone walls around a city",
+          "es": "las murallas",
+          "why": "key word"
+        },
+        {
+          "tap": "narrow",
+          "meaning": "not wide",
+          "es": "estrecha",
+          "why": "useful, often unknown"
+        },
+        {
+          "tap": "butchers",
+          "meaning": "people who sell meat in a shop",
+          "es": "carniceros",
+          "why": "above B1"
+        },
+        {
+          "tap": "is held",
+          "meaning": "takes place",
+          "es": "se celebra",
+          "why": "passive, unusual meaning"
+        },
+        {
+          "tap": "uneven",
+          "meaning": "not flat or smooth",
+          "es": "irregular",
+          "why": "above B1"
+        },
+        {
+          "tap": "Right",
+          "meaning": "OK; used to start something new",
+          "es": "bueno, venga",
+          "why": "spoken English"
+        }
+      ],
+      "cardWords": [
+        "destination",
+        "set off",
+        "custom",
+        "tradition",
+        "local"
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"The road is very narrow, so drive slowly.\" Narrow means:",
+          "options": [
+            "not wide",
+            "very long",
+            "very busy"
+          ],
+          "answerIndex": 0,
+          "feedback": "Narrow = estrecho."
+        },
+        {
+          "stem": "\"The meeting is held every Monday.\" Is held means:",
+          "options": [
+            "takes place",
+            "is cancelled",
+            "is planned"
+          ],
+          "answerIndex": 0,
+          "feedback": "Is held = se celebra."
+        },
+        {
+          "stem": "\"Be careful, the path is uneven.\" Uneven means:",
+          "options": [
+            "not flat",
+            "closed",
+            "new"
+          ],
+          "answerIndex": 0,
+          "feedback": "Uneven = not flat or smooth."
+        },
+        {
+          "stem": "\"We set off at seven in the morning.\" Set off means:",
+          "options": [
+            "started our journey",
+            "arrived",
+            "woke up"
+          ],
+          "answerIndex": 0,
+          "feedback": "Set off = start a journey."
+        }
+      ]
+    }
+  ]
+}
