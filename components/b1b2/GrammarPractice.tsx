@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { LearnerGrammar, LearnerGrammarItem, LearnerGrammarStep } from '@/lib/curriculum/learner-grammar';
 import { visibleItems } from '@/lib/curriculum/grammar-branch.mjs';
+import SentenceBox from './SentenceBox';
 
 type Marked = { correct: boolean; reason: string | null };
 
@@ -43,14 +44,19 @@ function Item({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Rewrite items and the "Use it" sentences are marked by the app, against the
+  // week's target grammar rather than one key. Both get the same box, and the
+  // result is reported back so the adaptive rules still see the outcome.
   if (item.needsAi) {
     return (
-      <div className="space-y-2 rounded-xl bg-stone-50 p-4">
-        <p className="font-medium">{item.prompt}</p>
-        <p className="text-sm text-stone-600">
-          Write your sentence in the speaking or writing box, where the app replies to your own words.
-        </p>
-      </div>
+      <SentenceBox
+        week={week}
+        id={item.id}
+        prompt={item.prompt}
+        signedIn={signedIn}
+        rows={item.step === 'Use it' ? 3 : 2}
+        onChecked={(onTarget) => onMarked(item.id, onTarget)}
+      />
     );
   }
 

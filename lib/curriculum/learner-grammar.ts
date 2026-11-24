@@ -50,7 +50,7 @@ const INSTRUCTIONS: Record<LearnerGrammarStep['title'], string> = {
   'See it': 'Read the short text, then answer what each form means.',
   Practise: 'Choose the right form, then complete each sentence.',
   'Fix it': 'Find the mistake, then write the sentence again correctly.',
-  'Use it': 'Write two sentences about your own life. Your teacher in the app will reply.',
+  'Use it': 'Write two sentences about your own life. The app will check them.',
   Remember: 'Try one more point from this week, then an item from an earlier week.',
 };
 
