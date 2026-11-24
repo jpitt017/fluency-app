@@ -214,8 +214,12 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
     });
     expect(unknown.status()).toBe(404);
 
-    // "Delete my data" clears the attempts the boxes wrote.
-    await admin.rpc('delete_my_learning_data');
+    // "Delete my data" clears the attempts the boxes wrote. This has to go
+    // through the app's endpoint, not admin.rpc: the function keys off
+    // auth.uid(), so calling it with the service key raises and deletes
+    // nothing -- which is exactly how a green-looking test hid this before.
+    const deleted = await request.post('/api/account/delete-data');
+    expect(deleted.status()).toBe(200);
     for (const table of ['week_vocabulary_attempts', 'week_grammar_attempts']) {
       const left = await admin.from(table).select('id').eq('user_id', user.id);
       if (left.error) throw left.error;
