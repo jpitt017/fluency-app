@@ -190,25 +190,33 @@ test.describe('with a signed-in learner', () => {
       // The saved answers are on screen, not only in the summary. The page
       // opened at the last step because everything before it is answered.
       await expect(reloaded.getByText('Step 5 of 5: Remember')).toBeVisible();
-      let back = reloaded.getByRole('button', { name: 'Previous' });
+      const back = reloaded.getByRole('button', { name: 'Previous' });
       while (await back.isEnabled()) await back.click();
       await expect(reloaded.getByText('Step 1 of 5: See it')).toBeVisible();
 
-      // One answered question per step, with its mark, straight from the server.
-      const savedChoice = reloaded.getByRole('radio', { name: 'No', exact: true }).first();
-      await expect(savedChoice).toBeChecked();
-      // Step 2 restored a typed answer.
+      // Step 1: a saved choice is the one that is checked.
+      await expect(reloaded.getByRole('radio', { name: 'No', exact: true }).first()).toBeChecked();
+      await expect(reloaded.getByText(/Correct! /).first()).toBeVisible();
+
+      // Step 2: another saved choice, and a typed completion in its box.
       await reloaded.getByRole('button', { name: 'Next', exact: true }).click();
       await expect(reloaded.getByText('Step 2 of 5: Practise')).toBeVisible();
-      await expect(reloaded.getByDisplayValue('moved')).toBeVisible();
-      // Step 3 holds the three repair answers, including the one marked wrong.
+      await expect(reloaded.getByRole('radio', { name: 'moved', exact: true })).toBeChecked();
+      await expect(reloaded.getByLabel('Your answer').first()).toHaveValue('were driving');
+      // The one answered wrongly is marked wrong, from the server's mark. Its
+      // prompt is in this step, so the line is not counted on another one.
+      await expect(
+        reloaded.getByText('When I arrived at the station, the train ___.'),
+      ).toBeVisible();
+      await expect(reloaded.getByText(/Not quite\./)).toHaveCount(1);
+
+      // Step 3: the repair answers are back in their boxes.
       await reloaded.getByRole('button', { name: 'Next', exact: true }).click();
       await expect(reloaded.getByText('Step 3 of 5: Fix it')).toBeVisible();
-      await expect(reloaded.getByDisplayValue('I moved to Leeds in 2023.')).toBeVisible();
-      await expect(reloaded.getByText(/Not quite\./).first()).toBeVisible();
+      await expect(reloaded.getByLabel('Your answer').first()).toHaveValue('I moved to Leeds in 2023.');
+      await expect(reloaded.getByText(/Correct! /).first()).toBeVisible();
 
-      // Finishing again is allowed and updates the same row rather than adding one.
-      await expect(reloaded.getByText(/deleted/i)).toHaveCount(0);
+      // One completion row, not one per visit.
       const rows = await admin
         .from('week_skill_completions')
         .select('skill')
@@ -269,7 +277,7 @@ test.describe('with a signed-in learner', () => {
       await reloaded.getByRole('button', { name: 'Previous' }).click();
       await expect(reloaded.getByText('Step 6 of 7: Type the word')).toBeVisible();
       // The typed word comes back with the mark it was given.
-      await expect(reloaded.locator('input[id^="V1-Y"]').first()).not.toHaveValue('');
+      await expect(reloaded.locator('input#V1-R1')).toHaveValue('take up');
       await expect(reloaded.getByRole('status').filter({ hasText: 'Correct! ' }).first()).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
