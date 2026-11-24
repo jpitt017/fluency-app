@@ -143,28 +143,39 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
   test.setTimeout(120_000);
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, 'sentence-e2e');
+  // When a step hangs, Playwright reports only "timeout exceeded". These notes
+  // say which one, since the log itself is not readable from CI annotations.
+  let phase = 'create user';
+  const step = async (name, fn) => {
+    phase = name;
+    const result = await fn();
+    phase = `${name} (done)`;
+    return result;
+  };
   try {
-    await signIn(page, user);
-    await page.goto('/week/1');
+    await step('sign in', () => signIn(page, user));
+    await step('open week 1', () => page.goto('/week/1'));
 
     // Grammar "Fix it": the authored answer is accepted without a model call, so
     // this half of the test runs even when GROQ_API_KEY is absent.
-    const fixIt = await openGrammarStep(page, 'Fix it');
+    const fixIt = await step('open Fix it', () => openGrammarStep(page, 'Fix it'));
     const rewrite = fixIt.locator('textarea').first();
-    await rewrite.fill("I've been learning English since 2020.");
-    await fixIt.getByRole('button', { name: 'Check', exact: true }).first().click();
+    await step('fill rewrite', () => rewrite.fill("I've been learning English since 2020."));
+    await step('check rewrite', () => fixIt.getByRole('button', { name: 'Check', exact: true }).first().click());
 
     const rewriteStatus = fixIt.getByRole('status').first();
-    await expect(rewriteStatus).toBeVisible({ timeout: 20_000 });
+    await step('wait for rewrite feedback', () => expect(rewriteStatus).toBeVisible({ timeout: 20_000 }));
     await expect(rewriteStatus.getByText(/Corrected sentence:/)).toBeVisible();
     await expect(rewriteStatus.getByText(/You used the target form/)).toBeVisible();
 
     // It landed in the week table that "Delete my data" already covers.
-    const attempts = await admin
-      .from('week_grammar_attempts')
-      .select('id,item_id,correct')
-      .eq('user_id', user.id)
-      .in('item_id', ['W1-R1', 'W1-R2', 'W1-R3']);
+    const attempts = await step('read grammar attempts', () =>
+      admin
+        .from('week_grammar_attempts')
+        .select('id,item_id,correct')
+        .eq('user_id', user.id)
+        .in('item_id', ['W1-R1', 'W1-R2', 'W1-R3']),
+    );
     if (attempts.error) throw attempts.error;
     expect(attempts.data?.length).toBeGreaterThan(0);
     expect(attempts.data?.some((row) => row.correct === true)).toBe(true);
@@ -173,29 +184,31 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
     // model. They need GROQ_API_KEY, which the E2E job does not set, so the
     // check here is that the box posts and reports success or a B1 error -- the
     // three-part feedback itself is covered by the unit tests.
-    const useIt = await openGrammarStep(page, 'Use it');
-    await useIt.locator('textarea').first().fill('I used to ride my bike every day.');
-    await useIt.getByRole('button', { name: 'Check', exact: true }).first().click();
-    await expect(
-      useIt.getByRole('status').first().or(useIt.getByRole('alert').first()),
-    ).toBeVisible({ timeout: 30_000 });
+    const useIt = await step('open Use it', () => openGrammarStep(page, 'Use it'));
+    await step('fill use-it', () => useIt.locator('textarea').first().fill('I used to ride my bike every day.'));
+    await step('check use-it', () => useIt.getByRole('button', { name: 'Check', exact: true }).first().click());
+    await step('wait for use-it result', () =>
+      expect(useIt.getByRole('status').first().or(useIt.getByRole('alert').first())).toBeVisible({
+        timeout: 30_000,
+      }),
+    );
 
     // Whatever the model did, the attempt is stored and is deletable.
-    const allAttempts = await admin
-      .from('week_grammar_attempts')
-      .select('id,item_id')
-      .eq('user_id', user.id);
+    const allAttempts = await step('read all attempts', () =>
+      admin.from('week_grammar_attempts').select('id,item_id').eq('user_id', user.id),
+    );
     if (allAttempts.error) throw allAttempts.error;
     expect(allAttempts.data?.length).toBeGreaterThan(0);
 
     // "Delete my data" clears the attempt tables the boxes write to.
-    await admin.rpc('delete_my_learning_data');
+    await step('delete learning data', () => admin.rpc('delete_my_learning_data'));
     for (const table of ['week_vocabulary_attempts', 'week_grammar_attempts']) {
       const left = await admin.from(table).select('id').eq('user_id', user.id);
       if (left.error) throw left.error;
       expect(left.data?.length, `${table} still has rows after deletion`).toBe(0);
     }
   } finally {
+    if (phase.includes('(done)') === false) console.log(`[week-sentence-e2e] stuck during: ${phase}`);
     await deleteTestUser(admin, user.id);
   }
 });
