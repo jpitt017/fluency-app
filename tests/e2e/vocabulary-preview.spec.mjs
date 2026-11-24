@@ -15,17 +15,17 @@ test('week vocabulary shows safe cards and exercise steps before reading', async
   await expect(vocabulary.getByText('challenge', { exact: false }).first()).toBeVisible();
   await expect(vocabulary.getByText('Temporary voice').first()).toBeVisible();
   await expect(vocabulary.getByText(/Sign in to check/)).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Next' }).click();
+  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   // The step header and the authored instruction can both start with the same
   // words, so assert on the exact authored line rather than a substring.
   await expect(vocabulary.getByText('Match each word to its meaning.', { exact: true })).toBeVisible();
   await expect(vocabulary.getByText('Step 2 of 7: Match')).toBeVisible();
   await expect(vocabulary.getByRole('button', { name: 'Check' }).first()).toBeDisabled();
-  await vocabulary.getByRole('button', { name: 'Next' }).click();
+  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(vocabulary.getByText(/Two years ago/)).toBeVisible();
-  for (let i = 0; i < 3; i++) await vocabulary.getByRole('button', { name: 'Next' }).click();
+  for (let i = 0; i < 3; i++) await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(vocabulary.getByText(/first letters are given/)).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Next' }).click();
+  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(vocabulary.getByText(/Personal sentence feedback is coming soon/)).toBeVisible();
 });
 

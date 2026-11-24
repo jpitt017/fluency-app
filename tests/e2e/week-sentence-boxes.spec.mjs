@@ -132,6 +132,9 @@ test('vocabulary step 1 groups the words and pages through them', async ({ page 
 
 test('a signed-in learner gets feedback and the attempt is saved and deletable', async ({ page }) => {
   test.skip(!url || !key, 'Live test needs the service key');
+  // Sign-in, two grammar steps, two boxes and four round trips to live Supabase.
+  // The default 45 s is not enough for that on a cold runner.
+  test.setTimeout(120_000);
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, 'sentence-e2e');
   try {
