@@ -8,7 +8,11 @@ test('week vocabulary shows safe cards and exercise steps before reading', async
   expect(html).not.toContain('answer_index');
   expect(html).not.toContain('onTargetWhen');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
-  await expect(vocabulary.getByText('turning point', { exact: false }).first()).toBeVisible();
+  // Step 1 pages the cards four at a time now, so page 1 holds the "Words to use"
+  // group rather than everything. "turning point" is a recognition word and
+  // lives on a later page; assert on a card that is actually on the first one.
+  await expect(vocabulary.getByRole('heading', { name: 'Words to use' })).toBeVisible();
+  await expect(vocabulary.getByText('challenge', { exact: false }).first()).toBeVisible();
   await expect(vocabulary.getByText('Temporary voice').first()).toBeVisible();
   await expect(vocabulary.getByText(/Sign in to check/)).toBeVisible();
   await vocabulary.getByRole('button', { name: 'Next' }).click();

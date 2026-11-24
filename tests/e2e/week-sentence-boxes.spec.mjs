@@ -58,12 +58,13 @@ test('grammar "Fix it" rewrite items have a text box and a Check button', async 
   const grammar = await openGrammarStep(page, 'Fix it');
   await expect(grammar.getByText(/Step \d of 5: Fix it/)).toBeVisible();
 
-  // Week 1 has rewrite items; each is a box, not a pointer to another page.
-  const box = grammar.getByRole('textbox').first();
-  await expect(box).toBeVisible();
+  // The step holds the 'Fix' items (single inputs) and then the rewrite items.
+  // The rewrite box is the multi-line one; target it by its prompt so the test
+  // cannot accidentally measure a one-line input belonging to another item.
+  const rewriteBox = grammar.locator('textarea').first();
+  await expect(rewriteBox).toBeVisible();
   await expect(grammar.getByRole('button', { name: 'Check', exact: true }).first()).toBeDisabled();
-  // Its own prompt, so the box belongs to the item and not to the page.
-  await expect(grammar.getByText(/since\)/).first()).toBeVisible();
+  await expect(grammar.getByText(/\(since\)/).first()).toBeVisible();
 });
 
 test('grammar "Use it" has a text box and a Check button', async ({ page }) => {
@@ -107,14 +108,22 @@ test('vocabulary step 1 groups the words and pages through them', async ({ page 
   // "Next words →" advances and, eventually, reaches the second group.
   const nextWords = vocabulary.getByRole('button', { name: 'Next words →' });
   await expect(nextWords).toBeVisible();
-  let sawUnderstand = await vocabulary.getByRole('heading', { name: 'Words to understand' }).isVisible().catch(() => false);
-  for (let i = 0; i < 4 && !sawUnderstand; i += 1) {
-    if (await nextWords.isDisabled()) break;
+  let sawUnderstand = await vocabulary
+    .getByRole('heading', { name: 'Words to understand' })
+    .isVisible()
+    .catch(() => false);
+  let pages = 1;
+  for (let i = 0; i < 6 && !(await nextWords.isDisabled()); i += 1) {
     await nextWords.click();
-    sawUnderstand = await vocabulary.getByRole('heading', { name: 'Words to understand' }).isVisible().catch(() => false);
+    pages += 1;
+    sawUnderstand =
+      sawUnderstand ||
+      (await vocabulary.getByRole('heading', { name: 'Words to understand' }).isVisible().catch(() => false));
   }
-  expect(sawUnderstand).toBe(true);
-  // The last page has no further words.
+  expect(sawUnderstand, 'the recognition group is never reached').toBe(true);
+  // Week 1 has 14 cards at four per page, so there must be more than one page,
+  // and the last page has no further words.
+  expect(pages, 'step 1 showed every card at once').toBeGreaterThan(1);
   await expect(nextWords).toBeDisabled();
 
   // Audio is still offered on the cards.
@@ -132,7 +141,7 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
     // Grammar "Fix it": the authored answer is accepted without a model call, so
     // this half of the test runs even when GROQ_API_KEY is absent.
     const fixIt = await openGrammarStep(page, 'Fix it');
-    const rewrite = fixIt.getByRole('textbox').first();
+    const rewrite = fixIt.locator('textarea').first();
     await rewrite.fill("I've been learning English since 2020.");
     await fixIt.getByRole('button', { name: 'Check', exact: true }).first().click();
 
@@ -156,7 +165,7 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
     // check here is that the box posts and reports success or a B1 error -- the
     // three-part feedback itself is covered by the unit tests.
     const useIt = await openGrammarStep(page, 'Use it');
-    await useIt.getByRole('textbox').first().fill('I used to ride my bike every day.');
+    await useIt.locator('textarea').first().fill('I used to ride my bike every day.');
     await useIt.getByRole('button', { name: 'Check', exact: true }).first().click();
     await expect(
       useIt.getByRole('status').first().or(useIt.getByRole('alert').first()),
