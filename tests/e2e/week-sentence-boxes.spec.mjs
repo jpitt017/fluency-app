@@ -140,22 +140,26 @@ test('vocabulary step 1 groups the words and pages through them', async ({ page 
  * through the UI and hung on the sign-in/session dance for reasons the CI
  * annotation could not report.
  */
-test('the sentence route accepts an authored answer, saves it, and deletion clears it', async ({ request }) => {
+test('the sentence route accepts an authored answer, saves it, and deletion clears it', async ({ page }) => {
   test.skip(!url || !key, 'Live test needs the service key');
+  // Sign-in plus several round trips to live Supabase.
+  test.setTimeout(150_000);
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, 'sentence-api');
   try {
-    const learner = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
-    });
-    const signedIn = await learner.auth.signInWithPassword({ email: user.email, password: user.password });
-    if (signedIn.error) throw signedIn.error;
-    const auth = { Authorization: `Bearer ${signedIn.data.session.access_token}` };
+    // The route reads the session from cookies, as every server component does,
+    // so it has to be signed in through the browser. page.request shares the
+    // page's cookie jar, which is what makes the calls below authenticated.
+    await page.goto('/login');
+    await page.getByLabel(/Email/i).fill(user.email);
+    await page.getByLabel('Password', { exact: true }).fill(user.password);
+    await page.getByRole('button', { name: /Sign in/i }).click();
+    await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
+    const request = page.request;
 
     // Week 1's rewrite item W1-R1: the authored answer must be accepted
     // deterministically, with no model call and therefore no AI unit spent.
     const accepted = await request.post('/api/week/sentence', {
-      headers: auth,
       data: { week: 1, id: 'W1-R1', answer: "I've been learning English since 2020." },
     });
     expect(accepted.status()).toBe(200);
@@ -169,7 +173,6 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
 
     // The full form of the same answer is also accepted.
     const fullForm = await request.post('/api/week/sentence', {
-      headers: auth,
       data: { week: 1, id: 'W1-R1', answer: 'I have been learning English since 2020.' },
     });
     expect(fullForm.status()).toBe(200);
@@ -189,7 +192,6 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
     // GROQ_API_KEY the route still answers, so the assertion is on the contract
     // (a status and three parts) rather than on what the model said.
     const other = await request.post('/api/week/sentence', {
-      headers: auth,
       data: { week: 1, id: 'V1-S1', answer: 'I got used to working from home.' },
     });
     expect([200, 402, 429, 500, 503]).toContain(other.status());
@@ -202,14 +204,12 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
     // A week that is not open yet is refused, so the boxes cannot be used to
     // practise ahead.
     const closed = await request.post('/api/week/sentence', {
-      headers: auth,
       data: { week: 4, id: 'W4-R1', answer: 'The castle was built in 1190.' },
     });
     expect(closed.status()).toBe(403);
 
     // Unknown items are not a way to probe the bank.
     const unknown = await request.post('/api/week/sentence', {
-      headers: auth,
       data: { week: 1, id: 'NOT-AN-ITEM', answer: 'Anything at all.' },
     });
     expect(unknown.status()).toBe(404);
