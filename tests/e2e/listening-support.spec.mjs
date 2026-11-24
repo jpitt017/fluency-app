@@ -111,6 +111,15 @@ async function answerListeningQuestions(page) {
   }
 }
 
+/** "Go further" is a <details>; its contents are unreachable until it is open. */
+async function openGoFurther(page) {
+  const summary = page.getByText('Go further (3–4 min)', { exact: true });
+  await expect(summary).toBeVisible();
+  const details = page.locator('details').filter({ hasText: 'Go further' });
+  if (!(await details.getAttribute('open'))) await summary.click();
+  await expect(page.getByRole('heading', { name: 'Check four words' })).toBeVisible();
+}
+
 async function signIn(page, user) {
   await page.goto('/login');
   await page.getByLabel(/Email/i).fill(user.email);
@@ -130,9 +139,10 @@ test.describe('gloss interaction, with a signed-in learner', () => {
       await signIn(page, user);
       await answerListeningQuestions(page);
       await page.goto('/week/1');
+      await openGoFurther(page);
 
       // The gloss inside the transcript, not a key-word card.
-      const gloss = page.locator('section').filter({ hasText: 'Go further' }).getByRole('button', { name: 'realised', exact: true }).first();
+      const gloss = page.locator('details').filter({ hasText: 'Go further' }).getByRole('button', { name: 'realised', exact: true }).first();
       await expect(gloss).toBeVisible();
       await expect(gloss).toHaveAttribute('aria-expanded', 'false');
 
@@ -159,8 +169,9 @@ test.describe('gloss interaction, with a signed-in learner', () => {
       await signIn(page, user);
       await answerListeningQuestions(page);
       await page.goto('/week/1');
+      await openGoFurther(page);
 
-      const gloss = page.locator('section').filter({ hasText: 'Go further' }).getByRole('button', { name: 'realised', exact: true }).first();
+      const gloss = page.locator('details').filter({ hasText: 'Go further' }).getByRole('button', { name: 'realised', exact: true }).first();
       await gloss.focus();
       await expect(gloss).toHaveAttribute('aria-expanded', 'false');
 
@@ -181,7 +192,7 @@ test.describe('gloss interaction, with a signed-in learner', () => {
 
       // A card word opens too, and its popup carries no Spanish (it is a
       // reminder of the vocabulary step, not a gloss).
-      const cardWord = page.locator('section').filter({ hasText: 'Go further' }).getByRole('button', { name: 'challenge', exact: true }).first();
+      const cardWord = page.locator('details').filter({ hasText: 'Go further' }).getByRole('button', { name: 'challenge', exact: true }).first();
       await cardWord.focus();
       await page.keyboard.press('Enter');
       await expect(page.getByRole('dialog', { name: 'Meaning of challenge' })).toBeVisible();
