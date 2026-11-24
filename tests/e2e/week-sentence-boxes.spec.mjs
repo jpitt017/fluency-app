@@ -147,7 +147,6 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
   // say which one, since the log itself is not readable from CI annotations.
   let phase = 'create user';
   const step = async (name, fn) => {
-    phase = name;
     const result = await fn();
     phase = `${name} (done)`;
     return result;
@@ -208,7 +207,12 @@ test('a signed-in learner gets feedback and the attempt is saved and deletable',
       expect(left.data?.length, `${table} still has rows after deletion`).toBe(0);
     }
   } finally {
-    if (phase.includes('(done)') === false) console.log(`[week-sentence-e2e] stuck during: ${phase}`);
+    // A hang reports only "timeout exceeded" with no location, and neither
+    // console output nor attachments reach the CI annotation. Failing the test
+    // with the unfinished phase in the message is the only channel that does.
+    if (!phase.endsWith('(done)')) {
+      throw new Error(`E2E hung during: ${phase}`);
+    }
     await deleteTestUser(admin, user.id);
   }
 });
