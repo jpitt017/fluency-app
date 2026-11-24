@@ -157,7 +157,10 @@ test.describe('with a signed-in learner', () => {
       // but the number offered from the twenty seeded here must still be twenty.
       await expect(page.getByText(/^Today's review: 2\d cards, about \d+ minutes?$/).first()).toBeVisible();
       const heading = await page.getByText(/^Today's review:/).innerText();
-      const offered = Number(heading.match(/(\d+) cards/)![1]);
+      // Plain JS, so no non-null assertion: .mjs is parsed by Node, not tsc.
+      const offeredMatch = heading.match(/(\d+) cards/);
+      expect(offeredMatch, `no card count in "${heading}"`).not.toBeNull();
+      const offered = Number(offeredMatch[1]);
       expect(offered).toBeGreaterThanOrEqual(20);
       await expect(page.getByText(/^Card 1 \//)).toBeVisible();
 
