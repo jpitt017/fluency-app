@@ -105,6 +105,6 @@ test('a failed review update cannot fail the learner’s answer', () => {
   const call = route.slice(route.indexOf('updateReviewFromWeeklyPractice'));
   // The attempt and the feedback are returned regardless of what the card did.
   assert.ok(call.indexOf('return NextResponse.json(result') > -1);
-  const module = read('lib/b1b2/week-vocab-review.ts');
-  assert.match(module, /catch \(error\)/);
+  const reviewModule = read('lib/b1b2/week-vocab-review.ts');
+  assert.match(reviewModule, /catch \(error\)/);
 });

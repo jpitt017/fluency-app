@@ -163,3 +163,22 @@ test('the cap never shows more than the cap in one sitting, whatever the count',
     assert.ok(plan.shown <= DAILY_CAP, `reviewedToday=${reviewedToday} showed ${plan.shown}`);
   }
 });
+
+// The two card types are fetched separately (error cards from the table, vocab
+// cards from get_due_cards), so the merge is the only place that decides which
+// of them is more overdue. Without this, every error card would be practised
+// before any vocabulary card, however long the vocabulary card had waited.
+test('the two card types are interleaved by due date, not grouped by type', () => {
+  const error = { ...card('e1', '2026-01-01T10:00:00Z'), type: 'error', lapses: 0, occurrence_count: 0 };
+  const vocab = { ...card('v1', '2026-01-01T08:00:00Z'), type: 'vocab', lapses: 0 };
+  const ordered = orderQueue([error, vocab]);
+  assert.deepEqual(ordered.map((c) => c.id), ['v1', 'e1'], 'the older vocab card comes first');
+});
+
+test('a vocabulary card with no occurrence_count does not sort as NaN', () => {
+  // vocab cards have lapses but no occurrence_count; an undefined there must not
+  // make every comparison false and leave the order to the database.
+  const a = { ...card('a', '2026-01-01T09:00:00Z'), lapses: 3, occurrence_count: undefined };
+  const b = { ...card('b', '2026-01-01T09:00:00Z'), lapses: 1, occurrence_count: undefined };
+  assert.deepEqual(orderQueue([b, a]).map((c) => c.id), ['a', 'b']);
+});
