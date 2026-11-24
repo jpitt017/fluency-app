@@ -45,6 +45,45 @@ fails with *Missing expected rejection* — that is exactly how course-audio run
 answer with an explicit `allowProductionRelease: false` and checks the rule holds
 for every value of the variable, so it cannot come back silently.
 
+## Never send trial SQL to the live project
+
+**SQL sent through the Supabase connector commits immediately. It does not roll
+back, and an explicit `begin;` … `rollback;` around it does not roll it back
+either.** The connector does not run your script as one interactive
+transaction: `rollback;` is accepted, returns success, and changes nothing.
+Whatever the statements before it did is already live.
+
+So the rule is not "be careful with transactions". It is: **never send trial,
+probe or exploratory SQL to the live project at all.** Not a `select` that
+creates something, not a constraint swap "to see if the pattern matches", not an
+insert to check a limit — if the statement can change anything, it does not go
+to production unless it is the reviewed migration itself.
+
+This has already gone wrong. A migration was about to be written to widen a
+`CHECK` constraint, and the pattern matching the existing constraint was probed
+on live first, wrapped in `begin;`/`rollback;`. It committed. Live ended up with
+a schema change its migration history did not record, and it took a manual
+revert to put back — safe only because the table happened to be empty.
+
+To check what SQL will do, use one of these instead:
+
+1. **A unit test or the replay in CI** — the `Isolated migration and
+   learner-data deletion` job replays every migration against a fresh
+   `supabase start` database, so a migration that does not apply cleanly fails
+   there, not on production. A pattern that has to match an existing constraint
+   name can be proven against the replayed schema.
+2. **A preview / branch database** — probe freely; nothing is live.
+3. **Read-only inspection of live** — `information_schema`, `pg_constraint`,
+   `pg_get_constraintdef()` and the `list_migrations` tool are safe, because they
+   only read. This is how to discover the real constraint name *without*
+   changing it.
+
+Then apply the reviewed migration file itself, once, after telling the owner the
+plan, and record it in `supabase_migrations.schema_migrations` so a fresh replay
+and live agree.
+
+If you are unsure whether a statement is read-only, it is not.
+
 ## This repo's other standing rules
 
 - Read the Next.js guidance block below before writing app code; this Next.js
