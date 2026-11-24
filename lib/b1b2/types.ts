@@ -525,7 +525,57 @@ export interface ErrorReviewCardRow {
   reps: number;
   lapses: number;
   last_review_at: string | null;
+  /** The local date of the last grading; counts against the daily cap. */
+  last_reviewed_on?: string | null;
 }
+
+/** One row from get_due_cards(): a vocabulary card the learner owes a review. */
+export interface VocabDueRow {
+  card_id: string;
+  vocab_item_id: string;
+  term: string;
+  part_of_speech: string | null;
+  ipa: string | null;
+  definition: string;
+  example: string;
+  collocations: string[] | null;
+  translation_es: string | null;
+  deck_slug: string;
+  deck_title: string;
+  ladder_step: number;
+  due_at: string;
+}
+
+/**
+ * One card in the daily review queue, of either kind.
+ *
+ * `hasTypedAnswer` is what decides the grading UI: a card with a typed answer is
+ * marked (wrong → Again, right → Good, Easy offered only after a correct
+ * answer); a card without one keeps the four self-rating buttons.
+ */
+export type ReviewQueueCard =
+  | (ErrorReviewCardRow & { type: 'error'; hasTypedAnswer: true })
+  | {
+      type: 'vocab';
+      id: string;
+      vocab_item_id: string;
+      term: string;
+      definition: string;
+      example: string;
+      part_of_speech: string | null;
+      translation_es: string | null;
+      due_at: string;
+      interval_days: number | null;
+      stability: number | null;
+      difficulty: number | null;
+      fsrs_state: number | null;
+      learning_steps: number | null;
+      reps: number | null;
+      lapses: number | null;
+      last_review_at: string | null;
+      last_reviewed_on: string | null;
+      hasTypedAnswer: false;
+    };
 
 export interface PlacementQuestionRow {
   id: string;

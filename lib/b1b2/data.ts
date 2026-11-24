@@ -1,6 +1,7 @@
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
+import { orderQueue, planQueue } from './review-queue.mjs';
 import type {
   AiObservabilitySummary,
   DashboardPayload,
@@ -11,7 +12,9 @@ import type {
   PlacementQuestionRow,
   PlacementTextRow,
   RecurringErrorTag,
+  ReviewQueueCard,
   TeacherRosterLearner,
+  VocabDueRow,
   WeeklyReportRow,
   XpEventRow,
 } from './types';
@@ -379,34 +382,109 @@ export async function loadHeaderSummary(): Promise<HeaderSummary> {
   }
 }
 
-export async function loadErrorReviewCards(): Promise<{
+/**
+ * Today's review queue.
+ *
+ * Two card types share one daily allowance: error-repair cards from the learner's
+ * own mistakes, and vocabulary cards fed by the weekly steps. They are fetched
+ * as two due lists, merged, ordered (most overdue first, then most often missed)
+ * and cut at the cap.
+ *
+ * The count of what has already been reviewed today is read here rather than in
+ * the browser, so reloading the page does not hand out twenty more cards.
+ * Quiz cards (error repair) also carry whether they have a typed answer:
+ * requirement 1 says a card with no typed answer keeps its four self-rating
+ * buttons, and a vocabulary card is answered by recall, so it is self-rated.
+ */
+export async function loadReviewQueue(options: { ignoreCap?: boolean } = {}): Promise<{
   signedIn: boolean;
-  cards: ErrorReviewCardRow[];
+  queue: ReturnType<typeof planQueue> & { cards: ReviewQueueCard[] };
+  totalDue: number;
 }> {
+  const empty = planQueue([]);
   const supabase = await createServerSupabase();
-  if (!supabase) return { signedIn: false, cards: [] };
+  if (!supabase) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0 };
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { signedIn: false, cards: [] };
+  if (!user) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0 };
 
-  const { data } = await supabase
-    .from('error_review_cards')
-    .select(
-      'id, category, prompt_sentence, corrected_sentence, context_sentence, card_format, occurrence_count, mastered, explanation, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at',
-    )
-    .eq('user_id', user.id)
-    .eq('suspended', false)
-    .eq('mastered', false)
-    .lte('due_at', new Date().toISOString())
-    .order('due_at', { ascending: true })
-    .limit(20);
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
 
-  return {
-    signedIn: true,
-    cards: (data as ErrorReviewCardRow[] | null) ?? [],
+  // Every due card, not only the first 20: the page has to know how many are
+  // left over to decide whether "Review more" is worth offering. One row per
+  // learner-day cap keeps this small in practice.
+  const [errorResult, vocabResult, errorToday, vocabToday] = await Promise.all([
+    supabase
+      .from('error_review_cards')
+      .select(
+        'id, category, prompt_sentence, corrected_sentence, context_sentence, card_format, occurrence_count, mastered, explanation, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, last_reviewed_on',
+      )
+      .eq('user_id', user.id)
+      .eq('suspended', false)
+      .eq('mastered', false)
+      .lte('due_at', now.toISOString())
+      .order('due_at', { ascending: true })
+      .limit(200),
+    supabase.rpc('get_due_cards', { p_limit: 200 }),
+    supabase
+      .from('error_review_cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('last_reviewed_on', today),
+    supabase
+      .from('vocab_reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('reviewed_at', `${today}T00:00:00.000Z`),
+  ]);
+
+  const errorCards = (errorResult.data as ErrorReviewCardRow[] | null) ?? [];
+  const vocabRows = (vocabResult.data as VocabDueRow[] | null) ?? [];
+
+  const cards: ReviewQueueCard[] = [
+    ...errorCards.map((card) => ({
+      ...card,
+      type: 'error' as const,
+      // An error card is repaired by typing; that is the whole exercise.
+      hasTypedAnswer: true as const,
+    })),
+    ...vocabRows.map((row) => ({
+      type: 'vocab' as const,
+      id: row.card_id,
+      vocab_item_id: row.vocab_item_id,
+      term: row.term,
+      definition: row.definition,
+      example: row.example,
+      part_of_speech: row.part_of_speech,
+      translation_es: row.translation_es,
+      due_at: row.due_at,
+      interval_days: null,
+      stability: null,
+      difficulty: null,
+      fsrs_state: null,
+      learning_steps: null,
+      reps: null,
+      lapses: null,
+      last_review_at: null,
+      last_reviewed_on: null,
+      hasTypedAnswer: false as const,
+    })),
+  ];
+
+  const reviewedToday = (errorToday.count ?? 0) + (vocabToday.count ?? 0);
+  const plan = planQueue(cards, { reviewedToday });
+  // planQueue orders and counts; the slice keeps the order it decided on.
+  // "Review more" asks for everything still due, so it passes ignoreCap.
+  const ordered = orderQueue(cards) as ReviewQueueCard[];
+  const queue = {
+    ...plan,
+    cards: options.ignoreCap ? ordered : ordered.slice(0, plan.shown),
   };
+
+  return { signedIn: true, queue, totalDue: cards.length };
 }
 
 export async function loadObservabilitySummary(days = 7): Promise<AiObservabilitySummary | null> {
