@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import GrammarPractice from '@/components/b1b2/GrammarPractice';
+import { ListeningAfterQuestions, ListeningBeforePlayer } from '@/components/b1b2/ListeningSupport';
 import ListeningTrialPlayer from '@/components/b1b2/ListeningTrialPlayer';
 import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
@@ -38,7 +39,12 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       {grammar && <GrammarPractice grammar={grammar} week={number} signedIn={viewer.signedIn} />}
       {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} />}
       <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Reading: {details.reading.title}</h2><p className="whitespace-pre-line leading-7">{details.reading.text}</p><WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} /></section>
-      <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>{trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail. The transcript stays hidden for now.</p><ListeningTrialPlayer trial={trialAudio} /></> : details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}<WeekInputTask week={number} skill="listening" questions={details.listening.questions} available={Boolean(trialAudio || details.listening.audioUrl)} signedIn={viewer.signedIn} /></section>
+      <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>
+        <ListeningBeforePlayer support={details.listeningSupport.support} />
+        {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio} /></> : details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}
+        <div id="listening-questions"><WeekInputTask week={number} skill="listening" questions={details.listening.questions} available={Boolean(trialAudio || details.listening.audioUrl)} signedIn={viewer.signedIn} /></div>
+        {/* Below the questions: the transcript gate counts their saved answers. */}
+        <ListeningAfterQuestions week={number} listening={details.listeningSupport} /></section>
       <section className="space-y-3 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Speaking</h2><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className="inline-block text-indigo-700 underline">Open speaking task in Labs</Link></section>
       <section className="space-y-3 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Writing</h2><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className="inline-block text-indigo-700 underline">Open writing task in Labs</Link></section>
     </>}</main>;
