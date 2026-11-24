@@ -22,15 +22,21 @@ async function signIn(page, user) {
   await page.waitForURL(/\/dashboard|\/labs/);
 }
 
-/** Walk the grammar steps until the wanted step title is showing. */
+/**
+ * Walk the grammar steps until the wanted step title is showing.
+ *
+ * The header is asserted first: without it the first loop iteration runs before
+ * the page has rendered, reads "not visible", clicks Next and skips past the
+ * step it was looking for -- which is how this skipped "Fix it" and hung.
+ */
 async function openGrammarStep(page, title) {
   const grammar = page.getByRole('region', { name: 'Grammar practice' });
+  await expect(grammar.getByText(/Step \d of 5: /)).toBeVisible();
   for (let i = 0; i < 5; i += 1) {
-    if (await grammar.getByText(new RegExp(`Step \\d of 5: ${title}`)).isVisible().catch(() => false)) {
-      return grammar;
-    }
+    if (await grammar.getByText(new RegExp(`Step \\d of 5: ${title}`)).isVisible()) return grammar;
     await grammar.getByRole('button', { name: 'Next', exact: true }).click();
   }
+  await expect(grammar.getByText(new RegExp(`Step \\d of 5: ${title}`))).toBeVisible();
   return grammar;
 }
 
