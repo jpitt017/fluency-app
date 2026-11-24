@@ -13,7 +13,7 @@ need no external API:
 
 | Check | What it proves |
 | --- | --- |
-| `build-and-offline-evals` | lint, syllabus/details validators, `eval:prompts --offline` (60 cases + 2 rewrite-injection checks), the unit suites, the live schema check, and a production build |
+| `build-and-offline-evals` | lint, syllabus/details validators, `eval:prompts --offline` (60 cases + 2 rewrite-injection checks), the unit suites (including `week-practice-finish`: what counts towards finishing grammar and vocabulary, and that the score comes from saved rows), the live schema check, and a production build |
 | `playwright-e2e` | the placement walk, the writing step, request timeouts and the service-worker install |
 | `rls-isolation` | row-level security between learners |
 

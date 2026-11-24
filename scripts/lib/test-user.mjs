@@ -51,6 +51,7 @@ const USER_TABLES = [
   'week_vocabulary_attempts',
   'week_grammar_attempts',
   'week_input_answers',
+  'week_skill_completions',
   'issue_reports',
   'issue_report_attempts',
   'writing_submissions',

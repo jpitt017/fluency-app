@@ -20,6 +20,7 @@ export default function SentenceBox({
   signedIn,
   rows = 2,
   onChecked,
+  initialAnswer,
 }: {
   week: number;
   id: string;
@@ -28,8 +29,14 @@ export default function SentenceBox({
   signedIn: boolean;
   rows?: number;
   onChecked?: (onTarget: boolean) => void;
+  /**
+   * What the learner wrote last time, restored from the server so a reload does
+   * not empty the box. It is only the sentence they wrote: the feedback comes
+   * back with the next check.
+   */
+  initialAnswer?: string;
 }) {
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState(initialAnswer ?? '');
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
