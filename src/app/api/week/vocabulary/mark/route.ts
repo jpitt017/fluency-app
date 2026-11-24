@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import bank from '@/supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json';
 import { markVocabularyAnswer } from '@/lib/curriculum/vocabulary-marking.mjs';
+import { termForExercise } from '@/lib/curriculum/vocabulary-review-link.mjs';
+import { updateReviewFromWeeklyPractice } from '@/lib/b1b2/week-vocab-review';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
@@ -30,5 +32,12 @@ export async function POST(request: Request) {
     console.error('[vocabulary] Failed to save attempt:', error.message);
     return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
   }
+
+  // Weekly practice feeds Review: a wrong answer makes the word due again soon,
+  // a right answer moves it on. Never allowed to fail the learner's answer --
+  // the attempt is saved and the feedback is correct either way.
+  const term = termForExercise(week, body.id);
+  if (term) await updateReviewFromWeeklyPractice(admin, user.id, term, result.correct);
+
   return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
 }

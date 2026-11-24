@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import ErrorReviewStudio from '@/components/b1b2/ErrorReviewStudio';
 import MediationTask from '@/components/b1b2/MediationTask';
-import { loadDashboard, loadErrorReviewCards } from '@/lib/b1b2/data';
+import { loadDashboard, loadReviewQueue } from '@/lib/b1b2/data';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
 
@@ -12,8 +12,8 @@ type ReviewProps = { searchParams: Promise<{ week?: string | string[] }> };
 export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) {
   const weekParam = (await searchParams).week;
   const weekNumber = weekParam ? learnerWeekFromParam(weekParam) : await currentLearnerWeek();
-  const [{ cards: errorCards, signedIn }, { telemetry }, syllabusContent] = await Promise.all([
-    loadErrorReviewCards(),
+  const [{ queue, signedIn, totalDue }, { telemetry }, syllabusContent] = await Promise.all([
+    loadReviewQueue(),
     loadDashboard(),
     loadSyllabusContent(),
   ]);
@@ -96,7 +96,15 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
 
       {week?.mediation && <MediationTask weekNumber={weekNumber} task={week.mediation} />}
 
-      <ErrorReviewStudio initialCards={errorCards} />
+      {/* The cap line, above the cards. Suppressed for a signed-out visitor and
+          when nothing is due, where it would say nothing useful. */}
+      {totalDue > 0 && (
+        <p className="rounded-xl bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-800">
+          {queue.summary}
+        </p>
+      )}
+
+      <ErrorReviewStudio initialCards={queue.cards} plan={queue} />
     </main>
   );
 }
