@@ -80,3 +80,53 @@ test('no learner-facing projection ships a key, accepted answer or reason of ano
     assert.ok(!week.includes(item.key) || item.options.includes(item.key), `${item.id} key must not be hard-coded here`);
   }
 });
+
+test('a task opened from /week/[n] shows the way back and keeps its week for counting', () => {
+  const page = read('src/app/labs/page.tsx');
+  // "← Back to Week N" is rendered from the week param, in the page header and
+  // in both task sections, so it is on screen even after the #speaking anchor
+  // scrolls past the header.
+  assert.match(page, /← Back to Week \{weekNumber\}/);
+  assert.match(page, /href=\{`\/week\/\$\{weekNumber\}`\}/);
+  const backLinkUses = page.match(/\{backToWeek\}/g) ?? [];
+  assert.ok(backLinkUses.length >= 2, 'the back link appears at the tasks, not only the header');
+  assert.match(page, /This task counts for Week \{weekNumber\}\./);
+  // A visitor who signs in from a weekly task returns to that same week.
+  assert.match(page, /encodeURIComponent\(weekParam \? `\/labs\?week=\$\{weekNumber\}` : '\/labs'\)/);
+  // Keep the week context even if details are unavailable; the marking routes
+  // count only a submission that matches a published weekly task.
+  assert.match(page, /weekParam \? \{ \.\.\.freeContext, weekNumber \} : freeContext/);
+  // The recording and the writing both send the week to their marking route.
+  assert.match(read('components/labs/SpeakingLab.tsx'), /form\.set\('weekNumber', String\(lessonContext\.weekNumber\)\)/);
+  assert.match(read('components/labs/WritingLab.tsx'), /weekNumber: lessonContext\?\.weekNumber/);
+  // And the routes record it against the week's progression.
+  assert.match(read('src/app/api/speaking/evaluate/route.ts'), /recordWeekSubmission\(guard\.userId, weekNumber, 'speaking'\)/);
+  assert.match(read('src/app/api/writing/correct/route.ts'), /recordWeekSubmission\(guard\.userId, body\.weekNumber, 'writing'\)/);
+});
+
+test('the week page sends learners to Start speaking/writing task, keeping the week in the URL', () => {
+  const page = read('src/app/week/[n]/page.tsx');
+  assert.match(page, /href=\{`\/labs\?week=\$\{number\}#speaking`\}[^>]*>Start speaking task</);
+  assert.match(page, /href=\{`\/labs\?week=\$\{number\}#writing`\}[^>]*>Start writing task</);
+  assert.match(page, /This week&apos;s tasks aren&apos;t ready yet\. You can practise in Practice\./);
+});
+
+test('the dashboard shows AI practice as a simple bar with B1 labels', () => {
+  const page = read('src/app/dashboard/page.tsx');
+  assert.match(page, /Plenty left today/);
+  assert.match(page, /Nearly finished for today/);
+  assert.match(page, /Finished for today/);
+  assert.match(page, /role="progressbar"/);
+  assert.match(page, /aria-label="AI practice left today"/);
+  assert.match(page, /Your AI practice starts again every night at midnight\. This is Madrid time\./);
+  assert.match(read('supabase-b1-b2/migrations/0035_ai_pilot_limits.sql'), /date_trunc\('day', v_now at time zone 'Europe\/Madrid'\)/);
+  // The raw units are not a sentence the learner has to do sums with.
+  assert.ok(!page.includes('AI practice left today: ${'), 'the old numeric line is gone');
+});
+
+test('review explains Again and Easy above the grade buttons', () => {
+  const source = read('components/b1b2/ErrorReviewStudio.tsx');
+  assert.match(source, /How well did you remember it\? Again = I forgot\. Easy = I knew it at once\./);
+  assert.match(source, /Nothing to practise today\. Come back tomorrow!/);
+  assert.match(source, /Correct answer/);
+});

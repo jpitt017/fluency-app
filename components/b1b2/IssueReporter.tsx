@@ -23,7 +23,7 @@ function wavFile(chunks: Float32Array[], samples: number, rate: number): Blob {
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
-export default function IssueReporter({ signedIn }: { signedIn: boolean }) {
+export default function IssueReporter({ signedIn, isStaff = false }: { signedIn: boolean; isStaff?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const recorder = useRef<Recorder | null>(null);
   const [type, setType] = useState('broken');
@@ -83,10 +83,17 @@ export default function IssueReporter({ signedIn }: { signedIn: boolean }) {
       form.set('device', navigator.platform || 'unknown');
       form.set('screen', `${window.screen.width} × ${window.screen.height}`);
       const res = await fetch('/api/issues', { method: 'POST', body: form });
-      const result = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(result.error || 'Could not send. Please try again.');
+      const result = await res.json().catch(() => null) as { error?: string } | null;
+      if (!res.ok || !result) {
+        console.error('[issues] report failed:', result?.error ?? res.status);
+        setError(result?.error || (isStaff ? 'Could not send. Please try again.' : 'Something went wrong. Please try again, or message your teacher.'));
+        return;
+      }
       setSent(true); setText(''); setAudio(null); setScreenshot(null); setInclude(false);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not send. Please try again.'); }
+    } catch (e) {
+      console.error('[issues] report failed:', e);
+      setError(isStaff ? (e instanceof Error ? e.message : 'Could not send. Please try again.') : 'Something went wrong. Please try again, or message your teacher.');
+    }
     finally { setBusy(false); }
   }
   return <>

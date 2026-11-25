@@ -226,12 +226,16 @@ ${wrapLearnerSubmission(text)}`;
     }
 
     const weekTask = Number.isInteger(body.weekNumber) ? await loadLearnerWeek(body.weekNumber!) : null;
-    const modelAnswer = guard.userId && weekTask && prompt.startsWith(sanitizeLearnerText(weekTask.writingPrompt, 500).text)
+    const weeklyTask = Boolean(weekTask && prompt.startsWith(sanitizeLearnerText(weekTask.writingPrompt, 500).text));
+    const modelAnswer = weeklyTask && guard.userId
       ? await recordWeekSubmission(guard.userId, body.weekNumber, 'writing') : null;
 
     return NextResponse.json(
       {
         modelAnswer,
+        // Keep useful feedback even if recording progress fails, but do not
+        // leave a learner believing that their weekly task was counted.
+        weekRecorded: weekTask ? Boolean(modelAnswer) : null,
         submissionId,
         corrected: validated.corrected,
         feedback: validated.feedback,

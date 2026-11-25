@@ -547,14 +547,20 @@ export async function loadPlacementTexts(): Promise<PlacementTextRow[]> {
 /** Server-only answer key for placement scoring; never sent to the browser. */
 export async function loadPlacementAnswerKey(): Promise<number[]> {
   const admin = createAdminSupabase();
-  if (!admin) return [];
+  if (!admin) {
+    console.error('[placement] Answer key client is not configured');
+    return [];
+  }
   const { data, error } = await admin
     .from('placement_questions')
     .select('answer_index')
     .eq('active', true)
     .eq('version', 'v2')
     .order('sort_order', { ascending: true });
-  if (error || !data) return [];
+  if (error || !data) {
+    console.error('[placement] Could not load answer key:', error ?? 'no data');
+    return [];
+  }
   return data.map((row) => Number(row.answer_index));
 }
 

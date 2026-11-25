@@ -51,11 +51,16 @@ export default function SentenceBox({
         body: JSON.stringify({ week, id, answer }),
       });
       const data = (await response.json()) as Feedback & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Could not check your sentence.');
+      if (!response.ok) {
+        console.error('[sentence] check failed:', data.error ?? response.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       setFeedback(data);
       onChecked?.(data.onTarget);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check your sentence.');
+      console.error('[sentence] check failed:', err);
+      setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(false);
     }

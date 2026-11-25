@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import { markFixedGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
+import { learnerGrammarReason } from '@/lib/curriculum/learner-grammar-reasons.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
@@ -25,5 +26,5 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ error: 'Could not save your answer.' }, { status: 503 });
   const { error } = await admin.from('week_grammar_attempts').insert({ user_id: user.id, week_number: week.number, item_id: item.id, answer, correct });
   if (error) return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
-  return NextResponse.json({ correct, reason: item.reason }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json({ correct, reason: learnerGrammarReason(item) }, { headers: { 'Cache-Control': 'no-store' } });
 }

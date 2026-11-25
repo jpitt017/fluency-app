@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
   try {
     if (!supabase) {
       statusCode = 503;
-      return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
+      console.error('[review] database client is not configured');
+      return NextResponse.json({ error: 'We could not check your answer. Please try again.' }, { status: 503 });
     }
 
     const {
@@ -106,14 +107,14 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user) {
       statusCode = 401;
-      return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
+      return NextResponse.json({ error: 'Sign in to check your answer.' }, { status: 401 });
     }
 
     const body = await request.json().catch(() => null);
     const parsed = CheckRewriteSchema.safeParse(body);
     if (!parsed.success) {
       statusCode = 400;
-      return NextResponse.json({ error: 'Provide a valid cardId and rewrite sentence.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 });
     }
 
     const { data: card, error: cardErr } = await supabase
@@ -125,7 +126,8 @@ export async function POST(request: NextRequest) {
 
     if (cardErr || !card) {
       statusCode = 404;
-      return NextResponse.json({ error: 'Error review card not found.' }, { status: 404 });
+      if (cardErr) console.error('[review] could not read card:', cardErr.message);
+      return NextResponse.json({ error: 'We could not find your card. Please try again.' }, { status: 404 });
     }
 
     if (parsed.data.revealOnly) {
@@ -156,7 +158,7 @@ export async function POST(request: NextRequest) {
         sameAsOriginal: true,
         mastered: Boolean(card.mastered),
         xpAwarded: 0,
-        reason: 'That still matches the original flawed sentence — try repairing the error first.',
+        reason: "That's the same as the original. Change the mistake first.",
         diffFromOriginal,
         diffToTarget,
         correctedSentence: card.corrected_sentence,
@@ -166,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Cheap deterministic match (0 AI usage units)
     let fixed = normRewrite === normTarget;
-    let reason = fixed ? 'Exact match with the target correction.' : '';
+    let reason = fixed ? 'This matches the correct answer.' : '';
 
     // Step 2: Tolerant semantic check for alternative valid repairs (enforces 1 AI usage unit)
     if (!fixed && process.env.GROQ_API_KEY) {

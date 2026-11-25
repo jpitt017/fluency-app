@@ -30,7 +30,7 @@ export default async function PortfolioPage() {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Study Portfolio</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">My work</span>
           <h1 className="mt-2 text-2xl font-bold text-stone-900">Sign in to view your saved speaking &amp; writing work</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             Listen to recordings and read feedback on your work.
@@ -46,7 +46,7 @@ export default async function PortfolioPage() {
               href="/labs"
               className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-100"
             >
-              Open AI Labs
+              Open Practice
             </Link>
           </div>
         </div>
@@ -76,10 +76,10 @@ export default async function PortfolioPage() {
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Output Archive</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Your work</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">My work</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
-            All evaluated speaking and writing submissions with audio playback and B2 model upgrades.
+            Your speaking and writing, with your recordings and feedback.
           </p>
         </div>
         <div className="flex gap-2">
@@ -87,7 +87,7 @@ export default async function PortfolioPage() {
             href="/labs"
             className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800"
           >
-            Open AI Labs
+            Open Practice
           </Link>
           <Link
             href="/dashboard"
@@ -101,12 +101,12 @@ export default async function PortfolioPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-xl font-bold text-stone-900">Speaking Attempts ({speaking.length})</h2>
+            <h2 className="font-serif text-xl font-bold text-stone-900">Speaking ({speaking.length})</h2>
           </div>
 
           {speaking.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-500">
-              No evaluated speaking attempts yet. Record a speaking response in the AI Labs to save your first recording.
+              No speaking yet. Try a speaking task in Practice.
             </div>
           ) : (
             speaking.map((item) => (
@@ -132,7 +132,7 @@ export default async function PortfolioPage() {
 
                 {item.feedback?.improvedResponse && (
                   <div className="rounded-lg border-l-4 border-indigo-400 bg-indigo-50/40 p-3 text-xs leading-5 text-stone-700">
-                    <strong className="block text-indigo-900">B2 model upgrade</strong>
+                    <strong className="block text-indigo-900">A better way to say it</strong>
                     {item.feedback.improvedResponse}
                   </div>
                 )}
@@ -143,12 +143,12 @@ export default async function PortfolioPage() {
 
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-xl font-bold text-stone-900">Writing Submissions ({writing.length})</h2>
+            <h2 className="font-serif text-xl font-bold text-stone-900">Writing ({writing.length})</h2>
           </div>
 
           {writing.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-500">
-              No evaluated writing submissions yet. Draft a paragraph in the Writing Studio to save your first submission.
+              No writing yet. Try a writing task in Practice.
             </div>
           ) : (
             writing.map((item) => (
@@ -171,7 +171,7 @@ export default async function PortfolioPage() {
 
                 {(item.feedback?.corrected || item.feedback?.upgrade) && (
                   <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50/40 p-3 text-xs leading-5 text-stone-700">
-                    <strong className="block text-emerald-900">B2 model rewrite</strong>
+                    <strong className="block text-emerald-900">A better way to say it</strong>
                     {item.feedback.corrected || item.feedback.upgrade}
                   </div>
                 )}

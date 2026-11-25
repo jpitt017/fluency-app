@@ -78,8 +78,13 @@ export default function ErrorReviewStudio({
     setError('');
     try {
       const response = await fetch('/api/review/more', { method: 'POST' });
-      const data = (await response.json().catch(() => ({}))) as { cards?: ReviewQueueCard[]; error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'Could not load more cards.');
+      const data = (await response.json().catch(() => null)) as { cards?: ReviewQueueCard[]; error?: string } | null;
+      if (!response.ok || !data) {
+        // Technical detail stays in the log; the learner reads a B1 line.
+        console.error('[review] load more failed:', data?.error ?? response.status);
+        setError(data?.error || 'We could not load your cards. Please try again.');
+        return;
+      }
       const extra = data.cards ?? [];
       if (extra.length === 0) {
         setReviewMore(true);
@@ -90,7 +95,8 @@ export default function ErrorReviewStudio({
       setIndex(0);
       setReviewMore(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load more cards.');
+      console.error('[review] load more failed:', err);
+      setError('We could not load your cards. Please try again.');
     } finally {
       setLoadingMore(false);
     }
@@ -110,7 +116,7 @@ export default function ErrorReviewStudio({
             ? `You reviewed ${reviewed} card${reviewed === 1 ? '' : 's'}${masteredCount ? ` and mastered ${masteredCount}` : ''}. The rest will come back another day.`
             : cappedOut
               ? 'You have already done your cards today. Anything still due will be waiting tomorrow.'
-              : 'Nothing is due right now. Your mistakes come back here just before you forget them.'}
+              : 'Nothing to practise today. Come back tomorrow!'}
         </p>
         {plan.canReviewMore && !reviewMore && (
           <button
@@ -166,10 +172,16 @@ export default function ErrorReviewStudio({
         body: JSON.stringify({ cardId: card.id, rewrite: attempt.trim() }),
       });
       const data = (await res.json().catch(() => ({}))) as CheckRewriteResponse;
-      if (!res.ok) throw new Error(data.error ?? 'Could not verify rewrite.');
+      if (!res.ok) {
+        // The server's message is written for a B1 learner; the rest is logged.
+        console.error('[review] check failed:', data.error ?? res.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        setRevealed(true);
+        return;
+      }
 
       if (data.sameAsOriginal) {
-        setError(data.reason || 'That matches the original sentence — change the flawed part first.');
+        setError(data.reason || "That's the same as the original. Change the mistake first.");
         return;
       }
 
@@ -177,7 +189,8 @@ export default function ErrorReviewStudio({
       if (data.mastered) setMasteredCount((n) => n + 1);
       setRevealed(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not verify rewrite.');
+      console.error('[review] check failed:', err);
+      setError('We could not check your answer. Please try again.');
       setRevealed(true);
     } finally {
       setChecking(false);
@@ -203,10 +216,15 @@ export default function ErrorReviewStudio({
         body: JSON.stringify({ cardId: card.id, cardType: card.type, grade }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Could not save review.');
+      if (!res.ok) {
+        console.error('[review] save failed:', data.error ?? res.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       advanceNext();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save review.');
+      console.error('[review] save failed:', err);
+      setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -291,7 +309,7 @@ export default function ErrorReviewStudio({
                 onClick={() => void checkAndReveal()}
                 className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
               >
-                {checking ? 'Checking…' : attempt.trim() ? 'Check my repair' : 'Reveal answer'}
+                {checking ? 'Checking…' : attempt.trim() ? 'Check my answer' : 'Reveal answer'}
               </button>
             </div>
           ) : (
@@ -323,7 +341,7 @@ export default function ErrorReviewStudio({
                 <span className="inline-flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-700" />
                   <span>
-                    Valid unprompted repair verified! Card mastered (+{checkResult.xpAwarded} XP).
+                    Well done! You fixed it without help. This card is finished (+{checkResult.xpAwarded} XP).
                     {checkResult.reason ? ` ${checkResult.reason}` : ''}
                   </span>
                 </span>
@@ -346,13 +364,13 @@ export default function ErrorReviewStudio({
                 )}
                 {attempt.trim() && (
                   <p className="text-xs font-semibold text-amber-800">
-                    Your repair: &ldquo;{attempt.trim()}&rdquo;
+                    Your answer: &ldquo;{attempt.trim()}&rdquo;
                     {checkResult?.reason ? ` — ${checkResult.reason}` : ' — compare your answer below.'}
                   </p>
                 )}
                 <div className="rounded-lg border border-stone-200 bg-white p-3 text-xs">
                   <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-stone-500">
-                    Word-level diff (original → {checkResult ? 'your repair' : 'reference'})
+                    The changes (original → {checkResult ? 'your answer' : 'correct answer'})
                   </p>
                   <div className="flex flex-wrap gap-1 leading-6">
                     {(checkResult ? checkResult.diffFromOriginal : fallbackDiff).map((tok, i) => (
@@ -372,7 +390,7 @@ export default function ErrorReviewStudio({
                   </div>
                 </div>
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Reference correction</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Correct answer</p>
                   <p className="mt-0.5 font-semibold text-emerald-950">{card.corrected_sentence}</p>
                   <p className="mt-1 text-xs text-stone-700">{card.explanation}</p>
                 </div>
@@ -432,7 +450,9 @@ export default function ErrorReviewStudio({
             ) : (
               !(card.type === 'error' && checkResult?.fixed && checkResult.mastered) && (
                 <div>
-                  <p className="mb-2 text-sm font-semibold">How well did you remember it?</p>
+                  <p className="mb-2 text-sm font-semibold">
+                    How well did you remember it? Again = I forgot. Easy = I knew it at once.
+                  </p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {SELF_GRADES.map((g) => (
                       <button

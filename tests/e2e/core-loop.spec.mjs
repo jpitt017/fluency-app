@@ -20,10 +20,10 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page).toHaveTitle(/B1|B2|Fluency/i);
 
     await page.goto('/labs');
-    await expect(page.getByText(/Listen-and-Compare Shadowing Studio/i)).toBeVisible();
+    await expect(page.getByText(/Pronunciation practice/i).first()).toBeVisible();
     await expect(page.getByText(/Check your pronunciation/i)).toBeVisible();
-    await expect(page.getByText(/Model replays:/i)).toBeVisible();
-    await expect(page.getByText(/Temporary voice/i).first()).toBeVisible();
+    await expect(page.getByText(/Speaker plays:/i)).toBeVisible();
+    await expect(page.getByText(/Temporary computer voice/i).first()).toBeVisible();
 
     await page.goto('/privacy');
     await expect(page.getByRole('button', { name: /Delete my learning data/i })).toBeVisible();
@@ -31,7 +31,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/Automated 12-month purge/i)).toBeVisible();
 
     await page.goto('/review');
-    await expect(page.getByRole('heading', { name: /Sign in to practise|Mistake & Pattern Drill/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Sign in to practise|Practise your mistakes/i })).toBeVisible();
 
     await page.goto('/teacher');
     await expect(page.getByRole('heading', { name: /Sign in with a teacher account|Teacher Review/i })).toBeVisible();
@@ -249,7 +249,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(page.getByText(/74 \/ 100|\/ 100/)).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
-    await expect(page.getByText(/Practise your mistakes|No error review cards due/i)).toBeVisible();
+    await expect(page.getByText(/Practise your mistakes|Nothing to practise today/i).first()).toBeVisible();
   });
 });
 

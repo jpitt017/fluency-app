@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 const INCLUDED = [
-  'Unlimited AI speaking evaluation (content, grammar & coherence) + Shadowing Studio',
-  'Writing studio with line-by-line B2 error feedback and rewrite coaching',
+  'Unlimited AI speaking feedback + Pronunciation practice',
+  'Writing practice with feedback on every line, and help to say it better',
   'Real-time conversational English role-play across B1 → B2 scenarios',
   'Practice for your mistakes and a place to save your work',
   'Teacher console support for live feedback and pronunciation notes',
@@ -23,22 +23,20 @@ export default function PricingPage() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to initialize checkout session.');
+      if (!res.ok || !data?.url) {
+        // Technical detail stays in the log; the learner reads a B1 line.
+        console.error('[pricing] checkout failed:', data?.error ?? res.status);
+        setErrorMessage(data?.error || 'Something went wrong. Please try again, or message your teacher.');
+        setLoading(false);
+        return;
       }
 
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL returned from server.');
-      }
+      window.location.href = data.url;
     } catch (err: unknown) {
-      console.error(err);
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Network error. Please check your connection and try again.',
-      );
+      console.error('[pricing] checkout failed:', err);
+      setErrorMessage('Something went wrong. Please try again, or message your teacher.');
       setLoading(false);
     }
   }
@@ -95,7 +93,7 @@ export default function PricingPage() {
           </p>
 
           <Link href="/labs" className="inline-block text-xs font-semibold text-indigo-700 hover:underline">
-            Try the AI Speaking &amp; Writing Labs →
+            Try speaking and writing practice →
           </Link>
         </div>
       </div>

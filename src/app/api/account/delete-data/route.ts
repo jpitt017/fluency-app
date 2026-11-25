@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) {
-      return NextResponse.json({ error: 'Database client is not configured.' }, { status: 503 });
+      console.error('[delete-data] database client is not configured');
+      return NextResponse.json({ error: 'We could not delete your data. Please try again.' }, { status: 503 });
     }
 
     const {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json().catch(() => ({}))) as { confirm?: string };
     if (body.confirm !== 'DELETE') {
       return NextResponse.json(
-        { error: 'Pass { "confirm": "DELETE" } to permanently erase your learning data.' },
+        { error: 'Please type DELETE to confirm.' },
         { status: 400 },
       );
     }
@@ -39,11 +40,15 @@ export async function POST(request: NextRequest) {
     }
 
     const { error: weekDeleteError } = await supabase.from('week_output_submissions').delete().eq('user_id', user.id);
-    if (weekDeleteError) return NextResponse.json({ error: weekDeleteError.message }, { status: 500 });
+    if (weekDeleteError) {
+      console.error('[delete-data] week submissions delete failed:', weekDeleteError);
+      return NextResponse.json({ error: 'We could not delete your data. Please try again.' }, { status: 500 });
+    }
 
     const { data: rpcResult, error: rpcErr } = await supabase.rpc('delete_my_learning_data');
     if (rpcErr) {
-      return NextResponse.json({ error: rpcErr.message }, { status: 500 });
+      console.error('[delete-data] delete_my_learning_data failed:', rpcErr);
+      return NextResponse.json({ error: 'We could not delete your data. Please try again.' }, { status: 500 });
     }
 
     const paths = new Set<string>(
@@ -70,8 +75,9 @@ export async function POST(request: NextRequest) {
       removedAudioFiles: allPaths.length,
     });
   } catch (err: unknown) {
+    console.error('[delete-data] failed:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Could not delete learning data.' },
+      { error: 'We could not delete your data. Please try again.' },
       { status: 500 },
     );
   }

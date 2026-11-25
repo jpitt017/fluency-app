@@ -27,6 +27,7 @@ interface WritingFeedbackResponse {
   passed?: boolean;
   rubric?: Record<string, unknown>;
   modelAnswer?: string | null;
+  weekRecorded?: boolean | null;
 }
 
 export default function WritingLab({
@@ -67,12 +68,20 @@ export default function WritingLab({
           weekNumber: lessonContext?.weekNumber,
         }),
       });
-      const data = (await response.json()) as WritingFeedbackResponse & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Failed to analyse your writing.');
+      const data = (await response.json().catch(() => null)) as (WritingFeedbackResponse & { error?: string }) | null;
+      if (!response.ok || !data) {
+        // The server's own message is already written for a B1 learner (daily
+        // limit, provider outage); anything else stays in the log.
+        console.error('[writing] check failed:', data?.error ?? response.status);
+        setError(data?.error || 'We could not check your work. Please try again.');
+        return;
+      }
       setResult(data);
       lessonContext?.onComplete?.({ text, score: data.score, passed: data.passed, rubric: data.rubric });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Network error while checking your writing. Please try again.');
+      // A network or parsing fault is technical: log it, show one B1 line.
+      console.error('[writing] check failed:', caught);
+      setError('We could not check your work. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -88,8 +97,8 @@ export default function WritingLab({
         <div className="flex items-start justify-between gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3.5">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-              B1 → B2 Writing Studio
-              {lessonContext?.mode === 'drill' ? ' · Drill' : ' · Free practice'}
+              Writing practice
+              {lessonContext?.mode === 'drill' ? ' · Guided task' : ' · Free practice'}
             </span>
             <p className="mt-1 text-sm font-medium text-stone-800">{activePrompt}</p>
           </div>
@@ -166,9 +175,11 @@ export default function WritingLab({
 
       {result && (
         <div role="status" className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">
+          {result.weekRecorded === true && <p className="font-semibold text-emerald-800">This counts for Week {lessonContext?.weekNumber}.</p>}
+          {result.weekRecorded === false && <p role="alert" className="font-semibold text-rose-700">We could not count this for Week {lessonContext?.weekNumber}. Please try again.</p>}
           {typeof result.passed === 'boolean' && (
             <p className={result.passed ? 'font-semibold text-emerald-700' : 'font-semibold text-amber-700'}>
-              {result.passed ? 'Can-Do checkpoint passed' : 'Review your feedback and try again'}
+              {result.passed ? "Well done! You can now do this week's goal." : 'Review your feedback and try again'}
               {typeof result.score === 'number' ? ` · ${result.score}%` : ''}
             </p>
           )}
@@ -176,7 +187,7 @@ export default function WritingLab({
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  Suggested B2-ready rewrite
+                  A better way to say it
                 </span>
                 {onSpeak && (
                   <button type="button" onClick={() => onSpeak(result.corrected!)} className="text-xs text-indigo-700">
@@ -200,11 +211,8 @@ export default function WritingLab({
               ))}
             </ul>
           )}
-          {result.rubric && (
-            <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-stone-600">
-              {JSON.stringify(result.rubric, null, 2)}
-            </pre>
-          )}
+          {/* The per-criterion scores stay in the response for the teacher
+              console and the log; a raw JSON block is not B1 reading. */}
         </div>
       )}
     </div>

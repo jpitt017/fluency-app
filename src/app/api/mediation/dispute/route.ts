@@ -5,7 +5,8 @@ import { createServerSupabase } from '@/utils/supabase/server';
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase();
   if (!supabase) {
-    return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+    console.error('[mediation] database client is not configured');
+    return NextResponse.json({ error: 'Something went wrong. Please try again, or message your teacher.' }, { status: 503 });
   }
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json().catch(() => ({}))) as { attemptId?: string };
   if (!body.attemptId) {
-    return NextResponse.json({ error: 'attemptId is required.' }, { status: 400 });
+    return NextResponse.json({ error: 'We could not send that. Please try again.' }, { status: 400 });
   }
 
   const { data: updated, error } = await supabase

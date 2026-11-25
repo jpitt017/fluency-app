@@ -81,7 +81,7 @@ export function FinishSummary({
         <span className="text-emerald-800">
           {summary.reviewMistakes === 0
             ? 'Nothing new to review.'
-            : `${summary.reviewMistakes} in Review`}
+            : `${summary.reviewMistakes} to practise in Review`}
         </span>
       </div>
       {onNext ? (

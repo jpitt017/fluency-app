@@ -6,7 +6,10 @@ export async function GET() {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+    if (!url || !key) {
+      console.error('[portfolio] database client is not configured');
+      return NextResponse.json({ error: 'We could not load your work. Please try again.' }, { status: 503 });
+    }
     const cookieStore = await cookies();
     const supabase = createServerClient(url, key, {
       cookies: {
@@ -24,7 +27,10 @@ export async function GET() {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (authError || !user) {
+      if (authError) console.error('[portfolio] Could not authenticate:', authError);
+      return NextResponse.json({ error: 'Sign in to see your work.' }, { status: 401 });
+    }
 
     const [speakingRes, writingRes] = await Promise.all([
       supabase
@@ -49,9 +55,7 @@ export async function GET() {
       writing: writingRes.data ?? [],
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unable to load portfolio.' },
-      { status: 500 },
-    );
+    console.error('[portfolio] Could not load work:', error);
+    return NextResponse.json({ error: 'We could not load your work. Please try again.' }, { status: 500 });
   }
 }

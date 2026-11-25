@@ -3,6 +3,7 @@ import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details
 import { createServerSupabase } from '@/utils/supabase/server';
 import { learnerGrammar } from './learner-grammar';
 import { learnerVocabularyExercises } from './learner-vocabulary-exercises';
+import { learnerGrammarReason } from './learner-grammar-reasons.mjs';
 import { practicePlan, type PracticePlan } from './week-practice-plan';
 import {
   practiceCounts,
@@ -101,7 +102,7 @@ async function readRows(
  */
 function grammarReasons(week: number): Map<string, string | null> {
   const items = details.weeks.find((entry) => entry.number === week)?.grammar.practice.items ?? [];
-  return new Map(items.map((item) => [item.id as string, (item.reason as string | undefined) ?? null]));
+  return new Map(items.map((item) => [item.id, learnerGrammarReason(item)]));
 }
 
 export async function loadWeekPracticeProgress(week: number): Promise<WeekPracticeProgress> {

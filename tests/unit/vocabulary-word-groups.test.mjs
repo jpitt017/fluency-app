@@ -42,7 +42,7 @@ test('step 1 states the week total and the promise of later practice', () => {
 
 test('the listen button and the careful notes survive the regrouping', () => {
   assert.match(source, /Listen/);
-  assert.match(source, /Temporary voice/);
+  assert.match(source, /Temporary computer voice/);
   assert.match(source, /noteFor\(card\.word\)/);
   assert.match(source, /exercises\.careful/);
 });

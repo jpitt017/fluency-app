@@ -23,8 +23,8 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Adaptive Review</span>
-          <h1 className="mt-2 text-2xl font-bold text-stone-900">Sign in to practise your recurring mistakes</h1>
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Your review</span>
+          <h1 className="mt-2 text-2xl font-bold text-stone-900">Sign in to practise your mistakes</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             Sign in to practise mistakes from your speaking and writing.
           </p>
@@ -39,7 +39,7 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
               href="/labs"
               className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-100"
             >
-              Open AI Labs
+              Open Practice
             </Link>
           </div>
         </div>
@@ -52,7 +52,7 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Your review</p>
-          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">Mistake &amp; Pattern Drill</h1>
+          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-stone-900">Practise your mistakes</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-600">
             Your mistakes come back here just before you forget them.
           </p>
@@ -62,7 +62,7 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
             href="/labs"
             className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-800 hover:bg-indigo-100"
           >
-            Open AI Labs →
+            Open Practice →
           </Link>
           <Link
             href="/dashboard"

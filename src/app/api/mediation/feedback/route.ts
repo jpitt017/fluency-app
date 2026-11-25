@@ -97,7 +97,8 @@ export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const supabase = await createServerSupabase();
   if (!supabase) {
-    return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+    console.error('[mediation] database client is not configured');
+    return NextResponse.json({ error: 'Something went wrong. Please try again, or message your teacher.' }, { status: 503 });
   }
   let statusCode = 200;
   let inputChars = 0;
@@ -303,7 +304,7 @@ export async function POST(req: NextRequest) {
     errorMessage = reported.errorMessage;
     console.error(`${LOG_ENDPOINT} failed`, error);
     return NextResponse.json(
-      { error: 'Mediation feedback is temporarily unavailable. Please try again.' },
+      { error: 'Something went wrong. Please try again, or message your teacher.' },
       { status: statusCode },
     );
   } finally {

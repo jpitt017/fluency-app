@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-[#faf9f6] text-stone-900 antialiased">
         <OfflineBanner />
         <AppHeader summary={summary} week={week} pricingEnabled={pricingEnabled} />
-        <IssueReporter signedIn={summary.signedIn} />
+        <IssueReporter signedIn={summary.signedIn} isStaff={isStaff} />
         <div className="min-h-[calc(100vh-118px)]">{children}</div>
         <footer className="border-t border-stone-200 bg-white/60 py-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 text-xs text-stone-500 sm:px-6">
@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="flex items-center gap-4">
               {isStaff && <><Link href="/curriculum" className="hover:text-stone-800">Curriculum</Link>
               <Link href="/assessments" className="hover:text-stone-800">Assessments</Link></>}
-              <Link href="/labs" className="hover:text-stone-800">Labs</Link>
+              <Link href="/labs" className="hover:text-stone-800">{isStaff ? 'Labs' : 'Practice'}</Link>
               <Link href="/review" className="hover:text-stone-800">Review</Link>
               {pricingEnabled && <Link href="/pricing" className="hover:text-stone-800">Pricing</Link>}
               <Link href="/privacy" className="hover:text-stone-800">Privacy</Link>

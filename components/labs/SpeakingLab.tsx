@@ -16,6 +16,7 @@ interface SpeakingFeedback {
   rubric?: Record<string, unknown>;
   reviewDeck?: string[];
   modelAnswer?: string | null;
+  weekRecorded?: boolean | null;
 }
 
 interface SpeakingLabProps {
@@ -82,12 +83,20 @@ export default function SpeakingLab({
       form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
       const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
-      const data = (await response.json()) as SpeakingFeedback & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Failed to evaluate speech.');
+      const data = (await response.json().catch(() => null)) as (SpeakingFeedback & { error?: string }) | null;
+      if (!response.ok || !data) {
+        // The server's own message is already written for a B1 learner (daily
+        // limit, provider outage); anything else stays in the log.
+        console.error('[speaking] evaluation failed:', data?.error ?? response.status);
+        setError(data?.error || 'We could not check your work. Please try again.');
+        return;
+      }
       setFeedback(data);
       lessonContext?.onComplete?.({ transcript: data.transcript, score: data.score });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'An error occurred while analysing your speech.');
+      // A network or parsing fault is technical: log it, show one B1 line.
+      console.error('[speaking] evaluation failed:', caught);
+      setError('We could not check your work. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -157,7 +166,7 @@ export default function SpeakingLab({
             </p>
           )}
           <p className="text-[11px] text-emerald-900/80">
-            AI evaluates content, grammar, vocabulary, and coherence from your transcript. Pronunciation can be self-checked in Shadowing Studio.
+            The AI reads what you said and checks your ideas, grammar and words. To practise pronunciation, use Pronunciation practice.
           </p>
           {(lessonContext?.targetGrammar?.length ?? 0) > 0 && (
             <p className="text-xs text-stone-700">
@@ -223,9 +232,11 @@ export default function SpeakingLab({
 
       {feedback && (
         <div role="status" className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">
+          {feedback.weekRecorded === true && <p className="font-semibold text-emerald-800">This counts for Week {lessonContext?.weekNumber}.</p>}
+          {feedback.weekRecorded === false && <p role="alert" className="font-semibold text-rose-700">We could not count this for Week {lessonContext?.weekNumber}. Please try again.</p>}
           {typeof feedback.passed === 'boolean' && (
             <p className={feedback.passed ? 'font-bold text-emerald-700' : 'font-bold text-amber-700'}>
-              {feedback.passed ? 'Can-Do checkpoint passed' : 'Review and try again'}
+              {feedback.passed ? "Well done! You can now do this week's goal." : 'Review and try again'}
               {feedback.mastery !== undefined ? ` · ${feedback.mastery}% mastery` : ''}
             </p>
           )}
@@ -242,7 +253,7 @@ export default function SpeakingLab({
           )}
           {feedback.improvedResponse && (
             <div>
-              <span className="text-xs font-bold uppercase text-emerald-800">Suggested B2-ready phrasing</span>
+              <span className="text-xs font-bold uppercase text-emerald-800">A better way to say it</span>
               <p className="mt-1 rounded-lg border border-stone-200 bg-white p-3 text-stone-800">
                 {feedback.improvedResponse}
               </p>

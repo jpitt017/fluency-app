@@ -31,8 +31,11 @@ export async function proxy(request: NextRequest) {
   // Fail closed on protected AI API routes when auth is not configured.
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder.supabase.co')) {
     if (request.nextUrl.pathname.startsWith('/api/') && pathname !== '/api/lessons/generate') {
+      console.error('[proxy] authentication and usage controls are not configured');
       return NextResponse.json(
-        { error: 'Authentication and usage controls are not configured.' },
+        { error: pathname.startsWith('/api/teacher/')
+          ? 'Authentication and usage controls are not configured.'
+          : 'Something went wrong. Please try again, or message your teacher.' },
         { status: 503 },
       );
     }

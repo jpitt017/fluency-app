@@ -13,7 +13,7 @@ test('week vocabulary shows safe cards and exercise steps before reading', async
   // lives on a later page; assert on a card that is actually on the first one.
   await expect(vocabulary.getByRole('heading', { name: 'Words to use' })).toBeVisible();
   await expect(vocabulary.getByText('challenge', { exact: false }).first()).toBeVisible();
-  await expect(vocabulary.getByText('Temporary voice').first()).toBeVisible();
+  await expect(vocabulary.getByText('Temporary computer voice').first()).toBeVisible();
   await expect(vocabulary.getByText(/Sign in to check/)).toBeVisible();
   await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   // The step header and the authored instruction can both start with the same

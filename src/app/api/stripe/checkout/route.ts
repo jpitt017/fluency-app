@@ -17,8 +17,10 @@ export async function POST(req: NextRequest) {
   try {
     stripe = getStripeClient();
   } catch (err: unknown) {
+    // The technical detail belongs in the server log, not on the pricing page.
+    console.error('[checkout] Stripe client unavailable:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Stripe is not configured on the server' },
+      { error: 'Something went wrong. Please try again, or message your teacher.' },
       { status: 500 },
     );
   }
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in to subscribe.' },
+        { error: 'Please sign in to subscribe.' },
         { status: 401 },
       );
     }
@@ -63,8 +65,9 @@ export async function POST(req: NextRequest) {
     const priceId = body.priceId || process.env.STRIPE_PRICE_ID;
 
     if (!priceId) {
+      console.error('[checkout] STRIPE_PRICE_ID is not configured');
       return NextResponse.json(
-        { error: 'Stripe Price ID is not configured.' },
+        { error: 'Something went wrong. Please try again, or message your teacher.' },
         { status: 400 },
       );
     }
@@ -93,8 +96,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: unknown) {
+    console.error('[checkout] session creation failed:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to create checkout session' },
+      { error: 'Something went wrong. Please try again, or message your teacher.' },
       { status: 500 },
     );
   }
