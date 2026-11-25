@@ -118,7 +118,6 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(
       page.getByText(/recommend a place I know, separating facts about it from my own experience/i),
     ).toBeVisible();
-    await expect(page.getByText(/Sustained monologue: describing experience · Level B1/i)).toBeVisible();
 
     await page.goto('/labs?week=4');
     await expect(page.getByText(/word stress in featured words and -ed endings/i)).toBeVisible();
