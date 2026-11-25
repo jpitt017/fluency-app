@@ -47,7 +47,7 @@ test('weekly writing keeps feedback but reports whether it counted', async ({ pa
 
   saved = true;
   await writing.getByRole('button', { name: 'Evaluate writing' }).click();
-  await expect(writing.getByText('Saved for Week 1.')).toBeVisible();
+  await expect(writing.getByText('This counts for Week 1.', { exact: true })).toBeVisible();
   await expect(writing.getByRole('alert')).toHaveCount(0);
 });
 
