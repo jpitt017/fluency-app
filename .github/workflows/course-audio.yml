@@ -6,6 +6,10 @@
 #   speaking-voice-check generate the Week 1 speaking model and first two
 #                       shadowing chunks with Aisha at B1, as a review artifact
 #                       only; no Storage write or approval row change.
+#   speaking-generate   generate all Weeks 1–4 speaking models and chunks into
+#                       the private review bucket, unreleased, with WPM report.
+#   speaking-release    copy reviewed speaking clips into the public bucket;
+#                       production requires the same two-key acknowledgement.
 #   voice-check  synthesise the lines a review asks for by name (one clip per
 #                request), upload them to the private review bucket and attach
 #                them as the `voice-check` artifact, so the voices and their
@@ -46,9 +50,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'speaking-voice-check | voice-check | voice-sample | generate | review | release | revoke | delete | delete-probes | list'
+        description: 'speaking-voice-check | speaking-generate | speaking-release | voice-check | voice-sample | generate | review | release | revoke | delete | delete-probes | list'
         type: choice
-        options: [speaking-voice-check, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list]
+        options: [speaking-voice-check, speaking-generate, speaking-release, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list]
         default: voice-check
       weeks:
         description: 'Weeks to act on (comma separated, 1–4; speaking-voice-check is always Week 1, voice-check ignores this, one week only for voice-sample)'
@@ -108,11 +112,11 @@ jobs:
       - run: npm ci
 
       - name: Install ffmpeg (MP3 encoding)
-        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' }}
+        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' || inputs.mode == 'speaking-generate' }}
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Check ELEVENLABS_API_KEY availability
-        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' }}
+        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' || inputs.mode == 'speaking-generate' }}
         env:
           ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
@@ -122,14 +126,14 @@ jobs:
           fi
 
       - name: Refuse an unacknowledged approval write on production
-        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke' || inputs.mode == 'speaking-release') && inputs.allow_production_release && inputs.production_ack != 'release to learners' }}
         run: |
           echo "::error::release/revoke on the production project needs the acknowledgement phrase. A week is never marked released on production for a test: use a preview database, a fake week number learners cannot open, or a unit test with a fake client."
           exit 1
 
       - name: Warn that this run writes approval state on production
-        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
-        run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
+        if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke' || inputs.mode == 'speaking-release') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
+        run: echo "::warning::Learner-facing audio is being written to the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
       # Every mode except a generate dry-run and the artifact-only speaking
       # voice check reads or writes Supabase, so a missing secret is fatal here
@@ -185,6 +189,21 @@ jobs:
           path: speaking-voice-check/
           retention-days: 3
 
+      - name: Generate all speaking clips, unreleased in private review storage
+        if: ${{ inputs.mode == 'speaking-generate' }}
+        run: node scripts/generate-course-audio.mjs --speaking-generate
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Speaking models and chunks for review (MP3 + WPM report)
+        if: ${{ inputs.mode == 'speaking-generate' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: speaking-review
+          path: audio-out/speaking-01-04/
+          retention-days: 3
+
       - name: Voice check clips for a listen
         if: ${{ inputs.mode == 'voice-check' }}
         uses: actions/upload-artifact@v7
@@ -228,6 +247,13 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SIGNED_LINKS_IN_LOG: '1'
         run: node scripts/generate-course-audio.mjs --review "${{ inputs.weeks }}"
+
+      - name: Release approved speaking clips
+        if: ${{ inputs.mode == 'speaking-release' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALLOW_PRODUCTION_RELEASE: ${{ inputs.allow_production_release && inputs.production_ack == 'release to learners' && '1' || '' }}
+        run: node scripts/generate-course-audio.mjs --speaking-release "${{ inputs.weeks }}"
 
       - name: Release approved weeks
         if: ${{ inputs.mode == 'release' }}

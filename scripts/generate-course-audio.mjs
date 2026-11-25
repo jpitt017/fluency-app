@@ -2,9 +2,12 @@
 /**
  * Audio pipeline for Fluency Studio.
  *
- * Speaking voice check (manual, artifact-only):
+ * Speaking audio (ElevenLabs):
  *   --speaking-voice-check Week 1 model + two shadowing chunks, Aisha at B1;
  *                           padded and measured, with no Storage/approval writes
+ *   --speaking-generate     all 16 model/chunk clips, private review upload only
+ *   --speaking-release 1,2  copy selected weeks to the public bucket behind the
+ *                           existing production two-key approval guard
  *
  * Weeks 1-4 listening (the current production path, ElevenLabs voices):
  *   --voice-check       the reviewed lines -> private review bucket: Tom's first
@@ -54,6 +57,7 @@ import path from 'node:path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
 import {
+  AUDIO_BUCKET,
   DEFAULT_REVIEW_BUCKET,
   SPEAKER_VOICES,
   TTS_MODEL,
@@ -74,7 +78,11 @@ import {
   pcmToWav,
   synthesiseTurn,
 } from './lib/course-audio/tts.mjs';
-import { generateSpeakingVoiceCheck } from './lib/course-audio/speaking-trial.mjs';
+import {
+  generateSpeakingTrials,
+  generateSpeakingVoiceCheck,
+  publishSpeakingWeek,
+} from './lib/course-audio/speaking-trial.mjs';
 
 /**
  * The voice settings a summary reports, read from the config.
@@ -804,6 +812,50 @@ async function revokeWeek(weeks) {
  * value (letters, `..`, exponents) fails with the same clean annotation as any
  * other error instead of a bare stack trace.
  */
+async function speakingGenerate() {
+  if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to generate speaking clips.');
+  const client = requireSupabase();
+  const outputDir = path.join(process.cwd(), 'audio-out', 'speaking-01-04');
+  const clips = await generateSpeakingTrials({
+    apiKey: elevenLabsKey,
+    client,
+    outputDir,
+    pace: 'b1',
+    log: (message) => console.log(message),
+  });
+  const rows = [
+    '# Speaking audio review — Weeks 1–4',
+    '',
+    'All clips are unreleased in the private `course-audio-review` bucket. No approval rows or public URLs were changed.',
+    '',
+    '| Week | Clip | Voice | Words | Duration incl. pads | WPM incl. pads | Speech-only WPM | Review key |',
+    '| ---: | --- | --- | ---: | ---: | ---: | ---: | --- |',
+    ...clips.map((clip) => `| ${clip.week} | ${clip.title} | ${clip.speaker} (${clip.voice}) | ${clip.words} | ${clip.durationSeconds}s | ${clip.wordsPerMinute} | ${clip.speakingWordsPerMinute} | \`${clip.key}\` |`),
+    '',
+    'ElevenLabs `eleven_multilingual_v2`; B1 speed 0.8; 0.5s silence before and after every model/chunk clip.',
+    'Nothing has been released. To publish a week later, use `speaking-release` with the existing production two-key acknowledgement when appropriate.',
+  ];
+  await writeFile(path.join(outputDir, 'review.md'), `${rows.join('\n')}\n`, 'utf8');
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...rows);
+  for (const clip of clips) {
+    console.log(`Week ${clip.week} ${clip.title}: ${clip.speaker} (${clip.voice}), ${clip.words} words, ${clip.durationSeconds}s incl. pads, ${clip.wordsPerMinute} wpm wall clock (${clip.speakingWordsPerMinute} speech-only wpm) -> ${clip.key}`);
+  }
+  console.log(`${clips.length} speaking clips uploaded unreleased to ${DEFAULT_REVIEW_BUCKET}. No release or approval-state write occurred.`);
+}
+
+async function releaseSpeaking(weeks) {
+  if (!weeks.length) throw new Error('--speaking-release requires one or more weeks');
+  weeks.forEach((week) => assertTrialWeek(week));
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
+  if (!verdict.ok) throw new Error(verdict.reason);
+  const client = requireSupabase();
+  for (const week of weeks) {
+    const keys = await publishSpeakingWeek(client, week, (message) => console.log(message));
+    console.log(`Week ${week}: ${keys.length} speaking clips copied to public ${AUDIO_BUCKET}.`);
+    console.log('This command does not modify Shadowing Studio URLs or database approval state.');
+  }
+}
+
 async function speakingVoiceCheck() {
   if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the speaking voice check.');
   const outputDir = path.join(process.cwd(), 'speaking-voice-check');
@@ -836,6 +888,9 @@ async function speakingVoiceCheck() {
 
 async function main() {
   if (args.includes('--speaking-voice-check')) return speakingVoiceCheck();
+  if (args.includes('--speaking-generate')) return speakingGenerate();
+  const speakingReleaseWeekList = listArg('--speaking-release');
+  if (speakingReleaseWeekList) return releaseSpeaking(speakingReleaseWeekList);
   const weekList = listArg('--week') ?? listArg('--weeks');
   const reviewWeekList = listArg('--review');
   const releaseWeekList = listArg('--release');
