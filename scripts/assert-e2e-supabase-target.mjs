@@ -81,7 +81,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const target = assertE2ESupabaseTarget();
     console.log(`E2E Supabase target verified: ${target.projectRef}`);
   } catch (error) {
-    console.error(error.message);
+    // Put the non-secret reason on the check run itself so CI configuration
+    // failures are diagnosable even if Actions log downloads are unavailable.
+    console.error(`::error title=E2E Supabase target guard::${error.message}`);
     process.exitCode = 1;
   }
 }
