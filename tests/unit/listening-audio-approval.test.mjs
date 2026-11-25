@@ -224,7 +224,7 @@ test('the workflow cannot release on production without an explicit override', (
 });
 
 test('the approval modes list matches the workflow modes', () => {
-  assert.deepEqual(APPROVAL_MODES, ['release', 'revoke']);
+  assert.deepEqual(APPROVAL_MODES, ['release', 'revoke', 'speaking-release', 'speaking-revoke']);
   const workflow = readFileSync(new URL('../../.github/workflows/course-audio.yml', import.meta.url), 'utf8');
   for (const mode of APPROVAL_MODES) {
     assert.match(workflow, new RegExp(`inputs\\.mode == '${mode}'`));
@@ -402,5 +402,5 @@ test('the workflow keeps the release override off every other step', () => {
   const overrideSteps = steps
     .filter((step) => /^\s*ALLOW_PRODUCTION_RELEASE:/m.test(step))
     .map((step) => step.split('\n')[0].trim());
-  assert.deepEqual(overrideSteps.sort(), ['Release approved speaking clips', 'Release approved weeks', 'Revoke a track']);
+  assert.deepEqual(overrideSteps.sort(), ['Release approved speaking clips', 'Release approved weeks', 'Revoke a track', 'Revoke speaking clips']);
 });

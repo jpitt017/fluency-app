@@ -125,7 +125,10 @@ export default function ShadowingLab({
       if (useTemporaryVoice) {
         await speakPhrase(active.text, 'en-GB', rate);
       } else {
-        await playAudioOrSpeak(resolvedAudioUrl, active.text, 'en-GB', rate);
+        const played = await playAudioOrSpeak(resolvedAudioUrl, active.text, 'en-GB', rate);
+        // If the recording fails and speech synthesis is used, label that
+        // fallback immediately rather than presenting it as the recording.
+        if (played === 'tts') setModelAudioFailed(true);
       }
     } finally {
       window.setTimeout(() => setPlayingModel(false), 1200);
@@ -265,6 +268,7 @@ export default function ShadowingLab({
           <button
             type="button"
             onClick={() => void playModel()}
+            aria-describedby={useTemporaryVoice ? 'shadowing-temporary-voice' : undefined}
             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
           >
             {playingModel ? <Volume2 className="h-3.5 w-3.5" /> : <Play className="h-3 w-3 fill-current" />}
@@ -328,7 +332,7 @@ export default function ShadowingLab({
                   >
                     Listen again ({rate}×)
                   </button>
-                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
+                  <p id="shadowing-temporary-voice" className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
                 </>
               ) : (
                 <audio

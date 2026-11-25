@@ -6,7 +6,7 @@ import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs'
 const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2.json', import.meta.url)));
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
 
-test('learner week 1 renders safe content and opens the weekly labs without keys or models', async ({ page }) => {
+test('learner week 1 renders safe content and opens the weekly practice task', async ({ page }) => {
   const response = await page.goto('/week/1');
   expect(response?.status()).toBe(200);
   await expect(page.getByText('By the end of this week I can…', { exact: false })).toBeVisible();
@@ -22,7 +22,9 @@ test('learner week 1 renders safe content and opens the weekly labs without keys
   expect(html).not.toContain('"answer_index"');
   expect(html).not.toContain('"accepted"');
   expect(html).not.toContain('"reason"');
-  expect(html).not.toContain(details.weeks[0].speaking.model);
+  // Main now intentionally shows a speaking example/player on the week page;
+  // the writing model and unmarked answer keys remain hidden.
+  await expect(page.getByRole('heading', { name: 'Speaking: model answer' })).toBeVisible();
   expect(html).not.toContain(details.weeks[0].writing.modelAnswer);
   await page.getByRole('link', { name: 'Start writing task' }).click();
   await expect(page).toHaveURL(/\/labs\?week=1#writing/);
@@ -40,6 +42,21 @@ test('learner week 1 renders safe content and opens the weekly labs without keys
   const labsHtml = await page.content();
   expect(labsHtml).not.toContain(details.weeks[0].speaking.model);
   expect(labsHtml).not.toContain(details.weeks[0].writing.modelAnswer);
+});
+
+test('free practice keeps the B1 prompt and still uses the current week for pronunciation', async ({ page }) => {
+  await page.goto('/labs');
+  const speaking = page.locator('#speaking');
+  await expect(speaking.getByText('Practise speaking for 1–2 minutes. Use linking words like however and so to connect your ideas.')).toBeVisible();
+  await expect(speaking.getByText(/This task counts for Week/)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Week 1 · Sentence 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Listen to the sentence', exact: true })).toBeVisible();
+
+  // Current-week pronunciation notes use the B1 "short sound" wording without
+  // changing the teacher's authored bank.
+  await page.goto('/labs?week=2');
+  await expect(page.getByRole('button', { name: 'Week 2 · Sentence 1' })).toBeVisible();
+  await expect(page.getByText('to has a short sound ("tuh"); stress on look, for and see')).toBeVisible();
 });
 
 test('signing in from a weekly writing task keeps the week in the submitted request', async ({ page }) => {

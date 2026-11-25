@@ -104,6 +104,20 @@ test('a task opened from /week/[n] shows the way back and keeps its week for cou
   assert.match(read('src/app/api/writing/correct/route.ts'), /recordWeekSubmission\(guard\.userId, body\.weekNumber, 'writing'\)/);
 });
 
+test('free practice keeps its prompt while pronunciation uses the current week', () => {
+  const page = read('src/app/labs/page.tsx');
+  assert.match(page, /const pronunciationWeek = await loadLearnerWeek\(weekNumber\)/);
+  assert.match(page, /const selectedWeek = weekParam \? pronunciationWeek : null/);
+  assert.match(page, /targets=\{pronunciationWeek\?\.shadowingChunks\.length/);
+  assert.match(page, /audioUrl: chunk\.audioUrl/);
+  assert.match(page, /has a short sound/);
+  const shadowing = read('components/b1b2/ShadowingLab.tsx');
+  assert.match(shadowing, /<span>Listen to the sentence<\/span>/);
+  assert.match(shadowing, /aria-describedby=\{useTemporaryVoice \? 'shadowing-temporary-voice' : undefined\}/);
+  assert.match(shadowing, /id="shadowing-temporary-voice"[^>]*>Temporary computer voice/);
+  assert.match(shadowing, /if \(played === 'tts'\) setModelAudioFailed\(true\)/);
+});
+
 test('the week page sends learners to Start speaking/writing task, keeping the week in the URL', () => {
   const page = read('src/app/week/[n]/page.tsx');
   assert.match(page, /href=\{`\/labs\?week=\$\{number\}#speaking`\}[^>]*>Start speaking task</);

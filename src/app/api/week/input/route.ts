@@ -61,10 +61,14 @@ export async function POST(request: Request) {
     console.error('[input] Could not save completion:', error);
     return NextResponse.json({ error: 'We could not save your answers. Please try again.' }, { status: 503 });
   }
-  const refreshed = await client.rpc('refresh_current_week');
-  if (refreshed.error) {
-    console.error('[input] Answers saved but progress could not be updated:', refreshed.error);
-    return NextResponse.json({ error: 'Answers saved, but progress could not be updated.' }, { status: 503 });
+  try {
+    const refreshed = await client.rpc('refresh_current_week');
+    if (refreshed.error) throw refreshed.error;
+    return NextResponse.json({ saved: true, currentWeek: refreshed.data });
+  } catch (error) {
+    // Completion is already saved; distinguish that from a failed save even
+    // when the progress refresh throws instead of returning an error.
+    console.error('[input] Answers saved but progress could not be updated:', error);
+    return NextResponse.json({ error: 'Your answers are saved, but we could not update your progress. Please try again.' }, { status: 503 });
   }
-  return NextResponse.json({ saved: true, currentWeek: refreshed.data });
 }

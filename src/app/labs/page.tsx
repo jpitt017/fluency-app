@@ -18,7 +18,10 @@ export default async function LabsPage({ searchParams }: LabsProps) {
   const viewer = await getViewer();
   const weekParam = (await searchParams).week;
   const weekNumber = weekParam ? learnerWeekFromParam(weekParam) : await currentLearnerWeek();
-  const selectedWeek = weekParam ? await loadLearnerWeek(weekNumber) : null;
+  // The current week's pronunciation clips also belong in free practice. Keep
+  // writing/speaking free unless the learner opened a specific weekly task.
+  const pronunciationWeek = await loadLearnerWeek(weekNumber);
+  const selectedWeek = weekParam ? pronunciationWeek : null;
   const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
   const freeContext: LessonLabContext = {
@@ -120,7 +123,14 @@ export default async function LabsPage({ searchParams }: LabsProps) {
         <ShadowingLab
           title="Pronunciation practice"
           pronunciationFocus={pronunciationFocus}
-          targets={[
+          targets={pronunciationWeek?.shadowingChunks.length ? pronunciationWeek.shadowingChunks.map((chunk, index) => ({
+            label: `Week ${weekNumber} · Sentence ${index + 1}`,
+            text: chunk.text,
+            // Keep the teacher's authored note intact, but use the short-sound
+            // wording on learner pages as requested by the B1 review.
+            note: chunk.note?.replace(/\bis weak\b/gi, 'has a short sound'),
+            audioUrl: chunk.audioUrl,
+          })) : [
             {
               label: 'Speed and pauses · Turning point',
               text: 'I had been teaching for six years when I finally booked a one-way ticket.',

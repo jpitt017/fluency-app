@@ -19,11 +19,18 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     expect(homeRes?.status()).toBeLessThan(500);
     await expect(page).toHaveTitle(/B1|B2|Fluency/i);
 
+    // A released recording may now be available. Block audio so the fallback
+    // is exercised in either case and must be labelled for all learners.
+    await page.route('**/*.mp3*', (route) => route.abort());
     await page.goto('/labs');
     await expect(page.getByText(/Pronunciation practice/i).first()).toBeVisible();
     await expect(page.getByText(/Check your pronunciation/i)).toBeVisible();
     await expect(page.getByText(/Speaker plays:/i)).toBeVisible();
-    await expect(page.getByText(/Temporary computer voice/i).first()).toBeVisible();
+    const listen = page.getByRole('button', { name: 'Listen to the sentence', exact: true });
+    await listen.click();
+    await expect(listen).toHaveAttribute('aria-describedby', 'shadowing-temporary-voice');
+    await expect(page.locator('#shadowing-temporary-voice')).toHaveText('Temporary computer voice');
+    await page.unroute('**/*.mp3*');
 
     await page.goto('/privacy');
     await expect(page.getByRole('button', { name: /Delete my learning data/i })).toBeVisible();
