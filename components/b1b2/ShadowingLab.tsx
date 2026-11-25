@@ -268,7 +268,7 @@ export default function ShadowingLab({
             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
           >
             {playingModel ? <Volume2 className="h-3.5 w-3.5" /> : <Play className="h-3 w-3 fill-current" />}
-            <span>{useTemporaryVoice ? 'Play UK model' : 'Play studio model'}</span>
+            <span>{useTemporaryVoice ? 'Play temporary computer voice' : 'Play studio model'}</span>
           </button>
 
           {!recording ? (
@@ -326,9 +326,9 @@ export default function ShadowingLab({
                     onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
                     className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                   >
-                    Replay UK model ({rate}×)
+                    Replay temporary computer voice ({rate}×)
                   </button>
-                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary voice</p>
+                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
                 </>
               ) : (
                 <audio
@@ -362,9 +362,9 @@ export default function ShadowingLab({
                     onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
                     className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                   >
-                    Hear the model with a UK voice
+                    Hear the model with temporary computer voice
                   </button>
-                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary voice</p>
+                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
                 </div>
               ) : (
                 <p className="text-xs text-stone-500">Record your attempt to compare side by side.</p>

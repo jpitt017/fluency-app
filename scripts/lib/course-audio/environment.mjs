@@ -25,7 +25,7 @@ export const PRODUCTION_PROJECT_REF = 'ebzmkhrssgnzmixfsuso';
 export const ALLOW_PROD_RELEASE_ENV = 'ALLOW_PRODUCTION_RELEASE';
 
 /** Modes that write the approval flag, i.e. change what a learner can hear. */
-export const APPROVAL_MODES = ['release', 'revoke'];
+export const APPROVAL_MODES = ['release', 'revoke', 'speaking-release', 'speaking-revoke'];
 
 /**
  * Pulls the project ref out of a Supabase URL: `<ref>.supabase.co`, or the

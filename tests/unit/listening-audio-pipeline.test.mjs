@@ -984,7 +984,7 @@ test('the Week 3 sample reads three of each speaker\'s longest lines, at the cou
 test('the workflow offers a one-week voice sample and ships it as the `week-sample` artifact', () => {
   assert.match(
     workflow,
-    /options: \[speaking-voice-check, speaking-generate, speaking-release, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
+    /options: \[speaking-voice-check, speaking-generate, speaking-release, speaking-revoke, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
   );
   assert.match(workflow, /description: 'voice-sample: pace profile \(b1 is the course pace\)'/);
   assert.match(workflow, /options: \[b1\]/, 'the warm profile is gone');
