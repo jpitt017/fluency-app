@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
+import { practiceErrorCard } from '../../lib/curriculum/week-practice-review.mjs';
 
 /**
  * Review: marking sets the rating, the daily cap, and "Review more".
@@ -12,6 +14,7 @@ import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs'
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
 
 async function signIn(page, user) {
   await page.goto('/login');
@@ -19,6 +22,17 @@ async function signIn(page, user) {
   await page.getByLabel('Password', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: /Sign in/i }).click();
   await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
+}
+
+/** Wait for the grade to be stored instead of assuming a fixed network delay. */
+async function gradeInReview(page, buttonName) {
+  const [response] = await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/srs/review'
+      && res.request().method() === 'POST', { timeout: 30_000 }),
+    page.getByRole('button', { name: buttonName }).click(),
+  ]);
+  const body = await response.text();
+  expect(response.ok(), `Review save returned ${response.status()}: ${body}`).toBe(true);
 }
 
 /** Seed one error card, due now, with a known correction. */
@@ -79,8 +93,7 @@ test.describe('with a signed-in learner', () => {
       await expect(page.getByRole('button', { name: /^Hard/ })).toHaveCount(0);
 
       const before = await admin.from('error_review_cards').select('reps, due_at').eq('user_id', user.id).single();
-      await page.getByRole('button', { name: /^Good/ }).click();
-      await page.waitForTimeout(1500);
+      await gradeInReview(page, /^Good/);
 
       const after = await admin.from('error_review_cards').select('reps, due_at, last_reviewed_on').eq('user_id', user.id).single();
       if (after.error) throw after.error;
@@ -113,8 +126,7 @@ test.describe('with a signed-in learner', () => {
       await expect(page.getByRole('button', { name: /^Good/ })).toHaveCount(0);
 
       // Grading Again stores the grade and keeps the card due soon.
-      await page.getByRole('button', { name: /^Again/ }).click();
-      await page.waitForTimeout(1500);
+      await gradeInReview(page, /^Again/);
       const { data: reviews, error } = await admin
         .from('vocab_reviews')
         .select('grade')
@@ -129,6 +141,47 @@ test.describe('with a signed-in learner', () => {
         .single();
       expect(card?.last_reviewed_on).toBe(new Date().toISOString().slice(0, 10));
       expect(reviews?.length ?? 0).toBe(0);
+    } finally {
+      await deleteTestUser(admin, user.id);
+    }
+  });
+
+  test('weekly sentence and word-order cards keep their context and accept the repair', async ({ page }) => {
+    test.setTimeout(150_000);
+    const admin = createClient(url, key, { auth: { persistSession: false } });
+    const user = await createTestUser(admin, 'review-weekly-context');
+    try {
+      const future = details.weeks[1].grammar.practice.items.find((item) => item.id === 'W2-F2');
+      const order = details.weeks[2].grammar.practice.items.find((item) => item.id === 'W3-L1');
+      const cards = [
+        practiceErrorCard({
+          userId: user.id,
+          item: { ...future, reviewPrompt: 'I will visit my parents.', reviewContext: future.prompt },
+          answer: 'I will visit my parents.', category: 'tense',
+        }),
+        practiceErrorCard({
+          userId: user.id, item: { ...order, reviewKind: 'reorder' },
+          answer: 'What time you usually do get home?', category: 'tense',
+        }),
+      ];
+      cards[0].due_at = new Date(Date.now() - 120_000).toISOString();
+      cards[1].due_at = new Date(Date.now() - 60_000).toISOString();
+      const inserted = await admin.from('error_review_cards').insert(cards);
+      if (inserted.error) throw inserted.error;
+
+      await signIn(page, user);
+      await page.goto('/review');
+      await expect(page.getByText('Context:', { exact: false })).toContainText('We arranged it last week.');
+      await page.getByLabel('Your corrected sentence').fill("I'm visiting my parents.");
+      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await expect(page.getByText(/Well done! You fixed it without help/)).toBeVisible({ timeout: 20_000 });
+      await page.getByRole('button', { name: 'Next card →' }).click();
+
+      await expect(page.getByText('Context:', { exact: false })).toContainText('Put the words in order: What time / you / usually / do / get home?');
+      await expect(page.getByText('What time you usually do get home?', { exact: false })).toBeVisible();
+      await page.getByLabel('Your corrected sentence').fill('What time do you usually get home?');
+      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await expect(page.getByText(/Well done! You fixed it without help/)).toBeVisible({ timeout: 20_000 });
     } finally {
       await deleteTestUser(admin, user.id);
     }
