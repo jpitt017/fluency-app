@@ -65,13 +65,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         <ListeningAfterQuestions week={number} listening={details.listeningSupport} /></section>
       {speakingSupport ? <WeekSpeakingSupport
         week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
-        planNotes={speakingSupport.planNotes} noticePhrases={speakingSupport.noticePhrases} realPhrases={speakingSupport.realPhrases}
+        planNotes={speakingSupport.planNotes} usefulPhrases={speakingSupport.usefulPhrases}
         retryGoal={speakingSupport.retryGoal} attemptId={speakingSupport.attemptId} initialNotes={speakingSupport.notes}
-        initialFocusChoice={speakingSupport.focusChoice} initialFocusCorrect={speakingSupport.focusCorrect}
-        initialNoticeSelected={speakingSupport.noticeSelected} noticeAnswered={speakingSupport.noticeAnswered}
         firstTranscript={speakingSupport.firstTranscript} firstFeedback={speakingSupport.firstFeedback}
         secondTranscript={speakingSupport.secondTranscript} secondFeedback={speakingSupport.secondFeedback}
-        model={speakingSupport.model} focusQuestion={speakingSupport.focusQuestion}
+        model={speakingSupport.model}
       /> : <section id="speaking-practice" className="space-y-3 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Speaking</h2><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className="inline-block text-indigo-700 underline">Start speaking task</Link></section>}
       <section id="writing-practice" className="space-y-3 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Writing</h2><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className="inline-block text-indigo-700 underline">Start writing task</Link></section>
     </>}</main>;
