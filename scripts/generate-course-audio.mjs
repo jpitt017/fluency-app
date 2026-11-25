@@ -840,6 +840,10 @@ async function speakingGenerate() {
   for (const clip of clips) {
     console.log(`Week ${clip.week} ${clip.title}: ${clip.speaker} (${clip.voice}), ${clip.words} words, ${clip.durationSeconds}s incl. pads, ${clip.wordsPerMinute} wpm wall clock (${clip.speakingWordsPerMinute} speech-only wpm) -> ${clip.key}`);
   }
+  const wpmNotice = clips
+    .map((clip) => `W${clip.week} ${clip.kind}${clip.index ? ` ${clip.index}` : ''}: ${clip.wordsPerMinute} wpm incl. pads (${clip.speakingWordsPerMinute} speech-only)`)
+    .join(' | ');
+  console.log(`::notice title=Speaking clip WPM::${wpmNotice.slice(0, 4000)}`);
   console.log(`${clips.length} speaking clips uploaded unreleased to ${DEFAULT_REVIEW_BUCKET}. No release or approval-state write occurred.`);
 }
 

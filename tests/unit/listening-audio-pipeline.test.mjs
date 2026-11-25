@@ -1153,6 +1153,7 @@ test('the speaking mode exposes private generation and gated release, with a rev
   assert.match(cliRelease, /if \(!verdict\.ok\) throw new Error\(verdict\.reason\)/);
   assert.match(cli, /--speaking-generate/);
   assert.match(cli, /--speaking-release/);
+  assert.match(cli, /::notice title=Speaking clip WPM::/);
 });
 
 test('the dry-run estimate covers all four weeks and lands in the reviewed pace window', () => {
