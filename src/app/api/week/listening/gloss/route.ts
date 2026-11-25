@@ -38,8 +38,17 @@ export async function POST(request: Request) {
   }
 
   const week = body.week as number;
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  let progress: { data: number | null; error: { message?: string } | null };
+  try {
+    progress = await client.rpc('refresh_current_week');
+  } catch (error) {
+    console.error('[gloss] Could not check progress:', error);
+    return NextResponse.json({ error: 'Could not check your progress. Please try again.' }, { status: 503 });
+  }
+  if (progress.error) {
+    console.error('[gloss] Could not check progress:', progress.error);
+    return NextResponse.json({ error: 'Could not check your progress. Please try again.' }, { status: 503 });
+  }
   if (week > Number(progress.data)) {
     return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   }
@@ -53,19 +62,26 @@ export async function POST(request: Request) {
 
   const admin = createAdminSupabase();
   if (!admin) return NextResponse.json({ error: 'Could not save your answer.' }, { status: 503 });
-  const { error } = await admin.from('week_input_answers').upsert(
-    {
-      user_id: user.id,
-      week_number: week,
-      skill: 'listening',
-      item_id: body.itemId,
-      answer: body.answer.slice(0, 500),
-      correct: marked.correct,
-    },
-    { onConflict: 'user_id,week_number,skill,item_id' },
-  );
-  if (error) {
-    console.error('[gloss] Failed to save attempt:', error.message);
+  try {
+    const { error } = await admin.from('week_input_answers').upsert(
+      {
+        user_id: user.id,
+        week_number: week,
+        skill: 'listening',
+        item_id: body.itemId,
+        answer: body.answer.slice(0, 500),
+        correct: marked.correct,
+      },
+      { onConflict: 'user_id,week_number,skill,item_id' },
+    );
+    if (error) {
+      console.error('[gloss] Failed to save attempt:', error);
+      return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
+    }
+  } catch (error) {
+    // Network/database timeouts may reject instead of returning PostgREST's
+    // { error } result. Treat either failure the same so the learner can retry.
+    console.error('[gloss] Failed to save attempt:', error);
     return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
   }
 
