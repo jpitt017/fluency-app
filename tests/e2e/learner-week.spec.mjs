@@ -22,8 +22,8 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
   expect(html).not.toContain('"answer_index"');
   expect(html).not.toContain('"accepted"');
   expect(html).not.toContain('"reason"');
-  // The first speaking model and focus question stay server-gated until a
-  // saved first recording; the writing model and answer keys remain hidden too.
+  // The first speaking model stays server-gated until a saved first recording;
+  // the writing model and answer keys remain hidden too.
   await expect(page.getByRole('heading', { name: '1. Plan · about 2 minutes' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Speaking: model answer' })).toHaveCount(0);
   expect(html).not.toContain(details.weeks[0].speaking.model);
