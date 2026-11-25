@@ -121,6 +121,9 @@ jobs:
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
+      # Real vocabulary route: repeated option marks and failure paths cannot
+      # turn a rejected save or progress check into an incorrect result.
+      - run: node --test tests/unit/week-vocab-mark-server.test.mjs
       # The explicit alias list from inflected gap answers to their cards, and
       # that every linked term resolves to an authored card (44 of 44).
       - run: node --test tests/unit/vocabulary-review-link.test.mjs
