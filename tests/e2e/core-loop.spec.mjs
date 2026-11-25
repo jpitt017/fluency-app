@@ -14,6 +14,13 @@ const hasRealSupabase = Boolean(
 );
 
 test.describe('B1 -> B2 Core Learning Loop', () => {
+  test('unreleased speaking audio uses the temporary computer voice fallback', async ({ page }) => {
+    // Week 32 has no authored/released audio, so the studio must show its
+    // browser-voice fallback regardless of live release state for Weeks 1–4.
+    await page.goto('/labs?week=32');
+    await expect(page.getByText(/Temporary computer voice/i).first()).toBeVisible();
+  });
+
   test('public routes, privacy controls, and labs render cleanly', async ({ page }) => {
     const homeRes = await page.goto('/');
     expect(homeRes?.status()).toBeLessThan(500);
