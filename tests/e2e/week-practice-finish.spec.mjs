@@ -117,6 +117,7 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
 test('signed out, reading card meanings stay gated while vocabulary remains available', async ({ page }) => {
   await page.goto('/week/1');
   const reading = page.locator('#reading-practice');
+  await reading.getByText('Go further (2–3 min)', { exact: true }).click();
   await expect(reading.getByText('Answer the reading questions first to open the card-word meanings and gloss check.')).toBeVisible();
   await expect(reading).not.toContainText('something new and difficult that needs effort');
   await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
