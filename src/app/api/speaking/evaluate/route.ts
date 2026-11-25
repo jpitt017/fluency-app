@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
+import { validSupportNotes } from '@/lib/curriculum/speaking-support.mjs';
+import { speakingSupportLabels } from '@/lib/curriculum/week-speaking-support';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
 import {
@@ -39,6 +42,10 @@ export async function POST(req: NextRequest) {
   let promptTokens = 0;
   let completionTokens = 0;
   let errorMessage: string | null = null;
+  let supportAttemptId = '';
+  let takeNumber = 0;
+  let supportNotesRaw: unknown = null;
+  let recordingFile: File | null = null;
   // Declared outside the try so the catch can tell a recording from typed text
   // and choose wording the learner can actually act on.
   const audioRequested = (req.headers.get('content-type') || '').includes('multipart/form-data');
@@ -86,6 +93,7 @@ export async function POST(req: NextRequest) {
     if (isAudio) {
       const formData = await req.formData();
       const audioFile = formData.get('audio') as File | null;
+      recordingFile = audioFile;
       const rawWeek = formData.get('weekNumber');
       if (rawWeek && /^\d+$/.test(String(rawWeek))) weekNumber = Number(rawWeek);
       targetPhrase = sanitizeLearnerText(formData.get('targetPhrase'), 400).text;
@@ -95,6 +103,12 @@ export async function POST(req: NextRequest) {
       audioPath = String(formData.get('audioPath') || '').trim();
       mimeType = String(formData.get('mimeType') || audioFile?.type || '').trim();
       durationSeconds = Number(formData.get('durationSeconds')) || 0;
+      supportAttemptId = String(formData.get('supportAttemptId') || '').trim();
+      takeNumber = Number(formData.get('takeNumber')) || 0;
+      const rawNotes = formData.get('supportNotes');
+      if (typeof rawNotes === 'string') {
+        try { supportNotesRaw = JSON.parse(rawNotes) as unknown; } catch { supportNotesRaw = null; }
+      }
 
       if (!audioFile) {
         statusCode = 400;
@@ -269,10 +283,48 @@ ${wrapLearnerSubmission(transcript)}`;
     const modelAnswer = weeklyTask && guard.userId
       ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking') : null;
 
+    let supportSaved: boolean | null = null;
+    const supportLabels = weeklyTask && weekNumber !== null ? speakingSupportLabels(weekNumber) : null;
+    const notes = supportLabels ? validSupportNotes(supportNotesRaw, supportLabels) : null;
+    if (weeklyTask && guard.userId && supportAttemptId && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(supportAttemptId)
+      && (takeNumber === 1 || takeNumber === 2) && recordingFile && notes) {
+      supportSaved = false;
+      const admin = createAdminSupabase();
+      if (admin) {
+        const extension = recordingFile.type.includes('mp4') ? 'm4a' : recordingFile.type.includes('ogg') ? 'ogg' : 'webm';
+        const contentType = extension === 'm4a' ? 'audio/mp4' : extension === 'ogg' ? 'audio/ogg' : 'audio/webm';
+        const storagePath = `${guard.userId}/week-speaking/${weekNumber}/${supportAttemptId}/take-${takeNumber}.${extension}`;
+        const upload = await admin.storage.from('speaking-recordings').upload(storagePath, recordingFile, {
+          contentType, upsert: true,
+        });
+        if (!upload.error) {
+          const savedFeedback = {
+            summary: validated.feedback, improvedResponse: validated.improvedResponse,
+            tips: validated.tips, strengths: validated.strengths, improvements: validated.improvements,
+            corrections: uiCorrections, rubric: validated.rubric, score: validated.score,
+          };
+          const saved = takeNumber === 1
+            ? await admin.from('week_speaking_attempts').insert({
+              id: supportAttemptId, user_id: guard.userId, week_number: weekNumber as number, notes,
+              first_recording_path: storagePath, first_transcript: transcript, first_feedback: savedFeedback,
+            })
+            : await admin.from('week_speaking_attempts').update({
+              second_recording_path: storagePath, second_transcript: transcript, second_feedback: savedFeedback, notes,
+            }).eq('id', supportAttemptId).eq('user_id', guard.userId).eq('week_number', weekNumber as number).not('first_recording_path', 'is', null).select('id').maybeSingle();
+          if (!saved.error && (takeNumber === 1 || saved.data)) supportSaved = true;
+          else {
+            console.error('[week-speaking] attempt persistence failed:', saved.error);
+            await admin.storage.from('speaking-recordings').remove([storagePath]);
+          }
+        } else console.error('[week-speaking] recording upload failed:', upload.error);
+      }
+    }
+
     return NextResponse.json(
       {
         modelAnswer,
         weekRecorded: weekTask ? Boolean(modelAnswer) : null,
+        supportSaved,
         attemptId: savedAttemptId,
         transcript,
         improvedResponse: validated.improvedResponse,
