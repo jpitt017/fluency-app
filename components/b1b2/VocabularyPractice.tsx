@@ -308,8 +308,8 @@ export default function VocabularyPractice({
     focusNextTask(next.href.replace('#', ''));
   }
 
-  return <section ref={sectionRef} id="vocabulary-practice" className="space-y-4 rounded-xl border border-indigo-200 bg-white p-5" aria-label="Vocabulary practice">
-    <h2 className="text-xl font-semibold">Vocabulary: {exercises.title}</h2>
+  return <section ref={sectionRef} id="vocabulary-practice" className="space-y-4 rounded-xl border border-indigo-200 bg-white p-5 target:scroll-mt-20" aria-label="Vocabulary practice">
+    <h2 tabIndex={-1} className="text-xl font-semibold">Vocabulary: {exercises.title}</h2>
     <StepProgress current={step + 1} total={steps.length} label={steps[step]} headingRef={stepHeadingRef} />
     <p className="text-sm text-stone-600">{STEP_INSTRUCTIONS[step]} This practice does not affect week unlocking.</p>
     {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}

@@ -136,10 +136,10 @@ export default function WeekSpeakingSupport(props: Props) {
   const usedOnRetry = secondTranscript ? phrasesUsed(secondTranscript, realPhrases) : [];
   const [scriptShown, setScriptShown] = useState(false);
 
-  return <section className="space-y-5 rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm" aria-labelledby="week-speaking-title">
+  return <section id="speaking-practice" className="space-y-5 rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm target:scroll-mt-20" aria-labelledby="week-speaking-title">
     <div>
       <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Week {week} · speaking</p>
-      <h2 id="week-speaking-title" className="mt-1 text-xl font-semibold">Plan, record and compare</h2>
+      <h2 id="week-speaking-title" tabIndex={-1} className="mt-1 text-xl font-semibold">Plan, record and compare</h2>
       <p className="mt-2 text-sm leading-6 text-stone-700">{prompt}</p>
     </div>
 
