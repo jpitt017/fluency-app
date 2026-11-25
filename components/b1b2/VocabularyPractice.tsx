@@ -11,9 +11,11 @@ import {
 import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
 import { parseGapText, gapsCoverItems } from '@/lib/curriculum/vocabulary-gap-text.mjs';
 import SentenceBox from './SentenceBox';
+import PracticeItemPager from './PracticeItemPager';
 import GapText from './GapText';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
 import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
+import { usePendingChecks } from './usePendingChecks';
 
 type Question = { id: string; prompt: string; options?: string[] };
 type Result = { correct: boolean; feedback: string };
@@ -87,14 +89,20 @@ function PracticeQuestion({
   week,
   signedIn,
   saved,
+  largeOptions = false,
+  finishing = false,
   onAnswered,
+  onCheckingChange,
 }: {
   question: Question;
   week: number;
   signedIn: boolean;
   /** The saved answer and mark, so a reload shows what the learner already did. */
   saved?: SavedAnswer;
+  largeOptions?: boolean;
+  finishing?: boolean;
   onAnswered: (id: string, saved: SavedAnswer) => void;
+  onCheckingChange: (id: string, checking: boolean) => void;
 }) {
   const [answer, setAnswer] = useState(saved?.answer ?? '');
   // The saved reason is the authored feedback for this item; the sentence it
@@ -109,6 +117,7 @@ function PracticeQuestion({
   async function check() {
     setError('');
     setBusy(true);
+    onCheckingChange(question.id, true);
     setSavedAt(false);
     try {
       const response = await fetch('/api/week/vocabulary/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ week, id: question.id, answer }) });
@@ -125,15 +134,30 @@ function PracticeQuestion({
       console.error('[vocabulary] check failed:', err);
       setError('We could not check your answer. Please try again.');
     }
-    finally { setBusy(false); }
+    finally { setBusy(false); onCheckingChange(question.id, false); }
   }
 
   return <div className="space-y-2 rounded-xl bg-stone-50 p-4">
-    <label htmlFor={question.id} className="block font-medium">{question.prompt}</label>
-    {question.options ? <select id={question.id} value={answer} onChange={e => { setAnswer(e.target.value); setResult(null); setSavedAt(false); }} className="w-full rounded-lg border border-stone-300 bg-white p-2"><option value="">Choose an answer</option>{question.options.map(option => <option key={option} value={option}>{option}</option>)}</select>
-      : <input id={question.id} value={answer} onChange={e => { setAnswer(e.target.value); setResult(null); setSavedAt(false); }} maxLength={500} className="w-full rounded-lg border border-stone-300 bg-white p-2" />}
+    {largeOptions && question.options ? (
+      <fieldset>
+        <legend className="font-medium">{question.prompt}</legend>
+        <div className="mt-2 space-y-2">
+          {question.options.map((option) => (
+            <label key={option} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-base focus-within:ring-2 focus-within:ring-indigo-600 ${answer === option ? 'border-indigo-600 bg-indigo-50' : 'border-stone-300 bg-white'}`}>
+              <input type="radio" name={`${question.id}-options`} value={option} checked={answer === option} disabled={busy}
+                onChange={() => { setAnswer(option); setResult(null); setSavedAt(false); }} />
+              {option}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    ) : <>
+      <label htmlFor={question.id} className="block font-medium">{question.prompt}</label>
+      {question.options ? <select id={question.id} value={answer} disabled={largeOptions && busy} onChange={e => { setAnswer(e.target.value); setResult(null); setSavedAt(false); }} className="w-full rounded-lg border border-stone-300 bg-white p-2"><option value="">Choose an answer</option>{question.options.map(option => <option key={option} value={option}>{option}</option>)}</select>
+        : <input id={question.id} value={answer} disabled={largeOptions && busy} onChange={e => { setAnswer(e.target.value); setResult(null); setSavedAt(false); }} maxLength={500} className={`w-full rounded-lg border border-stone-300 bg-white p-2 ${largeOptions ? 'min-h-12' : ''}`} />}
+    </>}
     <div className="flex flex-wrap items-center gap-3">
-      <button type="button" disabled={!signedIn || !answer.trim() || busy} onClick={check} className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Checking…' : 'Check'}</button>
+      <button type="button" disabled={!signedIn || !answer.trim() || busy || finishing} onClick={check} className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Checking…' : 'Check'}</button>
       <SavedTick saved={savedAt} error={error || undefined} saving={busy} />
     </div>
     {result && <div role="status" className={result.correct ? 'text-emerald-800' : 'text-amber-900'}><strong>{result.correct ? 'Correct! ' : 'Not quite. '}</strong>{result.feedback}</div>}
@@ -250,6 +274,7 @@ export default function VocabularyPractice({
   const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
   const [summary, setSummary] = useState(progress?.summary ?? null);
   const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
+  const { checking, setChecking } = usePendingChecks();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
 
@@ -337,6 +362,8 @@ export default function VocabularyPractice({
           text={exercises.text}
           signedIn={signedIn}
           saved={savedAnswers}
+          finishing={busy}
+          onCheckingChange={(checking) => setChecking('gap-text', checking)}
           onAnswered={(id, correct) => {
             setResults((prev) => ({ ...prev, [id]: correct }));
             setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
@@ -351,11 +378,11 @@ export default function VocabularyPractice({
     )}
     {step === 2 && !gapTextReady && <><p>{exercises.text.instruction}</p><p className="leading-7">{exercises.text.body}</p><p className="text-sm">Word box: {exercises.text.wordBox.join(' · ')}</p></>}
     {step === 5 && <p className="text-sm text-stone-600">{exercises.typeTheWord.instruction}</p>}
-    {step > 0 && step < 6 && (step !== 2 || !gapTextReady) && (
-      <div className="space-y-3">
-        {groups[step].map((q) => (
+    {[1, ...(!gapTextReady ? [2] : [])].map((stepIndex) => (
+      <div key={steps[stepIndex]} hidden={step !== stepIndex} className="space-y-3">
+        {groups[stepIndex].map((q) => (
           <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn}
-            saved={savedAnswers[q.id]}
+            saved={savedAnswers[q.id]} finishing={busy} onCheckingChange={setChecking}
             onAnswered={(id, saved) => {
               setResults((prev) => ({ ...prev, [id]: saved.correct }));
               setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
@@ -364,34 +391,60 @@ export default function VocabularyPractice({
           />
         ))}
       </div>
-    )}
-    {step === 6 && <div className="space-y-3">{exercises.yourSentence.map(q => (
-      <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn}
-        rows={2} initialAnswer={savedAnswers[q.id]?.answer}
-        onChecked={(onTarget, answer) => {
-          setResults((prev) => ({ ...prev, [q.id]: onTarget }));
-          setSavedAnswers((prev) => ({ ...prev, [q.id]: { answer, correct: onTarget, reason: null } }));
-        }}
+    ))}
+    {[3, 4, 5].map((stepIndex) => <div key={steps[stepIndex]} hidden={step !== stepIndex}>
+      <PracticeItemPager
+        label={`Vocabulary ${steps[stepIndex]}`}
+        initiallyAnswered={progress?.answers ?? {}}
+        items={groups[stepIndex].map((q) => ({
+          id: q.id,
+          content: <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn}
+            saved={savedAnswers[q.id]} largeOptions finishing={busy} onCheckingChange={setChecking}
+            onAnswered={(id, saved) => {
+              setResults((prev) => ({ ...prev, [id]: saved.correct }));
+              setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
+              setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
+            }}
+          />,
+        }))}
       />
-    ))}</div>}
+    </div>)}
+    <div hidden={step !== 6}>
+      <PracticeItemPager
+        label="Vocabulary Your sentences"
+        initiallyAnswered={progress?.answers ?? {}}
+        items={exercises.yourSentence.map((q) => ({
+          id: q.id,
+          content: <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn}
+            rows={2} initialAnswer={savedAnswers[q.id]?.answer} freezeWhileChecking
+            onChecked={(onTarget, answer) => {
+              setResults((prev) => ({ ...prev, [q.id]: onTarget }));
+              setSavedAnswers((prev) => ({ ...prev, [q.id]: { answer, correct: onTarget, reason: null } }));
+            }}
+          />,
+        }))}
+      />
+    </div>
     <div className="flex justify-between gap-2">
-      <button type="button" disabled={step === 0} onClick={() => { setStep(s => s - 1); focusStep(); }} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button>
+      <button type="button" disabled={step === 0} onClick={() => { setStep(s => s - 1); focusStep(); }} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous step</button>
       {lastStep ? (
         <div className="flex flex-col items-end gap-1">
           <button
             type="button"
-            disabled={!signedIn || busy || !canFinishRule(planned, results)}
+            disabled={!signedIn || busy || checking || !canFinishRule(planned, results)}
             onClick={finish}
             className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Saving…' : 'Finish vocabulary'}
           </button>
-          {signedIn && !summary && finishHint(planned, results) && (
+          {checking ? (
+            <span role="status" className="text-xs text-stone-600">Checking your answers. Please wait to finish.</span>
+          ) : signedIn && !summary && finishHint(planned, results) && (
             <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
           )}
         </div>
       ) : (
-        <button type="button" onClick={() => { setStep(s => s + 1); focusStep(); }} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Next</button>
+        <button type="button" onClick={() => { setStep(s => s + 1); focusStep(); }} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Next step</button>
       )}
     </div>
   </section>;

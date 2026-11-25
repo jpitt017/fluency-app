@@ -105,6 +105,8 @@ test('step 3 renders the inline gap text, not a list of separate gap questions',
   assert.match(source, /<GapText\s+week=\{exercises\.week\}\s+text=\{exercises\.text\}/);
   // Editing a checked gap removes its previous mark until it is checked again.
   assert.match(source, /onChanged=\{\(id\) => setResults\([\s\S]*?delete next\[id\]/);
-  // The old separate-question rendering is kept only as the mismatched-bank fallback.
-  assert.match(source, /step !== 2 \|\| !gapTextReady/);
+  // Step 2 stays a list; step 3 only falls back to that list if the text
+  // cannot cover the bank. Both stay mounted to retain a draft across steps.
+  assert.match(source, /\[1, \.\.\.\(!gapTextReady \? \[2\] : \[\]\)\]/);
+  assert.match(source, /hidden=\{step !== stepIndex\}/);
 });

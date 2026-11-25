@@ -34,8 +34,8 @@ async function locateGapStep(page) {
   await page.goto('/week/1');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
   await expect(vocabulary.getByText('Step 1 of 7: Words')).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
+  await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
+  await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
   await expect(vocabulary.getByText('Step 3 of 7: Complete the text')).toBeVisible();
   return vocabulary;
 }
@@ -123,9 +123,9 @@ test('phone: gaps sit inside the text, the word box is a fixed panel, used words
   await page.keyboard.press('Escape');
 
   // Moving between steps must not discard an unfinished choice.
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
+  await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
   await expect(vocabulary.getByText('Step 4 of 7: Choose the verb')).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Previous', exact: true }).click();
+  await vocabulary.getByRole('button', { name: 'Previous step', exact: true }).click();
   await expect(vocabulary.getByText('Step 3 of 7: Complete the text')).toBeVisible();
   await expect(vocabulary.getByTestId('gap-button-1')).toHaveText('made a big decision');
   await expect(vocabulary.getByTestId('gap-button-2')).toHaveText('(2) choose word');
@@ -193,8 +193,8 @@ test.describe('with a signed-in learner', () => {
       await expect(vocabulary.getByText('Saved ✓')).toBeVisible();
 
       // The checked choices and reasons also remain visible after changing steps.
-      await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-      await vocabulary.getByRole('button', { name: 'Previous', exact: true }).click();
+      await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
+      await vocabulary.getByRole('button', { name: 'Previous step', exact: true }).click();
       await expect(vocabulary.getByTestId('gap-button-1')).toHaveText('made a big decision');
       await expect(vocabulary.getByTestId('gap-result-1')).toContainText(week1.text.items[0].reason);
       await expect(vocabulary.getByTestId('gap-summary')).toHaveText('You got 5 of 5 right.');
@@ -237,7 +237,7 @@ test.describe('with a signed-in learner', () => {
       await page.reload();
       const reloaded = page.getByRole('region', { name: 'Vocabulary practice' });
       await expect(reloaded.getByText('Step 2 of 7: Match')).toBeVisible();
-      await reloaded.getByRole('button', { name: 'Next', exact: true }).click();
+      await reloaded.getByRole('button', { name: 'Next step', exact: true }).click();
       await expect(reloaded.getByText('Step 3 of 7: Complete the text')).toBeVisible();
       await expect(reloaded.getByTestId('gap-button-1')).toHaveText('memorable');
       await expect(reloaded.getByTestId('gap-button-2')).toHaveText('challenge');

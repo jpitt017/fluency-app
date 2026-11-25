@@ -130,12 +130,12 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
   await expect(grammar.getByText(/Step \d of 5: /)).toBeVisible();
 
   for (let step = 1; step < 5; step += 1) {
-    await grammar.getByRole('button', { name: 'Next', exact: true }).click();
+    await grammar.getByRole('button', { name: 'Next step', exact: true }).click();
   }
   await expect(grammar.getByText('Step 5 of 5: Remember')).toBeVisible();
 
   // The old ending: Next, disabled, with nothing after it.
-  await expect(grammar.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0);
+  await expect(grammar.getByRole('button', { name: 'Next step', exact: true })).toHaveCount(0);
   const finish = grammar.getByRole('button', { name: 'Finish grammar' });
   await expect(finish).toBeVisible();
   // Nothing can be saved signed out, so the button says so by staying disabled.
@@ -170,7 +170,7 @@ test.describe('with a signed-in learner', () => {
       // Walk to the last step; the button is the end of the section, not a
       // disabled Next.
       for (let step = 1; step < 5; step += 1) {
-        const next = grammar.getByRole('button', { name: 'Next', exact: true });
+        const next = grammar.getByRole('button', { name: 'Next step', exact: true });
         if (await next.isVisible()) await next.click();
       }
       const finish = grammar.getByRole('button', { name: 'Finish grammar' });
@@ -217,7 +217,7 @@ test.describe('with a signed-in learner', () => {
       // The saved answers are on screen, not only in the summary. The page
       // opened at the last step because everything before it is answered.
       await expect(reloaded.getByText('Step 5 of 5: Remember')).toBeVisible();
-      const back = reloaded.getByRole('button', { name: 'Previous' });
+      const back = reloaded.getByRole('button', { name: 'Previous step', exact: true });
       while (await back.isEnabled()) await back.click();
       await expect(reloaded.getByText('Step 1 of 5: See it')).toBeVisible();
 
@@ -226,22 +226,23 @@ test.describe('with a signed-in learner', () => {
       await expect(reloaded.getByText(/Correct! /).first()).toBeVisible();
 
       // Step 2: another saved choice, and a typed completion in its box.
-      await reloaded.getByRole('button', { name: 'Next', exact: true }).click();
+      await reloaded.getByRole('button', { name: 'Next step', exact: true }).click();
       await expect(reloaded.getByText('Step 2 of 5: Practise')).toBeVisible();
       await expect(reloaded.getByRole('radio', { name: 'moved', exact: true })).toBeChecked();
-      await expect(reloaded.getByLabel('Your answer').first()).toHaveValue('were driving');
-      // The one answered wrongly is marked wrong, from the server's mark. Its
-      // prompt is in this step, so the line is not counted on another one.
+      await reloaded.getByRole('tab', { name: 'Go to item 7 of 11' }).click();
+      await expect(reloaded.getByRole('textbox', { name: 'Your answer', exact: true })).toHaveValue('were driving');
+      // The one answered wrongly is marked wrong on its own item.
+      await reloaded.getByRole('tab', { name: 'Go to item 2 of 11' }).click();
       await expect(
         reloaded.getByText('I ___ a lot of new friends since then.'),
       ).toBeVisible();
-      await expect(reloaded.getByText(/Not quite\./)).toHaveCount(1);
+      await expect(reloaded.getByRole('status').filter({ hasText: 'Not quite.' })).toBeVisible();
 
       // Step 3: the repair answers are back in their boxes.
-      await reloaded.getByRole('button', { name: 'Next', exact: true }).click();
+      await reloaded.getByRole('button', { name: 'Next step', exact: true }).click();
       await expect(reloaded.getByText('Step 3 of 5: Fix it')).toBeVisible();
-      await expect(reloaded.getByLabel('Your answer').first()).toHaveValue('I moved to Leeds in 2023.');
-      await expect(reloaded.getByText(/Correct! /).first()).toBeVisible();
+      await expect(reloaded.getByRole('textbox', { name: 'Your answer', exact: true })).toHaveValue('I moved to Leeds in 2023.');
+      await expect(reloaded.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
 
       // One completion row, not one per visit.
       const rows = await admin
@@ -316,7 +317,7 @@ test.describe('with a signed-in learner', () => {
       );
 
       // Step 6 shows the saved typed words with their marks.
-      await reloaded.getByRole('button', { name: 'Previous' }).click();
+      await reloaded.getByRole('button', { name: 'Previous step', exact: true }).click();
       await expect(reloaded.getByText('Step 6 of 7: Type the word')).toBeVisible();
       // The typed word comes back with the mark it was given.
       await expect(reloaded.locator('input#V1-R1')).toHaveValue('take up');
@@ -370,7 +371,7 @@ test.describe('with a signed-in learner', () => {
       const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
       for (let step = 2; step < 5; step += 1) {
-        const next = grammar.getByRole('button', { name: 'Next', exact: true });
+        const next = grammar.getByRole('button', { name: 'Next step', exact: true });
         await next.focus();
         await page.keyboard.press('Enter');
         await expect(grammar.getByRole('heading', { name: new RegExp(`Step ${step + 1} of 5:`) })).toBeFocused();
@@ -411,8 +412,8 @@ test.describe('with a signed-in learner', () => {
       await postFromUi(page, more.getByRole('button', { name: 'Check', exact: true }), '/api/week/grammar/mark');
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
       await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
-      await grammar.getByRole('button', { name: 'Next', exact: true }).click();
-      await grammar.getByRole('button', { name: 'Previous', exact: true }).click();
+      await grammar.getByRole('button', { name: 'Next step', exact: true }).click();
+      await grammar.getByRole('button', { name: 'Previous step', exact: true }).click();
       await expect(more.getByRole('radio', { name: 'was cooking', exact: true })).toBeChecked();
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
@@ -420,7 +421,7 @@ test.describe('with a signed-in learner', () => {
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
       for (let step = 2; step < 7; step += 1) {
-        const next = vocabulary.getByRole('button', { name: 'Next', exact: true });
+        const next = vocabulary.getByRole('button', { name: 'Next step', exact: true });
         await next.focus();
         await page.keyboard.press('Enter');
         await expect(vocabulary.getByRole('heading', { name: new RegExp(`Step ${step + 1} of 7:`) })).toBeFocused();

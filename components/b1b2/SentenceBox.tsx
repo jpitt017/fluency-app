@@ -21,6 +21,7 @@ export default function SentenceBox({
   rows = 2,
   onChecked,
   initialAnswer,
+  freezeWhileChecking = false,
 }: {
   week: number;
   id: string;
@@ -29,6 +30,8 @@ export default function SentenceBox({
   signedIn: boolean;
   rows?: number;
   onChecked?: (onTarget: boolean, answer: string) => void;
+  /** Prevent a result for an older draft appearing beside an edited sentence. */
+  freezeWhileChecking?: boolean;
   /**
    * What the learner wrote last time, restored from the server so a reload does
    * not empty the box. It is only the sentence they wrote: the feedback comes
@@ -78,6 +81,7 @@ export default function SentenceBox({
         value={answer}
         rows={rows}
         maxLength={600}
+        disabled={freezeWhileChecking && busy}
         onChange={(event) => {
           setAnswer(event.target.value);
           setFeedback(null);
