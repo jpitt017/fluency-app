@@ -130,6 +130,26 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
 }
 const request = (skill, extra = {}) => ({ json: async () => ({ week: 1, skill, ...extra }) });
 
+test('Week 2 sentence repair and Week 3 word order produce clear, answerable Review cards', async () => {
+  const fixture = setup({ currentWeek: 3 });
+  fixture.addAttempt('week_grammar_attempts', 'W2-F2', 'I will visit my parents.', false, 'learner', 2);
+  fixture.addAttempt('week_grammar_attempts', 'W3-L1', 'What time you usually do get home?', false, 'learner', 3);
+
+  assert.equal((await fixture.finish(request('grammar', { week: 2 }))).status, 200);
+  assert.equal((await fixture.finish(request('grammar', { week: 3 }))).status, 200);
+  const [future, order] = fixture.tables.error_review_cards;
+  assert.equal(future.prompt_sentence, 'I will visit my parents.');
+  assert.equal(future.corrected_sentence, "I'm visiting my parents.");
+  assert.equal(future.context_sentence, "I can't come on Saturday. I will visit my parents. We arranged it last week.");
+  assert.equal(order.prompt_sentence, 'What time you usually do get home?');
+  assert.equal(order.corrected_sentence, 'What time do you usually get home?');
+  assert.equal(order.context_sentence, 'Put the words in order: What time / you / usually / do / get home?');
+
+  assert.equal((await fixture.finish(request('grammar', { week: 2 }))).status, 200);
+  assert.equal((await fixture.finish(request('grammar', { week: 3 }))).status, 200);
+  assert.equal(fixture.tables.error_review_cards.length, 2, 're-Finish deduplicates by the original exercise');
+});
+
 function sevenGrammarAnswers(fixture) {
   const values = [
     ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],

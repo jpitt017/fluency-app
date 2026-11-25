@@ -33,8 +33,11 @@ export type PlannedItem = {
   term?: string | null;
   /** Server-only: the authored feedback for a fixed vocabulary item. */
   feedback?: string;
-  /** Meaning checks ask a question rather than asking for a sentence repair. */
-  reviewKind?: 'question' | 'sentence';
+  /** Meaning checks and word-order items need different Review prompts. */
+  reviewKind?: 'question' | 'sentence' | 'reorder';
+  /** An explicitly authored sentence to fix, when the task has more context. */
+  reviewPrompt?: string;
+  reviewContext?: string;
 };
 
 export type PlannedStep = { index: number; title: string; items: PlannedItem[] };
@@ -54,7 +57,12 @@ export function grammarPlan(week: number): PracticePlan | null {
       prompt: item.prompt,
       ...grammarItemFlags(item),
       key: bank.find((entry) => entry.id === item.id)?.key,
-      reviewKind: item.step === 'Meaning' ? 'question' as const : 'sentence' as const,
+      // These two questions do not have the usual one-prompt/one-correction
+      // shape. Keep the original exercise and teacher bank unchanged, while
+      // giving newly created Review cards a clear, answerable task.
+      reviewKind: item.step === 'Meaning' ? 'question' as const : item.id === 'W3-L1' ? 'reorder' as const : 'sentence' as const,
+      reviewPrompt: item.id === 'W2-F2' ? 'I will visit my parents.' : undefined,
+      reviewContext: item.id === 'W2-F2' ? item.prompt : undefined,
     })),
   }));
   return { steps, items: steps.flatMap((step) => step.items) };
