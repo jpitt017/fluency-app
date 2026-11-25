@@ -24,15 +24,23 @@ async function signIn(page, user) {
   await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
 }
 
-/** Wait for the grade to be stored instead of assuming a fixed network delay. */
-async function gradeInReview(page, buttonName) {
+/** Wait for the server instead of assuming a fixed network delay. */
+async function postFromReview(page, buttonName, path) {
   const [response] = await Promise.all([
-    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/srs/review'
+    page.waitForResponse((res) => new URL(res.url()).pathname === path
       && res.request().method() === 'POST', { timeout: 30_000 }),
     page.getByRole('button', { name: buttonName }).click(),
   ]);
   const body = await response.text();
-  expect(response.ok(), `Review save returned ${response.status()}: ${body}`).toBe(true);
+  expect(response.ok(), `${path} returned ${response.status()}: ${body}`).toBe(true);
+}
+
+async function gradeInReview(page, buttonName) {
+  await postFromReview(page, buttonName, '/api/srs/review');
+}
+
+async function checkInReview(page) {
+  await postFromReview(page, /Check my answer/i, '/api/review/check-rewrite');
 }
 
 /** Seed one error card, due now, with a known correction. */
@@ -83,7 +91,7 @@ test.describe('with a signed-in learner', () => {
       await page.goto('/review');
 
       await page.getByLabel('Your corrected sentence').fill('I moved to Leeds in 2023.');
-      await page.getByRole('button', { name: /Check my answer/i }).click();
+      await checkInReview(page);
 
       // Marking decides: Good is offered, and Easy as a deliberate upgrade.
       await expect(page.getByText(/That is right/i)).toBeVisible({ timeout: 20_000 });
@@ -117,7 +125,7 @@ test.describe('with a signed-in learner', () => {
       await page.goto('/review');
 
       await page.getByLabel('Your corrected sentence').fill('I have moved to Leeds in 2023, yesterday.');
-      await page.getByRole('button', { name: /Check my answer/i }).click();
+      await checkInReview(page);
 
       await expect(page.getByText(/Not this time/i)).toBeVisible({ timeout: 20_000 });
       await expect(page.getByRole('button', { name: /^Again/ })).toBeVisible();
@@ -173,14 +181,14 @@ test.describe('with a signed-in learner', () => {
       await page.goto('/review');
       await expect(page.getByText('Context:', { exact: false })).toContainText('We arranged it last week.');
       await page.getByLabel('Your corrected sentence').fill("I'm visiting my parents.");
-      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await checkInReview(page);
       await expect(page.getByText(/Well done! You fixed it without help/)).toBeVisible({ timeout: 20_000 });
       await page.getByRole('button', { name: 'Next card →' }).click();
 
       await expect(page.getByText('Context:', { exact: false })).toContainText('Put the words in order: What time / you / usually / do / get home?');
       await expect(page.getByText('What time you usually do get home?', { exact: false })).toBeVisible();
       await page.getByLabel('Your corrected sentence').fill('What time do you usually get home?');
-      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await checkInReview(page);
       await expect(page.getByText(/Well done! You fixed it without help/)).toBeVisible({ timeout: 20_000 });
     } finally {
       await deleteTestUser(admin, user.id);

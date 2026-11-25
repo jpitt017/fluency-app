@@ -67,16 +67,20 @@ async function signIn(page, user) {
   await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
 }
 
-/** Wait for the actual server save rather than assuming it finishes in 5 seconds. */
-async function finishFromUi(page, button, keyboard = false) {
+/** Wait for the actual server save rather than assuming a fixed network delay. */
+async function postFromUi(page, button, path, keyboard = false) {
   if (keyboard) await button.focus();
   const [response] = await Promise.all([
-    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/week/practice/finish'
+    page.waitForResponse((res) => new URL(res.url()).pathname === path
       && res.request().method() === 'POST', { timeout: 30_000 }),
     keyboard ? page.keyboard.press('Enter') : button.click(),
   ]);
   const body = await response.text();
-  expect(response.ok(), `Finish returned ${response.status()}: ${body}`).toBe(true);
+  expect(response.ok(), `${path} returned ${response.status()}: ${body}`).toBe(true);
+}
+
+async function finishFromUi(page, button, keyboard = false) {
+  await postFromUi(page, button, '/api/week/practice/finish', keyboard);
 }
 
 /** Answer every counted grammar question through the marking route. */
@@ -378,7 +382,7 @@ test.describe('with a signed-in learner', () => {
       // finished snapshot stays unchanged until the learner finishes again.
       const more = grammar.locator('div.rounded-xl.bg-stone-50').filter({ hasText: 'I ___ dinner when my phone rang.' });
       await more.getByRole('radio', { name: 'was cooking', exact: true }).check();
-      await more.getByRole('button', { name: 'Check', exact: true }).click();
+      await postFromUi(page, more.getByRole('button', { name: 'Check', exact: true }), '/api/week/grammar/mark');
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
       await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
       await grammar.getByRole('button', { name: 'Next', exact: true }).click();
@@ -430,7 +434,7 @@ test.describe('with a signed-in learner', () => {
       await expect(page.getByText('Answer this question without hints:')).toBeVisible();
       await expect(page.getByText(/Does the speaker still live in Bristol/)).toBeVisible();
       await page.getByLabel('Your answer', { exact: true }).fill('Yes');
-      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await postFromUi(page, page.getByRole('button', { name: 'Check my answer' }), '/api/review/check-rewrite');
       await expect(page.getByText(/Well done! You answered without help\./)).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
