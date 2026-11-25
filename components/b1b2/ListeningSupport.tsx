@@ -102,7 +102,7 @@ export function ListeningIntro({ support }: { support: LearnerListeningSupport }
  * The card-word variant opens a short meaning with no Spanish, because the card
  * word is already in the vocabulary step and this is a reminder, not a gloss.
  */
-function TapWord({
+export function TapWord({
   label,
   meaning,
   spanish,
@@ -221,9 +221,13 @@ export function Transcript({ support }: { support: LearnerListeningSupport }) {
 export function GlossCheck({
   week,
   items,
+  endpoint = '/api/week/listening/gloss',
+  description = 'A short check of four words from the transcript. It is not part of the listening task, so you can stop at any point.',
 }: {
   week: number;
   items: { id: string; stem: string; options: string[] }[];
+  endpoint?: string;
+  description?: string;
 }) {
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [result, setResult] = useState<Record<string, { correct: boolean; answer: string; feedback: string }>>({});
@@ -234,7 +238,7 @@ export function GlossCheck({
     setError('');
     setBusy(id);
     try {
-      const response = await fetch('/api/week/listening/gloss', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ week, itemId: id, answer: choice[id] }),
@@ -261,10 +265,7 @@ export function GlossCheck({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-stone-600">
-        A short check of four words from the transcript. It is not part of the listening task, so you can stop
-        at any point.
-      </p>
+      <p className="text-sm text-stone-600">{description}</p>
       <ol className="space-y-4">
         {items.map((item) => {
           const marked = result[item.id];

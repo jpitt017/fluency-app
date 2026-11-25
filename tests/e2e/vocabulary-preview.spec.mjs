@@ -1,37 +1,21 @@
 import { test, expect } from '@playwright/test';
 
-test('week vocabulary shows safe cards and exercise steps before reading', async ({ page }) => {
+test('reading card meanings stay gated while vocabulary practice remains available', async ({ page }) => {
   const response = await page.goto('/week/1');
   expect(response.ok()).toBeTruthy();
   const html = await response.text();
   expect(html).not.toContain('It took me a few weeks to get used to working from home.');
   expect(html).not.toContain('answer_index');
   expect(html).not.toContain('onTargetWhen');
-  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
-  // Step 1 pages the cards four at a time now, so page 1 holds the "Words to use"
-  // group rather than everything. "turning point" is a recognition word and
-  // lives on a later page; assert on a card that is actually on the first one.
-  await expect(vocabulary.getByRole('heading', { name: 'Words to use' })).toBeVisible();
-  await expect(vocabulary.getByText('challenge', { exact: false }).first()).toBeVisible();
-  await expect(vocabulary.getByText('Temporary computer voice').first()).toBeVisible();
-  await expect(vocabulary.getByText(/Sign in to check/)).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  // The step header and the authored instruction can both start with the same
-  // words, so assert on the exact authored line rather than a substring.
-  await expect(vocabulary.getByText('Match each word to its meaning.', { exact: true })).toBeVisible();
-  await expect(vocabulary.getByText('Step 2 of 7: Match')).toBeVisible();
-  await expect(vocabulary.getByRole('button', { name: 'Check' }).first()).toBeDisabled();
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(vocabulary.getByText(/Two years ago/)).toBeVisible();
-  for (let i = 0; i < 3; i++) await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(vocabulary.getByText(/first letters are given/)).toBeVisible();
-  await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  // Step 7 used to say feedback was "coming soon". It now asks for the sentence.
-  await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-  await expect(vocabulary.getByText(/Write one sentence about something that was difficult at first/)).toBeVisible();
-  await expect(vocabulary.locator('textarea').first()).toBeVisible();
-  await expect(vocabulary.getByText(/Write your sentences and press Check/).first()).toBeVisible();
-  expect(await vocabulary.getByText(/coming soon/i).count()).toBe(0);
+
+  // The green card words are highlighted in the reading without exposing a
+  // reading-card meaning. The vocabulary section itself remains usable.
+  const reading = page.locator('#reading-practice');
+  await expect(reading.getByRole('button', { name: 'challenge', exact: true })).toHaveCount(0);
+  await expect(reading.getByText('challenge', { exact: true })).toBeVisible();
+  await expect(reading).not.toContainText('something new and difficult that needs effort');
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Words to use' })).toBeVisible();
 });
 
 test('draft on-demand model route is not exposed', async ({ request }) => {

@@ -104,6 +104,8 @@ jobs:
       # Input feedback cannot claim success when saving fails, and completion
       # counts only server-checked answers (including approved trial audio).
       - run: node --test tests/unit/week-input-save.test.mjs
+      # Reading support: safe glossary projection, saved-answer gate and server-side gloss marking.
+      - run: node --test tests/unit/reading-support.test.mjs
       # Week speaking flow: model gating, phrase-list exact matching, note validation,
       # focus-answer projection, and deletion coverage for both recordings.
       - run: node --test tests/unit/week-speaking-support.test.mjs

@@ -8,6 +8,12 @@ what makes a real learner hear a track and what changes `/week/[n]` from "Audio
 coming soon." There is no safe window: the page is live, and a browser can load
 it between two statements.
 
+**Scope:** This prohibition applies only to production audio release state
+(`listening_audio_trials` and speaking-clip release flags); it does not prohibit
+merging or deploying application features and learner content through the usual
+PR process. Only the owner changes audio release flags, using the two-key
+workflow.
+
 This applies to every route into that flag:
 
 - `update public.listening_audio_trials set released = true …` via the Supabase
