@@ -46,6 +46,9 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
 
 test('free practice keeps the B1 prompt and still uses the current week for pronunciation', async ({ page }) => {
   await page.goto('/labs');
+  const writing = page.locator('#writing');
+  await expect(writing.getByText('Write an email, a review or a short essay.', { exact: true })).toBeVisible();
+  await expect(writing.getByText('Practise speaking for 1–2 minutes.', { exact: false })).toHaveCount(0);
   const speaking = page.locator('#speaking');
   await expect(speaking.getByText('Practise speaking for 1–2 minutes. Use linking words like however and so to connect your ideas.')).toBeVisible();
   await expect(speaking.getByText(/This task counts for Week/)).toHaveCount(0);

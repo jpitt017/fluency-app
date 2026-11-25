@@ -31,6 +31,10 @@ export default async function LabsPage({ searchParams }: LabsProps) {
     targetGrammar: ['Present perfect vs. past simple', 'Conditionals', 'Hedging & concession'],
     targetVocabulary: ['turning point', 'compelling evidence', 'on balance', 'concede a point'],
   };
+  const freeWritingContext: LessonLabContext = {
+    ...freeContext,
+    prompt: 'Write an email, a review or a short essay.',
+  };
   // A task opened from /week/[n] keeps its week: the way back is on screen and
   // the evaluated submission counts for that week (weekNumber rides along in
   // the lesson context, and the marking routes record it).
@@ -101,7 +105,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
               <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>
             )}
           </div>
-          <WritingLab unlockedModel={unlockedModels?.writing} lessonContext={selectedWeek ? { ...freeContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeContext, weekNumber } : freeContext} />
+          <WritingLab unlockedModel={unlockedModels?.writing} lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext} />
         </section>
 
         <section id="speaking" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
