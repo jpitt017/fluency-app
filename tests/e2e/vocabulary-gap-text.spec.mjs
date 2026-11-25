@@ -2,20 +2,18 @@ import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
+import { answerReadingAndFinish, canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
 /**
  * Vocabulary step 3 on a phone: the gaps live inside the text.
  *
- * The signed-out tests run everywhere and pin the interaction: inline gap
- * buttons, the word box as a small fixed panel on a phone (anchored beside the
- * gap on a wider screen), used words greyed out, and the keyboard path
- * (Enter opens, Escape closes and returns focus).
- *
- * The signed-in test needs a real learner so the server can mark and save the
- * answers, so it uses a service-key test user like week-practice-finish and is
- * skipped without the key. It walks the whole loop through the UI: fill every
- * gap, one Check, a reason beside each gap, a wrong retry, and a reload that
- * restores the words and the marks.
+ * The reading gate keeps vocabulary definitions out of the page until every
+ * reading question has a saved mark. These interactions therefore create a
+ * confirmed test learner, mark reading on the server, and are skipped without
+ * the service key. They pin the inline gap buttons, the word-box layout, used
+ * words greyed out, and keyboard navigation (Enter opens, Escape closes and
+ * returns focus). The signed-in check case also pins marking, feedback, and
+ * reload restoration.
  */
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,8 +23,15 @@ const bank = JSON.parse(
   readFileSync(new URL('../../supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json', import.meta.url)),
 );
 const week1 = bank.weeks.find((entry) => entry.week === 1);
+let gateSession = null;
+let gateCounter = 0;
 
-async function openGapStep(page) {
+test.afterEach(async () => {
+  if (gateSession) await removeReadingLearner(gateSession.admin, gateSession.user);
+  gateSession = null;
+});
+
+async function locateGapStep(page) {
   await page.goto('/week/1');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
   await expect(vocabulary.getByText('Step 1 of 7: Words')).toBeVisible();
@@ -34,6 +39,13 @@ async function openGapStep(page) {
   await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(vocabulary.getByText('Step 3 of 7: Complete the text')).toBeVisible();
   return vocabulary;
+}
+
+async function openGapStep(page) {
+  test.skip(!canUseReadingGateFixture, 'Vocabulary interaction needs a service-key reader');
+  gateSession = await createReadingLearner(page, `vocab-gap-setup-${++gateCounter}`);
+  await answerReadingAndFinish(page);
+  return locateGapStep(page);
 }
 
 async function pickWord(vocabulary, gap, word) {
@@ -120,9 +132,9 @@ test('phone: gaps sit inside the text, the word box is a fixed panel, used words
   await expect(vocabulary.getByTestId('gap-button-1')).toHaveText('made a big decision');
   await expect(vocabulary.getByTestId('gap-button-2')).toHaveText('(2) choose word');
 
-  // Signed out, nothing can be checked or saved, and the page says so.
+  // An incomplete set of gaps is still not markable.
   await expect(vocabulary.getByTestId('gap-check')).toBeDisabled();
-  await expect(vocabulary.getByText(/Sign in to check and save/)).toBeVisible();
+  await expect(vocabulary.getByText(/Sign in to check and save/)).toHaveCount(0);
 });
 
 test('desktop: the word box opens beside the gap, not as a fixed panel', async ({ page }) => {
@@ -154,8 +166,9 @@ test.describe('with a signed-in learner', () => {
       await page.getByLabel('Password', { exact: true }).fill(user.password);
       await page.getByRole('button', { name: /Sign in/i }).click();
       await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
+      await answerReadingAndFinish(page);
 
-      const vocabulary = await openGapStep(page);
+      const vocabulary = await locateGapStep(page);
 
       // Check waits until every gap has a word.
       const check = vocabulary.getByTestId('gap-check');

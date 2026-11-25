@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
+import { answerReadingAndFinish } from './helpers/reading-gate.mjs';
 
 /**
  * Finishing grammar and vocabulary on /week/[n].
@@ -114,15 +115,13 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
   await expect(grammar.getByText(/Sign in to check and save/)).toBeVisible();
 });
 
-test('signed out, the last vocabulary step offers Finish rather than a dead Next', async ({ page }) => {
+test('signed out, vocabulary meanings stay gated until the reading answers are saved', async ({ page }) => {
   await page.goto('/week/1');
-  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
-  for (let step = 1; step < 7; step += 1) {
-    await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  }
-  await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-  await expect(vocabulary.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0);
-  await expect(vocabulary.getByRole('button', { name: 'Finish vocabulary' })).toBeDisabled();
+  await expect(page.getByText('Finish and save the reading questions first')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toHaveCount(0);
+  const html = await page.content();
+  expect(html).not.toContain('something new and difficult that needs effort');
+  expect(html).not.toContain('start to feel that something new is normal');
 });
 
 test.describe('with a signed-in learner', () => {
@@ -235,6 +234,7 @@ test.describe('with a signed-in learner', () => {
     const user = await createTestUser(admin, 'week-vocab-finish');
     try {
       await signIn(page, user);
+      await answerReadingAndFinish(page);
       await answerVocabulary(page);
 
       // The page opens at step 7, because every required question is answered

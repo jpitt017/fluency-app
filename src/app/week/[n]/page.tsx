@@ -56,8 +56,8 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       </section>
       {cards && vocabulary && (details.readingSupport.questionsAnswered || !details.readingSupport.support)
         ? <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} />
-        : cards && vocabulary && <section className="rounded-xl border border-stone-200 p-5" aria-labelledby="vocabulary-locked-heading"><h2 id="vocabulary-locked-heading" className="text-lg font-semibold">Vocabulary practice</h2><p className="mt-2 text-sm text-stone-700">Finish and save the reading questions first. Then your card meanings and vocabulary practice will open.</p></section>}
-      <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>
+        : cards && vocabulary && <section id="vocabulary-practice" className="rounded-xl border border-stone-200 p-5"><h2 id="vocabulary-locked-heading" className="text-lg font-semibold">Vocabulary practice</h2><p className="mt-2 text-sm text-stone-700">Finish and save the reading questions first. Then your card meanings and vocabulary practice will open.</p></section>}
+      <section id="listening-practice" className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>
         <ListeningBeforePlayer support={details.listeningSupport.support} />
         {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio} /></> : details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}
         <div id="listening-questions"><WeekInputTask week={number} skill="listening" questions={details.listening.questions} available={Boolean(trialAudio || details.listening.audioUrl)} signedIn={viewer.signedIn} /></div>
