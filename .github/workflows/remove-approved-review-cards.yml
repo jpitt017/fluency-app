@@ -1,0 +1,35 @@
+name: Remove learner-approved Review cards
+
+# An explicit operator action, never part of CI or deployment. Inputs contain
+# only the approved card IDs, their observed update times and a hash of the
+# owner's ID; do not put an email address or learner answers here.
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'JSON containing ownerHash and 1–2 card IDs with observed updatedAt values'
+        type: string
+        required: true
+      confirmation:
+        description: 'Type: the learner approved these cards'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  remove-approved-cards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Remove only unchanged, unreviewed cards belonging to the approved owner
+        run: node scripts/remove-approved-review-cards.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

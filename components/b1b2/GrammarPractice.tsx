@@ -284,10 +284,10 @@ export default function GrammarPractice({
     <section
       ref={sectionRef}
       id="grammar-practice"
-      className="space-y-4 rounded-xl border border-stone-200 p-5"
+      className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"
       aria-label="Grammar practice"
     >
-      <h2 className="text-xl font-semibold">Grammar practice</h2>
+      <h2 tabIndex={-1} className="text-xl font-semibold">Grammar practice</h2>
       <ProgressBar current={current.number} total={steps.length} title={current.title} headingRef={stepHeadingRef} />
       <p className="text-sm text-stone-600">{current.instruction}</p>
       {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}

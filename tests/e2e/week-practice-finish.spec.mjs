@@ -93,6 +93,24 @@ async function answerGrammar(page) {
   }
 }
 
+/** Check the server mark and report only known, learner-safe errors in CI. */
+async function markVocabulary(page, id, answer, correct) {
+  const response = await page.request.post('/api/week/vocabulary/mark', {
+    data: { week: 1, id, answer },
+  });
+  const result = await response.json().catch(() => null);
+  const safeErrors = new Set([
+    'Sign in to check your answer.', 'Please check your answer.',
+    'This activity is not available.', 'Could not check your progress.',
+    'This week is not open yet.', 'Could not save your answer.',
+    'Could not save your answer. Please try again.',
+    'Something went wrong. Please try again, or message your teacher.',
+  ]);
+  const detail = safeErrors.has(result?.error) ? result.error : 'other or non-JSON error (redacted)';
+  expect(response.ok(), `marking ${id}: HTTP ${response.status()} (${detail})`).toBe(true);
+  expect(result?.correct, `marking ${id}: unexpected correctness`).toBe(correct);
+}
+
 /** Answer every fixed vocabulary question, leaving step 7 (optional) alone. */
 async function answerVocabulary(page) {
   const bank = vocabularyBank.weeks.find((entry) => entry.week === 1);
@@ -103,12 +121,7 @@ async function answerVocabulary(page) {
     ...bank.wordForms.map((item) => ({ id: item.id, answer: item.options[item.answer_index] })),
     ...bank.typeTheWord.items.map((item) => ({ id: item.id, answer: item.key })),
   ];
-  for (const { id, answer } of answers) {
-    const response = await page.request.post('/api/week/vocabulary/mark', {
-      data: { week: 1, id, answer },
-    });
-    expect(response.ok(), `marking ${id}`).toBe(true);
-  }
+  for (const { id, answer } of answers) await markVocabulary(page, id, answer, true);
 }
 
 test('signed out, the last grammar step offers Finish rather than a dead Next', async ({ page }) => {
@@ -249,6 +262,21 @@ test.describe('with a signed-in learner', () => {
     const user = await createTestUser(admin, 'week-vocab-finish');
     try {
       await signIn(page, user);
+      // The previously flaky CI request was V1-F1. Exercise both its correct
+      // and wrong choices repeatedly, and check the saved marks as well as the
+      // HTTP responses before finishing the whole section.
+      const form = vocabularyBank.weeks[0].wordForms.find((item) => item.id === 'V1-F1');
+      const right = form.options[form.answer_index];
+      const wrong = form.options.find((option) => option !== right);
+      for (const [value, correct] of [[right, true], [wrong, false], [right, true], [right, true]]) {
+        await markVocabulary(page, form.id, value, correct);
+      }
+      const attempts = await admin.from('week_vocabulary_attempts').select('answer,correct')
+        .eq('user_id', user.id).eq('week_number', 1).eq('item_id', form.id);
+      if (attempts.error) throw attempts.error;
+      expect(attempts.data.filter((row) => row.answer === right && row.correct).length).toBe(3);
+      expect(attempts.data.filter((row) => row.answer === wrong && !row.correct).length).toBe(1);
+
       await answerVocabulary(page);
 
       // The page opens at step 7, because every required question is answered

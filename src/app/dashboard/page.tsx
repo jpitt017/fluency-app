@@ -24,13 +24,13 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
   const aiLabel = aiRemaining === 0 ? 'Finished for today' : aiShare <= 0.25 ? 'Nearly finished for today' : 'Plenty left today';
   const staff = summary.role === 'teacher' || summary.role === 'admin';
   const obs = staff ? await loadObservabilitySummary(7) : null;
-  const skills: { key: SkillArea; label: string; href: string; action: string }[] = [
-    { key: 'reading', label: 'Reading', href: `/week/${weekNumber}`, action: 'Read this week’s text' },
-    { key: 'listening', label: 'Listening', href: `/week/${weekNumber}`, action: 'Open this week’s listening' },
-    { key: 'speaking', label: 'Speaking', href: `/labs?week=${weekNumber}#speaking`, action: 'Practise speaking' },
-    { key: 'writing', label: 'Writing', href: `/labs?week=${weekNumber}#writing`, action: 'Practise writing' },
-    { key: 'grammar', label: 'Grammar', href: '/review', action: 'Practise your mistakes' },
-    { key: 'vocabulary', label: 'Vocabulary', href: '/review', action: 'Practise your mistakes' },
+  const skills: { key: SkillArea; label: string; action: string }[] = [
+    { key: 'reading', label: 'Reading', action: 'Read this week’s text' },
+    { key: 'listening', label: 'Listening', action: 'Open this week’s listening' },
+    { key: 'speaking', label: 'Speaking', action: 'Practise speaking' },
+    { key: 'writing', label: 'Writing', action: 'Practise writing' },
+    { key: 'grammar', label: 'Grammar', action: 'Practise this week’s grammar' },
+    { key: 'vocabulary', label: 'Vocabulary', action: 'Practise this week’s words' },
   ];
   if (!data.signedIn) return <main className="mx-auto max-w-3xl px-4 py-16">
     <h1 className="font-serif text-3xl font-semibold">Your dashboard</h1>
@@ -78,7 +78,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       )}
       <p className="mt-1 text-sm text-stone-600">Your AI practice starts again every night at midnight. This is Madrid time.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {skills.map((skill) => <Link key={skill.key} href={skill.href} className="rounded-xl border border-stone-200 p-4 hover:border-indigo-400">
+        {skills.map((skill) => <Link key={skill.key} href={`/week/${weekNumber}#${skill.key}-practice`} prefetch={false} className="rounded-xl border border-stone-200 p-4 hover:border-indigo-400">
           <strong>{skill.label}</strong><p className="mt-1 text-sm text-stone-600">{Math.round(Number(data.dashboard?.skills?.[skill.key]?.score ?? 0))}%</p>
           <p className="mt-2 text-sm font-semibold text-indigo-700">{skill.action} →</p>
         </Link>)}
