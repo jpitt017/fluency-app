@@ -1,6 +1,6 @@
 # Migration history format (live vs repo)
 
-**Status:** write-up and proposal only. This document records read-only checks performed on 2026-11-24. No migration files, live schema, or `supabase_migrations.schema_migrations` rows were changed.
+**Status:** historical read-only audit plus the prospective convention below. The observations record read-only checks performed on 2026-11-24; no migration files, live schema, or `supabase_migrations.schema_migrations` rows were changed by that audit. The convention applies only to new migrations and does not authorize rewriting existing history.
 
 ## Scope checked (read-only)
 
@@ -55,28 +55,17 @@ Repo 0039 is `0039_listening_review_bucket.sql` (private `course-audio-review` b
 
 Live rows for 0042–0046 and 20261122190000/20261122190100 have `statements = null`. That means the history table records that versions were applied, but not the SQL text. It reduces auditability and makes live-vs-repo comparison harder for those rows.
 
-## Proposed consistent format
+## Prospective standard for new migrations
 
-**Proposal (not applied):** Standardize this repo on **numeric, zero-padded, ordered migration filenames** as the canonical repo format, and make live `supabase_migrations.schema_migrations.version` match the repo filename version for new migrations.
+**Adopted convention:** Every new migration uses the repo's numeric, zero-padded filename format and is recorded in live `supabase_migrations.schema_migrations` under that same numeric version. For example, a new file `0050_example_name.sql` is recorded with version `0050` and name `example_name`, not with a timestamp. Keep the applied SQL in `statements` when the apply path supports it.
 
-Rationale:
+This is a forward-looking rule, not a cleanup or renumbering of the historical rows above. In particular, leave the existing 0038/0039, 0041, and 0047/0048 history entries exactly as documented here: do not edit, rename, replace, or normalize those rows as part of adopting the convention. Any separate reconciliation plan remains subject to explicit approval.
 
-- The repo already uses numeric filenames (`0001_...sql` through `0048_...sql`).
-- Existing tooling/docs and developer muscle memory in this repo refer to numeric migration numbers.
-- Numeric versions are short and readable in PRs; timestamps are useful as metadata but noisy as primary identifiers in this repo's current layout.
-- The inconsistency to eliminate is the mixed live history, not the repo naming convention.
+Before adding a new migration, check the newest number on `main`, live history, and open PRs that touch `supabase-b1-b2/migrations/`; the numeric version must be unique across all three.
 
-Canonical rule (proposed):
+## Historical reconciliation plan (separate approval required; not executed)
 
-1. Repo migration filename: `NNNN_snake_case_name.sql`.
-2. Live `schema_migrations.version`: `NNNN` (same number).
-3. Live `schema_migrations.name`: `snake_case_name` (same name).
-4. `schema_migrations.statements` should contain the applied SQL when the apply path supports it.
-5. No two migrations may share a version across `main`, live, and open PRs touching `supabase-b1-b2/migrations/`.
-
-## Exact plan to switch (requires approval before any change)
-
-> **Do not execute this plan without explicit approval.** Steps marked "live write" change production metadata or schema; steps marked "repo change" change tracked files.
+> **Do not execute this historical cleanup plan without explicit approval.** It concerns reconciling legacy rows/objects, not the prospective standard for new migrations. Steps marked "live write" change production metadata or schema; steps marked "repo change" change tracked files.
 
 ### Phase A — Read-only audit (complete for this write-up; re-run before execution)
 
