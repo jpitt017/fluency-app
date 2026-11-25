@@ -183,9 +183,8 @@ test('learner navigation remembers the last opened week and hides staff links', 
   for (const label of ['Curriculum', 'Assessments', 'Teacher', 'Pricing']) {
     await expect(nav.getByRole('link', { name: label })).toHaveCount(0);
   }
-  await page.getByRole('link', { name: 'Start speaking task' }).click();
-  await expect(page.getByText(/Speak for 60.90 seconds/)).toBeVisible();
-  await expect(page.locator('#speaking').getByRole('link', { name: '← Back to Week 4' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Plan, record and compare' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '2. Record · 60–90 seconds' })).toBeVisible();
   await page.reload();
   await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
 });
