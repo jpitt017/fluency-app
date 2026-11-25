@@ -1,8 +1,10 @@
 import 'server-only';
 import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import listeningSupport from '../../supabase-b1-b2/content/curriculum/listening-support-weeks-01-04.json';
+import readingSupportContent from '../../supabase-b1-b2/content/curriculum/reading-support-weeks-01-04.json';
 import vocabularyMeanings from './vocabulary-meanings.json';
 import { projectSupport } from './listening-support.mjs';
+import { projectReadingSupport } from './reading-support.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { projectInputQuestions } from './input-marking.mjs';
 
@@ -47,7 +49,22 @@ export type LearnerListening = {
   total: number;
   transcriptUnlocked: boolean;
 };
-export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; shadowingChunks: { text: string; note: string; audioUrl: string | null }[]; writingPrompt: string; reading: Input; listening: Input; listeningSupport: LearnerListening };
+export type LearnerReadingSupport = {
+  context: string;
+  predict: string;
+  keyWords: { word: string; meaning: string; es: string; example: string; note: string | null }[];
+  glosses: { tap: string; meaning: string; es: string }[];
+  cardWords: { word: string; meaning?: string }[];
+  text: { text: string; gloss?: string; card?: string }[];
+  glossCheck: { id: string; stem: string; options: string[] }[] | null;
+};
+export type LearnerReading = {
+  support: LearnerReadingSupport | null;
+  answered: number;
+  total: number;
+  questionsAnswered: boolean;
+};
+export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; shadowingChunks: { text: string; note: string; audioUrl: string | null }[]; writingPrompt: string; reading: Input; listening: Input; readingSupport: LearnerReading; listeningSupport: LearnerListening };
 
 /** Explicit allowlist: never serialize answer keys, models or listening transcripts. */
 export async function loadLearnerWeek(number: number): Promise<LearnerWeek | null> {
@@ -77,7 +94,9 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
     // drops key, reason and accepted answers, so neither path can leak one.
     return projectInputQuestions(rows.length ? rows : fallback) as LearnerQuestion[];
   };
+  const readingQuestions = questionsFor('reading', reading.questions);
   const listeningQuestions = questionsFor('listening', listening.questions);
+  const readingSupport = await loadReadingSupport(number, readingQuestions, reading.text, reading.predict);
   const listeningSupport = await loadListeningSupport(number, listeningQuestions, listening.script);
 
   return {
@@ -85,8 +104,9 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
     shadowingChunks: (week.speaking.shadowingChunks ?? []).map((chunk: { chunk: string; listenFor: string; audioUrl?: string }) => ({ text: chunk.chunk, note: chunk.listenFor, audioUrl: chunk.audioUrl ?? null })),
     speakingPrompt: week.speaking.prompt, speakingLength: week.speaking.flow.record.match(/\b\d+[–-]\d+\s*s\b/)?.[0].replace(/\s*s$/, ' seconds') ?? null, cueCard: week.speaking.cueCard,
     writingPrompt: week.writing.prompt,
-    reading: { title: reading.title, text: reading.text, questions: questionsFor('reading', reading.questions) },
+    reading: { title: reading.title, text: reading.text, questions: readingQuestions },
     listening: { title: listening.title, audioUrl: (listening as { audioUrl?: string }).audioUrl, questions: listeningQuestions },
+    readingSupport,
     listeningSupport,
   };
 }
@@ -101,6 +121,55 @@ function cardMeanings(weekNumber: number, words: string[]): Record<string, strin
     if (definition) found[word] = definition;
   }
   return found;
+}
+
+/**
+ * Build reading support and gate only card-word definitions and the optional
+ * check on saved, server-checked answers to every reading question.
+ */
+async function loadReadingSupport(
+  weekNumber: number,
+  questions: LearnerQuestion[],
+  text: string,
+  predict: string,
+): Promise<LearnerReading> {
+  const authored = readingSupportContent.weeks.find((entry) => entry.week === weekNumber);
+  const cardTerms = (authored?.cardWords ?? []).map((entry) => entry.card);
+  let answeredIds = new Set<string>();
+  try {
+    const client = await createServerSupabase();
+    const user = client ? (await client.auth.getUser()).data.user : null;
+    if (client && user) {
+      const saved = await client
+        .from('week_input_answers')
+        .select('item_id')
+        .eq('user_id', user.id)
+        .eq('week_number', weekNumber)
+        .eq('skill', 'reading');
+      if (!saved.error && saved.data) answeredIds = new Set(saved.data.map((row) => row.item_id as string));
+    }
+  } catch {
+    // Signed out or a failed query: keep the meanings and optional check locked.
+  }
+  const answered = questions.filter((question) => answeredIds.has(question.id)).length;
+  const questionsAnswered = questions.length > 0 && answered === questions.length;
+  const support = projectReadingSupport(readingSupportContent, weekNumber, {
+    text,
+    predict,
+    cardMeanings: cardMeanings(weekNumber, cardTerms),
+    questionsAnswered,
+  });
+  return {
+    support: support && {
+      ...support,
+      // Keep the answer key and feedback server-side. The check is not sent
+      // before the saved-answer gate opens it.
+      glossCheck: questionsAnswered ? support.glossCheck : null,
+    },
+    answered,
+    total: questions.length,
+    questionsAnswered,
+  };
 }
 
 /**

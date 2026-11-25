@@ -136,15 +136,13 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
   await expect(grammar.getByText(/Sign in to check and save/)).toBeVisible();
 });
 
-test('signed out, the last vocabulary step offers Finish rather than a dead Next', async ({ page }) => {
+test('signed out, reading card meanings stay gated while vocabulary remains available', async ({ page }) => {
   await page.goto('/week/1');
-  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
-  for (let step = 1; step < 7; step += 1) {
-    await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
-  }
-  await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-  await expect(vocabulary.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0);
-  await expect(vocabulary.getByRole('button', { name: 'Finish vocabulary' })).toBeDisabled();
+  const reading = page.locator('#reading-practice');
+  await reading.getByText('Go further (2–3 min)', { exact: true }).click();
+  await expect(reading.getByText('Answer the reading questions first to open the card-word meanings and gloss check.')).toBeVisible();
+  await expect(reading).not.toContainText('something new and difficult that needs effort');
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 });
 
 test.describe('with a signed-in learner', () => {

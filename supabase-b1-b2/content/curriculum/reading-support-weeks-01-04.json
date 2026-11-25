@@ -1,0 +1,511 @@
+{
+  "version": "reading-support-v1",
+  "status": "pilot draft: second-teacher review pending (especially Spanish)",
+  "rules": {
+    "keepExistingPredict": true,
+    "keyWordsPerWeek": 2,
+    "glossesPerWeek": 6,
+    "definitionMaxWords": 11,
+    "glossesAvailableWhileReading": true,
+    "cardWordsTappableOnlyAfterQuestionsAnswered": true,
+    "why": "Each week's X3 question asks learners to find a card word in the text, so card meanings must not show before the questions are answered.",
+    "glossCheckUnder": "Go further (2–3 min), after the questions; encouraged, not required",
+    "answerIndexServerOnly": true,
+    "notGlossedOnPurpose": "grammar tested by X questions (would, if I were you, don't have to/mustn't, quieter) and the X3 target words"
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "intro": {
+        "context": "Lucía is from Seville, in the south of Spain. Last year she moved to Manchester, in the north of England.",
+        "predictFromContent": true
+      },
+      "keyWords": [
+        {
+          "word": "miss",
+          "meaning": "feel sad because someone or something is not with you",
+          "es": "echar de menos",
+          "example": "I miss my family when I'm away.",
+          "note": "miss = echar de menos, not only 'perder'"
+        },
+        {
+          "word": "give up",
+          "meaning": "stop trying to do something",
+          "es": "rendirse",
+          "example": "The exam was hard, but I didn't give up."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "square",
+          "meaning": "an open public place in a town",
+          "es": "la plaza",
+          "why": "B1 meaning differs from the shape"
+        },
+        {
+          "tap": "guests",
+          "meaning": "people who stay in a hotel",
+          "es": "los huéspedes",
+          "why": "hotel meaning"
+        },
+        {
+          "tap": "colleague",
+          "meaning": "a person you work with",
+          "es": "un compañero de trabajo",
+          "why": "above A2"
+        },
+        {
+          "tap": "miss",
+          "meaning": "feel sad because something is not with you",
+          "es": "echo de menos",
+          "why": "key word"
+        },
+        {
+          "tap": "proud",
+          "meaning": "happy about something good you did",
+          "es": "orgullosa",
+          "why": "useful, often unknown"
+        },
+        {
+          "tap": "give up",
+          "meaning": "stop trying to do something",
+          "es": "rendirme",
+          "why": "key word; phrasal verb"
+        }
+      ],
+      "cardWords": [
+        {
+          "text": "challenge",
+          "card": "challenge"
+        },
+        {
+          "text": "get used to",
+          "card": "get used to"
+        },
+        {
+          "text": "Gradually",
+          "card": "gradually"
+        },
+        {
+          "text": "look back on",
+          "card": "look back on"
+        }
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"I miss my family.\" This means I:",
+          "options": [
+            "feel sad because they aren't here",
+            "can't find them",
+            "forget them"
+          ],
+          "answerIndex": 0,
+          "feedback": "Miss = echar de menos."
+        },
+        {
+          "stem": "\"Don't give up!\" This means:",
+          "options": [
+            "don't stop trying",
+            "don't start",
+            "don't be late"
+          ],
+          "answerIndex": 0,
+          "feedback": "Give up = stop trying."
+        },
+        {
+          "stem": "\"She was proud of her exam result.\" She felt:",
+          "options": [
+            "happy about something good she did",
+            "surprised",
+            "worried"
+          ],
+          "answerIndex": 0,
+          "feedback": "Proud = orgulloso/a."
+        },
+        {
+          "stem": "\"Gradually, I made new friends.\" Gradually means:",
+          "options": [
+            "slowly, over time",
+            "suddenly",
+            "never"
+          ],
+          "answerIndex": 0,
+          "feedback": "Gradually = poco a poco."
+        }
+      ],
+      "wordCount": 219
+    },
+    {
+      "week": 2,
+      "intro": {
+        "context": "\"Ask Sam\" is an advice column. People write to Sam with a problem, and Sam answers.",
+        "predictFromContent": true
+      },
+      "keyWords": [
+        {
+          "word": "volunteer",
+          "meaning": "work without pay to help people",
+          "es": "hacer voluntariado",
+          "example": "She volunteers at an animal hospital."
+        },
+        {
+          "word": "qualifications",
+          "meaning": "exams or courses you have passed",
+          "es": "los títulos, la formación",
+          "example": "You need qualifications to be a nurse."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "call centre",
+          "meaning": "an office where people answer phone calls for a company",
+          "es": "un centro de atención telefónica",
+          "why": "British workplace term"
+        },
+        {
+          "tap": "training course",
+          "meaning": "a course that teaches the skills for a job",
+          "es": "un curso de formación",
+          "why": "chunk"
+        },
+        {
+          "tap": "in their thirties",
+          "meaning": "aged between 30 and 39",
+          "es": "de treinta y tantos años",
+          "why": "hard to guess"
+        },
+        {
+          "tap": "qualifications",
+          "meaning": "exams or courses you have passed",
+          "es": "los títulos",
+          "why": "key word"
+        },
+        {
+          "tap": "volunteer",
+          "meaning": "work without pay to help people",
+          "es": "hacer voluntariado",
+          "why": "key word"
+        },
+        {
+          "tap": "application",
+          "meaning": "the form you send when you ask for a place",
+          "es": "la solicitud",
+          "why": "false friend (≠ aplicación)"
+        }
+      ],
+      "cardWords": [
+        {
+          "text": "goal",
+          "card": "goal"
+        },
+        {
+          "text": "intend",
+          "card": "intend"
+        },
+        {
+          "text": "deadline",
+          "card": "deadline"
+        },
+        {
+          "text": "apply",
+          "card": "apply"
+        },
+        {
+          "text": "career",
+          "card": "career"
+        },
+        {
+          "text": "looking forward to",
+          "card": "look forward to"
+        }
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"I volunteer at a hospital.\" This means I:",
+          "options": [
+            "work there without pay",
+            "am a patient there",
+            "am a doctor there"
+          ],
+          "answerIndex": 0,
+          "feedback": "Volunteer = trabajar sin cobrar para ayudar."
+        },
+        {
+          "stem": "\"Send your application by Friday.\" An application is:",
+          "options": [
+            "the form you send to ask for a place",
+            "the money you pay",
+            "a phone app"
+          ],
+          "answerIndex": 0,
+          "feedback": "Application = solicitud, not 'aplicación'."
+        },
+        {
+          "stem": "\"My parents are in their sixties.\" They are:",
+          "options": [
+            "aged 60–69",
+            "married for 60 years",
+            "born in the 1960s"
+          ],
+          "answerIndex": 0,
+          "feedback": "In their sixties = sesenta y tantos años."
+        },
+        {
+          "stem": "\"I've set a goal: run 5 km.\" This means I've:",
+          "options": [
+            "decided on something to achieve",
+            "finished it",
+            "forgotten it"
+          ],
+          "answerIndex": 0,
+          "feedback": "Set a goal = fijarse una meta."
+        }
+      ],
+      "wordCount": 213
+    },
+    {
+      "week": 3,
+      "intro": {
+        "context": "Jess is moving into a shared house next Saturday. Priya, one of the people who lives there, writes to her.",
+        "predictFromContent": true
+      },
+      "keyWords": [
+        {
+          "word": "bills",
+          "meaning": "money you pay for gas, electricity, water and internet",
+          "es": "las facturas",
+          "example": "We pay the bills every month."
+        },
+        {
+          "word": "rota",
+          "meaning": "a list that shows whose turn it is",
+          "es": "un cuadrante de turnos",
+          "example": "The cleaning rota is on the fridge."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "split the bills",
+          "meaning": "share the cost of the bills",
+          "es": "dividir las facturas",
+          "why": "hard to guess"
+        },
+        {
+          "tap": "share",
+          "meaning": "the part that you must pay",
+          "es": "tu parte",
+          "why": "noun meaning"
+        },
+        {
+          "tap": "rota",
+          "meaning": "a list that shows whose turn it is",
+          "es": "un cuadrante de turnos",
+          "why": "key word"
+        },
+        {
+          "tap": "a fortnight",
+          "meaning": "two weeks",
+          "es": "quince días",
+          "why": "British word"
+        },
+        {
+          "tap": "nobody minds",
+          "meaning": "nobody is unhappy about it",
+          "es": "a nadie le importa",
+          "why": "hard to guess"
+        },
+        {
+          "tap": "borrowing",
+          "meaning": "taking something and giving it back later",
+          "es": "tomar prestado",
+          "why": "useful verb"
+        }
+      ],
+      "cardWords": [
+        {
+          "text": "arrange",
+          "card": "arrange"
+        },
+        {
+          "text": "routines",
+          "card": "routine"
+        },
+        {
+          "text": "get on with",
+          "card": "get on with"
+        },
+        {
+          "text": "politely",
+          "card": "politely"
+        }
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"We split the cost of the taxi.\" This means we:",
+          "options": [
+            "shared it",
+            "didn't pay",
+            "paid it all"
+          ],
+          "answerIndex": 0,
+          "feedback": "Split = dividir."
+        },
+        {
+          "stem": "\"I see my grandparents once a fortnight.\" This means:",
+          "options": [
+            "every two weeks",
+            "every weekend",
+            "twice a year"
+          ],
+          "answerIndex": 0,
+          "feedback": "A fortnight = two weeks."
+        },
+        {
+          "stem": "\"Nobody minds if you're late.\" This means:",
+          "options": [
+            "nobody is unhappy about it",
+            "nobody knows",
+            "nobody comes"
+          ],
+          "answerIndex": 0,
+          "feedback": "Nobody minds = a nadie le importa."
+        },
+        {
+          "stem": "\"We have a lot in common.\" This means we:",
+          "options": [
+            "like the same things",
+            "live together",
+            "have a lot of money"
+          ],
+          "answerIndex": 0,
+          "feedback": "Have a lot in common = tener mucho en común."
+        }
+      ],
+      "wordCount": 221
+    },
+    {
+      "week": 4,
+      "intro": {
+        "context": "Bath is a small city in the west of England, about 90 minutes from London. This guide is for a weekend visit.",
+        "predictFromContent": true
+      },
+      "keyWords": [
+        {
+          "word": "bathe",
+          "meaning": "relax or swim in water",
+          "es": "bañarse",
+          "example": "You can bathe in the warm water of the spa."
+        },
+        {
+          "word": "row",
+          "meaning": "a line of things next to each other",
+          "es": "una hilera, una fila",
+          "example": "There's a row of shops near the station."
+        }
+      ],
+      "glosses": [
+        {
+          "tap": "World Heritage Site",
+          "meaning": "a place that is protected because it is very important",
+          "es": "Patrimonio de la Humanidad",
+          "why": "name of a status"
+        },
+        {
+          "tap": "bathe",
+          "meaning": "relax or swim in water",
+          "es": "bañarse",
+          "why": "key word"
+        },
+        {
+          "tap": "row",
+          "meaning": "a line of things next to each other",
+          "es": "una hilera",
+          "why": "key word"
+        },
+        {
+          "tap": "don't miss",
+          "meaning": "make sure you see it",
+          "es": "no te pierdas",
+          "why": "chunk"
+        },
+        {
+          "tap": "Scones",
+          "meaning": "small round cakes, eaten with cream and jam",
+          "es": "bollitos (scones)",
+          "why": "British food"
+        },
+        {
+          "tap": "argue",
+          "meaning": "disagree, often angrily",
+          "es": "discutir",
+          "why": "false friend (≠ argüir)"
+        }
+      ],
+      "cardWords": [
+        {
+          "text": "destination",
+          "card": "destination"
+        },
+        {
+          "text": "Set off",
+          "card": "set off"
+        },
+        {
+          "text": "custom",
+          "card": "custom"
+        },
+        {
+          "text": "tradition",
+          "card": "tradition"
+        },
+        {
+          "text": "local",
+          "card": "local"
+        }
+      ],
+      "glossCheck": [
+        {
+          "stem": "\"The houses stand in a row.\" They are:",
+          "options": [
+            "in a line, next to each other",
+            "in a circle",
+            "on a hill"
+          ],
+          "answerIndex": 0,
+          "feedback": "Row = hilera."
+        },
+        {
+          "stem": "\"Don't miss the museum!\" This means:",
+          "options": [
+            "make sure you see it",
+            "don't go there",
+            "it's closed"
+          ],
+          "answerIndex": 0,
+          "feedback": "Don't miss = no te pierdas."
+        },
+        {
+          "stem": "\"My brothers often argue.\" They:",
+          "options": [
+            "disagree, often angrily",
+            "play together",
+            "talk on the phone"
+          ],
+          "answerIndex": 0,
+          "feedback": "Argue = discutir, not 'argüir'."
+        },
+        {
+          "stem": "\"I always travel light.\" This means I:",
+          "options": [
+            "take only a small bag",
+            "travel at night",
+            "travel by plane"
+          ],
+          "answerIndex": 0,
+          "feedback": "Travel light = viajar con poco equipaje."
+        }
+      ],
+      "wordCount": 219
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import GrammarPractice from '@/components/b1b2/GrammarPractice';
 import FocusWeekSection from '@/components/b1b2/FocusWeekSection';
 import { ListeningAfterQuestions, ListeningBeforePlayer } from '@/components/b1b2/ListeningSupport';
+import { ReadingAfterQuestions, ReadingBeforeQuestions, ReadingText } from '@/components/b1b2/ReadingSupport';
 import ListeningTrialPlayer from '@/components/b1b2/ListeningTrialPlayer';
 import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
@@ -46,8 +47,16 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       <p className="mt-4 rounded-xl bg-emerald-50 p-4"><strong>By the end of this week I can… </strong>{details?.canDo ?? week.cefr.canDo}</p></header>
     {!details ? <section id="week-activities-unavailable" className="scroll-mt-20 rounded-xl border border-stone-200 p-5"><h2 tabIndex={-1} className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">This week&apos;s tasks aren&apos;t ready yet. You can practise in Practice.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Free practice</Link></section> : <>
       {grammar && <GrammarPractice grammar={grammar} week={number} signedIn={viewer.signedIn} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
+      <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20">
+        <h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2>
+        <ReadingBeforeQuestions support={details.readingSupport.support} />
+        {details.readingSupport.support ? <ReadingText support={details.readingSupport.support} /> : <p className="whitespace-pre-line leading-7">{details.reading.text}</p>}
+        <div id="reading-questions">
+          <WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} />
+        </div>
+        <ReadingAfterQuestions week={number} reading={details.readingSupport} />
+      </section>
       {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} />}
-      <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2><p className="whitespace-pre-line leading-7">{details.reading.text}</p><WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} /></section>
       <section id="listening-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Listening: {details.listening.title}</h2>
         <ListeningBeforePlayer support={details.listeningSupport.support} />
         {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio} /></> : details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}
