@@ -262,7 +262,7 @@ test('the saved view is server-side, and the score is never taken from the brows
   assert.match(finish, /item\.counted && results\[item\.id\] === false/);
   const feedback = read('components/b1b2/PracticeFeedback.tsx');
   assert.doesNotMatch(feedback, /of \{summary\.total\} right|to practise in Review|Nothing new to review/);
-  assert.doesNotMatch(read('lib/curriculum/week-practice.mjs'), /Well done! You got/);
+  assert.doesNotMatch(read('lib/curriculum/week-practice.mjs'), /Well done!|You got/);
 });
 
 test('completion records are included in "Delete my data"', () => {

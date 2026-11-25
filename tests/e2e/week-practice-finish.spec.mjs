@@ -361,6 +361,20 @@ test.describe('with a signed-in learner', () => {
       await page.reload();
       await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+      await expect(grammar.getByText('After checking more answers, press Finish again to update your score.')).toBeVisible();
+
+      // Check one more answer in the UI, then leave and return to that step.
+      // The newly saved choice and its feedback survive navigation; the last
+      // finished snapshot stays unchanged until the learner finishes again.
+      const more = grammar.locator('div.rounded-xl.bg-stone-50').filter({ hasText: 'I ___ dinner when my phone rang.' });
+      await more.getByRole('radio', { name: 'was cooking', exact: true }).check();
+      await more.getByRole('button', { name: 'Check', exact: true }).click();
+      await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
+      await grammar.getByRole('button', { name: 'Next', exact: true }).click();
+      await grammar.getByRole('button', { name: 'Previous', exact: true }).click();
+      await expect(more.getByRole('radio', { name: 'was cooking', exact: true })).toBeChecked();
+      await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
 
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
       await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
