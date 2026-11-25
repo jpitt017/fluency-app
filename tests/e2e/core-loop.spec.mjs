@@ -120,7 +120,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     ).toBeVisible();
 
     await page.goto('/labs?week=4');
-    await expect(page.getByText(/word stress in featured words and -ed endings/i)).toBeVisible();
+    await expect(page.getByText(/word stress in featured words and -ed endings/i).first()).toBeVisible();
 
     await page.goto('/review?week=4');
     await expect(page.getByText(/A friend is visiting your town and missed the travel guide/i)).toBeVisible();
