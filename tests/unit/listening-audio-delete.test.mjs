@@ -14,6 +14,7 @@ import {
   isTrialFileName,
   trialObjectKeys,
   assertReviewKey,
+  assertSpeakingTrackKey,
 } from '../../scripts/lib/course-audio/delete-guard.mjs';
 import { planTrialDeletion, runTrialDeletion } from '../../scripts/lib/course-audio/delete-plan.mjs';
 import { deleteProbeObjects } from '../../scripts/lib/course-audio/publish.mjs';
@@ -144,6 +145,8 @@ test('a review key is a track, a voice check, or a per-speaker sample — nothin
     'weeks-01-04/ai-trial/voice-check-Marta.mp3',
     'weeks-01-04/ai-trial/week-3-sample-Dan.mp3',
     'weeks-01-04/ai-trial/week-3-sample-Marta.mp3',
+    'weeks-01-04/ai-trial/speaking-week-1-model.mp3',
+    'weeks-01-04/ai-trial/speaking-week-4-shadowing-3.mp3',
   ]) {
     assert.equal(assertReviewKey(key), key);
   }
@@ -153,6 +156,8 @@ test('a review key is a track, a voice check, or a per-speaker sample — nothin
     'weeks-01-04/ai-trial/week-3-sample-Dan.mp3.bak',
     'weeks-01-04/ai-trial/sample-Dan.mp3',
     'weeks-01-04/ai-trial/voice-check-Marta.wav',
+    'weeks-01-04/ai-trial/speaking-week-5-model.mp3',
+    'weeks-01-04/ai-trial/speaking-week-1-shadowing-4.mp3',
     'weeks-01-04/ai-trial/notes.txt',
   ]) {
     assert.throws(() => assertReviewKey(key), /Refusing/, `should refuse ${key}`);
@@ -160,6 +165,22 @@ test('a review key is a track, a voice check, or a per-speaker sample — nothin
   // A sample is audition material, so it can never be uploaded to the live bucket.
   assert.throws(
     () => assertReviewKey('weeks-01-04/ai-trial/week-3-sample-Dan.mp3', 'course-audio'),
+    /Refusing/,
+  );
+  assert.equal(
+    assertSpeakingTrackKey('weeks-01-04/ai-trial/speaking-week-2-shadowing-1.mp3', 'course-audio'),
+    'weeks-01-04/ai-trial/speaking-week-2-shadowing-1.mp3',
+  );
+  assert.throws(
+    () => assertSpeakingTrackKey('weeks-01-04/ai-trial/speaking-week-2-shadowing-4.mp3', 'course-audio'),
+    /Refusing/,
+  );
+  assert.throws(
+    () => assertSpeakingTrackKey('weeks-01-04/ai-trial/speaking-week-2-model.mp3', 'other-bucket'),
+    /Refusing/,
+  );
+  assert.throws(
+    () => assertReviewKey('weeks-01-04/ai-trial/speaking-week-2-model.mp3', 'course-audio'),
     /Refusing/,
   );
 });

@@ -395,12 +395,12 @@ test('the workflow keeps the release override off every other step', () => {
     'the release override and the service-role key must be step-scoped, not job-wide',
   );
 
-  // And the override appears only on the two approval steps. Split into steps
+  // And the override appears only on the approval steps. Split into steps
   // first: a greedy regex across the whole file would attribute one step's env
   // to every step before it.
   const steps = workflow.split(/\n\s{6}- name: /).slice(1);
   const overrideSteps = steps
     .filter((step) => /^\s*ALLOW_PRODUCTION_RELEASE:/m.test(step))
     .map((step) => step.split('\n')[0].trim());
-  assert.deepEqual(overrideSteps.sort(), ['Release approved weeks', 'Revoke a track']);
+  assert.deepEqual(overrideSteps.sort(), ['Release approved speaking clips', 'Release approved weeks', 'Revoke a track']);
 });

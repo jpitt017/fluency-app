@@ -27,9 +27,10 @@ export const TRIAL_WEEKS = [1, 2, 3, 4];
 export const ALLOWED_BUCKETS = [DEFAULT_REVIEW_BUCKET, AUDIO_BUCKET];
 
 /**
- * Audition clips: a voice check or a Week 3 sample. They exist to be listened to
- * before a track is recorded, so they are only ever in the private bucket and
- * are never named by an approval row.
+ * Listening auditions: a voice check or a Week 3 sample. They exist to be
+ * listened to before a listening track is recorded, so they are private-only
+ * and never named by an approval row. Speaking review clips have their own
+ * explicit allow-list below.
  */
 export const AUDITION_CLIP_NAMES = [
   'tom-two-lines.mp3',
@@ -139,11 +140,20 @@ export function assertTrialTrackKey(key, bucket = AUDIO_BUCKET) {
   return key;
 }
 
+/** Exact Week 1–4 speaking model/chunk paths, valid only in course audio buckets. */
+export function assertSpeakingTrackKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
+  assertTrialObjectKey(key, bucket);
+  const name = key.slice(TRIAL_PREFIX.length);
+  if (!/^speaking-week-[1-4]-(?:model|shadowing-[1-3])\.mp3$/.test(name)) {
+    throw new Error(`Refusing "${key}": it is not an authored Week 1–4 speaking clip`);
+  }
+  return key;
+}
+
 /**
- * Anything the pipeline uploads to, or signs from, the review bucket. That is the
- * track files, the per-speaker voice-check clips, and the per-speaker sample
- * clips (week 3's warmer read), and nothing else. Samples are audition material
- * only: they are never released and never referenced by an approval row.
+ * Anything the pipeline uploads to, or signs from, the review bucket: listening
+ * track files, audition clips, and the exact Week 1–4 speaking model/chunk keys.
+ * Listening samples remain audition-only and are never released.
  */
 export function assertReviewKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
   assertTrialObjectKey(key, bucket);
@@ -156,6 +166,12 @@ export function assertReviewKey(key, bucket = DEFAULT_REVIEW_BUCKET) {
       throw new Error(`Refusing "${key}": audition clips only live in ${DEFAULT_REVIEW_BUCKET}`);
     }
     return key;
+  }
+  if (/^speaking-week-[1-4]-(?:model|shadowing-[1-3])\.mp3$/.test(name)) {
+    if (bucket !== DEFAULT_REVIEW_BUCKET) {
+      throw new Error(`Refusing "${key}": speaking review clips only live in ${DEFAULT_REVIEW_BUCKET}`);
+    }
+    return assertSpeakingTrackKey(key, bucket);
   }
   return assertTrialTrackKey(key, bucket);
 }

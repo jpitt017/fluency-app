@@ -43,7 +43,14 @@ import {
   readListeningWeeks,
   week3SampleLines,
 } from '../../scripts/lib/course-audio/listening-trial.mjs';
-import { generateSpeakingVoiceCheck } from '../../scripts/lib/course-audio/speaking-trial.mjs';
+import {
+  generateSpeakingTrials,
+  generateSpeakingVoiceCheck,
+  publishSpeakingWeek,
+  readSpeakingClipSpecs,
+  SPEAKING_WEEK_SPEAKERS,
+  speakingClipKey,
+} from '../../scripts/lib/course-audio/speaking-trial.mjs';
 
 const tts = readFileSync(new URL('../../scripts/lib/course-audio/tts.mjs', import.meta.url), 'utf8');
 const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', import.meta.url), 'utf8');
@@ -977,7 +984,7 @@ test('the Week 3 sample reads three of each speaker\'s longest lines, at the cou
 test('the workflow offers a one-week voice sample and ships it as the `week-sample` artifact', () => {
   assert.match(
     workflow,
-    /options: \[speaking-voice-check, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
+    /options: \[speaking-voice-check, speaking-generate, speaking-release, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
   );
   assert.match(workflow, /description: 'voice-sample: pace profile \(b1 is the course pace\)'/);
   assert.match(workflow, /options: \[b1\]/, 'the warm profile is gone');
@@ -1017,9 +1024,9 @@ test('the speaking voice check reads the Week 1 model and first two chunks with 
   });
 
   assert.deepEqual(clips.map((clip) => clip.key), [
-    'week-1-speaking-model',
-    'week-1-shadowing-1',
-    'week-1-shadowing-2',
+    'weeks-01-04/ai-trial/speaking-week-1-model.mp3',
+    'weeks-01-04/ai-trial/speaking-week-1-shadowing-1.mp3',
+    'weeks-01-04/ai-trial/speaking-week-1-shadowing-2.mp3',
   ]);
   assert.equal(requests.length, 3);
   for (const [index, { url, body }] of requests.entries()) {
@@ -1046,6 +1053,107 @@ test('the speaking voice check reads the Week 1 model and first two chunks with 
   }
   assert.match(workflow, /speaking-voice-check/);
   assert.match(cli, /--speaking-voice-check/);
+});
+
+test('speaking generation creates and uploads all 16 authored clips unreleased with speaker assignments and WPM', async (t) => {
+  const outputDir = await mkdtemp(path.join(tmpdir(), 'speaking-trials-'));
+  t.after(() => rm(outputDir, { recursive: true, force: true }));
+  const requests = [];
+  const uploads = [];
+  const client = {
+    storage: {
+      from: (bucket) => ({
+        upload: async (key, body, options) => {
+          uploads.push({ bucket, key, body, options });
+          return { error: null };
+        },
+      }),
+    },
+  };
+  const clips = await generateSpeakingTrials({
+    apiKey: 'test-key',
+    client,
+    outputDir,
+    fetchImpl: async (url, init) => {
+      requests.push({ url, body: JSON.parse(init.body) });
+      return new Response(fakePcm(2));
+    },
+    encoder: async (wav, output) => writeFile(output, wav),
+  });
+  const specs = await readSpeakingClipSpecs();
+
+  assert.equal(clips.length, 16);
+  assert.equal(uploads.length, 16);
+  assert.equal(requests.length, 16);
+  assert.deepEqual(Object.keys(SPEAKING_WEEK_SPEAKERS).map(Number), [1, 2, 3, 4]);
+  assert.deepEqual(clips.map((clip) => clip.key), specs.map((spec) => spec.key));
+  for (const [index, clip] of clips.entries()) {
+    assert.equal(clip.speaker, SPEAKING_WEEK_SPEAKERS[clip.week]);
+    assert.equal(clip.pace, 0.8);
+    assert.equal(clip.durationSeconds, 3, 'two-second mocked speech plus two half-second pads');
+    assert.equal(clip.wordsPerMinute, wordsPerMinute(clip.words, 3));
+    assert.equal(clip.speakingWordsPerMinute, wordsPerMinute(clip.words, 2));
+    assert.equal(requests[index].body.voice_settings.speed, 0.8);
+    assert.ok(requests[index].url.includes(SPEAKER_VOICES[clip.speaker].voice));
+    assert.equal(uploads[index].bucket, 'course-audio-review');
+    assert.equal(uploads[index].key, clip.key);
+    const wav = await readFile(clip.mp3Path);
+    const pcm = wav.subarray(44);
+    assert.ok(pcm.subarray(0, 24_000).every((sample) => sample === 0));
+    assert.ok(pcm.subarray(pcm.length - 24_000).every((sample) => sample === 0));
+  }
+  assert.deepEqual(clips.filter((clip) => clip.kind === 'model').map((clip) => clip.speaker), [
+    'Aisha', 'Host', 'Aisha', 'Host',
+  ]);
+});
+
+test('speaking release copies only one week from private to public and does not write approval rows', async () => {
+  const operations = [];
+  const client = {
+    storage: {
+      from: (bucket) => ({
+        download: async (key) => {
+          operations.push(['download', bucket, key]);
+          return { data: new Blob([`audio:${key}`]), error: null };
+        },
+        upload: async (key) => {
+          operations.push(['upload', bucket, key]);
+          return { error: null };
+        },
+        getPublicUrl: (key) => ({ data: { publicUrl: `https://audio.test/${key}` } }),
+      }),
+    },
+  };
+  const keys = await publishSpeakingWeek(client, 2);
+  assert.deepEqual(keys, [
+    speakingClipKey(2, 'model'),
+    speakingClipKey(2, 'shadowing', 1),
+    speakingClipKey(2, 'shadowing', 2),
+    speakingClipKey(2, 'shadowing', 3),
+  ]);
+  assert.deepEqual(operations.map(([op, bucket, key]) => [op, bucket, key]), keys.flatMap((key) => [
+    ['download', 'course-audio-review', key],
+    ['upload', 'course-audio', key],
+  ]));
+  assert.throws(() => speakingClipKey(5, 'model'), /Refusing speaking audio/);
+});
+
+test('the speaking mode exposes private generation and gated release, with a review artifact', () => {
+  assert.match(workflow, /options: \[speaking-voice-check, speaking-generate, speaking-release,/);
+  assert.match(workflow, /name: speaking-review\n/);
+  assert.match(workflow, /path: audio-out\/speaking-01-04\//);
+  assert.match(workflow, /inputs\.mode == 'speaking-release'/);
+  assert.match(workflow, /node scripts\/generate-course-audio\.mjs --speaking-release/);
+  const releaseStep = workflow.split('- name: Release approved speaking clips')[1]?.split('- name:')[0];
+  assert.ok(releaseStep, 'speaking release is a separate explicit workflow mode');
+  assert.match(releaseStep, /ALLOW_PRODUCTION_RELEASE: \$\{\{ inputs\.allow_production_release && inputs\.production_ack == 'release to learners'/);
+  const cliRelease = cli.split('async function releaseSpeaking')[1]?.split('async function speakingVoiceCheck')[0];
+  assert.ok(cliRelease);
+  assert.match(cliRelease, /checkApprovalTarget\(\{ url: supabaseUrl, bypass: isApprovalBypassRequested\(\) \}\)/);
+  assert.match(cliRelease, /if \(!verdict\.ok\) throw new Error\(verdict\.reason\)/);
+  assert.match(cli, /--speaking-generate/);
+  assert.match(cli, /--speaking-release/);
+  assert.match(cli, /::notice title=Speaking clip WPM::/);
 });
 
 test('the dry-run estimate covers all four weeks and lands in the reviewed pace window', () => {

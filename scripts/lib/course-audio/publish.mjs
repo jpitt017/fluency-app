@@ -24,6 +24,7 @@ import {
   assertDeletableKeys,
   assertProbeObject,
   assertReviewKey,
+  assertSpeakingTrackKey,
   assertTrialTrackKey,
   assertTrialWeek,
   isTrialFileName,
@@ -165,8 +166,15 @@ export async function listReviewFiles(client, week, bucket = DEFAULT_REVIEW_BUCK
  */
 export async function uploadToBucket(client, target) {
   const bucket = target.bucket ?? AUDIO_BUCKET;
-  if (bucket === AUDIO_BUCKET) assertTrialTrackKey(target.key, bucket);
-  else assertReviewKey(target.key, bucket);
+  if (bucket === AUDIO_BUCKET) {
+    if (/^speaking-week-[1-4]-(?:model|shadowing-[1-3])\.mp3$/.test(target.key.slice(TRIAL_PREFIX.length))) {
+      assertSpeakingTrackKey(target.key, bucket);
+    } else {
+      assertTrialTrackKey(target.key, bucket);
+    }
+  } else {
+    assertReviewKey(target.key, bucket);
+  }
   let lastError = null;
   for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt += 1) {
     const { error } = await client.storage.from(bucket).upload(target.key, target.body, {
