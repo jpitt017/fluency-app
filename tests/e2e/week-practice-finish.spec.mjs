@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
-import { answerReadingAndFinish } from './helpers/reading-gate.mjs';
 
 /**
  * Finishing grammar and vocabulary on /week/[n].
@@ -115,13 +114,12 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
   await expect(grammar.getByText(/Sign in to check and save/)).toBeVisible();
 });
 
-test('signed out, vocabulary meanings stay gated until the reading answers are saved', async ({ page }) => {
+test('signed out, reading card meanings stay gated while vocabulary remains available', async ({ page }) => {
   await page.goto('/week/1');
-  await expect(page.getByText('Finish and save the reading questions first')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toHaveCount(0);
-  const html = await page.content();
-  expect(html).not.toContain('something new and difficult that needs effort');
-  expect(html).not.toContain('start to feel that something new is normal');
+  const reading = page.locator('#reading-practice');
+  await expect(reading.getByText('Answer the reading questions first to open the card-word meanings and gloss check.')).toBeVisible();
+  await expect(reading).not.toContainText('something new and difficult that needs effort');
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 });
 
 test.describe('with a signed-in learner', () => {
@@ -234,7 +232,6 @@ test.describe('with a signed-in learner', () => {
     const user = await createTestUser(admin, 'week-vocab-finish');
     try {
       await signIn(page, user);
-      await answerReadingAndFinish(page);
       await answerVocabulary(page);
 
       // The page opens at step 7, because every required question is answered

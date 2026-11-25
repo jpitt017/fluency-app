@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { answerReadingAndFinish, canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
+import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
 // Capture real scroll requests while allowing the browser to scroll normally.
 for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'instant']]) {
@@ -44,7 +44,7 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
     expect(await lastScroll('grammar-practice')).toEqual({ id: 'grammar-practice', behavior, block: 'start' });
   });
 
-  test(`phone keyboard: vocabulary navigation uses ${behavior} scrolling after the reading gate`, async ({ page }) => {
+  test(`phone keyboard: vocabulary navigation uses ${behavior} scrolling`, async ({ page }) => {
     test.skip(!canUseReadingGateFixture, 'Needs a service-key test learner to open vocabulary');
     test.setTimeout(180_000);
     await page.setViewportSize({ width: 375, height: 667 });
@@ -61,7 +61,6 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
     });
     const { admin, user } = await createReadingLearner(page, `practice-navigation-${motion}`);
     try {
-      await answerReadingAndFinish(page);
       await page.goto('/week/1');
       expect(await page.evaluate(() => window.practiceScrolls)).toEqual([]);
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });

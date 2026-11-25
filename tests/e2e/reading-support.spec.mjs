@@ -20,10 +20,11 @@ test('reading context, prediction, key words and tappable glosses appear before 
   // absent from the page until the saved-answer gate opens.
   await expect(reading.getByText('challenge', { exact: true })).toBeVisible();
   await expect(reading.getByRole('button', { name: 'challenge', exact: true })).toHaveCount(0);
-  const html = await response.text();
-  expect(html).not.toContain('something new and difficult that needs effort');
-  expect(html).not.toContain('start to feel that something new is normal');
-  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toHaveCount(0);
+  // The reading card words are highlighted, not interactive, and their
+  // meanings are absent from the reading section until its server-side gate.
+  await expect(reading).not.toContainText('something new and difficult that needs effort');
+  await expect(reading).not.toContainText('start to feel that something new is normal');
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 });
 
 test('card meanings and optional gloss check open only after saved reading answers; check is server-marked', async ({ page }) => {
@@ -31,10 +32,11 @@ test('card meanings and optional gloss check open only after saved reading answe
   test.setTimeout(180_000);
   const { admin, user } = await createReadingLearner(page, 'reading-support-gate');
   try {
-    const locked = await page.goto('/week/1');
-    const lockedHtml = await locked.text();
-    expect(lockedHtml).not.toContain('something new and difficult that needs effort');
-    await expect(page.locator('#reading-practice').getByRole('button', { name: 'challenge', exact: true })).toHaveCount(0);
+    await page.goto('/week/1');
+    const readingBeforeAnswer = page.locator('#reading-practice');
+    await expect(readingBeforeAnswer).not.toContainText('something new and difficult that needs effort');
+    await expect(readingBeforeAnswer.getByRole('button', { name: 'challenge', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 
     await answerReadingAndFinish(page);
     await page.goto('/week/1');

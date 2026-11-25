@@ -2,18 +2,17 @@ import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
-import { answerReadingAndFinish, canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
+import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
 /**
  * Vocabulary step 3 on a phone: the gaps live inside the text.
  *
- * The reading gate keeps vocabulary definitions out of the page until every
- * reading question has a saved mark. These interactions therefore create a
- * confirmed test learner, mark reading on the server, and are skipped without
+ * These interactions create a confirmed test learner and are skipped without
  * the service key. They pin the inline gap buttons, the word-box layout, used
  * words greyed out, and keyboard navigation (Enter opens, Escape closes and
  * returns focus). The signed-in check case also pins marking, feedback, and
- * reload restoration.
+ * reload restoration. Vocabulary practice remains available independently of
+ * the reading-card meaning gate.
  */
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,7 +43,6 @@ async function locateGapStep(page) {
 async function openGapStep(page) {
   test.skip(!canUseReadingGateFixture, 'Vocabulary interaction needs a service-key reader');
   gateSession = await createReadingLearner(page, `vocab-gap-setup-${++gateCounter}`);
-  await answerReadingAndFinish(page);
   return locateGapStep(page);
 }
 
@@ -166,8 +164,6 @@ test.describe('with a signed-in learner', () => {
       await page.getByLabel('Password', { exact: true }).fill(user.password);
       await page.getByRole('button', { name: /Sign in/i }).click();
       await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
-      await answerReadingAndFinish(page);
-
       const vocabulary = await locateGapStep(page);
 
       // Check waits until every gap has a word.

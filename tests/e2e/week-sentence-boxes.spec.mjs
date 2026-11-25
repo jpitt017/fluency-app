@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
-import { answerReadingAndFinish, canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
+import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
 /**
  * The three answer boxes on /week/[n]:
  *   grammar "Fix it" rewrite items, grammar "Use it", vocabulary step 7.
  *
- * Grammar and locked-vocabulary expectations run signed out. Vocabulary
- * interaction coverage creates a confirmed test learner and marks the reading
- * answers first, because the new reading gate must withhold card definitions.
+ * The reading card-meaning gate is independent of the vocabulary practice
+ * section, so vocabulary navigation can be exercised without completing the
+ * reading questions.
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,11 +41,10 @@ test('the three boxes replace the old dead-end copy', async ({ page }) => {
   expect(html).not.toContain('Personal sentence feedback is coming soon');
   expect(html).not.toContain('Your teacher in the app will reply');
 
-  // The vocabulary deck also defines the green card words, so it must stay out
-  // of the response until the server sees all checked reading answers.
-  expect(html).not.toContain('Words to use');
-  expect(html).not.toContain('something new and difficult that needs effort');
-  expect(html).toContain('Finish and save the reading questions first');
+  // Vocabulary practice remains available; only the reading-card meaning is
+  // withheld until all reading answers have been checked and saved.
+  expect(html).toContain('Words to use');
+  await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 });
 
 test('grammar "Fix it" rewrite items have a text box and a Check button', async ({ page }) => {
@@ -71,12 +70,11 @@ test('grammar "Use it" has a text box and a Check button', async ({ page }) => {
   await expect(grammar.getByText('Write your sentences and press Check. The app will give you feedback.').first()).toBeVisible();
 });
 
-test('vocabulary step 7 opens after the reading gate and has a text box and Check button', async ({ page }) => {
-  test.skip(!canUseReadingGateFixture, 'Reading gate UI needs a service-key test user');
+test('vocabulary step 7 has a text box and Check button', async ({ page }) => {
+  test.skip(!canUseReadingGateFixture, 'Signed-in vocabulary UI needs a service-key test user');
   test.setTimeout(180_000);
   const { admin, user } = await createReadingLearner(page, 'sentence-vocab-step7');
   try {
-    await answerReadingAndFinish(page);
     await page.goto('/week/1');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
     for (let i = 0; i < 6; i += 1) {
@@ -92,12 +90,11 @@ test('vocabulary step 7 opens after the reading gate and has a text box and Chec
   }
 });
 
-test('vocabulary step 1 groups the words and pages through them after the reading gate', async ({ page }) => {
-  test.skip(!canUseReadingGateFixture, 'Reading gate UI needs a service-key test user');
+test('vocabulary step 1 groups the words and pages through them', async ({ page }) => {
+  test.skip(!canUseReadingGateFixture, 'Signed-in vocabulary UI needs a service-key test user');
   test.setTimeout(180_000);
   const { admin, user } = await createReadingLearner(page, 'sentence-vocab-step1');
   try {
-    await answerReadingAndFinish(page);
     await page.goto('/week/1');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
     await expect(vocabulary.getByText('Step 1 of 7: Words')).toBeVisible();

@@ -128,6 +128,7 @@ test('the page uses the shared, keyboard-operable gloss and gloss-check componen
   const readingIndex = page.indexOf('<section id="reading-practice"');
   const vocabularyIndex = page.indexOf('<VocabularyPractice');
   assert.ok(readingIndex >= 0 && vocabularyIndex > readingIndex);
-  assert.match(page, /details\.readingSupport\.questionsAnswered \|\| !details\.readingSupport\.support/);
-  assert.match(page, /Finish and save the reading questions first/);
+  assert.match(page, /\{cards && vocabulary && <VocabularyPractice/);
+  assert.doesNotMatch(page, /Finish and save the reading questions first/);
+  assert.match(component, /Answer the reading questions first to open the card-word meanings and gloss check/);
 });
