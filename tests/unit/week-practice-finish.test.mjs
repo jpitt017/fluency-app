@@ -90,22 +90,22 @@ test('vocabulary week 1 counts 16 fixed questions', () => {
 
 test('partial summaries use checked answers as the score denominator and the exact thresholds', () => {
   const high = summarySentence({ answered: 5, correct: 4, total: 22 }); // exactly 80%
-  assert.equal(high, 'You answered 5 of 22. 4 were right. 1 was wrong. Great work! You can come back and finish the other questions.');
+  assert.equal(high, 'You answered 5 of 22. 4 were right. Great work! You can come back and finish the other questions.');
   assert.equal(
     summarySentence({ answered: 7, correct: 6, total: 22 }),
-    'You answered 7 of 22. 6 were right. 1 was wrong. Great work! You can come back and finish the other questions.',
+    'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.',
   );
   assert.equal(
     summarySentence({ answered: 4, correct: 3, total: 22 }),
-    'You answered 4 of 22. 3 were right. 1 was wrong. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.',
+    'You answered 4 of 22. 3 were right. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.',
   );
-  assert.match(summarySentence({ answered: 2, correct: 1, total: 22 }), /1 was right\. 1 was wrong\. Good effort!/); // exactly 50%
+  assert.match(summarySentence({ answered: 2, correct: 1, total: 22 }), /1 was right\. Good effort!/); // exactly 50%
   assert.match(summarySentence({ answered: 100, correct: 79, total: 100 }), /Good effort!/); // not rounded up
   assert.match(summarySentence({ answered: 4, correct: 3, total: 4, reviewReady: false }), /Good effort! Press Finish again to add your mistakes to Review\./);
   assert.match(summarySentence({ answered: 100, correct: 49, total: 100 }), /This grammar is new\. Look at 'See it' again, then try your Review cards\./);
   assert.match(summarySentence({ answered: 5, correct: 0, total: 16, skill: 'vocabulary' }), /This vocabulary is new\. Look at 'Words' again, then try your Review cards\./);
   const complete = summarySentence({ answered: 22, correct: 22, total: 22 });
-  assert.equal(complete, 'You answered 22 of 22. 22 were right. 0 were wrong. Great work!');
+  assert.equal(complete, 'You answered 22 of 22. 22 were right. Great work!');
   assert.doesNotMatch(complete, /come back/);
   assert.match(summarySentence({ answered: 0, correct: 0, total: 22 }), /Answer and check a question to see your score\./);
 });
@@ -187,6 +187,25 @@ test('a wrong multi-blank answer gets a usable Review card, not a silently dropp
   const arrayCard = practiceErrorCard({ userId: 'learner', item: week4, answer: ['is', 'make'], category: 'tense' });
   assert.equal(arrayCard.prompt_sentence, 'Where is your car make?');
   assert.equal(arrayCard.corrected_sentence, 'Where was your car made?');
+});
+
+test('meaning questions in all four weeks become answerable Review questions, not broken sentence fixes', () => {
+  let questions = 0;
+  for (const week of details.weeks) {
+    for (const item of week.grammar.practice.items.filter((entry) => entry.step === 'Meaning')) {
+      questions += 1;
+      const wrong = item.options.find((option) => option !== item.key);
+      const card = practiceErrorCard({ userId: 'learner', item, answer: wrong, category: 'tense' });
+      assert.equal(card.prompt_sentence, `Answer this question: ${item.prompt}`);
+      assert.equal(card.corrected_sentence, item.key);
+      assert.notEqual(card.prompt_sentence, card.corrected_sentence);
+      assert.match(card.explanation, /The answer is/);
+    }
+  }
+  assert.equal(questions, 12);
+  const reviewUi = read('components/b1b2/ErrorReviewStudio.tsx');
+  assert.match(reviewUi, /Answer this question without hints:/);
+  assert.match(reviewUi, /isQuestion \? 'Your answer' : 'Your corrected sentence'/);
 });
 
 test('verb and word-form mistakes can use a repair card without inventing a vocabulary alias', () => {

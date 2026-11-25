@@ -6,6 +6,7 @@ import { CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 import { computeWordDiff, type DiffToken } from '@/lib/b1b2/diff';
 import { previewFsrsIntervals, type ReviewGrade } from '@/lib/b1b2/fsrs';
 import { canUpgradeToEasy, gradeForTypedAnswer, type planQueue } from '@/lib/b1b2/review-queue.mjs';
+import { REVIEW_QUESTION_PREFIX } from '@/lib/b1b2/review-card-format.mjs';
 import type { ReviewQueueCard } from '@/lib/b1b2/types';
 
 const SELF_GRADES: { grade: ReviewGrade; label: string }[] = [
@@ -238,6 +239,7 @@ export default function ErrorReviewStudio({
   }
 
   const isVocab = card.type === 'vocab';
+  const isQuestion = card.type === 'error' && card.prompt_sentence.startsWith(REVIEW_QUESTION_PREFIX);
   const fallbackDiff =
     card.type === 'error' ? computeWordDiff(card.prompt_sentence, card.corrected_sentence) : [];
 
@@ -251,7 +253,7 @@ export default function ErrorReviewStudio({
           </span>
           {card.type === 'error' && card.card_format && (
             <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-stone-600">
-              {card.card_format === 'cloze' ? 'Context repair' : 'Sentence fix'}
+              {isQuestion ? 'Question' : card.card_format === 'cloze' ? 'Context repair' : 'Sentence fix'}
             </span>
           )}
           <span className="text-xs text-stone-500">
@@ -275,9 +277,11 @@ export default function ErrorReviewStudio({
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">
-              Fix this sentence without hints:
+              {isQuestion ? 'Answer this question without hints:' : 'Fix this sentence without hints:'}
             </p>
-            <p className="text-base font-medium text-stone-900">&ldquo;{card.prompt_sentence}&rdquo;</p>
+            <p className="text-base font-medium text-stone-900">
+              &ldquo;{isQuestion ? card.prompt_sentence.slice(REVIEW_QUESTION_PREFIX.length) : card.prompt_sentence}&rdquo;
+            </p>
             {card.context_sentence && card.context_sentence !== card.prompt_sentence && (
               <p className="text-xs text-stone-600">
                 Context: <span className="italic">{card.context_sentence}</span>
@@ -292,7 +296,7 @@ export default function ErrorReviewStudio({
               <input
                 type="text"
                 value={attempt}
-                aria-label="Your corrected sentence"
+                aria-label={isQuestion ? 'Your answer' : 'Your corrected sentence'}
                 onChange={(e) => setAttempt(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -300,7 +304,7 @@ export default function ErrorReviewStudio({
                     void checkAndReveal();
                   }
                 }}
-                placeholder="Type your corrected version…"
+                placeholder={isQuestion ? 'Type your answer…' : 'Type your corrected version…'}
                 className="flex-1 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-900 focus:border-indigo-500 focus:outline-none"
               />
               <button
@@ -341,7 +345,7 @@ export default function ErrorReviewStudio({
                 <span className="inline-flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-700" />
                   <span>
-                    Well done! You fixed it without help. This card is finished (+{checkResult.xpAwarded} XP).
+                    {isQuestion ? 'Well done! You answered without help.' : 'Well done! You fixed it without help.'} This card is finished (+{checkResult.xpAwarded} XP).
                     {checkResult.reason ? ` ${checkResult.reason}` : ''}
                   </span>
                 </span>
@@ -368,27 +372,29 @@ export default function ErrorReviewStudio({
                     {checkResult?.reason ? ` — ${checkResult.reason}` : ' — compare your answer below.'}
                   </p>
                 )}
-                <div className="rounded-lg border border-stone-200 bg-white p-3 text-xs">
-                  <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-stone-500">
-                    The changes (original → {checkResult ? 'your answer' : 'correct answer'})
-                  </p>
-                  <div className="flex flex-wrap gap-1 leading-6">
-                    {(checkResult ? checkResult.diffFromOriginal : fallbackDiff).map((tok, i) => (
-                      <span
-                        key={i}
-                        className={
-                          tok.type === 'removed'
-                            ? 'rounded bg-rose-100 px-1 text-rose-800 line-through'
-                            : tok.type === 'added'
-                              ? 'rounded bg-emerald-100 px-1 font-semibold text-emerald-900'
-                              : 'text-stone-800'
-                        }
-                      >
-                        {tok.text}
-                      </span>
-                    ))}
+                {!isQuestion && (
+                  <div className="rounded-lg border border-stone-200 bg-white p-3 text-xs">
+                    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-stone-500">
+                      The changes (original → {checkResult ? 'your answer' : 'correct answer'})
+                    </p>
+                    <div className="flex flex-wrap gap-1 leading-6">
+                      {(checkResult ? checkResult.diffFromOriginal : fallbackDiff).map((tok, i) => (
+                        <span
+                          key={i}
+                          className={
+                            tok.type === 'removed'
+                              ? 'rounded bg-rose-100 px-1 text-rose-800 line-through'
+                              : tok.type === 'added'
+                                ? 'rounded bg-emerald-100 px-1 font-semibold text-emerald-900'
+                                : 'text-stone-800'
+                          }
+                        >
+                          {tok.text}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
                   <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Correct answer</p>
                   <p className="mt-0.5 font-semibold text-emerald-950">{card.corrected_sentence}</p>

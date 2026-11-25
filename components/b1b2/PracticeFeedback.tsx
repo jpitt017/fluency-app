@@ -42,6 +42,8 @@ export type PracticeSummary = {
   total: number;
   reviewMistakes: number;
   sentence: string;
+  /** Answers have changed since this saved snapshot. */
+  scoreNeedsRefresh?: boolean;
 };
 
 /**
@@ -79,9 +81,11 @@ export function FinishSummary({
       {summary.reviewMistakes < summary.wrong && (
         <p className="text-sm text-amber-900">Some mistakes may not be in Review yet. Press Finish again to add them.</p>
       )}
-      {summary.answered < summary.total && (
+      {summary.scoreNeedsRefresh ? (
+        <p className="text-sm text-emerald-900">Your latest answers may not match this score. Press Finish again to update it.</p>
+      ) : summary.answered < summary.total ? (
         <p className="text-sm text-emerald-900">After checking more answers, press Finish again to update your score.</p>
-      )}
+      ) : null}
       {onNext ? (
         <button
           type="button"

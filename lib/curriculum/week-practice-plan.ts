@@ -33,6 +33,8 @@ export type PlannedItem = {
   term?: string | null;
   /** Server-only: the authored feedback for a fixed vocabulary item. */
   feedback?: string;
+  /** Meaning checks ask a question rather than asking for a sentence repair. */
+  reviewKind?: 'question' | 'sentence';
 };
 
 export type PlannedStep = { index: number; title: string; items: PlannedItem[] };
@@ -52,6 +54,7 @@ export function grammarPlan(week: number): PracticePlan | null {
       prompt: item.prompt,
       ...grammarItemFlags(item),
       key: bank.find((entry) => entry.id === item.id)?.key,
+      reviewKind: item.step === 'Meaning' ? 'question' as const : 'sentence' as const,
     })),
   }));
   return { steps, items: steps.flatMap((step) => step.items) };

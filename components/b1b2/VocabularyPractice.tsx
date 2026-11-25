@@ -337,7 +337,10 @@ export default function VocabularyPractice({
           text={exercises.text}
           signedIn={signedIn}
           saved={savedAnswers}
-          onAnswered={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))}
+          onAnswered={(id, correct) => {
+            setResults((prev) => ({ ...prev, [id]: correct }));
+            setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
+          }}
           onChanged={(id) => setResults((prev) => {
             const next = { ...prev };
             delete next[id];
@@ -356,6 +359,7 @@ export default function VocabularyPractice({
             onAnswered={(id, saved) => {
               setResults((prev) => ({ ...prev, [id]: saved.correct }));
               setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
+              setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
             }}
           />
         ))}

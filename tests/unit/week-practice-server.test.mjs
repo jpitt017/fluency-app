@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import * as rules from '../../lib/curriculum/week-practice.mjs';
 import * as grammarMarking from '../../lib/curriculum/grammar-marking.mjs';
+import * as learnerGrammarMarking from '../../lib/curriculum/learner-grammar-marking.mjs';
 import * as vocabularyProjection from '../../lib/curriculum/vocabulary-exercise-projection.mjs';
 import * as vocabularyLinks from '../../lib/curriculum/vocabulary-review-link.mjs';
 import * as review from '../../lib/curriculum/week-practice-review.mjs';
@@ -36,9 +37,9 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
   const logs = [];
   const reviewUpdates = [];
   let sequence = 0;
-  function addAttempt(table, item_id, answer, correct, user_id = 'learner') {
+  function addAttempt(table, item_id, answer, correct, user_id = 'learner', week_number = 1) {
     tables[table].push({
-      id: String(sequence).padStart(5, '0'), user_id, week_number: 1, item_id, answer, correct,
+      id: String(sequence).padStart(5, '0'), user_id, week_number, item_id, answer, correct,
       created_at: new Date(1_700_000_000_000 + sequence++).toISOString(),
     });
   }
@@ -98,11 +99,16 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
     './vocabulary-review-link.mjs': vocabularyLinks, './week-practice.mjs': rules,
   }, logs);
   const attempts = load('lib/curriculum/week-practice-attempts.ts', { 'server-only': {} }, logs);
+  const savedMark = load('lib/curriculum/week-grammar-saved-mark.ts', {
+    'server-only': {}, '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json': details,
+    './grammar-marking.mjs': grammarMarking, './learner-grammar-marking.mjs': learnerGrammarMarking,
+  }, logs);
   const finish = load('lib/curriculum/week-practice-finish.ts', {
     'server-only': {}, './week-practice-plan': plan, './week-practice-attempts': attempts,
+    './week-grammar-saved-mark': savedMark,
     './week-practice-review.mjs': review, './week-practice.mjs': rules,
-    '@/lib/b1b2/week-vocab-review': { updateReviewFromWeeklyPractice: async (_db, userId, term, correct) => {
-      reviewUpdates.push({ userId, term, correct });
+    '@/lib/b1b2/week-vocab-review': { updateReviewFromWeeklyPractice: async (_db, userId, term, correct, _now, options) => {
+      reviewUpdates.push({ userId, term, correct, ensureOnly: options?.ensureOnly });
       return { updated: !failReview };
     } },
   }, logs);
@@ -111,7 +117,8 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
     '@/utils/supabase/server': { createServerSupabase: async () => db },
     './learner-grammar': grammar, './learner-vocabulary-exercises': vocabulary,
     './learner-grammar-reasons.mjs': { learnerGrammarReason: (item) => item.reason ?? null },
-    './week-practice-plan': plan, './week-practice-attempts': attempts, './week-practice.mjs': rules,
+    './week-practice-plan': plan, './week-practice-attempts': attempts, './week-grammar-saved-mark': savedMark,
+    './week-practice.mjs': rules,
   }, logs);
   const route = load('src/app/api/week/practice/finish/route.ts', {
     'next/server': { NextResponse: { json: (body, init = {}) => ({ body, status: init.status ?? 200 }) } },
@@ -125,8 +132,9 @@ const request = (skill, extra = {}) => ({ json: async () => ({ week: 1, skill, .
 
 function sevenGrammarAnswers(fixture) {
   const values = [
-    ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'Yes', true],
+    ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
     ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
+    // An old false mark for a valid alternative is corrected on read.
     ['W1-C5', 'Did ... live', false],
   ];
   for (const [id, answer, correct] of values) fixture.addAttempt('week_grammar_attempts', id, answer, correct);
@@ -145,15 +153,20 @@ test('real finish route counts seven checked questions, adds only the wrong one,
   const summary = plain(response.body.summary);
   assert.deepEqual({ total: summary.total, answered: summary.answered, correct: summary.correct, wrong: summary.wrong },
     { total: 22, answered: 7, correct: 6, wrong: 1 });
-  assert.equal(summary.sentence, 'You answered 7 of 22. 6 were right. 1 was wrong. Great work! You can come back and finish the other questions.');
+  assert.equal(summary.sentence, 'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.');
   assert.equal(fixture.tables.error_review_cards.length, 1);
-  assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'Have you ever lived in another country?');
+  assert.match(fixture.tables.error_review_cards[0].prompt_sentence, /^Answer this question: /);
+  assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'Yes');
   assert.deepEqual(plain(fixture.tables.week_skill_completions[0]).answered, 7);
 
   const reloaded = await fixture.progress.loadWeekPracticeProgress(1);
   assert.equal(reloaded.grammar.summary.sentence, summary.sentence);
   assert.equal(reloaded.grammar.summary.wrong, 1);
   assert.equal(reloaded.grammar.answers['W1-C5'].answer, 'Did ... live');
+  assert.equal(reloaded.grammar.answers['W1-C5'].correct, true);
+  assert.equal(reloaded.grammar.summary.scoreNeedsRefresh, false);
+  assert.equal(fixture.tables.week_grammar_attempts.find((row) => row.item_id === 'W1-C5').correct, false,
+    'reading a corrected mark does not rewrite the historical attempt');
 
   const repeat = await fixture.finish(request('grammar'));
   assert.equal(repeat.status, 200);
@@ -164,7 +177,9 @@ test('real finish route counts seven checked questions, adds only the wrong one,
   // A score is a snapshot until Finish is pressed again; returning to answer
   // another question does not silently change what was saved last time.
   fixture.addAttempt('week_grammar_attempts', 'W1-C4', 'was cooking', true);
-  assert.equal((await fixture.progress.loadWeekPracticeProgress(1)).grammar.summary.sentence, summary.sentence);
+  const changed = (await fixture.progress.loadWeekPracticeProgress(1)).grammar.summary;
+  assert.equal(changed.sentence, summary.sentence);
+  assert.equal(changed.scoreNeedsRefresh, true);
   const nextFinish = await fixture.finish(request('grammar'));
   assert.equal(nextFinish.body.summary.answered, 8);
   assert.equal(nextFinish.body.summary.correct, 7);
@@ -186,7 +201,7 @@ test('vocabulary wrong answers use real word cards or a repair card, never an in
     correct: response.body.summary.correct, wrong: response.body.summary.wrong }),
   { total: 16, answered: 4, correct: 1, wrong: 3 });
   assert.match(response.body.summary.sentence, /This vocabulary is new\. Look at 'Words' again/);
-  assert.deepEqual(fixture.reviewUpdates, [{ userId: 'learner', term: 'make a big decision', correct: false }]);
+  assert.deepEqual(fixture.reviewUpdates, [{ userId: 'learner', term: 'make a big decision', correct: false, ensureOnly: true }]);
   assert.equal(fixture.tables.error_review_cards.length, 2);
   assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'I took a risk and applied for a job abroad.');
   const reloaded = await fixture.progress.loadWeekPracticeProgress(1);
@@ -204,17 +219,54 @@ test('zero checked fixed questions cannot be finished even if an optional answer
   assert.equal(fixture.tables.error_review_cards.length, 0);
 });
 
-test('the latest mark wins across pages and multi-blank arrays restore on reload', async () => {
-  const fixture = setup();
-  for (let index = 0; index < 500; index += 1) fixture.addAttempt('week_grammar_attempts', 'W1-C5', ['Have', 'lived'], true);
-  fixture.addAttempt('week_grammar_attempts', 'W1-C5', ['Did', 'live'], false);
-  const response = await fixture.finish(request('grammar'));
+test('the latest mark wins across pages and wrong multi-blank arrays restore and reach Review', async () => {
+  const fixture = setup({ currentWeek: 4 });
+  for (let index = 0; index < 500; index += 1) fixture.addAttempt('week_grammar_attempts', 'W4-G5', ['was', 'made'], true, 'learner', 4);
+  fixture.addAttempt('week_grammar_attempts', 'W4-G5', ['is', 'make'], false, 'learner', 4);
+  const response = await fixture.finish(request('grammar', { week: 4 }));
   assert.equal(response.status, 200);
   assert.deepEqual(plain({ answered: response.body.summary.answered, correct: response.body.summary.correct, wrong: response.body.summary.wrong }),
     { answered: 1, correct: 0, wrong: 1 });
-  const reloaded = await fixture.progress.loadWeekPracticeProgress(1);
-  assert.equal(reloaded.grammar.answers['W1-C5'].answer, 'Did ... live');
-  assert.equal(reloaded.grammar.answers['W1-C5'].correct, false);
+  const reloaded = await fixture.progress.loadWeekPracticeProgress(4);
+  assert.equal(reloaded.grammar.answers['W4-G5'].answer, 'is ... make');
+  assert.equal(reloaded.grammar.answers['W4-G5'].correct, false);
+  assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'Where was your car made?');
+});
+
+test('old false grammar marks are corrected on read without changing stored attempts or the saved snapshot', async () => {
+  const fixture = setup();
+  fixture.addAttempt('week_grammar_attempts', 'W1-F2', 'when i got home my flatmate had already cooked dinner', false);
+  fixture.addAttempt('week_grammar_attempts', 'W1-C5', 'Did ... live', false);
+  fixture.addAttempt('week_grammar_attempts', 'W1-R2', 'when we arrived the film had already started', false);
+  fixture.addAttempt('week_grammar_attempts', 'W1-U1', 'my own sentence', false);
+  fixture.tables.week_skill_completions.push({ user_id: 'learner', week_number: 1, skill: 'grammar',
+    answered: 2, correct: 0, total: 22, review_count: 2, completed_at: '2025-01-01T00:00:00Z' });
+
+  const loaded = await fixture.progress.loadWeekPracticeProgress(1);
+  assert.equal(loaded.grammar.answers['W1-F2'].correct, true);
+  assert.equal(loaded.grammar.answers['W1-C5'].correct, true);
+  assert.equal(loaded.grammar.answers['W1-R2'].correct, true);
+  assert.equal(loaded.grammar.answers['W1-U1'].correct, false, 'open answers are not guessed on read');
+  assert.equal(loaded.grammar.summary.correct, 0, 'a completion is still a snapshot');
+  assert.equal(loaded.grammar.summary.scoreNeedsRefresh, true);
+  assert.ok(fixture.tables.week_grammar_attempts.every((row) => row.correct === false), 'the audit does not rewrite old rows');
+
+  const finished = await fixture.finish(request('grammar'));
+  assert.deepEqual(plain({ answered: finished.body.summary.answered, correct: finished.body.summary.correct, wrong: finished.body.summary.wrong }),
+    { answered: 2, correct: 2, wrong: 0 });
+  assert.equal(fixture.tables.error_review_cards.length, 0, 'corrected and optional answers do not make a card');
+  assert.equal((await fixture.progress.loadWeekPracticeProgress(1)).grammar.summary.scoreNeedsRefresh, false);
+});
+
+test('a later check marks a saved snapshot as stale even if its counts have not changed', async () => {
+  const fixture = setup();
+  fixture.addAttempt('week_grammar_attempts', 'W1-M1', 'No', true);
+  await fixture.finish(request('grammar'));
+  fixture.addAttempt('week_grammar_attempts', 'W1-M1', 'No', true);
+  fixture.tables.week_grammar_attempts.at(-1).created_at = new Date(Date.now() + 5000).toISOString();
+  const progress = await fixture.progress.loadWeekPracticeProgress(1);
+  assert.equal(progress.grammar.summary.correct, 1);
+  assert.equal(progress.grammar.summary.scoreNeedsRefresh, true);
 });
 
 test('Review, completion and attempt-read failures do not claim a successful finish', async () => {
@@ -241,5 +293,5 @@ test('old completion records do not count optional answers as mistakes on reload
   assert.equal(loaded.grammar.summary.answered, 22);
   assert.equal(loaded.grammar.summary.correct, 6);
   assert.equal(loaded.grammar.summary.wrong, 16);
-  assert.match(loaded.grammar.summary.sentence, /6 were right\. 16 were wrong\./);
+  assert.match(loaded.grammar.summary.sentence, /6 were right\./);
 });

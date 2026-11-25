@@ -13,7 +13,8 @@ import { scheduleFsrsReview } from './fsrs';
  *
  * Failure here must not fail the learner's answer. The attempt is already saved
  * and the feedback is already right; the review card is a follow-on, so every
- * problem is logged and swallowed.
+ * problem is logged and swallowed. Finish may use `ensureOnly` to ensure a
+ * missing card without grading the same checked answer a second time.
  */
 export async function updateReviewFromWeeklyPractice(
   admin: SupabaseClient,
@@ -21,6 +22,7 @@ export async function updateReviewFromWeeklyPractice(
   term: string,
   correct: boolean,
   now = new Date(),
+  options: { ensureOnly?: boolean } = {},
 ): Promise<{ updated: boolean; dueAt: string | null }> {
   const wanted = term.trim().toLocaleLowerCase('en-GB');
   if (!wanted) return { updated: false, dueAt: null };
@@ -41,10 +43,29 @@ export async function updateReviewFromWeeklyPractice(
       .from('vocab_items')
       .select('id, term, deck_id')
       .in('deck_id', deckIds)
-      .ilike('term', wanted)
-      .limit(1);
+      .ilike('term', wanted);
     if (itemError || !items?.length) return { updated: false, dueAt: null };
-    const item = items[0];
+
+    // SQL IN does not preserve the order of deckIds. Prefer an active card the
+    // learner already owns, then any existing card, then the weekly deck. This
+    // avoids creating a second card for the same exact authored term merely
+    // because the database returned another deck first.
+    const candidates = items
+      .filter((entry) => String(entry.term).trim().toLocaleLowerCase('en-GB') === wanted)
+      .sort((a, b) => deckIds.indexOf(a.deck_id) - deckIds.indexOf(b.deck_id) || String(a.id).localeCompare(String(b.id)));
+    if (!candidates.length) return { updated: false, dueAt: null };
+    const { data: existing, error: existingError } = await admin
+      .from('vocab_cards')
+      .select('vocab_item_id, suspended')
+      .eq('user_id', userId)
+      .eq('card_kind', 'definition')
+      .in('vocab_item_id', candidates.map((entry) => entry.id));
+    if (existingError) return { updated: false, dueAt: null };
+    const activeIds = new Set((existing ?? []).filter((card) => !card.suspended).map((card) => card.vocab_item_id));
+    const existingIds = new Set((existing ?? []).map((card) => card.vocab_item_id));
+    const item = candidates.find((entry) => activeIds.has(entry.id))
+      ?? candidates.find((entry) => existingIds.has(entry.id))
+      ?? candidates[0];
 
     // No duplicate cards: the row is inserted only if it is not already there.
     const { error: cardError } = await admin
@@ -60,12 +81,18 @@ export async function updateReviewFromWeeklyPractice(
 
     const { data: card, error: cardReadError } = await admin
       .from('vocab_cards')
-      .select('id, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at')
+      .select('id, due_at, suspended, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at')
       .eq('user_id', userId)
       .eq('vocab_item_id', item.id)
       .eq('card_kind', 'definition')
       .maybeSingle();
     if (cardReadError || !card) return { updated: false, dueAt: null };
+
+    // The marking route already graded this answer. Finishing again must not
+    // count the same mistake as a new FSRS review or reset the learner's card.
+    // A missing card was just created due now; an explicitly suspended one is
+    // not available in the Review queue and must not be claimed as ready.
+    if (options.ensureOnly) return { updated: !card.suspended, dueAt: card.due_at };
 
     const grade = correct ? 'good' : 'again';
     const next = scheduleFsrsReview(card, grade, now);

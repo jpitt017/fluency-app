@@ -18,8 +18,8 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
     });
     await page.goto('/week/1');
     expect(await page.evaluate(() => window.practiceScrolls)).toEqual([]); // no focus or jump on load
-    const grammar = page.getByRole('region', { name: 'Grammar practice' });
-    const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+    const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
+    const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
 
     async function activate(button) {
       await button.focus();

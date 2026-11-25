@@ -6,6 +6,7 @@ import { learnerVocabularyExercises } from './learner-vocabulary-exercises';
 import { learnerGrammarReason } from './learner-grammar-reasons.mjs';
 import { practicePlan, type PracticePlan } from './week-practice-plan';
 import { readPracticeAttempts, type PracticeAttempt } from './week-practice-attempts';
+import { effectiveGrammarMark } from './week-grammar-saved-mark';
 import {
   canFinish,
   completionCounts,
@@ -40,6 +41,8 @@ export type CompletionSummary = {
   reviewMistakes: number;
   /** The B1 sentence for this saved finish, repeated after a reload. */
   sentence: string;
+  /** The last saved score may not reflect the most recent checked answers. */
+  scoreNeedsRefresh?: boolean;
   /** Which task the finishing button points at. */
   next: 'vocabulary' | 'reading';
 };
@@ -73,6 +76,7 @@ type CompletionRow = {
   correct: number;
   total: number;
   review_count: number;
+  completed_at: string;
 };
 
 /**
@@ -107,7 +111,7 @@ export async function loadWeekPracticeProgress(week: number): Promise<WeekPracti
     vocabulary ? readPracticeAttempts(client, 'week_vocabulary_attempts', user.id, week) : Promise.resolve({ rows: [], error: null }),
     client
       .from('week_skill_completions')
-      .select('skill, answered, correct, total, review_count')
+      .select('skill, answered, correct, total, review_count, completed_at')
       .eq('user_id', user.id)
       .eq('week_number', week),
   ]);
@@ -121,7 +125,9 @@ export async function loadWeekPracticeProgress(week: number): Promise<WeekPracti
       ? progressFor({
           plan: grammar,
           rows: grammarAttempts.rows,
+          attemptsAvailable: !grammarAttempts.error,
           skill: 'grammar',
+          week,
           reasons: grammarReasons(week),
           completion: completionRows.find((row) => row.skill === 'grammar'),
           next: hasVocabulary ? 'vocabulary' : 'reading',
@@ -131,7 +137,9 @@ export async function loadWeekPracticeProgress(week: number): Promise<WeekPracti
       ? progressFor({
           plan: vocabulary,
           rows: vocabularyAttempts.rows,
+          attemptsAvailable: !vocabularyAttempts.error,
           skill: 'vocabulary',
+          week,
           completion: completionRows.find((row) => row.skill === 'vocabulary'),
           next: 'reading',
           // The authored feedback for a fixed item, so a restored answer shows
@@ -150,7 +158,9 @@ export async function loadWeekPracticeProgress(week: number): Promise<WeekPracti
 function progressFor({
   plan,
   rows,
+  attemptsAvailable,
   skill,
+  week,
   reasons,
   feedback,
   completion,
@@ -158,7 +168,9 @@ function progressFor({
 }: {
   plan: PracticePlan;
   rows: PracticeAttempt[];
+  attemptsAvailable: boolean;
   skill: 'grammar' | 'vocabulary';
+  week: number;
   reasons?: Map<string, string | null>;
   feedback?: Map<string, string>;
   completion: CompletionRow | undefined;
@@ -175,7 +187,9 @@ function progressFor({
       answer: Array.isArray(row.answer)
         ? row.answer.filter((part): part is string => typeof part === 'string').join(' ... ')
         : typeof row.answer === 'string' ? row.answer : '',
-      correct: row.correct,
+      correct: skill === 'grammar'
+        ? effectiveGrammarMark(week, row.item_id, row.answer, row.correct)
+        : row.correct,
       reason: reasons?.get(row.item_id) ?? feedback?.get(row.item_id) ?? null,
     };
   }
@@ -183,9 +197,18 @@ function progressFor({
     Object.entries(answers).map(([id, saved]) => [id, saved.correct]),
   ) as Record<string, boolean>;
   const remaining = unmarkedRequired(plan.items, results).length;
-  const counts = completion
-    ? completionCounts(completion, practiceCounts(plan.items, results).total)
-    : null;
+  const currentCounts = practiceCounts(plan.items, results);
+  const counts = completion ? completionCounts(completion, currentCounts.total) : null;
+  const countedIds = new Set(plan.items.filter((item) => item.counted).map((item) => item.id));
+  const checkedSinceFinish = completion && rows.some((row) =>
+    countedIds.has(row.item_id) && Date.parse(row.created_at) > Date.parse(completion.completed_at),
+  );
+  // Keep the historical snapshot, but don't suggest it matches later answers
+  // or marks that the improved grammar checker can now recognise as correct.
+  const scoreNeedsRefresh = Boolean(completion && counts && attemptsAvailable && (
+    checkedSinceFinish || counts.answered !== currentCounts.answered
+    || counts.correct !== currentCounts.correct || counts.total !== currentCounts.total
+  ));
 
   return {
     answers,
@@ -197,6 +220,7 @@ function progressFor({
           ...counts,
           reviewMistakes: completion.review_count,
           sentence: summarySentence({ ...counts, skill, reviewReady: completion.review_count >= counts.wrong }),
+          scoreNeedsRefresh,
           next,
         }
       : null,

@@ -2,6 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { practicePlan, type PracticePlan } from './week-practice-plan';
 import { readPracticeAttempts, type PracticeAttemptTable } from './week-practice-attempts';
+import { effectiveGrammarMark } from './week-grammar-saved-mark';
 import { updateReviewFromWeeklyPractice } from '@/lib/b1b2/week-vocab-review';
 import { practiceErrorCard } from './week-practice-review.mjs';
 import { canFinish, practiceCounts, summarySentence, unmarkedRequired } from './week-practice.mjs';
@@ -61,7 +62,7 @@ async function addMistakesToReview({
     if (skill === 'vocabulary' && item.term) {
       const term = item.term.trim().toLocaleLowerCase('en-GB');
       if (!updatedTerms.has(term)) {
-        const { updated } = await updateReviewFromWeeklyPractice(admin, userId, item.term, false);
+        const { updated } = await updateReviewFromWeeklyPractice(admin, userId, item.term, false, new Date(), { ensureOnly: true });
         if (!updated) return false;
         updatedTerms.add(term);
       }
@@ -118,7 +119,9 @@ export async function finishPractice({
   const answers: Record<string, unknown> = {};
   for (const row of rows) {
     if (!known.has(row.item_id) || typeof row.correct !== 'boolean') continue;
-    results[row.item_id] = row.correct;
+    results[row.item_id] = skill === 'grammar'
+      ? effectiveGrammarMark(week, row.item_id, row.answer, row.correct)
+      : row.correct;
     answers[row.item_id] = row.answer;
   }
 

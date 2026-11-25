@@ -317,6 +317,9 @@ export default function GrammarPractice({
             onMarked={(id, saved) => {
               setResults((prev) => ({ ...prev, [id]: saved.correct }));
               setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
+              if (!item.needsAi && item.target !== 'Extra') {
+                setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
+              }
             }}
           />
         ))}

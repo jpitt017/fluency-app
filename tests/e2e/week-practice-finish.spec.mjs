@@ -36,7 +36,7 @@ const GRAMMAR_ANSWERS = [
   // Practise: six choices. One is deliberately wrong, so the summary has a
   // mistake to report and a Review card to add.
   { id: 'W1-C1', answer: 'moved' },
-  { id: 'W1-C2', answer: 'have made' },
+  { id: 'W1-C2', answer: 'made' },
   { id: 'W1-C3', answer: 'left' },
   { id: 'W1-C4', answer: 'was cooking' },
   { id: 'W1-C5', answer: 'Have ... lived' },
@@ -97,7 +97,7 @@ async function answerVocabulary(page) {
 
 test('signed out, the last grammar step offers Finish rather than a dead Next', async ({ page }) => {
   await page.goto('/week/1');
-  const grammar = page.getByRole('region', { name: 'Grammar practice' });
+  const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
   await expect(grammar.getByText(/Step \d of 5: /)).toBeVisible();
 
   for (let step = 1; step < 5; step += 1) {
@@ -116,7 +116,7 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
 
 test('signed out, the last vocabulary step offers Finish rather than a dead Next', async ({ page }) => {
   await page.goto('/week/1');
-  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
   for (let step = 1; step < 7; step += 1) {
     await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   }
@@ -137,7 +137,7 @@ test.describe('with a signed-in learner', () => {
       await answerGrammar(page);
 
       await page.goto('/week/1');
-      const grammar = page.getByRole('region', { name: 'Grammar practice' });
+      const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
 
       // Every required question is answered, so the section can be finished.
       // Walk to the last step; the button is the end of the section, not a
@@ -151,11 +151,11 @@ test.describe('with a signed-in learner', () => {
       await finish.click();
 
       // One short summary in B1 English, with the real counts: 21 of 22 right,
-      // because W1-C3 was answered wrongly on purpose.
+      // because W1-C2 was answered wrongly on purpose.
       const summary = grammar.getByRole('status').filter({ hasText: 'You answered' });
       await expect(summary).toBeVisible();
       await expect(summary).toHaveText(
-        'You answered 22 of 22. 21 were right. 1 was wrong. Great work!',
+        'You answered 22 of 22. 21 were right. Great work!',
       );
       // And the way on, not a dead end.
       await expect(grammar.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
@@ -181,10 +181,10 @@ test.describe('with a signed-in learner', () => {
 
       // Reload: the answers and the summary are still there, from the server.
       await page.reload();
-      const reloaded = page.getByRole('region', { name: 'Grammar practice' });
+      const reloaded = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await expect(
         reloaded.getByRole('status').filter({ hasText: 'You answered' }),
-      ).toHaveText('You answered 22 of 22. 21 were right. 1 was wrong. Great work!');
+      ).toHaveText('You answered 22 of 22. 21 were right. Great work!');
       await expect(reloaded.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
 
       // The saved answers are on screen, not only in the summary. The page
@@ -206,7 +206,7 @@ test.describe('with a signed-in learner', () => {
       // The one answered wrongly is marked wrong, from the server's mark. Its
       // prompt is in this step, so the line is not counted on another one.
       await expect(
-        reloaded.getByText('When I arrived at the station, the train ___.'),
+        reloaded.getByText('I ___ a lot of new friends since then.'),
       ).toBeVisible();
       await expect(reloaded.getByText(/Not quite\./)).toHaveCount(1);
 
@@ -242,7 +242,7 @@ test.describe('with a signed-in learner', () => {
       // the whole point of restoring progress: the learner lands where they
       // stopped, with Finish on screen, rather than being walked from step 1.
       await page.goto('/week/1');
-      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       const finish = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
       await expect(finish).toBeEnabled();
@@ -252,7 +252,7 @@ test.describe('with a signed-in learner', () => {
       await expect(summary).toBeVisible();
       // All sixteen fixed questions were answered correctly, and nothing was
       // written in step 7, so there is nothing to review.
-      await expect(summary).toHaveText('You answered 16 of 16. 16 were right. 0 were wrong. Great work!');
+      await expect(summary).toHaveText('You answered 16 of 16. 16 were right. Great work!');
       await expect(vocabulary.getByRole('button', { name: 'Next: Reading →' })).toBeVisible();
 
       const saved = await admin
@@ -267,10 +267,10 @@ test.describe('with a signed-in learner', () => {
 
       // A reload opens where they left off: the last step, still finished.
       await page.reload();
-      const reloaded = page.getByRole('region', { name: 'Vocabulary practice' });
+      const reloaded = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(reloaded.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       await expect(reloaded.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
-        'You answered 16 of 16. 16 were right. 0 were wrong. Great work!',
+        'You answered 16 of 16. 16 were right. Great work!',
       );
 
       // Step 6 shows the saved typed words with their marks.
@@ -303,9 +303,9 @@ test.describe('with a signed-in learner', () => {
     try {
       await signIn(page, user);
       const grammarAnswers = [
-        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'Yes', true],
+        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
         ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
-        ['W1-C5', 'Did ... live', false],
+        ['W1-C5', 'Did ... live', true],
       ];
       for (const [id, answer, correct] of grammarAnswers) {
         const response = await page.request.post('/api/week/grammar/mark', { data: { week: 1, id, answer } });
@@ -325,7 +325,7 @@ test.describe('with a signed-in learner', () => {
       }
 
       await page.goto('/week/1');
-      const grammar = page.getByRole('region', { name: 'Grammar practice' });
+      const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
       for (let step = 2; step < 5; step += 1) {
         const next = grammar.getByRole('button', { name: 'Next', exact: true });
@@ -337,14 +337,14 @@ test.describe('with a signed-in learner', () => {
       await expect(finishGrammar).toBeEnabled();
       await finishGrammar.focus();
       await page.keyboard.press('Enter');
-      const grammarSummary = 'You answered 7 of 22. 6 were right. 1 was wrong. Great work! You can come back and finish the other questions.';
+      const grammarSummary = 'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.';
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
       await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeFocused();
       await expect.poll(async () => Math.abs((await grammar.boundingBox()).y)).toBeLessThan(40);
       expect((await page.evaluate(() => window.practiceScrolls)).filter((call) => call.id === 'grammar-practice').at(-1)?.behavior).toBe('instant');
       const cards = await admin.from('error_review_cards').select('category, corrected_sentence').eq('user_id', user.id);
       if (cards.error) throw cards.error;
-      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'Have you ever lived in another country?' }]);
+      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'Yes' }]);
 
       // The same Finish action scrolls smoothly when motion is not reduced.
       await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -370,13 +370,14 @@ test.describe('with a signed-in learner', () => {
       await more.getByRole('radio', { name: 'was cooking', exact: true }).check();
       await more.getByRole('button', { name: 'Check', exact: true }).click();
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
+      await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
       await grammar.getByRole('button', { name: 'Next', exact: true }).click();
       await grammar.getByRole('button', { name: 'Previous', exact: true }).click();
       await expect(more.getByRole('radio', { name: 'was cooking', exact: true })).toBeChecked();
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
 
-      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
       for (let step = 2; step < 7; step += 1) {
         const next = vocabulary.getByRole('button', { name: 'Next', exact: true });
@@ -388,7 +389,7 @@ test.describe('with a signed-in learner', () => {
       await expect(finishVocabulary).toBeEnabled();
       await finishVocabulary.focus();
       await page.keyboard.press('Enter');
-      const vocabularySummary = 'You answered 3 of 16. 2 were right. 1 was wrong. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.';
+      const vocabularySummary = 'You answered 3 of 16. 2 were right. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.';
       await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
       await expect(vocabulary.getByRole('heading', { name: 'Step 7 of 7: Your sentences' })).toBeFocused();
       await expect.poll(async () => Math.abs((await vocabulary.boundingBox()).y)).toBeLessThan(40);
@@ -409,10 +410,19 @@ test.describe('with a signed-in learner', () => {
       await page.reload();
       await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+      await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
       await vocabulary.getByRole('button', { name: 'Next: Reading →' }).click();
       await expect(page.locator('#reading-practice h2')).toBeFocused();
       const calls = await page.evaluate(() => window.practiceScrolls);
       expect(calls.filter((call) => call.id === 'reading-practice').at(-1)?.behavior).toBe('instant');
+
+      // Meaning checks must reach Review as questions, not as sentence fixes.
+      await page.goto('/review');
+      await expect(page.getByText('Answer this question without hints:')).toBeVisible();
+      await expect(page.getByText(/Does the speaker still live in Bristol/)).toBeVisible();
+      await page.getByLabel('Your answer', { exact: true }).fill('Yes');
+      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await expect(page.getByText(/Well done! You answered without help\./)).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
     }

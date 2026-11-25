@@ -112,6 +112,9 @@ jobs:
       - run: node --test tests/unit/week-practice-finish.test.mjs
       # Exercise the real finish route and reload against an in-memory database.
       - run: node --test tests/unit/week-practice-server.test.mjs
+      # Grammar alternatives, sentence verdicts, and Review scheduling stay
+      # server-side and are exercised with fake providers and an in-memory DB.
+      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-vocab-review-server.test.mjs
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
