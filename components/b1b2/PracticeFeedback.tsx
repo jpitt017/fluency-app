@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useId } from 'react';
+import { practiceScoreBand } from '@/lib/curriculum/week-practice.mjs';
 
 /**
  * The two small pieces both practices share once they can be finished: the
@@ -47,26 +49,32 @@ export type PracticeSummary = {
 };
 
 /**
- * What the learner reads after finishing, and again after a reload.
- *
- * One short summary, then one button to where they go next. The count is the
- * server's; the component only displays it.
+ * What the learner reads after finishing, and again after a reload. The server
+ * supplies the score; the same thresholds choose the matching actions here.
  */
 export function FinishSummary({
   title,
+  skill,
   summary,
   nextLabel,
   nextHref,
+  onRevisit,
   onNext,
 }: {
   title: string;
+  skill: 'grammar' | 'vocabulary';
   summary: PracticeSummary;
   nextLabel: string;
   nextHref: string;
+  /** Reopens step 1 and focuses the examples or words. */
+  onRevisit: () => void;
   /** Scrolls in-page instead of navigating, for "#..." targets. */
   onNext?: () => void;
 }) {
   const headingId = useId();
+  const band = practiceScoreBand(summary);
+  const primaryAction = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white';
+  const secondaryAction = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-indigo-700 bg-white px-4 py-2 text-sm font-semibold text-indigo-700';
   return (
     <section
       aria-labelledby={headingId}
@@ -82,26 +90,36 @@ export function FinishSummary({
         <p className="text-sm text-amber-900">Some mistakes may not be in Review yet. Press Finish again to add them.</p>
       )}
       {summary.scoreNeedsRefresh ? (
-        <p className="text-sm text-emerald-900">Your latest answers may not match this score. Press Finish again to update it.</p>
+        <>
+          <p className="text-sm text-emerald-900">Your latest answers may not match this score. Press Finish again to update it.</p>
+          <p className="text-sm text-amber-900">New mistakes may not be in Review yet.</p>
+        </>
       ) : summary.answered < summary.total ? (
         <p className="text-sm text-emerald-900">After checking more answers, press Finish again to update your score.</p>
       ) : null}
-      {onNext ? (
-        <button
-          type="button"
-          onClick={onNext}
-          className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
-        >
-          {nextLabel}
-        </button>
-      ) : (
-        <a
-          href={nextHref}
-          className="inline-block rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
-        >
-          {nextLabel}
-        </a>
-      )}
+      <div className="flex flex-wrap gap-2">
+        {band === 'low' && (
+          <button type="button" onClick={onRevisit} className={primaryAction}>
+            {skill === 'grammar' ? 'Read the examples again' : 'Look at the words again'}
+          </button>
+        )}
+        {(band === 'low' || band === 'middle') && (
+          <Link href="/review" prefetch={false} className={band === 'low' ? secondaryAction : primaryAction}>
+            {skill === 'grammar' ? 'Practise my mistakes' : 'Practise my words'}
+          </Link>
+        )}
+        {(band === 'middle' || band === 'high' || band === 'none') && (
+          onNext ? (
+            <button type="button" onClick={onNext} className={band === 'middle' ? secondaryAction : primaryAction}>
+              {nextLabel}
+            </button>
+          ) : (
+            <a href={nextHref} className={band === 'middle' ? secondaryAction : primaryAction}>
+              {nextLabel}
+            </a>
+          )
+        )}
+      </div>
     </section>
   );
 }

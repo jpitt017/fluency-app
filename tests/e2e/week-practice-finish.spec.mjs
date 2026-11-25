@@ -182,7 +182,7 @@ test.describe('with a signed-in learner', () => {
       const summary = grammar.getByRole('status').filter({ hasText: 'You answered' });
       await expect(summary).toBeVisible();
       await expect(summary).toHaveText(
-        'You answered 22 of 22. 21 were right. Great work!',
+        'You answered 22 of 22. 21 were right. Great work! You know this grammar well.',
       );
       // And the way on, not a dead end.
       await expect(grammar.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
@@ -211,7 +211,7 @@ test.describe('with a signed-in learner', () => {
       const reloaded = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await expect(
         reloaded.getByRole('status').filter({ hasText: 'You answered' }),
-      ).toHaveText('You answered 22 of 22. 21 were right. Great work!');
+      ).toHaveText('You answered 22 of 22. 21 were right. Great work! You know this grammar well.');
       await expect(reloaded.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
 
       // The saved answers are on screen, not only in the summary. The page
@@ -295,7 +295,7 @@ test.describe('with a signed-in learner', () => {
       await expect(summary).toBeVisible();
       // All sixteen fixed questions were answered correctly, and nothing was
       // written in step 7, so there is nothing to review.
-      await expect(summary).toHaveText('You answered 16 of 16. 16 were right. Great work!');
+      await expect(summary).toHaveText('You answered 16 of 16. 16 were right. Great work! You know these words well.');
       await expect(vocabulary.getByRole('button', { name: 'Next: Reading →' })).toBeVisible();
 
       const saved = await admin
@@ -313,7 +313,7 @@ test.describe('with a signed-in learner', () => {
       const reloaded = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(reloaded.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       await expect(reloaded.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
-        'You answered 16 of 16. 16 were right. Great work!',
+        'You answered 16 of 16. 16 were right. Great work! You know these words well.',
       );
 
       // Step 6 shows the saved typed words with their marks.
@@ -379,7 +379,7 @@ test.describe('with a signed-in learner', () => {
       const finishGrammar = grammar.getByRole('button', { name: 'Finish grammar' });
       await expect(finishGrammar).toBeEnabled();
       await finishFromUi(page, finishGrammar, true);
-      const grammarSummary = 'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.';
+      const grammarSummary = 'You answered 7 of 22. 6 were right. Great work! You know this grammar well. You can come back and finish the other questions.';
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
       await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeFocused();
       await expect.poll(async () => Math.abs((await grammar.boundingBox()).y)).toBeLessThan(40);

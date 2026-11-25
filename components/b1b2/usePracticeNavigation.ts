@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 /** Focus without the browser's implicit jump, then scroll the section to top. */
 function focusAndScroll(section: HTMLElement | null, heading: HTMLElement | null) {
@@ -14,17 +14,25 @@ function focusAndScroll(section: HTMLElement | null, heading: HTMLElement | null
 export function usePracticeNavigation() {
   const sectionRef = useRef<HTMLElement>(null);
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const targetRef = useRef<RefObject<HTMLElement | null> | null>(null);
   const [navigation, setNavigation] = useState(0);
 
   useEffect(() => {
-    if (navigation) focusAndScroll(sectionRef.current, stepHeadingRef.current);
+    if (!navigation) return;
+    // A step's content may not exist until after navigation has rendered it.
+    const target = targetRef.current?.current;
+    if (target) focusAndScroll(target, target);
+    else focusAndScroll(sectionRef.current, stepHeadingRef.current);
   }, [navigation]);
 
   return {
     sectionRef,
     stepHeadingRef,
     // The effect runs after React has rendered the new step or word page.
-    focusStep: () => setNavigation((value) => value + 1),
+    focusStep: (target?: RefObject<HTMLElement | null>) => {
+      targetRef.current = target ?? null;
+      setNavigation((value) => value + 1);
+    },
   };
 }
 
