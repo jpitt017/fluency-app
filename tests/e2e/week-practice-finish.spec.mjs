@@ -93,13 +93,20 @@ async function answerGrammar(page) {
   }
 }
 
-/** Check both HTTP success and the actual server mark, with useful CI diagnostics. */
+/** Check the server mark and report only known, learner-safe errors in CI. */
 async function markVocabulary(page, id, answer, correct) {
   const response = await page.request.post('/api/week/vocabulary/mark', {
     data: { week: 1, id, answer },
   });
   const result = await response.json().catch(() => null);
-  const detail = typeof result?.error === 'string' ? result.error : 'no error details';
+  const safeErrors = new Set([
+    'Sign in to check your answer.', 'Please check your answer.',
+    'This activity is not available.', 'Could not check your progress.',
+    'This week is not open yet.', 'Could not save your answer.',
+    'Could not save your answer. Please try again.',
+    'Something went wrong. Please try again, or message your teacher.',
+  ]);
+  const detail = safeErrors.has(result?.error) ? result.error : 'other or non-JSON error (redacted)';
   expect(response.ok(), `marking ${id}: HTTP ${response.status()} (${detail})`).toBe(true);
   expect(result?.correct, `marking ${id}: unexpected correctness`).toBe(correct);
 }

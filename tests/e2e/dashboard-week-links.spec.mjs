@@ -18,6 +18,12 @@ async function expectSection(page, id) {
   await expect(heading).toBeVisible();
   await expect(heading).toBeFocused();
   await expect(heading).toBeInViewport();
+  // A sticky header must not cover the focused heading on a phone.
+  await expect.poll(async () => {
+    const header = await page.locator('body > header').boundingBox();
+    const bounds = await heading.boundingBox();
+    return bounds.y - (header.y + header.height);
+  }).toBeGreaterThanOrEqual(0);
 }
 
 test('week links focus each section on a phone and respect reduced motion', async ({ page }) => {
@@ -29,6 +35,11 @@ test('week links focus each section on a phone and respect reduced motion', asyn
     await expectSection(page, id);
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe('auto');
   }
+
+  // Changing between section hashes on the same page also moves focus.
+  await page.goto('/week/1#reading-practice');
+  await page.evaluate(() => { window.location.hash = '#writing-practice'; });
+  await expectSection(page, 'writing-practice');
 
   // A future week has no authored sections yet: a deep link lands on the
   // "coming soon" explanation, rather than leaving focus at page top.
@@ -43,6 +54,22 @@ test('week links focus each section on a phone and respect reduced motion', asyn
   await expect(page.locator('#grammar-practice h2').first()).not.toBeFocused();
   await page.goto('/week/1#listening-questions');
   await expect(page.locator('#listening-practice h2').first()).not.toBeFocused();
+});
+
+test('deep links use smooth scrolling when reduced motion is not requested', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    window.weekLinkScrolls = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (options) {
+      if (this.id === 'listening-practice') window.weekLinkScrolls.push(options?.behavior);
+      return original.call(this, options);
+    };
+  });
+  await page.goto('/week/1#listening-practice');
+  await expectSection(page, 'listening-practice');
+  expect(await page.evaluate(() => window.weekLinkScrolls)).toContain('smooth');
 });
 
 test('signed-in dashboard cards open the matching section of the current week', async ({ page }) => {
