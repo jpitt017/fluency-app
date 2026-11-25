@@ -97,6 +97,7 @@ If you are unsure whether a statement is read-only, it is not.
   across all three. Two migrations once claimed `0040` (`ai_failure_alerts`
   and `vocabulary_attempts`): live could record only one, so a fresh replay
   could never reproduce it. `ai_failure_alerts` is now `0045`.
+- **For every new migration, use the numeric `NNNN_name` format and record it in live `supabase_migrations.schema_migrations` history under that same number; do not rewrite existing history rows.**
 - **Before applying a migration that replaces a function, save the live
   `pg_get_functiondef(...)` output for comparison.** Capture it before the
   migration runs and keep it with the rollout notes or PR context so the new
