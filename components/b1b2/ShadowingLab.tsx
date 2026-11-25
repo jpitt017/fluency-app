@@ -13,15 +13,15 @@ export interface ShadowingTarget {
 }
 
 const DEFAULT_CHECKLIST = [
-  { id: 'stress', label: 'Stressed key content words (nouns, main verbs, negatives)' },
-  { id: 'linking', label: 'Linked final consonants smoothly into vowel-initial words' },
-  { id: 'intonation', label: 'Matched rising/falling sentence intonation at clause boundaries' },
-  { id: 'pace', label: 'Kept a steady B2 rhythm without long mid-clause pauses' },
+  { id: 'stress', label: 'I said the important words more strongly.' },
+  { id: 'linking', label: 'I joined words together, like turn_it_on.' },
+  { id: 'intonation', label: "My voice went up and down like the speaker's." },
+  { id: 'pace', label: 'I spoke smoothly, without long stops.' },
 ];
 
 export default function ShadowingLab({
   targets,
-  title = 'Listen-and-Compare Shadowing Lab',
+  title = 'Pronunciation practice',
   pronunciationFocus,
 }: {
   targets: ShadowingTarget[];
@@ -125,7 +125,10 @@ export default function ShadowingLab({
       if (useTemporaryVoice) {
         await speakPhrase(active.text, 'en-GB', rate);
       } else {
-        await playAudioOrSpeak(resolvedAudioUrl, active.text, 'en-GB', rate);
+        const played = await playAudioOrSpeak(resolvedAudioUrl, active.text, 'en-GB', rate);
+        // If the recording fails and speech synthesis is used, label that
+        // fallback immediately rather than presenting it as the recording.
+        if (played === 'tts') setModelAudioFailed(true);
       }
     } finally {
       window.setTimeout(() => setPlayingModel(false), 1200);
@@ -209,7 +212,7 @@ export default function ShadowingLab({
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900">{title}</h4>
             <p className="text-[11px] text-stone-500">
-              Listen to the model, shadow aloud with live waveform feedback, then self-check stress &amp; linking.
+              Listen to the sentence. Say it at the same time as the speaker. Then record yourself and compare.
             </p>
             {pronunciationFocus && (
               <p className="mt-1 text-[11px] font-semibold text-emerald-800">
@@ -265,10 +268,11 @@ export default function ShadowingLab({
           <button
             type="button"
             onClick={() => void playModel()}
+            aria-describedby={useTemporaryVoice ? 'shadowing-temporary-voice' : undefined}
             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
           >
             {playingModel ? <Volume2 className="h-3.5 w-3.5" /> : <Play className="h-3 w-3 fill-current" />}
-            <span>{useTemporaryVoice ? 'Play temporary computer voice' : 'Play studio model'}</span>
+            <span>Listen to the sentence</span>
           </button>
 
           {!recording ? (
@@ -278,7 +282,7 @@ export default function ShadowingLab({
               className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
             >
               <Mic className="h-3.5 w-3.5 text-rose-700" />
-              <span>{recordedUrl ? 'Record again' : 'Record your shadow'}</span>
+              <span>{recordedUrl ? 'Record again' : 'Record yourself'}</span>
             </button>
           ) : (
             <button
@@ -303,7 +307,7 @@ export default function ShadowingLab({
           )}
 
           <span className="ml-auto text-[11px] font-medium text-stone-500">
-            Model replays: {modelPlayCount} · Self replays: {selfReplayCount}
+            Speaker plays: {modelPlayCount} · Your plays: {selfReplayCount}
           </span>
         </div>
 
@@ -317,7 +321,7 @@ export default function ShadowingLab({
           <div className="mt-3 grid gap-3 border-t border-stone-100 pt-3 sm:grid-cols-2">
             <div className="rounded-lg bg-stone-50 p-2.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-indigo-800">
-                1. Reference Model
+                1. The speaker
               </p>
               {useTemporaryVoice ? (
                 <>
@@ -326,9 +330,9 @@ export default function ShadowingLab({
                     onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
                     className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                   >
-                    Replay temporary computer voice ({rate}×)
+                    Listen again ({rate}×)
                   </button>
-                  <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
+                  <p id="shadowing-temporary-voice" className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
                 </>
               ) : (
                 <audio
@@ -345,7 +349,7 @@ export default function ShadowingLab({
             </div>
             <div className="rounded-lg bg-stone-50 p-2.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-rose-800">
-                2. Your Shadowing Take
+                2. Your recording
               </p>
               {recordedUrl && !recordedAudioFailed ? (
                 <audio
@@ -362,12 +366,12 @@ export default function ShadowingLab({
                     onClick={() => void speakPhrase(active.text, 'en-GB', rate)}
                     className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                   >
-                    Hear the model with temporary computer voice
+                    Listen to the sentence
                   </button>
                   <p className="mt-1 text-[10px] font-semibold text-amber-700">Temporary computer voice</p>
                 </div>
               ) : (
-                <p className="text-xs text-stone-500">Record your attempt to compare side by side.</p>
+                <p className="text-xs text-stone-500">Record yourself, then listen to both.</p>
               )}
             </div>
           </div>

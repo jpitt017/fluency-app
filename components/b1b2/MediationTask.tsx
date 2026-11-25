@@ -53,11 +53,16 @@ export default function MediationTask({
           mode: submissionMode,
         }),
       });
-      const data = (await response.json()) as MediationFeedback & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Feedback is temporarily unavailable.');
+      const data = (await response.json().catch(() => null)) as (MediationFeedback & { error?: string }) | null;
+      if (!response.ok || !data) {
+        console.error('[mediation] feedback failed:', data?.error ?? response.status);
+        setError(data?.error || 'Something went wrong. Please try again, or message your teacher.');
+        return;
+      }
       setFeedback(data);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not get feedback. Please try again.');
+      console.error('[mediation] feedback failed:', caught);
+      setError('Something went wrong. Please try again, or message your teacher.');
     } finally {
       setLoading(false);
     }
@@ -72,11 +77,16 @@ export default function MediationTask({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attemptId: feedback.attemptId }),
       });
-      const data = (await response.json()) as { ok?: boolean; error?: string };
-      if (!response.ok) throw new Error(data.error || 'Could not flag this feedback.');
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!response.ok || !data) {
+        console.error('[mediation] report failed:', data?.error ?? response.status);
+        setError(data?.error || 'Something went wrong. Please try again, or message your teacher.');
+        return;
+      }
       setDisputed(true);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not flag this feedback.');
+      console.error('[mediation] report failed:', caught);
+      setError('Something went wrong. Please try again, or message your teacher.');
     } finally {
       setLoading(false);
     }
@@ -108,13 +118,21 @@ export default function MediationTask({
         try {
           // Transcription-only: 2 units, no speaking rubric or pronunciation score.
           const transcription = await fetch('/api/speaking/transcribe', { method: 'POST', body: form });
-          const data = (await transcription.json()) as { transcript?: string; error?: string };
-          if (!transcription.ok) throw new Error(data.error || 'Could not transcribe your recording.');
-          if (!data.transcript) throw new Error('No speech was detected. Please try again or type your response.');
+          const data = (await transcription.json().catch(() => null)) as { transcript?: string; error?: string } | null;
+          if (!transcription.ok || !data) {
+            console.error('[mediation] recording check failed:', data?.error ?? transcription.status);
+            setError(data?.error || 'Something went wrong. Please try again, or message your teacher.');
+            return;
+          }
+          if (!data.transcript) {
+            setError('We could not hear any words. Please try again or write your answer.');
+            return;
+          }
           setText(data.transcript);
           await requestFeedback(data.transcript, 'voice');
         } catch (caught) {
-          setError(caught instanceof Error ? caught.message : 'Could not transcribe your recording.');
+          console.error('[mediation] recording check failed:', caught);
+          setError('Something went wrong. Please try again, or message your teacher.');
         }
       };
       recorder.start();

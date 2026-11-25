@@ -5,11 +5,15 @@ import { scorePlacement } from '@/lib/b1b2/placement-scoring.mjs';
 /** Scores the placement quiz on the server so answer indices never reach the browser. */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { answers?: unknown } | null;
-  const answerKey = await loadPlacementAnswerKey();
+  let answerKey: number[] | null = null;
   try {
+    answerKey = await loadPlacementAnswerKey();
     return NextResponse.json(scorePlacement(body?.answers, answerKey));
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to score placement.';
-    return NextResponse.json({ error: message }, { status: answerKey.length !== 24 ? 503 : 400 });
+    console.error('[placement] Could not score answers:', error);
+    return NextResponse.json(
+      { error: 'We could not check your answers. Please try again.' },
+      { status: answerKey?.length === 24 ? 400 : 503 },
+    );
   }
 }

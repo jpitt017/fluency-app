@@ -21,13 +21,26 @@ import {
 
 type PendingAction = 'auth' | 'magic' | 'reset' | null;
 
-function formatAuthError(err: unknown, fallback: string): string {
-  const raw = err instanceof Error ? err.message : fallback;
+/** The one B1 line for a technical auth fault; the detail goes to the log. */
+const AUTH_ERROR_LINE = 'Something went wrong. Please try again, or message your teacher.';
+
+/**
+ * Turn whatever GoTrue (or the browser) threw into a line a B1 learner can
+ * read. The provider's own words — rate limits, SMTP settings, session-cookie
+ * mechanics — are logged, never shown. A wrong password is the learner's own
+ * mistake, not a technical fault, so it gets its own plain sentence.
+ */
+function formatAuthError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  console.error('[login] auth error:', raw);
   const lower = raw.toLowerCase();
-  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit')) {
-    return 'Email sending limit reached (Supabase default allows 2 emails/hour without custom SMTP). Sign in with your password above, or wait before requesting another link.';
+  if (lower.includes('invalid login credentials')) {
+    return 'That email or password is not right. Please try again.';
   }
-  return raw;
+  if (lower.includes('email not confirmed')) {
+    return 'Please confirm your email first. Look for the link in your inbox.';
+  }
+  return AUTH_ERROR_LINE;
 }
 
 function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOpen: boolean }) {
@@ -55,6 +68,9 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
       : null,
   );
   const [message, setMessage] = useState<string | null>(null);
+  // The new-tab escape hatch is a flag, not a substring of the learner's error:
+  // the B1 line no longer names the embedded preview.
+  const [cookieBlocked, setCookieBlocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +100,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
     setPendingAction('magic');
     setError(null);
     setMessage(null);
+    setCookieBlocked(false);
 
     try {
       const supabase = createClient();
@@ -96,7 +113,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
       if (otpError) throw otpError;
       setMessage('Check your email for a one-time sign-in link.');
     } catch (err: unknown) {
-      setError(formatAuthError(err, 'Unable to send a sign-in link.'));
+      setError(formatAuthError(err));
     } finally {
       setPendingAction(null);
     }
@@ -113,6 +130,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
     setPendingAction('reset');
     setError(null);
     setMessage(null);
+    setCookieBlocked(false);
 
     try {
       const supabase = createClient();
@@ -125,7 +143,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
       if (resetError) throw resetError;
       setMessage('If an account exists for that email, a password-reset link will be sent.');
     } catch (err: unknown) {
-      setError(formatAuthError(err, 'Unable to send a password-reset email.'));
+      setError(formatAuthError(err));
     } finally {
       setPendingAction(null);
     }
@@ -136,6 +154,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
     setPendingAction('auth');
     setError(null);
     setMessage(null);
+    setCookieBlocked(false);
 
     try {
       const supabase = createClient();
@@ -192,12 +211,12 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
 
         if (signInError) throw signInError;
         if (!data.session) {
-          throw new Error('Signed in, but no browser session was created. Please try again.');
+          throw new Error('Signed in, but no browser session was created.');
         }
         if (!document.cookie.includes('sb-')) {
-          setError(
-            'Your browser blocked session cookies inside this embedded preview. Open this page in a new tab to sign in.',
-          );
+          console.error('[login] session cookies missing after sign-in (embedded preview?)');
+          setCookieBlocked(true);
+          setError(AUTH_ERROR_LINE);
           return;
         }
 
@@ -208,11 +227,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
       // The setting can be stale in a long-open tab, and the server is the real
       // authority either way, so translate the refusal here too rather than
       // showing a learner GoTrue's own wording.
-      setError(
-        isSignupsClosedError(err)
-          ? SIGNUPS_CLOSED_MESSAGE
-          : formatAuthError(err, 'An unexpected authentication error occurred.'),
-      );
+      setError(isSignupsClosedError(err) ? SIGNUPS_CLOSED_MESSAGE : formatAuthError(err));
     } finally {
       setPendingAction(null);
     }
@@ -244,7 +259,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
             ? 'Choose a new password (at least 6 characters) for your account'
             : isSignUp
               ? signupsOpen
-                ? 'Start your B1 → B2 study workspace'
+                ? 'Start your B1 → B2 English course'
                 : 'Pilot accounts are made by your teacher'
               : 'Sign in to practise and review your mistakes'}
         </p>
@@ -270,7 +285,7 @@ function LoginForm({ emailLinks, signupsOpen }: { emailLinks: boolean; signupsOp
       {error && (
         <div role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           <p>{error}</p>
-          {error.includes('embedded preview') && (
+          {cookieBlocked && (
             <a
               href={`/login?next=${encodeURIComponent(safeNext)}`}
               target="_blank"

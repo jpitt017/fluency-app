@@ -21,14 +21,20 @@ export default function DeleteDataButton() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ confirm: 'DELETE' }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; removedAudioFiles?: number };
-      if (!res.ok) throw new Error(data.error ?? 'Could not erase learning data.');
+      const data = (await res.json().catch(() => null)) as { error?: string; removedAudioFiles?: number } | null;
+      if (!res.ok || !data) {
+        // Technical detail stays in the log; the learner reads a B1 line.
+        console.error('[delete-data] request failed:', data?.error ?? res.status);
+        setStatus(data?.error || 'We could not delete your data. Please try again.');
+        return;
+      }
       setStatus(`All learning data and ${data.removedAudioFiles ?? 0} audio recordings deleted.`);
       setConfirming(false);
       setTyped('');
       router.refresh();
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Deletion failed.');
+      console.error('[delete-data] request failed:', err);
+      setStatus('We could not delete your data. Please try again.');
     } finally {
       setBusy(false);
     }

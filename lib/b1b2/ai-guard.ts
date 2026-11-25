@@ -28,11 +28,12 @@ export async function enforceAiUsage(
   units: number,
 ): Promise<AiGuardResult> {
   if (!supabase) {
+    console.error('[ai-guard] authentication and usage controls are not configured');
     return {
       allowed: false,
       headers: {},
       response: NextResponse.json(
-        { error: 'Authentication and usage controls are not configured.' },
+        { error: 'Something went wrong. Please try again, or message your teacher.' },
         { status: 503 },
       ),
     };

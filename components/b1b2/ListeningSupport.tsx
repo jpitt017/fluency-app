@@ -245,10 +245,15 @@ export function GlossCheck({
         feedback: string;
         error?: string;
       };
-      if (!response.ok) throw new Error(data.error || 'Could not check your answer.');
+      if (!response.ok) {
+        console.error('[listening-support] check failed:', data.error ?? response.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       setResult((previous) => ({ ...previous, [id]: data }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check your answer.');
+      console.error('[listening-support] check failed:', err);
+      setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(null);
     }

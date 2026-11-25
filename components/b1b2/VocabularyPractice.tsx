@@ -11,7 +11,9 @@ import {
   unmarkedRequired,
 } from '@/lib/curriculum/week-practice.mjs';
 import type { PracticeProgress } from '@/lib/curriculum/week-practice-progress';
+import { parseGapText, gapsCoverItems } from '@/lib/curriculum/vocabulary-gap-text.mjs';
 import SentenceBox from './SentenceBox';
+import GapText from './GapText';
 import { FinishSummary, SavedTick } from './PracticeFeedback';
 
 type Question = { id: string; prompt: string; options?: string[] };
@@ -21,7 +23,7 @@ type Result = { correct: boolean; feedback: string };
 const STEP_INSTRUCTIONS = [
   'Read the new words for this week. Tap Listen to hear each one.',
   'Match each word to its meaning.',
-  'Complete the text with words from the box.',
+  'Choose a word for each gap in the text.',
   'Choose the verb that fits the sentence.',
   'Choose the right form of the word.',
   'Type the word that matches the meaning.',
@@ -73,7 +75,7 @@ function WordCard({
       <p className="mt-1 text-sm italic">{card.example}</p>
       {note && <p className="mt-2 text-sm text-amber-900">{note}</p>}
       <button type="button" onClick={onPlay} className="mt-2 text-sm text-indigo-700 underline">
-        Listen{!card.audioUrl && ' · Temporary voice'}
+        Listen{!card.audioUrl && ' · Temporary computer voice'}
       </button>
     </article>
   );
@@ -110,11 +112,18 @@ function PracticeQuestion({
     try {
       const response = await fetch('/api/week/vocabulary/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ week, id: question.id, answer }) });
       const data = await response.json() as Result & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Could not check your answer.');
+      if (!response.ok) {
+        console.error('[vocabulary] check failed:', data.error ?? response.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       setResult(data);
       setSavedAt(true);
       onAnswered(question.id, data.correct);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Could not check your answer.'); }
+    } catch (err) {
+      console.error('[vocabulary] check failed:', err);
+      setError('We could not check your answer. Please try again.');
+    }
     finally { setBusy(false); }
   }
 
@@ -221,6 +230,12 @@ export default function VocabularyPractice({
   const steps = ['Words', 'Match', 'Complete the text', 'Choose the verb', 'Word forms', 'Type the word', 'Your sentences'];
   const groups: Question[][] = [[], exercises.match.words.map(q => ({ id: q.id, prompt: q.word, options: exercises.match.meanings })), exercises.text.items.map(q => ({ id: q.id, prompt: `Gap ${q.gap}`, options: exercises.text.wordBox })), exercises.chooseVerb.map(q => ({ id: q.id, prompt: q.question, options: q.options })), exercises.wordForms.map(q => ({ id: q.id, prompt: q.question, options: q.options })), exercises.typeTheWord.items.map(q => ({ id: q.id, prompt: `${q.meaning} (${q.hint})` }))];
 
+  // The inline gap text needs every bank item to have its marker in the body.
+  const gapTextReady = useMemo(
+    () => gapsCoverItems(parseGapText(exercises.text.body, exercises.text.items), exercises.text.items),
+    [exercises],
+  );
+
   const [results, setResults] = useState<Record<string, boolean>>(() => {
     const restored: Record<string, boolean> = {};
     for (const [id, saved] of Object.entries(progress?.answers ?? {})) restored[id] = saved.correct;
@@ -269,10 +284,15 @@ export default function VocabularyPractice({
         error?: string;
         summary?: { correct: number; total: number; reviewMistakes: number; sentence: string };
       };
-      if (!response.ok || !data.summary) throw new Error(data.error || 'Could not save your progress.');
+      if (!response.ok || !data.summary) {
+        console.error('[vocabulary] finish failed:', data.error ?? response.status);
+        setFinishError(data.error || 'We could not save your progress. Please try again.');
+        return;
+      }
       setSummary({ ...data.summary, next: 'reading' });
     } catch (err) {
-      setFinishError(err instanceof Error ? err.message : 'Could not save your progress.');
+      console.error('[vocabulary] finish failed:', err);
+      setFinishError('We could not save your progress. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -289,9 +309,30 @@ export default function VocabularyPractice({
     {!signedIn && <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>}
     {step === 0 && <WordGroups cards={cards} careful={exercises.careful} onPlay={play} />}
     {step === 1 && <p className="text-sm text-stone-600">{exercises.match.instruction}</p>}
-    {step === 2 && <><p>{exercises.text.instruction}</p><p className="leading-7">{exercises.text.body}</p><p className="text-sm">Word box: {exercises.text.wordBox.join(' · ')}</p></>}
+    {/* Step 3: the gaps sit inside the text. The plain version below only runs
+        if a future bank edit leaves a gap without an item — the parse tests
+        pin the current bank, so learners see the inline version. */}
+    {gapTextReady && (
+      // Keep the component mounted when changing steps so both unfinished
+      // choices and checked feedback are still there when the learner returns.
+      <div hidden={step !== 2}>
+        <GapText
+          week={exercises.week}
+          text={exercises.text}
+          signedIn={signedIn}
+          saved={progress?.answers}
+          onAnswered={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))}
+          onChanged={(id) => setResults((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          })}
+        />
+      </div>
+    )}
+    {step === 2 && !gapTextReady && <><p>{exercises.text.instruction}</p><p className="leading-7">{exercises.text.body}</p><p className="text-sm">Word box: {exercises.text.wordBox.join(' · ')}</p></>}
     {step === 5 && <p className="text-sm text-stone-600">{exercises.typeTheWord.instruction}</p>}
-    {step > 0 && step < 6 && <div className="space-y-3">{groups[step].map(q => <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn} saved={progress?.answers[q.id]} onAnswered={(id, correct) => setResults(prev => ({ ...prev, [id]: correct }))} />)}</div>}
+    {step > 0 && step < 6 && (step !== 2 || !gapTextReady) && <div className="space-y-3">{groups[step].map(q => <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn} saved={progress?.answers[q.id]} onAnswered={(id, correct) => setResults(prev => ({ ...prev, [id]: correct }))} />)}</div>}
     {step === 6 && <div className="space-y-3">{exercises.yourSentence.map(q => <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn} rows={2} initialAnswer={progress?.answers[q.id]?.answer} onChecked={(onTarget) => setResults(prev => ({ ...prev, [q.id]: onTarget }))} />)}</div>}
     <div className="flex justify-between gap-2">
       <button type="button" disabled={step === 0} onClick={() => setStep(s => s - 1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button>

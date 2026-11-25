@@ -58,16 +58,25 @@ export async function POST(request: Request) {
   const reason = marked.reason ?? reviewed?.reason ?? null;
   const sourceLine = (reviewed?.sourceLine as string | undefined) ?? null;
 
-  // Keep the attempt, so "Delete my data" has something real to erase.
-  const admin = createAdminSupabase();
-  if (admin) {
+  // The mark counts only once its answer has been saved: later steps and the
+  // transcript gate rely on these same rows, not on a browser-only result.
+  try {
+    const admin = createAdminSupabase();
+    if (!admin) {
+      console.error('[input] Could not save attempt: admin client is not configured');
+      return NextResponse.json({ error: 'We could not save your answer. Please try again.' }, { status: 503 });
+    }
     const { error } = await admin.from('week_input_answers').upsert(
-      { user_id: user.id, week_number: weekNumber, skill, item_id: item.id, answer: body.answer.slice(0, 500), correct: marked.correct },
+      { user_id: user.id, week_number: weekNumber, skill, item_id: item.id, answer: body.answer, correct: marked.correct },
       { onConflict: 'user_id,week_number,skill,item_id' },
     );
     if (error) {
-      console.error('[input] Failed to save attempt:', error.message);
+      console.error('[input] Failed to save attempt:', error);
+      return NextResponse.json({ error: 'We could not save your answer. Please try again.' }, { status: 503 });
     }
+  } catch (error) {
+    console.error('[input] Failed to save attempt:', error);
+    return NextResponse.json({ error: 'We could not save your answer. Please try again.' }, { status: 503 });
   }
 
   return NextResponse.json(

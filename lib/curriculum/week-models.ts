@@ -15,20 +15,35 @@ export async function recordWeekSubmission(userId: string, weekNumber: unknown, 
   if (!Number.isInteger(weekNumber)) return null;
   const week = weekNumber as number;
   const model = modelFor(week, skill);
-  const admin = createAdminSupabase();
-  if (!model || !admin) return null;
-  const { error } = await admin.from('week_output_submissions').upsert(
-    { user_id: userId, week_number: week, skill },
-    { onConflict: 'user_id,week_number,skill', ignoreDuplicates: true },
-  );
-  if (error) {
-    console.error('[week] Failed to record submission:', error.message);
+  if (!model) return null;
+  try {
+    const admin = createAdminSupabase();
+    if (!admin) {
+      console.error('[week] Could not record submission: admin client is not configured');
+      return null;
+    }
+    const { error } = await admin.from('week_output_submissions').upsert(
+      { user_id: userId, week_number: week, skill },
+      { onConflict: 'user_id,week_number,skill', ignoreDuplicates: true },
+    );
+    if (error) {
+      console.error('[week] Failed to record submission:', error);
+      return null;
+    }
+  } catch (error) {
+    console.error('[week] Failed to record submission:', error);
     return null;
   }
-  const client = await createServerSupabase();
-  if (client) {
-    const { error: progressError } = await client.rpc('refresh_current_week');
-    if (progressError) console.error('[week] Could not refresh progress:', progressError.message);
+  // A refresh failure must not pretend the already-saved submission vanished:
+  // progression is recomputed on the next refresh as well.
+  try {
+    const client = await createServerSupabase();
+    if (client) {
+      const { error: progressError } = await client.rpc('refresh_current_week');
+      if (progressError) console.error('[week] Could not refresh progress:', progressError);
+    }
+  } catch (error) {
+    console.error('[week] Could not refresh progress:', error);
   }
   return model;
 }

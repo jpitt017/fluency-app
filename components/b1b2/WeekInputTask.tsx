@@ -12,14 +12,18 @@ function Question({
   question,
   index,
   signedIn,
+  finishing,
   onAnswered,
+  onChanged,
 }: {
   week: number;
   skill: 'reading' | 'listening';
   question: LearnerQuestion;
   index: number;
   signedIn: boolean;
+  finishing: boolean;
   onAnswered: (id: string, correct: boolean) => void;
+  onChanged: (id: string) => void;
 }) {
   const [answer, setAnswer] = useState('');
   const [marked, setMarked] = useState<Marked | null>(null);
@@ -36,11 +40,16 @@ function Question({
         body: JSON.stringify({ week, skill, id: question.id, answer }),
       });
       const data = (await response.json()) as Marked & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Could not check your answer.');
+      if (!response.ok) {
+        console.error('[week-input] check failed:', data.error ?? response.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       setMarked(data);
       onAnswered(question.id, data.correct);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check your answer.');
+      console.error('[week-input] check failed:', err);
+      setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -61,9 +70,11 @@ function Question({
                   name={question.id}
                   value={option}
                   checked={answer === option}
+                  disabled={busy || finishing}
                   onChange={() => {
                     setAnswer(option);
                     setMarked(null);
+                    onChanged(question.id);
                   }}
                 />
                 {option}
@@ -75,9 +86,11 @@ function Question({
             aria-label={`Answer to question ${index + 1}`}
             maxLength={500}
             value={answer}
+            disabled={busy || finishing}
             onChange={(event) => {
               setAnswer(event.target.value);
               setMarked(null);
+              onChanged(question.id);
             }}
             className="mt-2 w-full rounded border border-stone-300 bg-white p-2"
           />
@@ -85,7 +98,7 @@ function Question({
       </fieldset>
       <button
         type="button"
-        disabled={!signedIn || busy || !answer.trim()}
+        disabled={!signedIn || busy || finishing || !answer.trim()}
         onClick={check}
         className="mt-2 rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
@@ -137,14 +150,19 @@ export default function WeekInputTask({
       const response = await fetch('/api/week/input', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ week, skill, answers: Object.fromEntries(questions.map((q) => [q.id, 'answered'])) }),
+        body: JSON.stringify({ week, skill }),
       });
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error || 'Could not save your progress.');
+      if (!response.ok) {
+        console.error('[week-input] save failed:', result.error ?? response.status);
+        setMessage(result.error || 'We could not save your progress. Please try again.');
+        return;
+      }
       setMessage('Your answers are saved.');
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Please try again.');
+      console.error('[week-input] save failed:', error);
+      setMessage('We could not save your progress. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -161,7 +179,20 @@ export default function WeekInputTask({
             question={question}
             index={index}
             signedIn={signedIn}
-            onAnswered={(id, isCorrect) => setResults((prev) => ({ ...prev, [id]: isCorrect }))}
+            finishing={busy}
+            onAnswered={(id, isCorrect) => {
+              setMessage('');
+              setResults((prev) => ({ ...prev, [id]: isCorrect }));
+            }}
+            onChanged={(id) => {
+              setMessage('');
+              setResults((prev) => {
+                if (!(id in prev)) return prev;
+                const next = { ...prev };
+                delete next[id];
+                return next;
+              });
+            }}
           />
         ))}
       </ol>

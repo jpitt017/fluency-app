@@ -100,9 +100,28 @@ jobs:
       - run: node --experimental-strip-types --test tests/unit/mediation-fallback.test.mjs
       - run: node --test tests/unit/placement.test.mjs
       - run: node --test tests/unit/learner-wording.test.mjs
+      - run: node --test tests/unit/learner-errors.test.mjs
+      # Input feedback cannot claim success when saving fails, and completion
+      # counts only server-checked answers (including approved trial audio).
+      - run: node --test tests/unit/week-input-save.test.mjs
+      # The actual speaking/writing route and recording helper: weekly work
+      # counts only when saved, while feedback survives a progress-save error.
+      - run: node --test tests/unit/week-output-counting.test.mjs
       # Finishing grammar and vocabulary: what counts, what may be skipped, and
       # that the score comes from saved rows rather than the browser.
       - run: node --test tests/unit/week-practice-finish.test.mjs
+      # The vocabulary exercise bank and its learner projection: no keys or
+      # reasons ship to the browser, and every gap has an authored reason.
+      - run: node --test tests/unit/vocabulary-exercises.test.mjs
+      # The explicit alias list from inflected gap answers to their cards, and
+      # that every linked term resolves to an authored card (44 of 44).
+      - run: node --test tests/unit/vocabulary-review-link.test.mjs
+      - run: node --test tests/unit/vocabulary-word-groups.test.mjs
+      # Step 3: gaps inline in the text, one Check, server marking, a11y wiring.
+      - run: node --test tests/unit/vocabulary-gap-text.test.mjs
+      # The week page and labs wiring: back-to-week, counting, the AI bar, and
+      # the Again/Easy line above the review grade buttons.
+      - run: node --test tests/unit/learner-week-ui.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/usage-messages.test.mjs

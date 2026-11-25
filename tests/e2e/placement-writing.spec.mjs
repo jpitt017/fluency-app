@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2.json', import.meta.url)));
 
 const QUESTION_COUNT = 24;
+const WRITING_PROMPT = 'Write 3–5 sentences (60–100 words). Say why you are learning English and what you find hard to talk about.';
 
 /**
  * The placement quiz regression cover.
@@ -62,8 +63,15 @@ async function walkToWritingStep(page) {
 test('placement quiz reaches the writing task and the result on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.route('**/api/placement/score', (route) => route.fulfill({ json: { score: 22, total: 24, placement: 'stage2' } }));
+  let sentPrompt;
+  await page.route('**/api/writing/correct', (route) => {
+    sentPrompt = route.request().postDataJSON().prompt;
+    return route.fulfill({ json: { score: 80, feedback: 'Good work.' } });
+  });
 
   await walkToWritingStep(page);
+  await expect(page.getByText(WRITING_PROMPT, { exact: true })).toHaveCount(1);
+  await expect(page.getByText(/Why are you learning English to B2/)).toHaveCount(0);
 
   // The word counter starts at zero and the hint explains the disabled button.
   const counter = page.getByTestId('writing-word-counter');
@@ -93,6 +101,7 @@ test('placement quiz reaches the writing task and the result on a phone', async 
 
   // The result, reached from the writing task rather than from Skip.
   await expect(page.getByRole('heading', { name: 'Placement Check Complete' })).toBeVisible();
+  expect(sentPrompt).toBe(WRITING_PROMPT);
   await expect(page.getByText('Suggested Band: Stage 2')).toBeVisible();
   await expect(page.getByText('Quiz 22/24')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Start Week 17 →' })).toBeVisible();

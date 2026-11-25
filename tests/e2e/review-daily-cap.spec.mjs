@@ -49,7 +49,7 @@ async function seedErrorCard(admin, userId, { prompt, corrected, overdueMinutes 
 
 test('signed out, the review page asks for a sign-in and shows no cards', async ({ page }) => {
   await page.goto('/review');
-  await expect(page.getByRole('heading', { name: /Sign in to practise your recurring mistakes/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Sign in to practise your mistakes/i })).toBeVisible();
   await expect(page.getByText("Today's review", { exact: false })).toHaveCount(0);
 });
 
@@ -69,7 +69,7 @@ test.describe('with a signed-in learner', () => {
       await page.goto('/review');
 
       await page.getByLabel('Your corrected sentence').fill('I moved to Leeds in 2023.');
-      await page.getByRole('button', { name: /Check my repair/i }).click();
+      await page.getByRole('button', { name: /Check my answer/i }).click();
 
       // Marking decides: Good is offered, and Easy as a deliberate upgrade.
       await expect(page.getByText(/That is right/i)).toBeVisible({ timeout: 20_000 });
@@ -104,7 +104,7 @@ test.describe('with a signed-in learner', () => {
       await page.goto('/review');
 
       await page.getByLabel('Your corrected sentence').fill('I have moved to Leeds in 2023, yesterday.');
-      await page.getByRole('button', { name: /Check my repair/i }).click();
+      await page.getByRole('button', { name: /Check my answer/i }).click();
 
       await expect(page.getByText(/Not this time/i)).toBeVisible({ timeout: 20_000 });
       await expect(page.getByRole('button', { name: /^Again/ })).toBeVisible();

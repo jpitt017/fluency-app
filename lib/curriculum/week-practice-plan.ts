@@ -70,7 +70,11 @@ export function vocabularyPlan(week: number): PracticePlan | null {
   const bankWeek = vocabularyBank.weeks.find((entry) => entry.week === week);
   const termFor = (id: string) => (bankWeek ? termForExercise(bankWeek, id) : null);
   const feedbackFor = (id: string) =>
-    [...(bankWeek?.chooseVerb ?? []), ...(bankWeek?.wordForms ?? [])].find((entry) => entry.id === id)?.reason;
+    [
+      ...(bankWeek?.chooseVerb ?? []),
+      ...(bankWeek?.wordForms ?? []),
+      ...(bankWeek?.text.items ?? []),
+    ].find((entry) => entry.id === id)?.reason;
   const item = (id: string, prompt: string, index: number): PlannedItem => ({
     id,
     prompt,

@@ -101,12 +101,17 @@ function Item({
         body: JSON.stringify({ week, id: item.id, answer: value }),
       });
       const data = (await response.json()) as Marked & { error?: string };
-      if (!response.ok) throw new Error(data.error || 'Could not check your answer.');
+      if (!response.ok) {
+        console.error('[grammar] check failed:', data.error ?? response.status);
+        setError(data.error || 'We could not check your answer. Please try again.');
+        return;
+      }
       setMarked(data);
       setSavedAt(true);
       onMarked(item.id, data.correct);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check your answer.');
+      console.error('[grammar] check failed:', err);
+      setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -248,10 +253,15 @@ export default function GrammarPractice({
         error?: string;
         summary?: { correct: number; total: number; reviewMistakes: number; sentence: string };
       };
-      if (!response.ok || !data.summary) throw new Error(data.error || 'Could not save your progress.');
+      if (!response.ok || !data.summary) {
+        console.error('[grammar] finish failed:', data.error ?? response.status);
+        setFinishError(data.error || 'We could not save your progress. Please try again.');
+        return;
+      }
       setSummary({ ...data.summary, next: hasVocabulary ? 'vocabulary' : 'reading' });
     } catch (err) {
-      setFinishError(err instanceof Error ? err.message : 'Could not save your progress.');
+      console.error('[grammar] finish failed:', err);
+      setFinishError('We could not save your progress. Please try again.');
     } finally {
       setBusy(false);
     }

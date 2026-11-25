@@ -13,20 +13,21 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) {
-      return NextResponse.json({ error: 'Database client is not configured.' }, { status: 503 });
+      console.error('[review] database client is not configured');
+      return NextResponse.json({ error: 'We could not check your answer. Please try again.' }, { status: 503 });
     }
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: 'Sign in to save SRS reviews.' }, { status: 401 });
+      return NextResponse.json({ error: 'Sign in to save your review.' }, { status: 401 });
     }
 
     const body = await request.json().catch(() => null);
     const parsed = ReviewRequestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid SRS review payload.' }, { status: 400 });
+      return NextResponse.json({ error: 'We could not check your answer. Please try again.' }, { status: 400 });
     }
 
     const { cardId, cardType, grade } = parsed.data;
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (fetchError || !cardRow) {
-      return NextResponse.json({ error: 'Card not found.' }, { status: 404 });
+      if (fetchError) console.error('[review] could not read card:', fetchError.message);
+      return NextResponse.json({ error: 'We could not find your card. Please try again.' }, { status: 404 });
     }
 
     const nextFsrs = scheduleFsrsReview(cardRow, grade as ReviewGrade);
@@ -60,7 +62,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (rpcError) {
-      return NextResponse.json({ error: rpcError.message }, { status: 500 });
+      console.error('[review] could not save:', rpcError.message);
+      return NextResponse.json({ error: 'We could not check your answer. Please try again.' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -68,8 +71,9 @@ export async function POST(request: NextRequest) {
       fsrs: nextFsrs,
     });
   } catch (err: unknown) {
+    console.error('[review] could not save:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to save FSRS review' },
+      { error: 'We could not check your answer. Please try again.' },
       { status: 500 },
     );
   }

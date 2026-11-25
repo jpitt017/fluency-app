@@ -233,7 +233,7 @@ ${wrapLearnerSubmission(transcript)}`;
               errorPatterns: validated.errorPatterns,
               rubric: validated.rubric,
               pronunciationNote:
-                'Transcript feedback evaluates content, grammar, vocabulary, and coherence. Use the Shadowing Lab to compare your pronunciation directly with native audio.',
+                'The AI reads what you said and checks your ideas, grammar and words. To practise pronunciation, use Pronunciation practice.',
             },
             strengths: validated.strengths,
             improvements: validated.improvements,
@@ -265,12 +265,14 @@ ${wrapLearnerSubmission(transcript)}`;
     }
 
     const weekTask = weekNumber ? await loadLearnerWeek(weekNumber) : null;
-    const modelAnswer = guard.userId && isAudio && weekTask && promptContext === sanitizeLearnerText(weekTask.speakingPrompt, 500).text
+    const weeklyTask = Boolean(isAudio && weekTask && promptContext === sanitizeLearnerText(weekTask.speakingPrompt, 500).text);
+    const modelAnswer = weeklyTask && guard.userId
       ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking') : null;
 
     return NextResponse.json(
       {
         modelAnswer,
+        weekRecorded: weekTask ? Boolean(modelAnswer) : null,
         attemptId: savedAttemptId,
         transcript,
         improvedResponse: validated.improvedResponse,
@@ -283,7 +285,7 @@ ${wrapLearnerSubmission(transcript)}`;
         rubric: validated.rubric,
         score: validated.score,
         transcriptionNote:
-          'Evaluated from your spoken transcript (content, grammar, vocabulary & coherence). Use the Listen-and-Compare Shadowing Lab below to practise pronunciation.',
+          'The AI reads what you said and checks your ideas, grammar and words. To practise pronunciation, use Pronunciation practice.',
         newBadges,
         cached: cacheHit,
       },

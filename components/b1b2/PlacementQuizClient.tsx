@@ -21,7 +21,7 @@ const TARGET_WRITING_WORDS = 60;
 const STUCK_TIMEOUT_MS = 4000;
 
 function placementRecommendation(placement: Placement) {
-  if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice Labs →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
+  if (placement === 'foundation') return { belowB1: true, band: 'Foundation', startLabel: 'Open Practice →', startHref: '/labs', summary: 'Build your foundation before starting Stage 1.' };
   if (placement === 'stage1') return { belowB1: false, band: 'Stage 1', startLabel: 'Start Week 1 →', startHref: '/week/1', summary: 'Start with Stage 1.' };
   return { belowB1: false, band: 'Stage 2', startLabel: 'Start Week 17 →', startHref: '/week/17', summary: 'Start with Stage 2.' };
 }
@@ -75,7 +75,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
         <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center">
           <p className="text-sm text-stone-600">Placement questions are currently unavailable.</p>
           <Link href="/labs" className="mt-4 inline-block rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white">
-            Open Practice Labs →
+            Open Practice →
           </Link>
         </div>
       </main>
@@ -146,8 +146,10 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: sample,
+            // The same simple prompt the learner reads on screen — the only
+            // placement writing prompt there is.
             prompt:
-              'Placement writing sample (60–100 words): Why are you learning English to B2, and what topic do you want to discuss more confidently?',
+              'Write 3–5 sentences (60–100 words). Say why you are learning English and what you find hard to talk about.',
             variety: 'British',
           }),
         }, WRITING_TIMEOUT_MS, 'We could not read your writing this time. Your quiz result still shows your level.');
@@ -159,6 +161,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
           feedbackText = 'We could not read your writing this time. Your quiz result still shows your level.';
         }
       } catch (error) {
+        console.error('[placement] writing check failed:', error);
         feedbackText = error instanceof Error && error.message.startsWith('We could not read your writing')
           ? error.message
           : 'We could not read your writing this time. Your quiz result still shows your level.';

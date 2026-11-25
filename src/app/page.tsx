@@ -77,7 +77,7 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800"
               >
                 <Mic className="h-4 w-4" />
-                <span>Open Speaking &amp; Writing Labs</span>
+                <span>Open speaking and writing practice</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
@@ -104,9 +104,9 @@ export default async function Home() {
                     <RotateCcw className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-xs font-bold text-stone-900">Mistake Repair Queue</p>
+                    <p className="text-xs font-bold text-stone-900">Practise your mistakes</p>
                     <p className="text-[11px] text-stone-600">
-                      {dueErrors > 0 ? `${dueErrors} items due now` : 'Queue clear right now'}
+                      {dueErrors > 0 ? `${dueErrors} cards to practise today` : 'Nothing to practise today'}
                     </p>
                   </div>
                 </div>
@@ -122,9 +122,9 @@ export default async function Home() {
                     <Award className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-xs font-bold text-stone-900">Output Portfolio</p>
+                    <p className="text-xs font-bold text-stone-900">My work</p>
                     <p className="text-[11px] text-stone-600">
-                      {telemetry.speakingCount + telemetry.writingCount} evaluated submissions
+                      {telemetry.speakingCount + telemetry.writingCount} pieces of work checked
                     </p>
                   </div>
                 </div>
@@ -136,8 +136,8 @@ export default async function Home() {
           <aside className="space-y-4 rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)] lg:col-span-5">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Live Mastery</p>
-                <h2 className="font-serif text-lg font-semibold text-stone-900">Skill Meters</h2>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Your skills</p>
+                <h2 className="font-serif text-lg font-semibold text-stone-900">How you are doing</h2>
               </div>
               {weakestSkill && (
                 <Link
@@ -185,7 +185,7 @@ export default async function Home() {
                   {telemetry.speakingLatest !== null ? `${telemetry.speakingLatest}%` : '—'}
                 </p>
                 <p className="text-[11px] text-indigo-700">
-                  {telemetry.speakingCount > 0 ? `${telemetry.speakingCount} evaluated` : 'Open Speaking Lab →'}
+                  {telemetry.speakingCount > 0 ? `${telemetry.speakingCount} checked` : 'Open speaking practice →'}
                 </p>
               </Link>
               <Link href="/portfolio" className="rounded-xl bg-stone-50 p-3 transition hover:bg-stone-100">
@@ -194,7 +194,7 @@ export default async function Home() {
                   {telemetry.writingLatest !== null ? `${telemetry.writingLatest}%` : '—'}
                 </p>
                 <p className="text-[11px] text-indigo-700">
-                  {telemetry.writingCount > 0 ? `${telemetry.writingCount} evaluated` : 'Open Portfolio →'}
+                  {telemetry.writingCount > 0 ? `${telemetry.writingCount} checked` : 'Open my work →'}
                 </p>
               </Link>
             </div>
@@ -223,7 +223,7 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800"
               >
                 <Mic className="h-4 w-4" />
-                <span>Open Speaking &amp; Writing Labs</span>
+                <span>Open speaking and writing practice</span>
               </Link>
               <Link
                 href="/onboarding/placement"
@@ -243,14 +243,14 @@ export default async function Home() {
           </div>
 
           <aside className="space-y-3 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)] lg:col-span-5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Core Practice Studios</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Practice</p>
             <Link
               href="/labs"
               className="flex items-start gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3.5 transition hover:border-indigo-200 hover:bg-indigo-50/30"
             >
               <PenLine className="mt-0.5 h-4 w-4 shrink-0 text-indigo-700" />
               <div>
-                <p className="text-xs font-bold text-stone-900">Writing &amp; Speaking Evaluator</p>
+                <p className="text-xs font-bold text-stone-900">Writing and speaking practice</p>
                 <p className="mt-0.5 text-xs text-stone-600">
                   See what you said and get feedback.
                 </p>
@@ -264,7 +264,7 @@ export default async function Home() {
               <div>
                 <p className="text-xs font-bold text-stone-900">Practise your mistakes</p>
                 <p className="mt-0.5 text-xs text-stone-600">
-                  Targeted rewrite drills built automatically from your recurring errors.
+                  Practise the mistakes from your speaking and writing.
                 </p>
               </div>
             </Link>
@@ -274,9 +274,9 @@ export default async function Home() {
             >
               <Award className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
               <div>
-                <p className="text-xs font-bold text-stone-900">Output Portfolio</p>
+                <p className="text-xs font-bold text-stone-900">My work</p>
                 <p className="mt-0.5 text-xs text-stone-600">
-                  Replay saved audio recordings and review past writing feedback.
+                  Listen to your recordings and read feedback on your writing.
                 </p>
               </div>
             </Link>

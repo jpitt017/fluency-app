@@ -20,7 +20,7 @@ export default function ConversationalSpeakingLab({
     {
       role: 'assistant',
       content:
-        "Good to meet you! Let's practise speaking naturally at B1 → B2. Tell me about a change in your work or daily routine recently — what turned out better than expected?",
+        "Good to meet you! Let's practise speaking. Tell me about a change in your work or daily life. Was it better than you expected?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -50,12 +50,18 @@ export default function ConversationalSpeakingLab({
         }),
       });
 
-      const data = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
+      const data = (await res.json().catch(() => null)) as { reply?: string; error?: string } | null;
+      if (!res.ok || !data) {
+        // The technical detail goes to the console log, not to the learner.
+        console.error('[role-play] chat request failed:', data?.error ?? res.status);
+        setError(data?.error || 'Something went wrong. Please try again, or message your teacher.');
+        return;
+      }
 
       setMessages([...updatedMessages, { role: 'assistant', content: data.reply || '' }]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to send message. Sign in to use AI conversation labs.');
+      console.error('[role-play] chat request failed:', err);
+      setError('Something went wrong. Please try again, or message your teacher.');
     } finally {
       setLoading(false);
     }
@@ -65,9 +71,9 @@ export default function ConversationalSpeakingLab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-bold text-stone-900">Multi-Turn Role-Play Coach</h2>
+          <h2 className="text-lg font-bold text-stone-900">Role-play practice</h2>
           <p className="mt-0.5 text-xs text-stone-500">
-            Practise real-time spoken-style dialogue with natural B1 → B2 follow-up questions.
+            Have a conversation with the AI coach. It asks you questions, and you answer.
           </p>
         </div>
         {keyLanguage.length > 0 && (
