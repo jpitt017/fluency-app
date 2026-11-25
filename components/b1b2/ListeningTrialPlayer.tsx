@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import AudioTransportControls, { formatClock } from './AudioTransportControls';
 import {
   AI_TRIAL_LABEL,
   TRIAL_PLAYS_SUGGESTED,
@@ -54,14 +55,7 @@ function subscribe(onChange: () => void) {
   };
 }
 
-const SKIP_SECONDS = 5;
-
-/** "0:42" — never "0:042", and never NaN when metadata is missing. */
-export function formatClock(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
+export { formatClock };
 
 export default function ListeningTrialPlayer({ trial }: { trial: PlayableTrial }) {
   const storageKey = trialPlayKey(trial.week);
@@ -135,46 +129,20 @@ export default function ListeningTrialPlayer({ trial }: { trial: PlayableTrial }
     setAnnouncement(`${formatClock(audio.currentTime)} of ${formatClock(audio.duration)}`);
   }, []);
 
-  const skip = useCallback((offset: number) => {
+  const stop = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    seek(audio.currentTime + offset);
-  }, [seek]);
+    audio.pause();
+    audio.currentTime = 0;
+    setSeconds(0);
+    setAnnouncement('Stopped');
+  }, []);
 
-  /**
-   * Keyboard shortcuts. Bound to the container rather than to window so the keys
-   * only act while the player has focus somewhere inside it, and ignored when the
-   * event came from an input or button: Space on a focused button must press that
-   * button, not toggle playback a second time.
-   */
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const target = event.target as HTMLElement;
-      const onControl = target.closest('button, input, a, select, textarea');
-      if (onControl && (event.key === ' ' || event.key === 'Enter')) return;
-      if (event.key === ' ') {
-        event.preventDefault();
-        toggle();
-      } else if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        skip(-SKIP_SECONDS);
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        skip(SKIP_SECONDS);
-      }
-    },
-    [toggle, skip],
-  );
-
-  const progress = duration > 0 ? Math.min(100, (seconds / duration) * 100) : 0;
+  const toggleRate = useCallback(() => setRate((current) => current === 0.75 ? 1 : 0.75), []);
   const suggestedDone = used >= TRIAL_PLAYS_SUGGESTED;
 
   return (
-    <div
-      className="space-y-3 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200"
-      onKeyDown={onKeyDown}
-      data-testid="listening-trial-player"
-    >
+    <div className="space-y-3 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200" data-testid="listening-trial-player">
       <div>
         <p className="font-semibold text-amber-900">{AI_TRIAL_LABEL}</p>
         <p className="text-sm text-amber-900/80">
@@ -198,7 +166,7 @@ export default function ListeningTrialPlayer({ trial }: { trial: PlayableTrial }
         }}
         onPause={() => {
           setPlaying(false);
-          setAnnouncement('Paused');
+          setAnnouncement(audioRef.current?.currentTime === 0 ? 'Stopped' : 'Paused');
         }}
         onEnded={() => {
           setPlaying(false);
@@ -210,67 +178,19 @@ export default function ListeningTrialPlayer({ trial }: { trial: PlayableTrial }
         onTimeUpdate={() => setSeconds(audioRef.current?.currentTime ?? 0)}
       />
 
-      {/* The seek bar is an input[type=range]: dragging, arrow keys and the right
-          screen-reader role all come from the element itself. */}
-      <div className="space-y-1">
-        <label htmlFor={`trial-seek-${trial.week}`} className="sr-only">
-          Position in the track
-        </label>
-        <input
-          id={`trial-seek-${trial.week}`}
-          type="range"
-          min={0}
-          max={Math.max(duration, 1)}
-          step={1}
-          value={Math.min(seconds, Math.max(duration, 1))}
-          onChange={(event) => seek(Number(event.target.value))}
-          aria-valuetext={`${formatClock(seconds)} of ${formatClock(duration)}`}
-          className="h-3 w-full cursor-pointer accent-amber-900"
-          style={{ backgroundSize: `${progress}% 100%` }}
-        />
-        <p className="text-sm tabular-nums text-amber-900/80" aria-hidden="true">
-          {formatClock(seconds)} / {formatClock(duration)}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => skip(-SKIP_SECONDS)}
-          aria-label={`Back ${SKIP_SECONDS} seconds`}
-          className="min-h-11 min-w-11 rounded-xl bg-white px-3 py-2 font-semibold text-amber-900 ring-1 ring-amber-300"
-        >
-          ⟲ {SKIP_SECONDS} s
-        </button>
-
-        <button
-          type="button"
-          onClick={toggle}
-          aria-pressed={playing}
-          className="min-h-11 min-w-11 rounded-xl bg-amber-900 px-6 py-2 font-semibold text-white"
-        >
-          {playing ? 'Pause' : used === 0 ? 'Play the track' : 'Play again'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => skip(SKIP_SECONDS)}
-          aria-label={`Forward ${SKIP_SECONDS} seconds`}
-          className="min-h-11 min-w-11 rounded-xl bg-white px-3 py-2 font-semibold text-amber-900 ring-1 ring-amber-300"
-        >
-          {SKIP_SECONDS} s ⟳
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setRate(rate === 0.75 ? 1 : 0.75)}
-          aria-pressed={rate === 0.75}
-          aria-label="Slower speed, three quarters"
-          className="min-h-11 min-w-11 rounded-xl bg-white px-3 py-2 font-semibold text-amber-900 ring-1 ring-amber-300"
-        >
-          0.75×
-        </button>
-      </div>
+      <AudioTransportControls
+        id={`trial-seek-${trial.week}`}
+        positionLabel="Position in the track"
+        seconds={seconds}
+        duration={duration}
+        playing={playing}
+        rate={rate}
+        playLabel={used === 0 ? 'Play the track' : 'Play again'}
+        onToggle={toggle}
+        onStop={stop}
+        onSeek={seek}
+        onToggleRate={toggleRate}
+      />
 
       {/* Guidance, never a gate. The sentence itself lives on the page; this is
           the gentle nudge once the two suggested listens are used. */}

@@ -106,8 +106,8 @@ jobs:
       - run: node --test tests/unit/week-input-save.test.mjs
       # Reading support: safe glossary projection, saved-answer gate and server-side gloss marking.
       - run: node --test tests/unit/reading-support.test.mjs
-      # Week speaking flow: model gating, phrase-list exact matching, note validation,
-      # focus-answer projection, and deletion coverage for both recordings.
+      # Week speaking flow: model gating, exact phrase highlighting, note validation,
+      # removed focus/noticing answers, and retained deletion coverage for recordings.
       - run: node --test tests/unit/week-speaking-support.test.mjs
       # The actual speaking/writing route and recording helper: weekly work
       # counts only when saved, while feedback survives a progress-save error.
