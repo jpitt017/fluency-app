@@ -63,6 +63,7 @@ test('the Playwright workflow has no live-project fallback', () => {
   const job = workflow.slice(start, end);
 
   assert.doesNotMatch(job, new RegExp(LIVE_PROJECT_REF));
+  assert.match(job, new RegExp(`E2E_SUPABASE_PROJECT_REF: ${E2E_PROJECT_REF}`));
   assert.match(job, /vars\.E2E_SUPABASE_URL/);
   assert.match(job, /secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(job, /supabase --workdir .* db push/);

@@ -197,7 +197,7 @@ jobs:
           version: 3.2.0
       - name: Verify isolated E2E Supabase configuration
         env:
-          E2E_SUPABASE_PROJECT_REF: ${{ vars.E2E_SUPABASE_PROJECT_REF }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
           E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
@@ -208,7 +208,7 @@ jobs:
       - name: Apply repository migrations to the isolated E2E project
         shell: bash
         env:
-          E2E_SUPABASE_PROJECT_REF: ${{ vars.E2E_SUPABASE_PROJECT_REF }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
           E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
