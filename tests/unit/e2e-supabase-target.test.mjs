@@ -67,5 +67,6 @@ test('the Playwright workflow has no live-project fallback', () => {
   assert.match(job, /vars\.E2E_SUPABASE_URL/);
   assert.match(job, /secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(job, /supabase --workdir .* db push/);
+  assert.match(job, /node scripts\/seed-e2e-supabase\.mjs/);
   assert.doesNotMatch(job, /secrets\.NEXT_PUBLIC_SUPABASE_URL|secrets\.SUPABASE_SERVICE_ROLE_KEY/);
 });

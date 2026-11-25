@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 async function signIn(page, email, password) {
   await page.goto('/login');
   await page.getByLabel(/Email/i).fill(email);
-  await page.getByLabel(/Password/i).fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: /Sign in/i }).click();
   await page.waitForURL(/\/dashboard|\/labs|\/teacher/);
 }

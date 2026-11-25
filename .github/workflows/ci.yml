@@ -157,7 +157,7 @@ jobs:
       # git rev-parse --short origin/main instead of judging by eye.
       - run: node --test tests/unit/deploy-version.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
-      - run: node --test tests/unit/e2e-supabase-target.test.mjs
+      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs
       - run: node --test tests/unit/listening-gloss-save.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -219,6 +219,16 @@ jobs:
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --yes
+      - name: Seed isolated E2E learner and minimal fixture
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: node scripts/seed-e2e-supabase.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run build
         env:
