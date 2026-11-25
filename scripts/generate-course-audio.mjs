@@ -2,6 +2,10 @@
 /**
  * Audio pipeline for Fluency Studio.
  *
+ * Speaking voice check (manual, artifact-only):
+ *   --speaking-voice-check Week 1 model + two shadowing chunks, Aisha at B1;
+ *                           padded and measured, with no Storage/approval writes
+ *
  * Weeks 1-4 listening (the current production path, ElevenLabs voices):
  *   --voice-check       the reviewed lines -> private review bucket: Tom's first
  *                       two Week 2 lines, Marta's three longest Week 3 turns and
@@ -70,6 +74,7 @@ import {
   pcmToWav,
   synthesiseTurn,
 } from './lib/course-audio/tts.mjs';
+import { generateSpeakingVoiceCheck } from './lib/course-audio/speaking-trial.mjs';
 
 /**
  * The voice settings a summary reports, read from the config.
@@ -799,7 +804,38 @@ async function revokeWeek(weeks) {
  * value (letters, `..`, exponents) fails with the same clean annotation as any
  * other error instead of a bare stack trace.
  */
+async function speakingVoiceCheck() {
+  if (!elevenLabsKey) throw new Error('Set ELEVENLABS_API_KEY to synthesise the speaking voice check.');
+  const outputDir = path.join(process.cwd(), 'speaking-voice-check');
+  const clips = await generateSpeakingVoiceCheck({
+    apiKey: elevenLabsKey,
+    outputDir,
+    speaker: 'Aisha',
+    pace: 'b1',
+    log: (message) => console.log(message),
+  });
+  const rows = [
+    '# Week 1 speaking voice check',
+    '',
+    'Download the `speaking-voice-check` artifact from this run. These are preview clips only; nothing was uploaded to Supabase Storage or released.',
+    '',
+    '| Clip | Voice | Words | Duration (incl. pads) | WPM (incl. pads) | Speech-only WPM |',
+    '| --- | --- | ---: | ---: | ---: | ---: |',
+    ...clips.map((clip) => `| ${clip.title} | ${clip.speaker} (${clip.voice}) | ${clip.words} | ${clip.durationSeconds}s | ${clip.wordsPerMinute} | ${clip.speakingWordsPerMinute} |`),
+    '',
+    'ElevenLabs model: `eleven_multilingual_v2`; B1 speed: 0.8; leading and trailing silence: 0.5s per clip.',
+    'The WPM values use the generated audio duration; the wall-clock value includes both 0.5s pads.',
+    'Approval is required before generating the remaining speaking tracks.',
+  ];
+  if (process.env.GITHUB_STEP_SUMMARY) await appendSummary(...rows);
+  for (const clip of clips) {
+    console.log(`${clip.title}: ${clip.words} words, ${clip.durationSeconds}s incl. pads, ${clip.wordsPerMinute} wpm wall clock (${clip.speakingWordsPerMinute} speech-only wpm) -> ${clip.mp3Path}`);
+  }
+  console.log('Speaking voice-check clips generated as workflow artifacts only. Nothing uploaded to Storage or released.');
+}
+
 async function main() {
+  if (args.includes('--speaking-voice-check')) return speakingVoiceCheck();
   const weekList = listArg('--week') ?? listArg('--weeks');
   const reviewWeekList = listArg('--review');
   const releaseWeekList = listArg('--release');

@@ -43,6 +43,7 @@ import {
   readListeningWeeks,
   week3SampleLines,
 } from '../../scripts/lib/course-audio/listening-trial.mjs';
+import { generateSpeakingVoiceCheck } from '../../scripts/lib/course-audio/speaking-trial.mjs';
 
 const tts = readFileSync(new URL('../../scripts/lib/course-audio/tts.mjs', import.meta.url), 'utf8');
 const cli = readFileSync(new URL('../../scripts/generate-course-audio.mjs', import.meta.url), 'utf8');
@@ -976,7 +977,7 @@ test('the Week 3 sample reads three of each speaker\'s longest lines, at the cou
 test('the workflow offers a one-week voice sample and ships it as the `week-sample` artifact', () => {
   assert.match(
     workflow,
-    /options: \[voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
+    /options: \[speaking-voice-check, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list\]/,
   );
   assert.match(workflow, /description: 'voice-sample: pace profile \(b1 is the course pace\)'/);
   assert.match(workflow, /options: \[b1\]/, 'the warm profile is gone');
@@ -998,6 +999,53 @@ test('the workflow offers a one-week voice sample and ships it as the `week-samp
   assert.match(cli, /path\.join\(process\.cwd\(\), 'voice-samples'\)/);
   const ignore = readFileSync(new URL('../../.gitignore', import.meta.url), 'utf8');
   assert.match(ignore, /^\/voice-samples\/$/m);
+});
+
+test('the speaking voice check reads the Week 1 model and first two chunks with Aisha and half-second pads', async (t) => {
+  const outputDir = await mkdtemp(path.join(tmpdir(), 'speaking-voice-check-'));
+  t.after(() => rm(outputDir, { recursive: true, force: true }));
+  const requests = [];
+  const fetchImpl = fakeFetch(async (url, init) => {
+    requests.push({ url, body: JSON.parse(init.body) });
+    return { ok: true, arrayBuffer: async () => fakePcm(2) };
+  });
+  const clips = await generateSpeakingVoiceCheck({
+    apiKey: 'test-key',
+    outputDir,
+    fetchImpl,
+    encoder: async (wav, output) => writeFile(output, wav),
+  });
+
+  assert.deepEqual(clips.map((clip) => clip.key), [
+    'week-1-speaking-model',
+    'week-1-shadowing-1',
+    'week-1-shadowing-2',
+  ]);
+  assert.equal(requests.length, 3);
+  for (const [index, { url, body }] of requests.entries()) {
+    assert.ok(url.includes(SPEAKER_VOICES.Aisha.voice));
+    if (index === 0) assert.match(body.text, /^When I moved to a new city/);
+    assert.equal(body.voice_settings.speed, 0.8);
+  }
+  assert.match(requests[1].body.text, /^It took me a few weeks/);
+  assert.match(requests[2].body.text, /^I'd never run with a group/);
+
+  for (const clip of clips) {
+    assert.equal(clip.speaker, 'Aisha');
+    assert.equal(clip.pace, 0.8);
+    assert.equal(clip.leadingAndTrailingSilenceSeconds, 0.5);
+    assert.equal(clip.speechSeconds, 2);
+    assert.equal(clip.durationSeconds, 3);
+    assert.equal(clip.wordsPerMinute, wordsPerMinute(clip.words, 3));
+    assert.equal(clip.speakingWordsPerMinute, wordsPerMinute(clip.words, 2));
+    const wav = await readFile(clip.mp3Path);
+    assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
+    const pcm = wav.subarray(44);
+    assert.ok(pcm.subarray(0, 24_000).every((sample) => sample === 0), '0.5s leading silence');
+    assert.ok(pcm.subarray(pcm.length - 24_000).every((sample) => sample === 0), '0.5s trailing silence');
+  }
+  assert.match(workflow, /speaking-voice-check/);
+  assert.match(cli, /--speaking-voice-check/);
 });
 
 test('the dry-run estimate covers all four weeks and lands in the reviewed pace window', () => {

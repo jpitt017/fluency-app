@@ -3,6 +3,9 @@
 # Manual only: nothing here runs on a push or a pull request.
 #
 # `mode` is the approval workflow:
+#   speaking-voice-check generate the Week 1 speaking model and first two
+#                       shadowing chunks with Aisha at B1, as a review artifact
+#                       only; no Storage write or approval row change.
 #   voice-check  synthesise the lines a review asks for by name (one clip per
 #                request), upload them to the private review bucket and attach
 #                them as the `voice-check` artifact, so the voices and their
@@ -43,12 +46,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'voice-check | voice-sample | generate | review | release | revoke | delete | delete-probes | list'
+        description: 'speaking-voice-check | voice-check | voice-sample | generate | review | release | revoke | delete | delete-probes | list'
         type: choice
-        options: [voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list]
+        options: [speaking-voice-check, voice-check, voice-sample, generate, review, release, revoke, delete, delete-probes, list]
         default: voice-check
       weeks:
-        description: 'Weeks to act on (comma separated, 1–4; ignored by voice-check, one week only for voice-sample)'
+        description: 'Weeks to act on (comma separated, 1–4; speaking-voice-check is always Week 1, voice-check ignores this, one week only for voice-sample)'
         type: string
         default: '1,2,3,4'
       pace:
@@ -105,11 +108,11 @@ jobs:
       - run: npm ci
 
       - name: Install ffmpeg (MP3 encoding)
-        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' }}
+        if: ${{ inputs.mode == 'generate' || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' }}
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Check ELEVENLABS_API_KEY availability
-        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' }}
+        if: ${{ (inputs.mode == 'generate' && !inputs.dry_run) || inputs.mode == 'voice-check' || inputs.mode == 'voice-sample' || inputs.mode == 'speaking-voice-check' }}
         env:
           ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: |
@@ -128,12 +131,12 @@ jobs:
         if: ${{ (inputs.mode == 'release' || inputs.mode == 'revoke') && inputs.allow_production_release && inputs.production_ack == 'release to learners' }}
         run: echo "::warning::Approval state is being written on the production project. This is only legitimate as a deliberate, human-reviewed release - never as a test."
 
-      # Every mode except a generate dry-run reads or writes Supabase, so a
-      # missing secret is fatal here rather than at whatever call happens to run
+      # Every mode except a generate dry-run and the artifact-only speaking
+      # voice check reads or writes Supabase, so a missing secret is fatal here
       # first. The value is never printed: only its length, so an empty secret
       # that is merely whitespace is still distinguishable from a short one.
       - name: Check SUPABASE_SERVICE_ROLE_KEY availability
-        if: ${{ inputs.mode != 'generate' || !inputs.dry_run }}
+        if: ${{ (inputs.mode != 'generate' || !inputs.dry_run) && inputs.mode != 'speaking-voice-check' }}
         env:
           SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
@@ -168,6 +171,20 @@ jobs:
       # The signed links in the step summary are not usable outside the run page
       # (GitHub redacts the token when it renders them), so the clips themselves
       # travel as an artifact.
+      - name: Speaking voice check — Week 1 model and first two shadowing chunks
+        if: ${{ inputs.mode == 'speaking-voice-check' }}
+        run: node scripts/generate-course-audio.mjs --speaking-voice-check
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+
+      - name: Speaking voice-check clips for a listen
+        if: ${{ inputs.mode == 'speaking-voice-check' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: speaking-voice-check
+          path: speaking-voice-check/
+          retention-days: 3
+
       - name: Voice check clips for a listen
         if: ${{ inputs.mode == 'voice-check' }}
         uses: actions/upload-artifact@v7
