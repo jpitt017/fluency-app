@@ -42,6 +42,10 @@ begin
   insert into public.ai_usage_resets(user_id) values(u);
   insert into public.week_input_submissions(user_id,week_number,skill) values(u,1,'reading');
   insert into public.week_output_submissions(user_id,week_number,skill) values(u,1,'writing');
+  if to_regclass('public.week_speaking_attempts') is not null then
+    execute 'insert into public.week_speaking_attempts(id,user_id,week_number,notes,first_recording_path,first_transcript,second_recording_path,second_transcript) values ($1,$2,1,''[]''::jsonb,$3,''first take'',$4,''second take'')'
+      using gen_random_uuid(), u, u::text||'/week-speaking/1/first.wav', u::text||'/week-speaking/1/second.wav';
+  end if;
   insert into public.issue_reports(user_id,type,message,page_url) values(u,'feedback','test','/week/1');
   insert into public.issue_report_attempts(user_id) values(u);
   if to_regclass('public.week_grammar_attempts') is not null then
@@ -73,6 +77,10 @@ begin
   perform set_config('request.jwt.claim.sub',u::text,true);
   result := public.delete_my_learning_data();
   if result->>'deleted' <> 'true' or not (result->'audio_paths' ? (u::text||'/recording.wav')) then raise exception 'Unexpected deletion result %',result; end if;
+  if to_regclass('public.week_speaking_attempts') is not null and (
+    not (result->'audio_paths' ? (u::text||'/week-speaking/1/first.wav'))
+    or not (result->'audio_paths' ? (u::text||'/week-speaking/1/second.wav'))
+  ) then raise exception 'Week speaking recordings missing from deletion result %',result; end if;
   for t in select c.table_name from information_schema.columns c join information_schema.tables tb using (table_schema,table_name)
     where c.table_schema='public' and c.column_name='user_id' and tb.table_type='BASE TABLE' loop
     execute format('select count(*) from public.%I where user_id=$1',t.table_name) into n using u;
