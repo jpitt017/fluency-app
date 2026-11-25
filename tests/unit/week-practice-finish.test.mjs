@@ -271,7 +271,7 @@ test('the saved view is server-side, and the score is never taken from the brows
   assert.match(progress, /week_vocabulary_attempts/);
   assert.match(progress, /week_skill_completions/);
   // The adaptive rules are applied to restored results, not only to clicks.
-  assert.match(read('components/b1b2/GrammarPractice.tsx'), /visibleItems\(current, steps, results\)/);
+  assert.match(read('components/b1b2/GrammarPractice.tsx'), /visibleItems\(step, steps, results\)/);
 
   const route = read('src/app/api/week/practice/finish/route.ts');
   const finish = read('lib/curriculum/week-practice-finish.ts');

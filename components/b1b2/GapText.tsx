@@ -31,6 +31,8 @@ export default function GapText({
   saved,
   onAnswered,
   onChanged,
+  onCheckingChange,
+  finishing = false,
 }: {
   week: number;
   text: { instruction: string; body: string; wordBox: string[]; items: GapItem[] };
@@ -40,6 +42,8 @@ export default function GapText({
   onAnswered: (id: string, correct: boolean) => void;
   /** An edited answer needs checking again before finishing the practice. */
   onChanged: (id: string) => void;
+  onCheckingChange?: (checking: boolean) => void;
+  finishing?: boolean;
 }) {
   const segments = parseGapText(text.body, text.items);
   const complete = gapsCoverItems(segments, text.items);
@@ -157,6 +161,16 @@ export default function GapText({
     // for the old choice could appear beside a word selected during the request.
     setOpenGap(null);
     setBusy(true);
+    onCheckingChange?.(true);
+    try {
+      await checkSelectedGaps();
+    } finally {
+      setBusy(false);
+      onCheckingChange?.(false);
+    }
+  }
+
+  async function checkSelectedGaps() {
     setSavedTick(false);
     setErrors({});
     // One request per gap through the same marking route as every other step:
@@ -199,7 +213,6 @@ export default function GapText({
     setErrors(nextErrors);
     setSavedTick(failures === 0);
     setChecked(failures === 0);
-    setBusy(false);
   }
 
   const rightCount = text.items.filter((item) => marks[item.gap]?.correct).length;
@@ -332,7 +345,7 @@ export default function GapText({
         <button
           type="button"
           data-testid="gap-check"
-          disabled={!signedIn || busy || !allFilled}
+          disabled={!signedIn || busy || finishing || !allFilled}
           onClick={checkAll}
           className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >

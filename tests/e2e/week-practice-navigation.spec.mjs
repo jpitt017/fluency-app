@@ -32,13 +32,13 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
       return calls.filter((call) => call.id === id).at(-1);
     }
 
-    await activate(grammar.getByRole('button', { name: 'Next', exact: true }));
+    await activate(grammar.getByRole('button', { name: 'Next step', exact: true }));
     await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeFocused();
     await atTop(grammar);
     expect(await lastScroll('grammar-practice')).toEqual({ id: 'grammar-practice', behavior, block: 'start' });
     await page.keyboard.press('Tab');
-    await expect(grammar.locator('input:focus').first()).toBeFocused();
-    await activate(grammar.getByRole('button', { name: 'Previous', exact: true }));
+    await expect(grammar.getByRole('tab', { name: 'Go to item 1 of 11' })).toBeFocused();
+    await activate(grammar.getByRole('button', { name: 'Previous step', exact: true }));
     await expect(grammar.getByRole('heading', { name: 'Step 1 of 5: See it' })).toBeFocused();
     await atTop(grammar);
     expect(await lastScroll('grammar-practice')).toEqual({ id: 'grammar-practice', behavior, block: 'start' });
@@ -85,11 +85,11 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
       await page.keyboard.press('Tab');
       await expect(vocabulary.getByRole('button', { name: /Listen/ }).first()).toBeFocused();
 
-      await activate(vocabulary.getByRole('button', { name: 'Next', exact: true }));
+      await activate(vocabulary.getByRole('button', { name: 'Next step', exact: true }));
       await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeFocused();
       await atTop();
       expect(await lastScroll()).toEqual({ id: 'vocabulary-practice', behavior, block: 'start' });
-      await activate(vocabulary.getByRole('button', { name: 'Previous', exact: true }));
+      await activate(vocabulary.getByRole('button', { name: 'Previous step', exact: true }));
       await expect(vocabulary.getByRole('heading', { name: 'Step 1 of 7: Words' })).toBeFocused();
       await atTop();
       expect(await lastScroll()).toEqual({ id: 'vocabulary-practice', behavior, block: 'start' });

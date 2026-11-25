@@ -26,7 +26,7 @@ async function openGrammarStep(page, title) {
   await expect(grammar.getByText(/Step \d of 5: /)).toBeVisible();
   for (let i = 0; i < 5; i += 1) {
     if (await grammar.getByText(new RegExp(`Step \\d of 5: ${title}`)).isVisible()) return grammar;
-    await grammar.getByRole('button', { name: 'Next', exact: true }).click();
+    await grammar.getByRole('button', { name: 'Next step', exact: true }).click();
   }
   await expect(grammar.getByText(new RegExp(`Step \\d of 5: ${title}`))).toBeVisible();
   return grammar;
@@ -52,10 +52,10 @@ test('grammar "Fix it" rewrite items have a text box and a Check button', async 
   const grammar = await openGrammarStep(page, 'Fix it');
   await expect(grammar.getByText(/Step \d of 5: Fix it/)).toBeVisible();
 
-  // The step holds the 'Fix' items (single inputs) and then the rewrite items.
-  // The rewrite box is the multi-line one; target it by its prompt so the test
-  // cannot accidentally measure a one-line input belonging to another item.
-  const rewriteBox = grammar.locator('textarea').first();
+  // Three repair items come first, followed by the separate rewrite items.
+  // Open the first rewrite before testing its multi-line box.
+  await grammar.getByRole('tab', { name: 'Go to item 4 of 6' }).click();
+  const rewriteBox = grammar.getByRole('textbox');
   await expect(rewriteBox).toBeVisible();
   await expect(grammar.getByRole('button', { name: 'Check', exact: true }).first()).toBeDisabled();
   await expect(grammar.getByText(/\(since\)/).first()).toBeVisible();
@@ -67,7 +67,7 @@ test('grammar "Use it" has a text box and a Check button', async ({ page }) => {
   await expect(grammar.getByText(/Step \d of 5: Use it/)).toBeVisible();
   await expect(grammar.getByRole('textbox').first()).toBeVisible();
   await expect(grammar.getByRole('button', { name: 'Check', exact: true }).first()).toBeDisabled();
-  await expect(grammar.getByText('Write your sentences and press Check. The app will give you feedback.').first()).toBeVisible();
+  await expect(grammar.locator('p:visible').filter({ hasText: 'Write your sentences and press Check. The app will give you feedback.' }).first()).toBeVisible();
 });
 
 test('vocabulary step 7 has a text box and Check button', async ({ page }) => {
@@ -78,7 +78,7 @@ test('vocabulary step 7 has a text box and Check button', async ({ page }) => {
     await page.goto('/week/1');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
     for (let i = 0; i < 6; i += 1) {
-      await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
+      await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
     }
     await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
     await expect(vocabulary.getByText(/Write one sentence about something that was difficult at first/)).toBeVisible();

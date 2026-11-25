@@ -11,8 +11,10 @@ import {
 } from '@/lib/curriculum/week-practice.mjs';
 import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
 import SentenceBox from './SentenceBox';
+import PracticeItemPager from './PracticeItemPager';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
 import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
+import { usePendingChecks } from './usePendingChecks';
 
 type Marked = { correct: boolean; reason: string | null };
 
@@ -44,14 +46,20 @@ function Item({
   week,
   signedIn,
   saved,
+  largeOptions = false,
+  finishing = false,
   onMarked,
+  onCheckingChange,
 }: {
   item: LearnerGrammarItem;
   week: number;
   signedIn: boolean;
   /** The saved answer from the server, when there is one. */
   saved?: Marked & { answer: string };
+  largeOptions?: boolean;
+  finishing?: boolean;
   onMarked: (id: string, saved: SavedAnswer) => void;
+  onCheckingChange?: (id: string, checking: boolean) => void;
 }) {
   const [answer, setAnswer] = useState<string[]>(() => {
     const blanks = Array(Math.max(1, item.blankCount)).fill('');
@@ -81,6 +89,7 @@ function Item({
         signedIn={signedIn}
         rows={item.step === 'Use it' ? 3 : 2}
         initialAnswer={saved?.answer}
+        freezeWhileChecking={largeOptions}
         onChecked={(onTarget, answer) => {
           setSavedAt(true);
           onMarked(item.id, { answer, correct: onTarget, reason: null });
@@ -94,6 +103,7 @@ function Item({
   async function check() {
     setError('');
     setBusy(true);
+    onCheckingChange?.(item.id, true);
     setSavedAt(false);
     try {
       const value = item.blankCount > 1 && !isChoice ? answer : answer[0];
@@ -120,20 +130,28 @@ function Item({
       setError('We could not check your answer. Please try again.');
     } finally {
       setBusy(false);
+      onCheckingChange?.(item.id, false);
     }
   }
 
   return (
     <div className="space-y-2 rounded-xl bg-stone-50 p-4">
-      <p className="font-medium">{item.prompt}</p>
+      <p id={`${item.id}-prompt`} className="font-medium">{item.prompt}</p>
       {isChoice ? (
-        <div className="space-y-1">
+        <div
+          role={largeOptions ? 'radiogroup' : undefined}
+          aria-labelledby={largeOptions ? `${item.id}-prompt` : undefined}
+          className={largeOptions ? 'space-y-2' : 'space-y-1'}
+        >
           {item.options.map((option) => (
-            <label key={option} className="flex items-center gap-2 text-sm">
+            <label key={option} className={largeOptions
+              ? `flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-base focus-within:ring-2 focus-within:ring-indigo-600 ${answer[0] === option ? 'border-indigo-600 bg-indigo-50' : 'border-stone-300 bg-white'}`
+              : 'flex items-center gap-2 text-sm'}>
               <input
                 type="radio"
                 name={`${item.id}-options`}
                 checked={answer[0] === option}
+                disabled={largeOptions && busy}
                 onChange={() => {
                   setAnswer([option]);
                   setMarked(null);
@@ -152,6 +170,8 @@ function Item({
               value={value}
               maxLength={500}
               aria-label={item.blankCount > 1 ? `Blank ${index + 1}` : 'Your answer'}
+              aria-describedby={largeOptions ? `${item.id}-prompt` : undefined}
+              disabled={largeOptions && busy}
               onChange={(event) => {
                 const next = [...answer];
                 next[index] = event.target.value;
@@ -167,7 +187,7 @@ function Item({
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          disabled={!signedIn || busy || answer.every((part) => !part.trim())}
+          disabled={!signedIn || busy || finishing || answer.every((part) => !part.trim())}
           onClick={check}
           className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
@@ -220,16 +240,10 @@ export default function GrammarPractice({
   const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
   const [summary, setSummary] = useState(progress?.summary ?? null);
   const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
+  const { checking, setChecking } = usePendingChecks();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
   const current: LearnerGrammarStep = steps[Math.min(index, steps.length - 1)];
-
-  /**
-   * The adaptive rules are applied to the results the server restored, not only
-   * to what the browser has seen: a learner who reloads mid-practice gets the
-   * same silent branch they were on.
-   */
-  const shown = useMemo(() => visibleItems(current, steps, results), [current, steps, results]);
 
   const allItems = useMemo(
     () => steps.flatMap((step) => step.items),
@@ -306,14 +320,22 @@ export default function GrammarPractice({
       {!signedIn && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>
       )}
-      <div className="space-y-3">
-        {shown.map((item: LearnerGrammarItem) => (
-          <Item
+      {steps.map((step, stepIndex) => {
+        // The same adaptive rules and restored results decide which questions
+        // exist before the pager counts or displays them.
+        const shown = visibleItems(step, steps, results) as LearnerGrammarItem[];
+        const paged = step.title === 'Practise' || step.title === 'Fix it' || step.title === 'Remember';
+        const pages = (paged ? step.items : shown).map((item) => ({
+          id: item.id,
+          content: <Item
             key={item.id}
             item={item}
             week={week}
             signedIn={signedIn}
             saved={savedAnswers[item.id]}
+            largeOptions={paged}
+            finishing={!item.needsAi && item.target !== 'Extra' && busy}
+            onCheckingChange={!item.needsAi && item.target !== 'Extra' ? setChecking : undefined}
             onMarked={(id, saved) => {
               setResults((prev) => ({ ...prev, [id]: saved.correct }));
               setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
@@ -321,9 +343,15 @@ export default function GrammarPractice({
                 setSummary((prev) => prev ? { ...prev, scoreNeedsRefresh: true } : prev);
               }
             }}
-          />
-        ))}
-      </div>
+          />,
+        }));
+        // Keep each step mounted while another is open: unchecked drafts,
+        // pending checks and feedback survive step navigation as well.
+        if (paged) return <div key={step.number} hidden={stepIndex !== index}>
+          <PracticeItemPager label={`Grammar ${step.title}`} items={pages} visibleIds={new Set(shown.map((item) => item.id))} initiallyAnswered={progress?.answers ?? {}} />
+        </div>;
+        return <div key={step.number} hidden={stepIndex !== index} className="space-y-3">{pages.map((page) => page.content)}</div>;
+      })}
       <div className="flex justify-between gap-2">
         <button
           type="button"
@@ -334,19 +362,21 @@ export default function GrammarPractice({
           }}
           className="rounded-lg border border-stone-300 px-4 py-2 text-sm disabled:opacity-40"
         >
-          Previous
+          Previous step
         </button>
         {lastStep ? (
           <div className="flex flex-col items-end gap-1">
             <button
               type="button"
-              disabled={!signedIn || busy || !canFinishRule(planned, results)}
+              disabled={!signedIn || busy || checking || !canFinishRule(planned, results)}
               onClick={finish}
               className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               {busy ? 'Saving…' : 'Finish grammar'}
             </button>
-            {signedIn && !summary && finishHint(planned, results) && (
+            {checking ? (
+              <span role="status" className="text-xs text-stone-600">Checking your answers. Please wait to finish.</span>
+            ) : signedIn && !summary && finishHint(planned, results) && (
               <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
             )}
           </div>
@@ -359,7 +389,7 @@ export default function GrammarPractice({
             }}
             className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
           >
-            Next
+            Next step
           </button>
         )}
       </div>
