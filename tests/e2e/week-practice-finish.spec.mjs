@@ -10,8 +10,8 @@ import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs'
  *
  * 1. Signed out, the sections end in a Finish button rather than a disabled
  *    Next. That runs everywhere.
- * 2. Signed in, the whole loop: answer everything, finish, read the summary,
- *    reload, and find the answers and the summary still there. That needs a
+ * 2. Signed in, finish a full or partial practice, read the summary, reload,
+ *    and find the answers and the summary still there. That needs a
  *    real learner whose rows the server can read back, so it needs the service
  *    key and is skipped without it.
  *
@@ -36,7 +36,7 @@ const GRAMMAR_ANSWERS = [
   // Practise: six choices. One is deliberately wrong, so the summary has a
   // mistake to report and a Review card to add.
   { id: 'W1-C1', answer: 'moved' },
-  { id: 'W1-C2', answer: 'have made' },
+  { id: 'W1-C2', answer: 'made' },
   { id: 'W1-C3', answer: 'left' },
   { id: 'W1-C4', answer: 'was cooking' },
   { id: 'W1-C5', answer: 'Have ... lived' },
@@ -97,7 +97,7 @@ async function answerVocabulary(page) {
 
 test('signed out, the last grammar step offers Finish rather than a dead Next', async ({ page }) => {
   await page.goto('/week/1');
-  const grammar = page.getByRole('region', { name: 'Grammar practice' });
+  const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
   await expect(grammar.getByText(/Step \d of 5: /)).toBeVisible();
 
   for (let step = 1; step < 5; step += 1) {
@@ -116,7 +116,7 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
 
 test('signed out, the last vocabulary step offers Finish rather than a dead Next', async ({ page }) => {
   await page.goto('/week/1');
-  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+  const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
   for (let step = 1; step < 7; step += 1) {
     await vocabulary.getByRole('button', { name: 'Next', exact: true }).click();
   }
@@ -137,7 +137,7 @@ test.describe('with a signed-in learner', () => {
       await answerGrammar(page);
 
       await page.goto('/week/1');
-      const grammar = page.getByRole('region', { name: 'Grammar practice' });
+      const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
 
       // Every required question is answered, so the section can be finished.
       // Walk to the last step; the button is the end of the section, not a
@@ -151,11 +151,11 @@ test.describe('with a signed-in learner', () => {
       await finish.click();
 
       // One short summary in B1 English, with the real counts: 21 of 22 right,
-      // because W1-C3 was answered wrongly on purpose.
-      const summary = grammar.getByRole('status').filter({ hasText: 'Well done!' });
+      // because W1-C2 was answered wrongly on purpose.
+      const summary = grammar.getByRole('status').filter({ hasText: 'You answered' });
       await expect(summary).toBeVisible();
       await expect(summary).toHaveText(
-        'Well done! You got 21 of 22 right. 1 mistake is now in your Review.',
+        'You answered 22 of 22. 21 were right. Great work!',
       );
       // And the way on, not a dead end.
       await expect(grammar.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
@@ -163,13 +163,13 @@ test.describe('with a signed-in learner', () => {
       // The completion is a row, not a browser flag.
       const saved = await admin
         .from('week_skill_completions')
-        .select('correct,total,review_count')
+        .select('answered,correct,total,review_count')
         .eq('user_id', user.id)
         .eq('week_number', 1)
         .eq('skill', 'grammar')
         .single();
       if (saved.error) throw saved.error;
-      expect(saved.data).toEqual({ correct: 21, total: 22, review_count: 1 });
+      expect(saved.data).toEqual({ answered: 22, correct: 21, total: 22, review_count: 1 });
 
       // The mistake really is in Review, deduplicated on a second finish.
       const cards = await admin
@@ -181,10 +181,10 @@ test.describe('with a signed-in learner', () => {
 
       // Reload: the answers and the summary are still there, from the server.
       await page.reload();
-      const reloaded = page.getByRole('region', { name: 'Grammar practice' });
+      const reloaded = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await expect(
-        reloaded.getByRole('status').filter({ hasText: 'Well done!' }),
-      ).toHaveText('Well done! You got 21 of 22 right. 1 mistake is now in your Review.');
+        reloaded.getByRole('status').filter({ hasText: 'You answered' }),
+      ).toHaveText('You answered 22 of 22. 21 were right. Great work!');
       await expect(reloaded.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
 
       // The saved answers are on screen, not only in the summary. The page
@@ -206,7 +206,7 @@ test.describe('with a signed-in learner', () => {
       // The one answered wrongly is marked wrong, from the server's mark. Its
       // prompt is in this step, so the line is not counted on another one.
       await expect(
-        reloaded.getByText('When I arrived at the station, the train ___.'),
+        reloaded.getByText('I ___ a lot of new friends since then.'),
       ).toBeVisible();
       await expect(reloaded.getByText(/Not quite\./)).toHaveCount(1);
 
@@ -242,17 +242,17 @@ test.describe('with a signed-in learner', () => {
       // the whole point of restoring progress: the learner lands where they
       // stopped, with Finish on screen, rather than being walked from step 1.
       await page.goto('/week/1');
-      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
+      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       const finish = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
       await expect(finish).toBeEnabled();
       await finish.click();
 
-      const summary = vocabulary.getByRole('status').filter({ hasText: 'Well done!' });
+      const summary = vocabulary.getByRole('status').filter({ hasText: 'You answered' });
       await expect(summary).toBeVisible();
       // All sixteen fixed questions were answered correctly, and nothing was
       // written in step 7, so there is nothing to review.
-      await expect(summary).toHaveText('Well done! You got 16 of 16 right.');
+      await expect(summary).toHaveText('You answered 16 of 16. 16 were right. Great work!');
       await expect(vocabulary.getByRole('button', { name: 'Next: Reading →' })).toBeVisible();
 
       const saved = await admin
@@ -267,10 +267,10 @@ test.describe('with a signed-in learner', () => {
 
       // A reload opens where they left off: the last step, still finished.
       await page.reload();
-      const reloaded = page.getByRole('region', { name: 'Vocabulary practice' });
+      const reloaded = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(reloaded.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-      await expect(reloaded.getByRole('status').filter({ hasText: 'Well done!' })).toHaveText(
-        'Well done! You got 16 of 16 right.',
+      await expect(reloaded.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
+        'You answered 16 of 16. 16 were right. Great work!',
       );
 
       // Step 6 shows the saved typed words with their marks.
@@ -279,6 +279,150 @@ test.describe('with a signed-in learner', () => {
       // The typed word comes back with the mark it was given.
       await expect(reloaded.locator('input#V1-R1')).toHaveValue('take up');
       await expect(reloaded.getByRole('status').filter({ hasText: 'Correct! ' }).first()).toBeVisible();
+    } finally {
+      await deleteTestUser(admin, user.id);
+    }
+  });
+
+  test('phone: partial grammar and vocabulary finish, Review and reload agree', async ({ page }) => {
+    test.setTimeout(240_000);
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(() => {
+      window.practiceScrolls = [];
+      const original = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (options) {
+        if (this.id === 'grammar-practice' || this.id === 'vocabulary-practice' || this.id === 'reading-practice') {
+          window.practiceScrolls.push({ id: this.id, behavior: options?.behavior });
+        }
+        return original.call(this, options);
+      };
+    });
+    const admin = createClient(url, key, { auth: { persistSession: false } });
+    const user = await createTestUser(admin, 'week-partial-phone');
+    try {
+      await signIn(page, user);
+      const grammarAnswers = [
+        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
+        ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
+        ['W1-C5', 'Did ... live', true],
+      ];
+      for (const [id, answer, correct] of grammarAnswers) {
+        const response = await page.request.post('/api/week/grammar/mark', { data: { week: 1, id, answer } });
+        expect(response.ok(), id).toBe(true);
+        expect((await response.json()).correct, id).toBe(correct);
+      }
+      const bank = vocabularyBank.weeks.find((entry) => entry.week === 1);
+      const vocabularyAnswers = [
+        [bank.match.items[0].id, bank.match.items[0].meaning, true],
+        [bank.match.items[1].id, bank.match.items[1].meaning, true],
+        [bank.chooseVerb[0].id, bank.chooseVerb[0].options[0], false],
+      ];
+      for (const [id, answer, correct] of vocabularyAnswers) {
+        const response = await page.request.post('/api/week/vocabulary/mark', { data: { week: 1, id, answer } });
+        expect(response.ok(), id).toBe(true);
+        expect((await response.json()).correct, id).toBe(correct);
+      }
+
+      await page.goto('/week/1');
+      const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
+      await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
+      for (let step = 2; step < 5; step += 1) {
+        const next = grammar.getByRole('button', { name: 'Next', exact: true });
+        await next.focus();
+        await page.keyboard.press('Enter');
+        await expect(grammar.getByRole('heading', { name: new RegExp(`Step ${step + 1} of 5:`) })).toBeFocused();
+      }
+      const finishGrammar = grammar.getByRole('button', { name: 'Finish grammar' });
+      await expect(finishGrammar).toBeEnabled();
+      await finishGrammar.focus();
+      await page.keyboard.press('Enter');
+      const grammarSummary = 'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.';
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+      await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeFocused();
+      await expect.poll(async () => Math.abs((await grammar.boundingBox()).y)).toBeLessThan(40);
+      expect((await page.evaluate(() => window.practiceScrolls)).filter((call) => call.id === 'grammar-practice').at(-1)?.behavior).toBe('instant');
+      const cards = await admin.from('error_review_cards').select('category, corrected_sentence').eq('user_id', user.id);
+      if (cards.error) throw cards.error;
+      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'Yes' }]);
+
+      // The same Finish action scrolls smoothly when motion is not reduced.
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      const beforeRepeat = await page.evaluate(() => window.practiceScrolls.length);
+      await finishGrammar.focus();
+      await page.keyboard.press('Enter');
+      await expect.poll(() => page.evaluate(() => window.practiceScrolls.length)).toBeGreaterThan(beforeRepeat);
+      expect((await page.evaluate(() => window.practiceScrolls)).at(-1)?.behavior).toBe('smooth');
+      await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeFocused();
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+
+      // A reload resumes at the first unanswered question but retains the exact
+      // snapshot. The other 15 questions were not turned into Review cards.
+      await page.reload();
+      await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+      await expect(grammar.getByText('After checking more answers, press Finish again to update your score.')).toBeVisible();
+
+      // Check one more answer in the UI, then leave and return to that step.
+      // The newly saved choice and its feedback survive navigation; the last
+      // finished snapshot stays unchanged until the learner finishes again.
+      const more = grammar.locator('div.rounded-xl.bg-stone-50').filter({ hasText: 'I ___ dinner when my phone rang.' });
+      await more.getByRole('radio', { name: 'was cooking', exact: true }).check();
+      await more.getByRole('button', { name: 'Check', exact: true }).click();
+      await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
+      await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
+      await grammar.getByRole('button', { name: 'Next', exact: true }).click();
+      await grammar.getByRole('button', { name: 'Previous', exact: true }).click();
+      await expect(more.getByRole('radio', { name: 'was cooking', exact: true })).toBeChecked();
+      await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+
+      const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
+      await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
+      for (let step = 2; step < 7; step += 1) {
+        const next = vocabulary.getByRole('button', { name: 'Next', exact: true });
+        await next.focus();
+        await page.keyboard.press('Enter');
+        await expect(vocabulary.getByRole('heading', { name: new RegExp(`Step ${step + 1} of 7:`) })).toBeFocused();
+      }
+      const finishVocabulary = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
+      await expect(finishVocabulary).toBeEnabled();
+      await finishVocabulary.focus();
+      await page.keyboard.press('Enter');
+      const vocabularySummary = 'You answered 3 of 16. 2 were right. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.';
+      await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
+      await expect(vocabulary.getByRole('heading', { name: 'Step 7 of 7: Your sentences' })).toBeFocused();
+      await expect.poll(async () => Math.abs((await vocabulary.boundingBox()).y)).toBeLessThan(40);
+      expect((await page.evaluate(() => window.practiceScrolls)).filter((call) => call.id === 'vocabulary-practice').at(-1)?.behavior).toBe('instant');
+      const cardsAfter = await admin.from('error_review_cards').select('category, corrected_sentence').eq('user_id', user.id);
+      if (cardsAfter.error) throw cardsAfter.error;
+      expect(cardsAfter.data).toEqual(expect.arrayContaining([
+        { category: 'collocation', corrected_sentence: 'I took a risk and applied for a job abroad.' },
+      ]));
+      expect(cardsAfter.data.length).toBe(2);
+      const completion = await admin.from('week_skill_completions').select('skill,answered,correct,total,review_count').eq('user_id', user.id);
+      if (completion.error) throw completion.error;
+      expect(completion.data).toEqual(expect.arrayContaining([
+        { skill: 'grammar', answered: 7, correct: 6, total: 22, review_count: 1 },
+        { skill: 'vocabulary', answered: 3, correct: 2, total: 16, review_count: 1 },
+      ]));
+
+      await page.reload();
+      await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
+      await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
+      await vocabulary.getByRole('button', { name: 'Next: Reading →' }).click();
+      await expect(page.locator('#reading-practice h2')).toBeFocused();
+      const calls = await page.evaluate(() => window.practiceScrolls);
+      expect(calls.filter((call) => call.id === 'reading-practice').at(-1)?.behavior).toBe('instant');
+
+      // Meaning checks must reach Review as questions, not as sentence fixes.
+      await page.goto('/review');
+      await expect(page.getByText('Answer this question without hints:')).toBeVisible();
+      await expect(page.getByText(/Does the speaker still live in Bristol/)).toBeVisible();
+      await page.getByLabel('Your answer', { exact: true }).fill('Yes');
+      await page.getByRole('button', { name: 'Check my answer' }).click();
+      await expect(page.getByText(/Well done! You answered without help\./)).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
     }

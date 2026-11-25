@@ -178,6 +178,25 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
     expect(fullForm.status()).toBe(200);
     expect((await fullForm.json()).onTarget).toBe(true);
 
+    // A missing introductory comma does not make an otherwise exact grammar
+    // repair or rewrite wrong, and neither creates a Review card.
+    const repair = await request.post('/api/week/grammar/mark', {
+      data: { week: 1, id: 'W1-F2', answer: 'when i got home my flatmate had already cooked dinner' },
+    });
+    expect(repair.status()).toBe(200);
+    expect((await repair.json()).correct).toBe(true);
+    const rewrite = await request.post('/api/week/sentence', {
+      data: { week: 1, id: 'W1-R2', answer: 'when we arrived the film had already started' },
+    });
+    expect(rewrite.status()).toBe(200);
+    const rewriteBody = await rewrite.json();
+    expect(rewriteBody.onTarget).toBe(true);
+    expect(rewriteBody.checkedWith).toBe('target-form');
+    expect(rewriteBody.addedToReview).toBe(false);
+    const cards = await admin.from('error_review_cards').select('id').eq('user_id', user.id);
+    if (cards.error) throw cards.error;
+    expect(cards.data?.length).toBe(0);
+
     // Both attempts are stored where "Delete my data" reaches them.
     const stored = await admin
       .from('week_grammar_attempts')
@@ -189,8 +208,8 @@ test('the sentence route accepts an authored answer, saves it, and deletion clea
     expect(stored.data?.every((row) => row.correct === true)).toBe(true);
 
     // An answer that is not one of the authored ones goes to the model. Without
-    // GROQ_API_KEY the route still answers, so the assertion is on the contract
-    // (a status and three parts) rather than on what the model said.
+    // GROQ_API_KEY the route returns a safe error rather than marking it wrong;
+    // when configured, the response has the three feedback parts.
     const other = await request.post('/api/week/sentence', {
       data: { week: 1, id: 'V1-S1', answer: 'I got used to working from home.' },
     });

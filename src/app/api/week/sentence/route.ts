@@ -8,6 +8,7 @@ import { logAiRequest } from '@/lib/b1b2/observability';
 import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import { sentenceFeedback, SENTENCE_MODEL_ID, type SentenceContext } from '@/lib/b1b2/week-sentence-feedback';
 import { normaliseFeedback, normaliseSentence, praiseFor, reviewCardFor } from '@/lib/curriculum/free-text-marking.mjs';
+import { matchesGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
 
 /**
  * One route for the three free-text boxes on /week/[n]:
@@ -130,8 +131,9 @@ export async function POST(request: Request) {
   // answers is accepted without a model call, so it costs no AI units. Anything
   // else is judged by the model, which is what lets a differently-worded but
   // correct sentence through -- the point of not marking against one key.
-  const acceptedNorm = item.accepted.map(normaliseSentence);
-  const onTarget = acceptedNorm.includes(normaliseSentence(answer));
+  let onTarget = item.context.kind === 'grammar-rewrite'
+    ? item.accepted.some((candidate) => matchesGrammarAnswer(candidate, answer, true))
+    : item.accepted.map(normaliseSentence).includes(normaliseSentence(answer));
 
   let feedback = normaliseFeedback(null, {
     good: praiseFor(item.context.target, true) ?? 'You wrote a clear sentence.',
@@ -145,18 +147,26 @@ export async function POST(request: Request) {
   let headers: Record<string, string> = {};
 
   if (!onTarget) {
+    // Do not charge a learner or invent a wrong mark if there is no checker.
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503 });
+    }
     const guard = await enforceAiUsage(client, '/api/review/check-rewrite', 1);
     headers = guard.headers;
     if (!guard.allowed && guard.response) return guard.response;
 
     try {
       const result = await sentenceFeedback(item.context, answer);
-      if (result) {
-        usedLlm = true;
-        promptTokens = result.promptTokens;
-        completionTokens = result.completionTokens;
-        feedback = result.feedback;
+      if (!result) {
+        // No verdict is not a mistake. Leave the text in the learner's box and
+        // do not save a false mark or make a Review card for an unknown result.
+        return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503, headers });
       }
+      usedLlm = true;
+      promptTokens = result.promptTokens;
+      completionTokens = result.completionTokens;
+      onTarget = result.onTarget;
+      feedback = result.feedback;
     } catch (err) {
       // The attempt is stored below either way, so the work is saved; the B1
       // wording for that lives in provider-errors, never the provider's words.

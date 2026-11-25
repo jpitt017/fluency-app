@@ -1,34 +1,26 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { practicePlan } from './week-practice-plan';
+import { practicePlan, type PracticePlan } from './week-practice-plan';
+import { readPracticeAttempts, type PracticeAttemptTable } from './week-practice-attempts';
+import { effectiveGrammarMark } from './week-grammar-saved-mark';
 import { updateReviewFromWeeklyPractice } from '@/lib/b1b2/week-vocab-review';
-import {
-  canFinish,
-  practiceCounts,
-  summarySentence,
-  unmarkedRequired,
-} from './week-practice.mjs';
+import { practiceErrorCard } from './week-practice-review.mjs';
+import { canFinish, practiceCounts, summarySentence, unmarkedRequired } from './week-practice.mjs';
 
 /**
- * Finishing one practice section: record the completion, and put the mistakes
- * in Review.
- *
- * Everything here is decided from the rows the marking routes already wrote.
- * The request body carries no count, and a count sent from the browser is
- * ignored: a learner cannot award themselves "18 of 22" by editing a request.
- *
- * The same function produces the sentence the learner reads on the page and the
- * sentence stored against the completion, so the summary after a reload is the
- * one they finished with rather than a second, possibly different, calculation.
+ * Finish from saved server marks, never from numbers supplied by the browser.
+ * A partial practice is a valid finish once at least one fixed question has
+ * been checked. The completion is a snapshot; finishing again replaces it.
  */
-
 export type FinishSkill = 'grammar' | 'vocabulary';
 
 export type FinishResult =
   | {
       ok: true;
       summary: {
+        answered: number;
         correct: number;
+        wrong: number;
         total: number;
         reviewMistakes: number;
         sentence: string;
@@ -36,99 +28,64 @@ export type FinishResult =
     }
   | { ok: false; status: number; error: string; remaining?: number };
 
-type Row = { item_id: string; answer: unknown; correct: boolean };
-
-const TABLES: Record<FinishSkill, 'week_grammar_attempts' | 'week_vocabulary_attempts'> = {
+const TABLES: Record<FinishSkill, PracticeAttemptTable> = {
   grammar: 'week_grammar_attempts',
   vocabulary: 'week_vocabulary_attempts',
 };
 
 /**
- * A Review card for every fixed-answer mistake.
- *
- * Grammar mistakes are stored as a repair card ("fix this sentence"), which is
- * exactly what the Review page offers. Vocabulary mistakes are not: a wrong
- * option says nothing about a sentence to repair, so those go through the same
- * FSRS path the marking route already uses for the word itself. Both are
- * deduplicated -- the grammar insert relies on the unique
- * (user_id, category, normalized_key) index, the vocabulary update on the
- * existing card -- so finishing twice does not double a learner's queue.
+ * Ensure each checked fixed-answer mistake has a Review card. Unanswered and
+ * optional items never get cards here. A duplicate already exists in Review;
+ * it is not another mistake or another new card. Vocabulary questions tied to
+ * an authored word use that word's card. Verb/word-form questions have no such
+ * term, so they get sentence-repair cards rather than guessed vocabulary aliases.
  */
 async function addMistakesToReview({
   admin,
   userId,
   skill,
-  week,
   plan,
   results,
+  answers,
 }: {
   admin: SupabaseClient;
   userId: string;
   skill: FinishSkill;
-  week: number;
-  plan: NonNullable<ReturnType<typeof practicePlan>>;
+  plan: PracticePlan;
   results: Record<string, boolean>;
-}): Promise<number> {
+  answers: Record<string, unknown>;
+}): Promise<boolean> {
   const mistakes = plan.items.filter((item) => item.counted && results[item.id] === false);
+  const updatedTerms = new Set<string>();
 
-  if (skill === 'vocabulary') {
-    let added = 0;
-    for (const item of mistakes) {
-      if (!item.term) continue;
-      const { updated } = await updateReviewFromWeeklyPractice(admin, userId, item.term, false);
-      if (updated) added += 1;
+  for (const item of mistakes) {
+    if (skill === 'vocabulary' && item.term) {
+      const term = item.term.trim().toLocaleLowerCase('en-GB');
+      if (!updatedTerms.has(term)) {
+        const { updated } = await updateReviewFromWeeklyPractice(admin, userId, item.term, false, new Date(), { ensureOnly: true });
+        if (!updated) return false;
+        updatedTerms.add(term);
+      }
+      continue;
     }
-    return added;
-  }
 
-  const cards = mistakes
-    .filter((item) => typeof item.key === 'string' && item.key.trim())
-    .map((item) => ({
-      user_id: userId,
-      category: 'tense' as const,
-      prompt_sentence: item.prompt,
-      corrected_sentence: item.key as string,
-      // Shown on the Review card under the sentence, so it says what to do
-      // rather than naming a "target": the card is the repair itself.
-      explanation: `Write the sentence again with this correction: ${correctedFor(item.key as string)}.`,
-      context_sentence: null,
-      card_format: 'fix_sentence',
-      normalized_key: normalizeKey(item.prompt),
-      due_at: new Date().toISOString(),
-    }))
-    .filter((card) => Boolean(card.normalized_key));
-  if (!cards.length) return 0;
-
-  // One at a time, so a duplicate in the batch does not reject the rest: the
-  // unique index on (user_id, category, normalized_key) is what deduplicates,
-  // and an existing card simply counts as already in Review.
-  let added = 0;
-  for (const card of cards) {
+    const card = practiceErrorCard({
+      userId,
+      item,
+      answer: answers[item.id],
+      category: skill === 'grammar' ? 'tense' : 'collocation',
+    });
+    if (!card) {
+      console.error('[week-finish] Missing Review answer for a checked practice item:', item.id);
+      return false;
+    }
     const { error } = await admin.from('error_review_cards').insert(card);
-    if (!error) added += 1;
-    else if (error.code !== '23505') {
-      // A Review card is a follow-on; the completion record still stands.
-      console.error('[week-finish] Could not add a grammar mistake to Review:', error.message);
+    if (error && error.code !== '23505') {
+      console.error('[week-finish] Could not add a mistake to Review:', error.message);
+      return false;
     }
   }
-  void week;
-  return added;
-}
-
-/** The same normalisation the writing feedback uses, so a repeat is a duplicate. */
-function normalizeKey(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/[^a-z0-9'\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function correctedFor(value: string) {
-  return value.trim().replace(/[.!?]+$/, '');
+  return true;
 }
 
 export async function finishPractice({
@@ -154,34 +111,39 @@ export async function finishPractice({
   if (progressError) return { ok: false, status: 503, error: 'Could not check your progress.' };
   if (week > Number(current)) return { ok: false, status: 403, error: 'This week is not open yet.' };
 
-  const { data, error } = await admin
-    .from(TABLES[skill])
-    .select('item_id, answer, correct')
-    .eq('user_id', userId)
-    .eq('week_number', week)
-    .order('created_at', { ascending: true });
+  const { rows, error } = await readPracticeAttempts(admin, TABLES[skill], userId, week);
   if (error) return { ok: false, status: 503, error: 'Could not read your answers.' };
 
   const known = new Set(plan.items.map((item) => item.id));
   const results: Record<string, boolean> = {};
-  for (const row of (data ?? []) as Row[]) {
-    if (!known.has(row.item_id)) continue;
-    results[row.item_id] = row.correct;
+  const answers: Record<string, unknown> = {};
+  for (const row of rows) {
+    if (!known.has(row.item_id) || typeof row.correct !== 'boolean') continue;
+    results[row.item_id] = skill === 'grammar'
+      ? effectiveGrammarMark(week, row.item_id, row.answer, row.correct)
+      : row.correct;
+    answers[row.item_id] = row.answer;
   }
 
-  const remaining = unmarkedRequired(plan.items, results).length;
   if (!canFinish(plan.items, results)) {
     return {
       ok: false,
       status: 400,
-      error: 'Answer the questions first, then finish.',
-      remaining,
+      error: 'Answer and check at least 1 question to finish.',
+      remaining: unmarkedRequired(plan.items, results).length,
     };
   }
 
   const counts = practiceCounts(plan.items, results);
-  const reviewMistakes = await addMistakesToReview({ admin, userId, skill, week, plan, results });
-  const sentence = summarySentence({ ...counts, reviewMistakes });
+  const reviewReady = await addMistakesToReview({ admin, userId, skill, plan, results, answers });
+  if (!reviewReady) {
+    return {
+      ok: false,
+      status: 503,
+      error: 'Your answers are saved, but we could not add your mistakes to Review. Please try again.',
+    };
+  }
+  const sentence = summarySentence({ ...counts, skill });
 
   const { error: saveError } = await admin.from('week_skill_completions').upsert(
     {
@@ -191,7 +153,8 @@ export async function finishPractice({
       answered: counts.answered,
       correct: counts.correct,
       total: counts.total,
-      review_count: reviewMistakes,
+      // Number of answered mistakes represented in Review, not new card inserts.
+      review_count: counts.wrong,
       completed_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,week_number,skill' },
@@ -201,5 +164,5 @@ export async function finishPractice({
     return { ok: false, status: 503, error: 'Could not save your progress. Please try again.' };
   }
 
-  return { ok: true, summary: { ...counts, reviewMistakes, sentence } };
+  return { ok: true, summary: { ...counts, reviewMistakes: counts.wrong, sentence } };
 }
