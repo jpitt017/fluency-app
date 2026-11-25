@@ -1,8 +1,14 @@
 'use client';
 
-import { useMemo, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type RefObject } from 'react';
 import type { LearnerGrammar, LearnerGrammarItem, LearnerGrammarStep } from '@/lib/curriculum/learner-grammar';
 import { visibleItems } from '@/lib/curriculum/grammar-branch.mjs';
+import {
+  createGrammarPositionStore,
+  grammarPositionItem,
+  grammarPositionKey,
+  parseGrammarPosition,
+} from '@/lib/curriculum/grammar-practice-position.mjs';
 import {
   canFinish as canFinishRule,
   finishHint,
@@ -17,6 +23,12 @@ import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 import { usePendingChecks } from './usePendingChecks';
 
 type Marked = { correct: boolean; reason: string | null };
+
+const NO_ANSWERS: Record<string, SavedAnswer> = {};
+
+function remembersItems(title: LearnerGrammarStep['title']): title is 'Practise' | 'Fix it' {
+  return title === 'Practise' || title === 'Fix it';
+}
 
 function ProgressBar({ current, total, title, headingRef }: {
   current: number; total: number; title: string; headingRef: RefObject<HTMLHeadingElement | null>;
@@ -214,13 +226,16 @@ export default function GrammarPractice({
   grammar,
   week,
   signedIn,
+  userId,
   progress,
   hasVocabulary,
 }: {
   grammar: LearnerGrammar;
   week: number;
   signedIn: boolean;
-  /** What the server has saved for this learner, so a reload starts where they stopped. */
+  /** Used only to keep browser navigation positions separate between learners. */
+  userId: string | null;
+  /** What the server has saved for this learner, so a reload restores their marks. */
   progress?: PracticeProgress | null;
   hasVocabulary?: boolean;
 }) {
@@ -230,20 +245,44 @@ export default function GrammarPractice({
     for (const [id, saved] of Object.entries(progress?.answers ?? {})) results[id] = saved.correct;
     return results;
   }, [progress]);
-  // Open where the learner stopped. With nothing saved the saved results are
-  // empty, so resumeStep returns 0 and the section starts at "See it".
-  const [index, setIndex] = useState(() =>
-    Math.min(progress?.step ?? resumeStep(steps, restored), Math.max(0, steps.length - 1)),
-  );
+  // Without a browser position (first visit, another device, or blocked
+  // storage), retain the server's first-unanswered-step fallback.
+  const initialAnswers = progress?.answers ?? NO_ANSWERS;
+  const fallbackIndex = Math.min(progress?.step ?? resumeStep(steps, restored), Math.max(0, steps.length - 1));
+  const positionStore = useMemo(() => createGrammarPositionStore(grammarPositionKey(week, userId)), [week, userId]);
+  const position = parseGrammarPosition(useSyncExternalStore(
+    positionStore.subscribe, positionStore.getSnapshot, positionStore.getServerSnapshot,
+  ));
+  const rememberedIndex = position ? steps.findIndex((step) => step.title === position.step) : -1;
+  const index = rememberedIndex >= 0 ? rememberedIndex : fallbackIndex;
   const [results, setResults] = useState<Record<string, boolean>>(restored);
   // Preserve checked answers when a learner goes back to an earlier step.
-  const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
+  const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(initialAnswers);
   const [summary, setSummary] = useState(progress?.summary ?? null);
   const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
   const { checking, setChecking } = usePendingChecks();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
   const current: LearnerGrammarStep = steps[Math.min(index, steps.length - 1)];
+
+  // If saved answers initially open a paged step, record the visible item even
+  // before the learner moves. Otherwise checking that item and reloading would
+  // advance to the next unanswered one instead of restoring the position.
+  // Read the store again inside the effect: hydration may just have discovered
+  // a browser position that was not available to the server render.
+  useEffect(() => {
+    const initialStep = steps[fallbackIndex];
+    if (!initialStep || !remembersItems(initialStep.title)) return;
+    const existing = parseGrammarPosition(positionStore.getSnapshot());
+    if (existing && steps.some((step) => step.title === existing.step)) return;
+    const shown = visibleItems(initialStep, steps, restored) as LearnerGrammarItem[];
+    const itemId = grammarPositionItem(initialStep.items, shown, initialAnswers, undefined);
+    if (!itemId) return;
+    positionStore.update((latest) => {
+      if (latest && steps.some((step) => step.title === latest.step)) return latest;
+      return { step: initialStep.title, items: { [initialStep.title]: itemId } };
+    });
+  }, [fallbackIndex, initialAnswers, positionStore, restored, steps]);
 
   const allItems = useMemo(
     () => steps.flatMap((step) => step.items),
@@ -292,6 +331,21 @@ export default function GrammarPractice({
 
   function goToNextTask() {
     focusNextTask(next.href.replace('#', ''));
+  }
+
+  function changeStep(nextIndex: number) {
+    const nextStep = steps[Math.max(0, Math.min(steps.length - 1, nextIndex))];
+    if (!nextStep) return;
+    positionStore.update((previous) => {
+      const items = { ...previous?.items };
+      if (remembersItems(nextStep.title)) {
+        const shown = visibleItems(nextStep, steps, results) as LearnerGrammarItem[];
+        const itemId = grammarPositionItem(nextStep.items, shown, initialAnswers, items[nextStep.title]);
+        if (itemId) items[nextStep.title] = itemId;
+      }
+      return { step: nextStep.title, items };
+    });
+    focusStep();
   }
 
   return (
@@ -347,19 +401,32 @@ export default function GrammarPractice({
         }));
         // Keep each step mounted while another is open: unchecked drafts,
         // pending checks and feedback survive step navigation as well.
-        if (paged) return <div key={step.number} hidden={stepIndex !== index}>
-          <PracticeItemPager label={`Grammar ${step.title}`} items={pages} visibleIds={new Set(shown.map((item) => item.id))} initiallyAnswered={progress?.answers ?? {}} />
-        </div>;
+        if (paged) {
+          const rememberedTitle = remembersItems(step.title) ? step.title : null;
+          const selectedItemId = rememberedTitle
+            ? grammarPositionItem(step.items, shown, initialAnswers, position?.items[rememberedTitle])
+            : undefined;
+          return <div key={step.number} hidden={stepIndex !== index}>
+            <PracticeItemPager
+              label={`Grammar ${step.title}`}
+              items={pages}
+              visibleIds={new Set(shown.map((item) => item.id))}
+              initiallyAnswered={initialAnswers}
+              selectedItemId={selectedItemId}
+              onSelectItem={rememberedTitle ? (id) => positionStore.update((previous) => ({
+                step: rememberedTitle,
+                items: { ...previous?.items, [rememberedTitle]: id },
+              })) : undefined}
+            />
+          </div>;
+        }
         return <div key={step.number} hidden={stepIndex !== index} className="space-y-3">{pages.map((page) => page.content)}</div>;
       })}
       <div className="flex justify-between gap-2">
         <button
           type="button"
           disabled={index === 0}
-          onClick={() => {
-            setIndex((value) => Math.max(0, value - 1));
-            focusStep();
-          }}
+          onClick={() => changeStep(index - 1)}
           className="rounded-lg border border-stone-300 px-4 py-2 text-sm disabled:opacity-40"
         >
           Previous step
@@ -383,10 +450,7 @@ export default function GrammarPractice({
         ) : (
           <button
             type="button"
-            onClick={() => {
-              setIndex((value) => Math.min(steps.length - 1, value + 1));
-              focusStep();
-            }}
+            onClick={() => changeStep(index + 1)}
             className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
           >
             Next step

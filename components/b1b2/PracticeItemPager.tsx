@@ -15,22 +15,27 @@ export default function PracticeItemPager({
   items,
   initiallyAnswered,
   visibleIds,
+  selectedItemId,
+  onSelectItem,
 }: {
   label: string;
   items: Page[];
   initiallyAnswered: Record<string, unknown>;
   /** Adaptive items can disappear from navigation without losing their state. */
   visibleIds?: ReadonlySet<string>;
+  /** Optional controlled selection for a caller that remembers its position. */
+  selectedItemId?: string;
+  onSelectItem?: (id: string) => void;
 }) {
   const baseId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const visible = visibleIds ? items.filter((item) => visibleIds.has(item.id)) : items;
-  const [selectedId, setSelectedId] = useState(() =>
+  const [localSelectedId, setLocalSelectedId] = useState(() =>
     visible.find((item) => !Object.hasOwn(initiallyAnswered, item.id))?.id ?? visible[0]?.id ?? '',
   );
   const [focusRequest, setFocusRequest] = useState(0);
-  const selectedIndex = Math.max(0, visible.findIndex((item) => item.id === selectedId));
+  const selectedIndex = Math.max(0, visible.findIndex((item) => item.id === (selectedItemId ?? localSelectedId)));
   const total = visible.length;
 
   // Only an explicit Previous/Next item action moves focus or scrolls. Entering
@@ -48,7 +53,8 @@ export default function PracticeItemPager({
   function show(index: number, focusHeading = false) {
     const item = visible[index];
     if (!item) return;
-    setSelectedId(item.id);
+    if (onSelectItem) onSelectItem(item.id);
+    else setLocalSelectedId(item.id);
     if (focusHeading) setFocusRequest((value) => value + 1);
   }
 

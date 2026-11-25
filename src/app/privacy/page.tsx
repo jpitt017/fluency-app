@@ -1,6 +1,8 @@
 import DeleteDataButton from '@/components/b1b2/DeleteDataButton';
+import { getViewer } from '@/lib/b1b2/data';
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const { user } = await getViewer();
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 text-stone-800 sm:px-6">
       <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
@@ -61,7 +63,7 @@ export default function PrivacyPage() {
               Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
             </p>
             <div className="mt-4">
-              <DeleteDataButton />
+              <DeleteDataButton userId={user?.id ?? null} />
             </div>
           </div>
         </section>
