@@ -20,6 +20,9 @@ function watchPage(page) {
   page.on('pageerror', (error) => problems.pageErrors.push(`${error.name}: ${error.message}`));
   page.on('requestfailed', (request) => {
     const failure = request.failure()?.errorText ?? 'unknown';
+    // Next.js cancels in-flight RSC prefetches when a test navigates away. This
+    // is expected client navigation behavior, not an app/network failure.
+    if (failure === 'net::ERR_ABORTED') return;
     problems.failedRequests.push(`${request.method()} ${request.url()} :: ${failure}`);
   });
   page.on('response', (response) => {
