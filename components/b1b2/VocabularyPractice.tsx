@@ -1,20 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type RefObject } from 'react';
 import type { LearnerVocabularyCard } from '@/lib/curriculum/learner-vocabulary';
 import type { VocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import {
   canFinish as canFinishRule,
   finishHint,
   nextTaskAfter,
-  resumeStep,
-  unmarkedRequired,
 } from '@/lib/curriculum/week-practice.mjs';
-import type { PracticeProgress } from '@/lib/curriculum/week-practice-progress';
+import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
 import { parseGapText, gapsCoverItems } from '@/lib/curriculum/vocabulary-gap-text.mjs';
 import SentenceBox from './SentenceBox';
 import GapText from './GapText';
-import { FinishSummary, SavedTick } from './PracticeFeedback';
+import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
+import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 
 type Question = { id: string; prompt: string; options?: string[] };
 type Result = { correct: boolean; feedback: string };
@@ -33,13 +32,15 @@ const STEP_INSTRUCTIONS = [
 /** Four or five cards at a time: enough to scan, not enough to overwhelm. */
 const CARDS_PER_PAGE = 4;
 
-function StepProgress({ current, total, label }: { current: number; total: number; label: string }) {
+function StepProgress({ current, total, label, headingRef }: {
+  current: number; total: number; label: string; headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
   const percent = Math.round((current / total) * 100);
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium text-stone-700">
+      <h3 ref={headingRef} tabIndex={-1} data-practice-step-heading className="text-sm font-medium text-stone-700">
         Step {current} of {total}: {label}
-      </p>
+      </h3>
       <div
         className="h-2 w-full overflow-hidden rounded-full bg-stone-200"
         role="progressbar"
@@ -92,8 +93,8 @@ function PracticeQuestion({
   week: number;
   signedIn: boolean;
   /** The saved answer and mark, so a reload shows what the learner already did. */
-  saved?: { answer: string; correct: boolean; reason: string | null };
-  onAnswered: (id: string, correct: boolean) => void;
+  saved?: SavedAnswer;
+  onAnswered: (id: string, saved: SavedAnswer) => void;
 }) {
   const [answer, setAnswer] = useState(saved?.answer ?? '');
   // The saved reason is the authored feedback for this item; the sentence it
@@ -119,7 +120,7 @@ function PracticeQuestion({
       }
       setResult(data);
       setSavedAt(true);
-      onAnswered(question.id, data.correct);
+      onAnswered(question.id, { answer, correct: data.correct, reason: data.feedback });
     } catch (err) {
       console.error('[vocabulary] check failed:', err);
       setError('We could not check your answer. Please try again.');
@@ -149,10 +150,12 @@ function WordGroups({
   cards,
   careful,
   onPlay,
+  onPageChanged,
 }: {
   cards: LearnerVocabularyCard[];
   careful: VocabularyExercises['careful'];
   onPlay: (card: LearnerVocabularyCard) => void;
+  onPageChanged: () => void;
 }) {
   const [page, setPage] = useState(0);
 
@@ -205,7 +208,10 @@ function WordGroups({
         <button
           type="button"
           disabled={page >= pages.length - 1}
-          onClick={() => setPage((value) => Math.min(pages.length - 1, value + 1))}
+          onClick={() => {
+            setPage((value) => Math.min(pages.length - 1, value + 1));
+            onPageChanged();
+          }}
           className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
         >
           Next words →
@@ -241,7 +247,9 @@ export default function VocabularyPractice({
     for (const [id, saved] of Object.entries(progress?.answers ?? {})) restored[id] = saved.correct;
     return restored;
   });
+  const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
   const [summary, setSummary] = useState(progress?.summary ?? null);
+  const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
 
@@ -256,12 +264,9 @@ export default function VocabularyPractice({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [exercises],
   );
-  const remaining = unmarkedRequired(planned, results);
-  const remainingCount = remaining.length;
-  // Open where the learner stopped. With nothing saved, resumeStep returns 0 and
-  // the section starts at the word cards.
+  // The server restores the first unfinished step; a new learner sees the words.
   const [step, setStep] = useState(() =>
-    Math.min(progress?.step ?? resumeStep(planned, results), steps.length - 1),
+    Math.min(progress?.step ?? 0, steps.length - 1),
   );
   const lastStep = step === steps.length - 1;
   const next = nextTaskAfter('vocabulary');
@@ -282,7 +287,7 @@ export default function VocabularyPractice({
       });
       const data = (await response.json()) as {
         error?: string;
-        summary?: { correct: number; total: number; reviewMistakes: number; sentence: string };
+        summary?: PracticeSummary;
       };
       if (!response.ok || !data.summary) {
         console.error('[vocabulary] finish failed:', data.error ?? response.status);
@@ -295,19 +300,30 @@ export default function VocabularyPractice({
       setFinishError('We could not save your progress. Please try again.');
     } finally {
       setBusy(false);
+      focusStep();
     }
   }
 
   function goToNextTask() {
-    document.getElementById(next.href.replace('#', ''))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    focusNextTask(next.href.replace('#', ''));
   }
 
-  return <section id="vocabulary-practice" className="space-y-4 rounded-xl border border-indigo-200 bg-white p-5" aria-label="Vocabulary practice">
+  return <section ref={sectionRef} id="vocabulary-practice" className="space-y-4 rounded-xl border border-indigo-200 bg-white p-5" aria-label="Vocabulary practice">
     <h2 className="text-xl font-semibold">Vocabulary: {exercises.title}</h2>
-    <StepProgress current={step + 1} total={steps.length} label={steps[step]} />
+    <StepProgress current={step + 1} total={steps.length} label={steps[step]} headingRef={stepHeadingRef} />
     <p className="text-sm text-stone-600">{STEP_INSTRUCTIONS[step]} This practice does not affect week unlocking.</p>
+    {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}
+    {summary && (
+      <FinishSummary
+        title="Vocabulary practice finished"
+        summary={summary}
+        nextLabel={next.label}
+        nextHref={next.href}
+        onNext={goToNextTask}
+      />
+    )}
     {!signedIn && <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>}
-    {step === 0 && <WordGroups cards={cards} careful={exercises.careful} onPlay={play} />}
+    {step === 0 && <WordGroups cards={cards} careful={exercises.careful} onPlay={play} onPageChanged={focusStep} />}
     {step === 1 && <p className="text-sm text-stone-600">{exercises.match.instruction}</p>}
     {/* Step 3: the gaps sit inside the text. The plain version below only runs
         if a future bank edit leaves a gap without an item — the parse tests
@@ -320,7 +336,7 @@ export default function VocabularyPractice({
           week={exercises.week}
           text={exercises.text}
           signedIn={signedIn}
-          saved={progress?.answers}
+          saved={savedAnswers}
           onAnswered={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))}
           onChanged={(id) => setResults((prev) => {
             const next = { ...prev };
@@ -332,10 +348,30 @@ export default function VocabularyPractice({
     )}
     {step === 2 && !gapTextReady && <><p>{exercises.text.instruction}</p><p className="leading-7">{exercises.text.body}</p><p className="text-sm">Word box: {exercises.text.wordBox.join(' · ')}</p></>}
     {step === 5 && <p className="text-sm text-stone-600">{exercises.typeTheWord.instruction}</p>}
-    {step > 0 && step < 6 && (step !== 2 || !gapTextReady) && <div className="space-y-3">{groups[step].map(q => <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn} saved={progress?.answers[q.id]} onAnswered={(id, correct) => setResults(prev => ({ ...prev, [id]: correct }))} />)}</div>}
-    {step === 6 && <div className="space-y-3">{exercises.yourSentence.map(q => <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn} rows={2} initialAnswer={progress?.answers[q.id]?.answer} onChecked={(onTarget) => setResults(prev => ({ ...prev, [q.id]: onTarget }))} />)}</div>}
+    {step > 0 && step < 6 && (step !== 2 || !gapTextReady) && (
+      <div className="space-y-3">
+        {groups[step].map((q) => (
+          <PracticeQuestion key={q.id} question={q} week={exercises.week} signedIn={signedIn}
+            saved={savedAnswers[q.id]}
+            onAnswered={(id, saved) => {
+              setResults((prev) => ({ ...prev, [id]: saved.correct }));
+              setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
+            }}
+          />
+        ))}
+      </div>
+    )}
+    {step === 6 && <div className="space-y-3">{exercises.yourSentence.map(q => (
+      <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn}
+        rows={2} initialAnswer={savedAnswers[q.id]?.answer}
+        onChecked={(onTarget, answer) => {
+          setResults((prev) => ({ ...prev, [q.id]: onTarget }));
+          setSavedAnswers((prev) => ({ ...prev, [q.id]: { answer, correct: onTarget, reason: null } }));
+        }}
+      />
+    ))}</div>}
     <div className="flex justify-between gap-2">
-      <button type="button" disabled={step === 0} onClick={() => setStep(s => s - 1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button>
+      <button type="button" disabled={step === 0} onClick={() => { setStep(s => s - 1); focusStep(); }} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button>
       {lastStep ? (
         <div className="flex flex-col items-end gap-1">
           <button
@@ -346,23 +382,13 @@ export default function VocabularyPractice({
           >
             {busy ? 'Saving…' : 'Finish vocabulary'}
           </button>
-          {!summary && finishHint(remainingCount) && (
-            <span className="text-xs text-stone-600">{finishHint(remainingCount)}</span>
+          {signedIn && !summary && finishHint(planned, results) && (
+            <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
           )}
         </div>
       ) : (
-        <button type="button" onClick={() => setStep(s => s + 1)} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Next</button>
+        <button type="button" onClick={() => { setStep(s => s + 1); focusStep(); }} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Next</button>
       )}
     </div>
-    {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}
-    {summary && (
-      <FinishSummary
-        title="Vocabulary practice finished"
-        summary={summary}
-        nextLabel={next.label}
-        nextHref={next.href}
-        onNext={goToNextTask}
-      />
-    )}
   </section>;
 }

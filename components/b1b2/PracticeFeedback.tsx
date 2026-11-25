@@ -36,7 +36,9 @@ export function SavedTick({ saved, error, saving }: { saved: boolean; error?: st
 }
 
 export type PracticeSummary = {
+  answered: number;
   correct: number;
+  wrong: number;
   total: number;
   reviewMistakes: number;
   sentence: string;
@@ -74,16 +76,12 @@ export function FinishSummary({
       <p role="status" className="text-sm text-emerald-950">
         {summary.sentence}
       </p>
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <span className="font-medium text-emerald-900">
-          {summary.correct} of {summary.total} right
-        </span>
-        <span className="text-emerald-800">
-          {summary.reviewMistakes === 0
-            ? 'Nothing new to review.'
-            : `${summary.reviewMistakes} to practise in Review`}
-        </span>
-      </div>
+      {summary.reviewMistakes < summary.wrong && (
+        <p className="text-sm text-amber-900">Some mistakes may not be in Review yet. Press Finish again to add them.</p>
+      )}
+      {summary.answered < summary.total && (
+        <p className="text-sm text-emerald-900">After checking more answers, press Finish again to update your score.</p>
+      )}
       {onNext ? (
         <button
           type="button"

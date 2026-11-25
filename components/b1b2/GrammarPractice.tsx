@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type RefObject } from 'react';
 import type { LearnerGrammar, LearnerGrammarItem, LearnerGrammarStep } from '@/lib/curriculum/learner-grammar';
 import { visibleItems } from '@/lib/curriculum/grammar-branch.mjs';
 import {
@@ -8,21 +8,23 @@ import {
   finishHint,
   nextTaskAfter,
   resumeStep,
-  unmarkedRequired,
 } from '@/lib/curriculum/week-practice.mjs';
-import type { PracticeProgress } from '@/lib/curriculum/week-practice-progress';
+import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
 import SentenceBox from './SentenceBox';
-import { FinishSummary, SavedTick } from './PracticeFeedback';
+import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
+import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 
 type Marked = { correct: boolean; reason: string | null };
 
-function ProgressBar({ current, total, title }: { current: number; total: number; title: string }) {
+function ProgressBar({ current, total, title, headingRef }: {
+  current: number; total: number; title: string; headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
   const percent = Math.round((current / total) * 100);
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium text-stone-700">
+      <h3 ref={headingRef} tabIndex={-1} data-practice-step-heading className="text-sm font-medium text-stone-700">
         Step {current} of {total}: {title}
-      </p>
+      </h3>
       <div
         className="h-2 w-full overflow-hidden rounded-full bg-stone-200"
         role="progressbar"
@@ -49,7 +51,7 @@ function Item({
   signedIn: boolean;
   /** The saved answer from the server, when there is one. */
   saved?: Marked & { answer: string };
-  onMarked: (id: string, correct: boolean) => void;
+  onMarked: (id: string, saved: SavedAnswer) => void;
 }) {
   const [answer, setAnswer] = useState<string[]>(() => {
     const blanks = Array(Math.max(1, item.blankCount)).fill('');
@@ -79,9 +81,9 @@ function Item({
         signedIn={signedIn}
         rows={item.step === 'Use it' ? 3 : 2}
         initialAnswer={saved?.answer}
-        onChecked={(onTarget) => {
+        onChecked={(onTarget, answer) => {
           setSavedAt(true);
-          onMarked(item.id, onTarget);
+          onMarked(item.id, { answer, correct: onTarget, reason: null });
         }}
       />
     );
@@ -108,7 +110,11 @@ function Item({
       }
       setMarked(data);
       setSavedAt(true);
-      onMarked(item.id, data.correct);
+      onMarked(item.id, {
+        answer: Array.isArray(value) ? value.join(' ... ') : value,
+        correct: data.correct,
+        reason: data.reason,
+      });
     } catch (err) {
       console.error('[grammar] check failed:', err);
       setError('We could not check your answer. Please try again.');
@@ -210,7 +216,10 @@ export default function GrammarPractice({
     Math.min(progress?.step ?? resumeStep(steps, restored), Math.max(0, steps.length - 1)),
   );
   const [results, setResults] = useState<Record<string, boolean>>(restored);
+  // Preserve checked answers when a learner goes back to an earlier step.
+  const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
   const [summary, setSummary] = useState(progress?.summary ?? null);
+  const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
   const current: LearnerGrammarStep = steps[Math.min(index, steps.length - 1)];
@@ -236,7 +245,6 @@ export default function GrammarPractice({
       })),
     [allItems],
   );
-  const remaining = unmarkedRequired(planned, results).length;
   const lastStep = index === steps.length - 1;
   const next = nextTaskAfter('grammar', { hasVocabulary });
 
@@ -251,7 +259,7 @@ export default function GrammarPractice({
       });
       const data = (await response.json()) as {
         error?: string;
-        summary?: { correct: number; total: number; reviewMistakes: number; sentence: string };
+        summary?: PracticeSummary;
       };
       if (!response.ok || !data.summary) {
         console.error('[grammar] finish failed:', data.error ?? response.status);
@@ -264,23 +272,34 @@ export default function GrammarPractice({
       setFinishError('We could not save your progress. Please try again.');
     } finally {
       setBusy(false);
+      focusStep();
     }
   }
 
   function goToNextTask() {
-    const anchor = document.getElementById(next.href.replace('#', ''));
-    anchor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    focusNextTask(next.href.replace('#', ''));
   }
 
   return (
     <section
+      ref={sectionRef}
       id="grammar-practice"
       className="space-y-4 rounded-xl border border-stone-200 p-5"
       aria-label="Grammar practice"
     >
       <h2 className="text-xl font-semibold">Grammar practice</h2>
-      <ProgressBar current={current.number} total={steps.length} title={current.title} />
+      <ProgressBar current={current.number} total={steps.length} title={current.title} headingRef={stepHeadingRef} />
       <p className="text-sm text-stone-600">{current.instruction}</p>
+      {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}
+      {summary && (
+        <FinishSummary
+          title="Grammar practice finished"
+          summary={summary}
+          nextLabel={next.label}
+          nextHref={next.href}
+          onNext={goToNextTask}
+        />
+      )}
       {current.title === 'See it' && (
         <p className="whitespace-pre-line rounded-xl bg-indigo-50 p-4 text-sm leading-7">{grammar.notice}</p>
       )}
@@ -294,8 +313,11 @@ export default function GrammarPractice({
             item={item}
             week={week}
             signedIn={signedIn}
-            saved={progress?.answers[item.id]}
-            onMarked={(id, correct) => setResults((prev) => ({ ...prev, [id]: correct }))}
+            saved={savedAnswers[item.id]}
+            onMarked={(id, saved) => {
+              setResults((prev) => ({ ...prev, [id]: saved.correct }));
+              setSavedAnswers((prev) => ({ ...prev, [id]: saved }));
+            }}
           />
         ))}
       </div>
@@ -303,7 +325,10 @@ export default function GrammarPractice({
         <button
           type="button"
           disabled={index === 0}
-          onClick={() => setIndex((value) => Math.max(0, value - 1))}
+          onClick={() => {
+            setIndex((value) => Math.max(0, value - 1));
+            focusStep();
+          }}
           className="rounded-lg border border-stone-300 px-4 py-2 text-sm disabled:opacity-40"
         >
           Previous
@@ -318,34 +343,23 @@ export default function GrammarPractice({
             >
               {busy ? 'Saving…' : 'Finish grammar'}
             </button>
-            {!summary && finishHint(remaining) && (
-              <span className="text-xs text-stone-600">{finishHint(remaining)}</span>
+            {signedIn && !summary && finishHint(planned, results) && (
+              <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
             )}
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}
+            onClick={() => {
+              setIndex((value) => Math.min(steps.length - 1, value + 1));
+              focusStep();
+            }}
             className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
           >
             Next
           </button>
         )}
       </div>
-      {finishError && (
-        <p role="alert" className="text-sm text-red-700">
-          {finishError}
-        </p>
-      )}
-      {summary && (
-        <FinishSummary
-          title="Grammar practice finished"
-          summary={summary}
-          nextLabel={next.label}
-          nextHref={next.href}
-          onNext={goToNextTask}
-        />
-      )}
     </section>
   );
 }

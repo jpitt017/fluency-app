@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   canFinish,
+  completionCounts,
   finishHint,
   firstUnfinishedStep,
   grammarItemFlags,
@@ -14,6 +15,7 @@ import {
   unmarkedRequired,
   vocabularyItemFlags,
 } from '../../lib/curriculum/week-practice.mjs';
+import { practiceErrorCard } from '../../lib/curriculum/week-practice-review.mjs';
 
 /**
  * Finishing grammar and vocabulary on /week/[n].
@@ -86,37 +88,41 @@ test('vocabulary week 1 counts 16 fixed questions', () => {
   assert.equal(perStep.reduce((total, value) => total + value, 0), 16);
 });
 
-test('the summary is one B1 sentence, and says nothing when there is nothing to review', () => {
+test('partial summaries use checked answers as the score denominator and the exact thresholds', () => {
+  const high = summarySentence({ answered: 5, correct: 4, total: 22 }); // exactly 80%
+  assert.equal(high, 'You answered 5 of 22. 4 were right. 1 was wrong. Great work! You can come back and finish the other questions.');
   assert.equal(
-    summarySentence({ correct: 18, total: 22, reviewMistakes: 4 }),
-    'Well done! You got 18 of 22 right. 4 mistakes are now in your Review.',
+    summarySentence({ answered: 7, correct: 6, total: 22 }),
+    'You answered 7 of 22. 6 were right. 1 was wrong. Great work! You can come back and finish the other questions.',
   );
   assert.equal(
-    summarySentence({ correct: 21, total: 22, reviewMistakes: 1 }),
-    'Well done! You got 21 of 22 right. 1 mistake is now in your Review.',
+    summarySentence({ answered: 4, correct: 3, total: 22 }),
+    'You answered 4 of 22. 3 were right. 1 was wrong. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.',
   );
-  assert.equal(
-    summarySentence({ correct: 22, total: 22, reviewMistakes: 0 }),
-    'Well done! You got 22 of 22 right.',
-  );
-  // A practice with no countable questions still ends with a sentence.
-  assert.match(summarySentence({ correct: 0, total: 0, reviewMistakes: 0 }), /^Well done! You finished this practice\.$/);
+  assert.match(summarySentence({ answered: 2, correct: 1, total: 22 }), /1 was right\. 1 was wrong\. Good effort!/); // exactly 50%
+  assert.match(summarySentence({ answered: 100, correct: 79, total: 100 }), /Good effort!/); // not rounded up
+  assert.match(summarySentence({ answered: 4, correct: 3, total: 4, reviewReady: false }), /Good effort! Press Finish again to add your mistakes to Review\./);
+  assert.match(summarySentence({ answered: 100, correct: 49, total: 100 }), /This grammar is new\. Look at 'See it' again, then try your Review cards\./);
+  assert.match(summarySentence({ answered: 5, correct: 0, total: 16, skill: 'vocabulary' }), /This vocabulary is new\. Look at 'Words' again, then try your Review cards\./);
+  const complete = summarySentence({ answered: 22, correct: 22, total: 22 });
+  assert.equal(complete, 'You answered 22 of 22. 22 were right. 0 were wrong. Great work!');
+  assert.doesNotMatch(complete, /come back/);
+  assert.match(summarySentence({ answered: 0, correct: 0, total: 22 }), /Answer and check a question to see your score\./);
 });
 
-test('finishing needs every required question, and optional ones are skipped freely', () => {
+test('a checked fixed answer enables a partial finish, but optional work alone does not', () => {
   const items = [
     { id: 'a', optional: false, counted: true },
     { id: 'b', optional: false, counted: true },
     { id: 'c', optional: true, counted: false },
   ];
-  assert.equal(canFinish(items, { a: true }), false);
+  assert.equal(canFinish(items, {}), false);
+  assert.equal(canFinish(items, { c: true }), false);
+  assert.equal(canFinish(items, { a: true }), true);
+  assert.equal(canFinish(items, { b: false }), true, 'a wrong mark is still an answer');
   assert.equal(unmarkedRequired(items, { a: true }).length, 1);
-  // The optional item alone missing is fine: that is the brief's "a learner can
-  // finish even if some optional items are skipped".
-  assert.equal(canFinish(items, { a: true, b: false }), true);
-  assert.equal(finishHint(1), 'Answer 1 more question to finish.');
-  assert.equal(finishHint(3), 'Answer 3 more questions to finish.');
-  assert.equal(finishHint(0), null);
+  assert.equal(finishHint(items, { c: true }), 'Answer and check at least 1 question to finish.');
+  assert.equal(finishHint(items, { a: true }), null);
 });
 
 test('a reload starts at the first unfinished step, not at step 1', () => {
@@ -146,14 +152,51 @@ test('a reload opens at the section start before anything is done, and at Finish
   assert.equal(resumeStep(steps, { b: true, c: true }), 2, 'everything done: Finish is on screen');
 });
 
-test('the score is out of every counted question, not only the answered ones', () => {
+test('right plus wrong equals answered, excluding optional, unanswered and unknown items', () => {
   const items = [
     { id: 'a', optional: false, counted: true },
     { id: 'b', optional: false, counted: true },
     { id: 'c', optional: false, counted: true },
     { id: 'd', optional: true, counted: false },
   ];
-  assert.deepEqual(practiceCounts(items, { a: true, b: false }), { total: 3, correct: 1, answered: 2 });
+  const counts = practiceCounts(items, { a: true, b: false, d: false, unknown: true });
+  assert.deepEqual(counts, { total: 3, answered: 2, correct: 1, wrong: 1 });
+  assert.equal(counts.correct + counts.wrong, counts.answered);
+});
+
+test('saved partial snapshots reload unchanged and old optional counts are capped', () => {
+  assert.deepEqual(completionCounts({ total: 22, answered: 7, correct: 6 }), {
+    total: 22, answered: 7, correct: 6, wrong: 1,
+  });
+  // Old Finish required all 22, but stored optional answers in `answered` too.
+  assert.deepEqual(completionCounts({ total: 22, answered: 25, correct: 6 }), {
+    total: 22, answered: 22, correct: 6, wrong: 16,
+  });
+  assert.deepEqual(completionCounts({ total: 0, answered: 25, correct: 6 }, 22), {
+    total: 22, answered: 22, correct: 6, wrong: 16,
+  });
+});
+
+test('a wrong multi-blank answer gets a usable Review card, not a silently dropped key', () => {
+  const item = details.weeks[0].grammar.practice.items.find((entry) => entry.id === 'W1-C5');
+  const card = practiceErrorCard({ userId: 'learner', item, answer: 'Did ... live', category: 'tense' });
+  assert.equal(card.prompt_sentence, 'Did you ever live in another country?');
+  assert.equal(card.corrected_sentence, 'Have you ever lived in another country?');
+  assert.match(card.explanation, /Have \.\.\. lived/);
+  const week4 = details.weeks[3].grammar.practice.items.find((entry) => entry.id === 'W4-G5');
+  const arrayCard = practiceErrorCard({ userId: 'learner', item: week4, answer: ['is', 'make'], category: 'tense' });
+  assert.equal(arrayCard.prompt_sentence, 'Where is your car make?');
+  assert.equal(arrayCard.corrected_sentence, 'Where was your car made?');
+});
+
+test('verb and word-form mistakes can use a repair card without inventing a vocabulary alias', () => {
+  const item = vocabularyBank.weeks[0].chooseVerb[0];
+  const card = practiceErrorCard({
+    userId: 'learner', item: { prompt: item.question, key: item.options[item.answer_index] },
+    answer: 'made', category: 'collocation',
+  });
+  assert.equal(card.prompt_sentence, 'I made a risk and applied for a job abroad.');
+  assert.equal(card.corrected_sentence, 'I took a risk and applied for a job abroad.');
 });
 
 test('grammar points at vocabulary when there is one, and the sections have anchors', () => {
@@ -215,8 +258,11 @@ test('the saved view is server-side, and the score is never taken from the brows
   const finish = read('lib/curriculum/week-practice-finish.ts');
   // Nothing in the body can set a count: the route accepts a week and a skill.
   assert.doesNotMatch(route, /body\.(correct|total|score|review)\b/);
-  assert.match(finish, /from\(TABLES\[skill\]\)/);
-  assert.match(finish, /unmarkedRequired/);
+  assert.match(finish, /readPracticeAttempts\(admin, TABLES\[skill\]/);
+  assert.match(finish, /item\.counted && results\[item\.id\] === false/);
+  const feedback = read('components/b1b2/PracticeFeedback.tsx');
+  assert.doesNotMatch(feedback, /of \{summary\.total\} right|to practise in Review|Nothing new to review/);
+  assert.doesNotMatch(read('lib/curriculum/week-practice.mjs'), /Well done! You got/);
 });
 
 test('completion records are included in "Delete my data"', () => {

@@ -110,6 +110,8 @@ jobs:
       # Finishing grammar and vocabulary: what counts, what may be skipped, and
       # that the score comes from saved rows rather than the browser.
       - run: node --test tests/unit/week-practice-finish.test.mjs
+      # Exercise the real finish route and reload against an in-memory database.
+      - run: node --test tests/unit/week-practice-server.test.mjs
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
