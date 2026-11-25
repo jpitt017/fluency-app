@@ -108,6 +108,8 @@ test('free practice keeps its prompt while pronunciation uses the current week',
   const page = read('src/app/labs/page.tsx');
   assert.match(page, /const pronunciationWeek = await loadLearnerWeek\(weekNumber\)/);
   assert.match(page, /const selectedWeek = weekParam \? pronunciationWeek : null/);
+  assert.match(page, /const freeWritingContext: LessonLabContext = \{[\s\S]*?prompt: 'Write an email, a review or a short essay\.'/);
+  assert.match(page, /<WritingLab[^>]*lessonContext=\{selectedWeek \? \{ \.\.\.freeWritingContext, prompt: selectedWeek\.writingPrompt, weekNumber \} : weekParam \? \{ \.\.\.freeWritingContext, weekNumber \} : freeWritingContext\}/);
   assert.match(page, /targets=\{pronunciationWeek\?\.shadowingChunks\.length/);
   assert.match(page, /audioUrl: chunk\.audioUrl/);
   assert.match(page, /has a short sound/);
