@@ -1,0 +1,146 @@
+{
+  "version": "speaking-support-v1",
+  "status": "pilot draft: second-teacher review pending",
+  "flow": [
+    "1 Plan (2 min): one note box per cue-card point; model hidden",
+    "2 Record (60–90 s): existing speaking feedback with week context",
+    "3 Listen to the model (unlocked after the first recording): focus question, answer marked on the server",
+    "4 Notice: listen again and tap the phrases you hear (4 real, 2 not in the model); then see the model transcript with the phrases highlighted",
+    "5 Compare: model transcript beside the learner's transcript; phrases from the list that the learner used are highlighted",
+    "6 Try again (optional): record once more using two phrases; feedback says which phrases were used"
+  ],
+  "rules": {
+    "modelHiddenUntilFirstRecording": true,
+    "answerIndexServerOnly": true,
+    "noticePhrasesAreExactSubstringsOfModel": true,
+    "shadowingWarmupStaysAsIs": true
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "voice": "Aisha",
+      "focusQuestion": {
+        "question": "What helped the speaker feel at home in the new city?",
+        "options": [
+          "a running group",
+          "a cooking class",
+          "her new colleagues"
+        ],
+        "answerIndex": 0,
+        "feedback": "She joined a running group and made friends there."
+      },
+      "noticePhrases": [
+        "The biggest challenge I faced was",
+        "It took me a few weeks to get used to",
+        "Since then, I've",
+        "When I look back on"
+      ],
+      "distractors": [
+        "I'm really looking forward to",
+        "It was built in"
+      ],
+      "planNotes": [
+        "Before",
+        "The change",
+        "What was hard",
+        "What helped",
+        "Now"
+      ],
+      "retryGoal": "In your second recording, try to use two phrases from the list."
+    },
+    {
+      "week": 2,
+      "voice": "Host",
+      "focusQuestion": {
+        "question": "What will the speaker do if he doesn't get a place this spring?",
+        "options": [
+          "take an evening class",
+          "study full-time",
+          "look for a new job"
+        ],
+        "answerIndex": 0,
+        "feedback": "He says: \"I'll take an evening class instead.\""
+      },
+      "noticePhrases": [
+        "My goal is to",
+        "I intend to",
+        "I'm looking forward to",
+        "If I don't get a place this spring, I'll"
+      ],
+      "distractors": [
+        "It took me a few weeks to",
+        "We have to"
+      ],
+      "planNotes": [
+        "My goal",
+        "Already arranged",
+        "When it's done...",
+        "If it doesn't work out..."
+      ],
+      "retryGoal": "In your second recording, try to use two phrases from the list."
+    },
+    {
+      "week": 3,
+      "voice": "Aisha",
+      "focusQuestion": {
+        "question": "When do the flatmates usually eat together?",
+        "options": [
+          "on Fridays",
+          "every evening",
+          "at weekends"
+        ],
+        "answerIndex": 0,
+        "feedback": "\"We usually eat together on Fridays.\""
+      },
+      "noticePhrases": [
+        "We have to",
+        "You don't have to",
+        "I think we should",
+        "Apart from that"
+      ],
+      "distractors": [
+        "It was built in",
+        "My goal is to"
+      ],
+      "planNotes": [
+        "A shared job",
+        "A rule",
+        "Something optional",
+        "Advice",
+        "A question for them"
+      ],
+      "retryGoal": "In your second recording, try to use two phrases from the list."
+    },
+    {
+      "week": 4,
+      "voice": "Host",
+      "focusQuestion": {
+        "question": "Why does the speaker say to set off early on Saturday?",
+        "options": [
+          "the market is very busy then",
+          "the shops close at lunchtime",
+          "the river walk is long"
+        ],
+        "answerIndex": 0,
+        "feedback": "\"It's the busiest place in town on a Saturday morning, so I'd set off early.\""
+      },
+      "noticePhrases": [
+        "It was built in",
+        "is held there every Saturday",
+        "It's quieter than",
+        "one of the friendliest places"
+      ],
+      "distractors": [
+        "Since then, I've",
+        "We have to"
+      ],
+      "planNotes": [
+        "An event or custom",
+        "A fact about the past",
+        "A comparison",
+        "My recommendation"
+      ],
+      "retryGoal": "In your second recording, try to use two phrases from the list."
+    }
+  ]
+}

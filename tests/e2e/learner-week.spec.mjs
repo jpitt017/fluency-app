@@ -22,9 +22,11 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
   expect(html).not.toContain('"answer_index"');
   expect(html).not.toContain('"accepted"');
   expect(html).not.toContain('"reason"');
-  // Main now intentionally shows a speaking example/player on the week page;
-  // the writing model and unmarked answer keys remain hidden.
-  await expect(page.getByRole('heading', { name: 'Speaking: model answer' })).toBeVisible();
+  // The first speaking model and focus question stay server-gated until a
+  // saved first recording; the writing model and answer keys remain hidden too.
+  await expect(page.getByRole('heading', { name: '1. Plan · about 2 minutes' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Speaking: model answer' })).toHaveCount(0);
+  expect(html).not.toContain(details.weeks[0].speaking.model);
   expect(html).not.toContain(details.weeks[0].writing.modelAnswer);
   await page.getByRole('link', { name: 'Start writing task' }).click();
   await expect(page).toHaveURL(/\/labs\?week=1#writing/);
@@ -181,9 +183,8 @@ test('learner navigation remembers the last opened week and hides staff links', 
   for (const label of ['Curriculum', 'Assessments', 'Teacher', 'Pricing']) {
     await expect(nav.getByRole('link', { name: label })).toHaveCount(0);
   }
-  await page.getByRole('link', { name: 'Start speaking task' }).click();
-  await expect(page.getByText(/Speak for 60.90 seconds/)).toBeVisible();
-  await expect(page.locator('#speaking').getByRole('link', { name: '← Back to Week 4' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Plan, record and compare' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '2. Record · 60–90 seconds' })).toBeVisible();
   await page.reload();
   await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
 });
