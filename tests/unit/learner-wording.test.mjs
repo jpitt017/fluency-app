@@ -185,7 +185,9 @@ test('the grammar and vocabulary banks say it in B1', () => {
     assert.ok(!jargon.test(reason), `${item.id}: ${reason}`);
     if (!Object.hasOwn(LEARNER_GRAMMAR_REASONS, item.id)) assert.equal(reason, item.reason);
   }
-  assert.deepEqual(Object.keys(LEARNER_GRAMMAR_REASONS).sort(), ['W2-R2', 'W3-L1', 'W4-L1']);
+  assert.deepEqual(Object.keys(LEARNER_GRAMMAR_REASONS).sort(), [
+    'W1-C3', 'W1-C5', 'W1-E2', 'W1-F3', 'W1-G1', 'W2-R2', 'W3-L1', 'W4-L1',
+  ]);
   assert.match(items.find((item) => item.id === 'W2-R2').reason, /main clause/);
   assert.match(items.find((item) => item.id === 'W3-L1').reason, /Auxiliary/);
   assert.match(items.find((item) => item.id === 'W4-L1').reason, /full clause/);

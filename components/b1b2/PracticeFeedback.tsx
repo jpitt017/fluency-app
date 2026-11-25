@@ -36,10 +36,14 @@ export function SavedTick({ saved, error, saving }: { saved: boolean; error?: st
 }
 
 export type PracticeSummary = {
+  answered: number;
   correct: number;
+  wrong: number;
   total: number;
   reviewMistakes: number;
   sentence: string;
+  /** Answers have changed since this saved snapshot. */
+  scoreNeedsRefresh?: boolean;
 };
 
 /**
@@ -74,16 +78,14 @@ export function FinishSummary({
       <p role="status" className="text-sm text-emerald-950">
         {summary.sentence}
       </p>
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <span className="font-medium text-emerald-900">
-          {summary.correct} of {summary.total} right
-        </span>
-        <span className="text-emerald-800">
-          {summary.reviewMistakes === 0
-            ? 'Nothing new to review.'
-            : `${summary.reviewMistakes} to practise in Review`}
-        </span>
-      </div>
+      {summary.reviewMistakes < summary.wrong && (
+        <p className="text-sm text-amber-900">Some mistakes may not be in Review yet. Press Finish again to add them.</p>
+      )}
+      {summary.scoreNeedsRefresh ? (
+        <p className="text-sm text-emerald-900">Your latest answers may not match this score. Press Finish again to update it.</p>
+      ) : summary.answered < summary.total ? (
+        <p className="text-sm text-emerald-900">After checking more answers, press Finish again to update your score.</p>
+      ) : null}
       {onNext ? (
         <button
           type="button"

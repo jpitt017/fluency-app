@@ -46,7 +46,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     {!details ? <section className="rounded-xl border border-stone-200 p-5"><h2 className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">This week&apos;s tasks aren&apos;t ready yet. You can practise in Practice.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Free practice</Link></section> : <>
       {grammar && <GrammarPractice grammar={grammar} week={number} signedIn={viewer.signedIn} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
       <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5">
-        <h2 className="text-xl font-semibold">Reading: {details.reading.title}</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2>
         <ReadingBeforeQuestions support={details.readingSupport.support} />
         {details.readingSupport.support ? <ReadingText support={details.readingSupport.support} /> : <p className="whitespace-pre-line leading-7">{details.reading.text}</p>}
         <div id="reading-questions">

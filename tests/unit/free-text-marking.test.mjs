@@ -117,6 +117,7 @@ test("a learner's own sentence becomes a cloze card", () => {
   assert.equal(card.category, 'tense');
 });
 
-test('no card is created for an empty answer', () => {
+test('no card is created for an empty answer or an uncorrected sentence', () => {
   assert.equal(reviewCardFor({ kind: 'rewrite', prompt: 'p', answer: '   ', corrected: 'c', target: 't' }), null);
+  assert.equal(reviewCardFor({ kind: 'use-it', prompt: 'I play.', answer: 'I play.', corrected: 'I play.', target: 'used to' }), null);
 });

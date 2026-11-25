@@ -16,8 +16,8 @@ import { grammarItemFlags, vocabularyItemFlags } from './week-practice.mjs';
  *     the browser) and to know which mistakes deserve a Review card;
  *   - the unit tests, which check the totals the summary shows.
  *
- * The flags are the rules in week-practice.mjs: optional items never block
- * finishing, counted items are what "You got X of Y right" is about. `key` is
+ * The flags are the rules in week-practice.mjs: counted items are the fixed
+ * questions in the summary; optional items never affect the score. `key` is
  * only read on the server, to write a Review card's corrected sentence; it is
  * never serialised to the browser by anything that imports this module.
  */
@@ -28,11 +28,13 @@ export type PlannedItem = {
   optional: boolean;
   counted: boolean;
   /** Server-only: the authored answer, for a Review card. */
-  key?: string;
+  key?: string | string[];
   /** Server-only: the vocabulary term this item practises. */
   term?: string | null;
   /** Server-only: the authored feedback for a fixed vocabulary item. */
   feedback?: string;
+  /** Meaning checks ask a question rather than asking for a sentence repair. */
+  reviewKind?: 'question' | 'sentence';
 };
 
 export type PlannedStep = { index: number; title: string; items: PlannedItem[] };
@@ -51,9 +53,8 @@ export function grammarPlan(week: number): PracticePlan | null {
       id: item.id,
       prompt: item.prompt,
       ...grammarItemFlags(item),
-      key: (bank.find((entry) => entry.id === item.id) as { key?: unknown } | undefined)?.key as
-        | string
-        | undefined,
+      key: bank.find((entry) => entry.id === item.id)?.key,
+      reviewKind: item.step === 'Meaning' ? 'question' as const : 'sentence' as const,
     })),
   }));
   return { steps, items: steps.flatMap((step) => step.items) };
@@ -69,17 +70,21 @@ export function vocabularyPlan(week: number): PracticePlan | null {
   if (!exercises) return null;
   const bankWeek = vocabularyBank.weeks.find((entry) => entry.week === week);
   const termFor = (id: string) => (bankWeek ? termForExercise(bankWeek, id) : null);
+  const choices = [...(bankWeek?.chooseVerb ?? []), ...(bankWeek?.wordForms ?? [])];
   const feedbackFor = (id: string) =>
-    [
-      ...(bankWeek?.chooseVerb ?? []),
-      ...(bankWeek?.wordForms ?? []),
-      ...(bankWeek?.text.items ?? []),
-    ].find((entry) => entry.id === id)?.reason;
+    [...choices, ...(bankWeek?.text.items ?? [])].find((entry) => entry.id === id)?.reason;
+  const choiceKey = (id: string) => {
+    const choice = choices.find((entry) => entry.id === id);
+    return choice?.options[choice.answer_index];
+  };
   const item = (id: string, prompt: string, index: number): PlannedItem => ({
     id,
     prompt,
     ...vocabularyItemFlags(index),
     term: termFor(id),
+    // Some verb/word-form questions do not correspond to a vocabulary card.
+    // Give a wrong answer its own sentence-repair card instead of guessing a term.
+    key: choiceKey(id),
     feedback: feedbackFor(id),
   });
 

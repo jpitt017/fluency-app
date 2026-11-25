@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { markFixedGrammarAnswer, grammarBranch, projectLearnerGrammar } from '../../lib/curriculum/grammar-marking.mjs';
+import { markFixedGrammarAnswer, matchesGrammarAnswer, grammarBranch, projectLearnerGrammar } from '../../lib/curriculum/grammar-marking.mjs';
+import { LEARNER_GRAMMAR_ALTERNATIVES, markLearnerGrammarAnswer } from '../../lib/curriculum/learner-grammar-marking.mjs';
 
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
 
@@ -56,6 +57,40 @@ test('fixed questions accept their keys and alternatives and reject wrong answer
       } else assert.equal(markFixedGrammarAnswer(item, 'incorrect'), false, item.id);
     }
   }
+});
+
+test('learner alternatives are explicit, grammatical answers to the specified ambiguous questions', () => {
+  assert.deepEqual(LEARNER_GRAMMAR_ALTERNATIVES, {
+    'W1-C3': ['left'],
+    'W1-C5': ['Did ... live'],
+    'W1-G1': ['drove'],
+    'W1-F3': ['I knew her for years before we worked together.'],
+    'W1-E2': ['never saw'],
+  });
+  const items = details.weeks[0].grammar.practice.items;
+  for (const [id, alternatives] of Object.entries(LEARNER_GRAMMAR_ALTERNATIVES)) {
+    const item = items.find((entry) => entry.id === id);
+    for (const answer of alternatives) assert.equal(markLearnerGrammarAnswer(item, answer), true, `${id}: ${answer}`);
+  }
+  // A two-part answer can be restored as an array as well as as an option.
+  assert.equal(markLearnerGrammarAnswer(items.find((item) => item.id === 'W1-C5'), ['Did', 'live']), true);
+  assert.equal(markLearnerGrammarAnswer(items.find((item) => item.id === 'W1-G1'), 'drive'), false);
+  assert.equal(markLearnerGrammarAnswer(items.find((item) => item.id === 'W1-F3'), 'I had knew her for years before we worked together.'), false);
+  assert.equal(markLearnerGrammarAnswer(items.find((item) => item.id === 'W1-C2'), 'made'), false);
+  assert.throws(() => markLearnerGrammarAnswer(items.find((item) => item.id === 'W1-C3'), 'left-ish'), /choose/);
+});
+
+test('only an introductory comma in an authored full-sentence grammar answer is optional', () => {
+  const items = details.weeks[0].grammar.practice.items;
+  const fixed = items.find((item) => item.id === 'W1-F2');
+  assert.equal(markLearnerGrammarAnswer(fixed, 'when i got home my flatmate had already cooked dinner'), true);
+  assert.equal(markLearnerGrammarAnswer(fixed, 'When I got home, my flatmate had already cooked dinner.'), true);
+  assert.equal(markLearnerGrammarAnswer(fixed, 'when i got home my flatmate already cooked dinner'), false);
+  assert.equal(markLearnerGrammarAnswer(fixed, 'when i got home my flatmate, had already cooked dinner'), false);
+  // Other punctuation can carry meaning; do not silently strip every comma.
+  assert.equal(matchesGrammarAnswer('Let us eat, Grandma.', 'Let us eat Grandma.', true), false);
+  assert.equal(matchesGrammarAnswer('When I got home, John, left.', 'When I got home John left.', true), false);
+  assert.equal(matchesGrammarAnswer('when I left, I smiled.', 'when I left I smiled.', false), false);
 });
 
 test('adaptive decisions are made only after all 11 choose and complete answers', () => {

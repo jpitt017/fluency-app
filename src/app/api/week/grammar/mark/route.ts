@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
-import { markFixedGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
+import { markLearnerGrammarAnswer } from '@/lib/curriculum/learner-grammar-marking.mjs';
 import { learnerGrammarReason } from '@/lib/curriculum/learner-grammar-reasons.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
   if (week.number > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   let correct: boolean;
-  try { correct = markFixedGrammarAnswer(item, answer); }
+  try { correct = markLearnerGrammarAnswer(item, answer); }
   catch { return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 }); }
   const admin = createAdminSupabase();
   if (!admin) return NextResponse.json({ error: 'Could not save your answer.' }, { status: 503 });

@@ -28,7 +28,7 @@ export default function SentenceBox({
   label?: string;
   signedIn: boolean;
   rows?: number;
-  onChecked?: (onTarget: boolean) => void;
+  onChecked?: (onTarget: boolean, answer: string) => void;
   /**
    * What the learner wrote last time, restored from the server so a reload does
    * not empty the box. It is only the sentence they wrote: the feedback comes
@@ -57,7 +57,7 @@ export default function SentenceBox({
         return;
       }
       setFeedback(data);
-      onChecked?.(data.onTarget);
+      onChecked?.(data.onTarget, answer);
     } catch (err) {
       console.error('[sentence] check failed:', err);
       setError('We could not check your answer. Please try again.');
