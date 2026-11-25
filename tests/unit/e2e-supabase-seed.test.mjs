@@ -57,6 +57,10 @@ function fakeAdmin({ hasProfile = true, hasTask = false } = {}) {
           calls.push(['insert', table, row]);
           return { error: null };
         },
+        async upsert(rows, options) {
+          calls.push(['upsert', table, rows, options]);
+          return { error: null };
+        },
       };
     },
   };
@@ -71,6 +75,11 @@ test('resets the configured account after migrations and creates only a minimal 
   assert.equal(created[1].email, 'e2e@example.invalid');
   assert.equal(created[1].password, 'not-a-real-password');
   assert.equal(created[1].email_confirm, true);
+  const outputs = admin.calls.find(([name, table]) => name === 'upsert' && table === 'week_output_submissions');
+  assert.equal(outputs[2].length, 6);
+  assert.deepEqual([...new Set(outputs[2].map((row) => row.week_number))], [1, 2, 3]);
+  const inputs = admin.calls.find(([name, table]) => name === 'upsert' && table === 'week_input_submissions');
+  assert.equal(inputs[2].length, 3);
   const task = admin.calls.find(([name, table]) => name === 'insert' && table === 'writing_tasks');
   assert.deepEqual(task[2], {
     module_id: 'module-1',

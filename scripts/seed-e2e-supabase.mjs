@@ -45,6 +45,26 @@ export async function seedE2ESupabase({ admin, env = process.env }) {
     throw new Error(`The isolated E2E learner profile was not created by the auth trigger${profileError ? `: ${profileError.message}` : ''}`);
   }
 
+  // The signed-in CEFR smoke tests deliberately exercise Week 4. Unlock it for
+  // this test user only using the same completion rows the progress RPC reads.
+  const outputProgress = [1, 2, 3].flatMap((week_number) => [
+    { user_id: created.user.id, week_number, skill: 'speaking' },
+    { user_id: created.user.id, week_number, skill: 'writing' },
+  ]);
+  const inputProgress = [1, 2, 3].map((week_number) => ({
+    user_id: created.user.id,
+    week_number,
+    skill: 'reading',
+  }));
+  const { error: outputError } = await admin
+    .from('week_output_submissions')
+    .upsert(outputProgress, { onConflict: 'user_id,week_number,skill' });
+  if (outputError) throw new Error(`Could not prepare isolated E2E week progress: ${outputError.message}`);
+  const { error: inputError } = await admin
+    .from('week_input_submissions')
+    .upsert(inputProgress, { onConflict: 'user_id,week_number,skill' });
+  if (inputError) throw new Error(`Could not prepare isolated E2E week progress: ${inputError.message}`);
+
   const { data: existingTask, error: taskReadError } = await admin
     .from('writing_tasks')
     .select('id')

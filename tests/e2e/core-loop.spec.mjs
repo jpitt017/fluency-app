@@ -230,6 +230,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
           body: JSON.stringify({
             submissionId: null,
             score: 74,
+            passed: true,
             feedback: 'Good effort! Watch article and preposition collocations.',
             corrected: 'Moving to Edinburgh was a turning point in my career.',
             notes: ['Use "a turning point" and "responsible for".'],
@@ -260,7 +261,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 
     await page.getByRole('button', { name: /Evaluate writing/i }).click();
-    await expect(page.getByText(/74 \/ 100|\/ 100/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/74%/)).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
     await expect(page.getByText(/Practise your mistakes|Nothing to practise today/i).first()).toBeVisible();
