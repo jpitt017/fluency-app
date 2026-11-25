@@ -397,12 +397,16 @@ test.describe('with a signed-in learner', () => {
       await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeFocused();
       await page.emulateMedia({ reducedMotion: 'reduce' });
 
-      // A reload resumes at the first unanswered question but retains the exact
-      // snapshot. The other 15 questions were not turned into Review cards.
+      // Reload keeps the last visited step and the exact snapshot. The other
+      // 15 questions were not turned into Review cards.
       await page.reload();
-      await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
+      await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeVisible();
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
       await expect(grammar.getByText('After checking more answers, press Finish again to update your score.')).toBeVisible();
+      for (let step = 5; step > 2; step -= 1) {
+        await grammar.getByRole('button', { name: 'Previous step', exact: true }).click();
+      }
+      await expect(grammar.getByRole('heading', { name: 'Step 2 of 5: Practise' })).toBeVisible();
 
       // Check one more answer in the UI, then leave and return to that step.
       // The newly saved choice and its feedback survive navigation; the last

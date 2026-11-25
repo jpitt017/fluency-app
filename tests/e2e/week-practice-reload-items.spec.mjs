@@ -64,17 +64,17 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     await page.reload();
     await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
     await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
-    // Resume the first unanswered item on entering a paged step; progress tabs
-    // can still bring back the saved answer and its server feedback.
-    await expect(grammar.getByRole('heading', { name: 'Step 1 of 5: See it' })).toBeVisible();
-    await step(grammar, 'Next').click();
-    await expect(grammar.getByRole('heading', { name: 'Item 2 of 11' })).toBeVisible();
-    await tab(grammar, 1, 11).click();
+    // Grammar returns to the actual step last visited, then to the last
+    // selected item in each paged step, with its saved answer and feedback.
+    await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeVisible();
+    await step(grammar, 'Previous').click();
+    await step(grammar, 'Previous').click();
+    await expect(grammar.getByRole('heading', { name: 'Item 4 of 6' })).toBeVisible();
+    await expect(grammar.getByRole('textbox')).toHaveValue("I've been learning English since 2020.");
+    await step(grammar, 'Previous').click();
+    await expect(grammar.getByRole('heading', { name: 'Item 1 of 11' })).toBeVisible();
     await expect(grammar.getByRole('radio', { name: 'moved', exact: true })).toBeChecked();
     await expect(grammar.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
-    await step(grammar, 'Next').click();
-    await tab(grammar, 4, 6).click();
-    await expect(grammar.getByRole('textbox')).toHaveValue("I've been learning English since 2020.");
 
     await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
     await step(vocabulary, 'Next').click();

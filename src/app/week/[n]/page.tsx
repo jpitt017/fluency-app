@@ -46,7 +46,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>
       <p className="mt-4 rounded-xl bg-emerald-50 p-4"><strong>By the end of this week I can… </strong>{details?.canDo ?? week.cefr.canDo}</p></header>
     {!details ? <section id="week-activities-unavailable" className="scroll-mt-20 rounded-xl border border-stone-200 p-5"><h2 tabIndex={-1} className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">This week&apos;s tasks aren&apos;t ready yet. You can practise in Practice.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Free practice</Link></section> : <>
-      {grammar && <GrammarPractice grammar={grammar} week={number} signedIn={viewer.signedIn} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
+      {grammar && <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
       <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20">
         <h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2>
         <ReadingBeforeQuestions support={details.readingSupport.support} />

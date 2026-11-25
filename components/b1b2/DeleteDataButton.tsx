@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import { clearGrammarPositions } from '@/lib/curriculum/grammar-practice-position.mjs';
 
-export default function DeleteDataButton() {
+export default function DeleteDataButton({ userId }: { userId: string | null }) {
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
@@ -27,6 +28,11 @@ export default function DeleteDataButton() {
         console.error('[delete-data] request failed:', data?.error ?? res.status);
         setStatus(data?.error || 'We could not delete your data. Please try again.');
         return;
+      }
+      try {
+        clearGrammarPositions(window.localStorage, userId);
+      } catch {
+        // Access to browser storage may itself be disabled; server data is deleted.
       }
       setStatus(`All learning data and ${data.removedAudioFiles ?? 0} audio recordings deleted.`);
       setConfirming(false);
