@@ -47,7 +47,7 @@ export type LearnerListening = {
   total: number;
   transcriptUnlocked: boolean;
 };
-export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; writingPrompt: string; reading: Input; listening: Input; listeningSupport: LearnerListening };
+export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; speakingModel: { text: string; audioUrl: string | null }; shadowingChunks: { text: string; note: string; audioUrl: string | null }[]; writingPrompt: string; reading: Input; listening: Input; listeningSupport: LearnerListening };
 
 /** Explicit allowlist: never serialize answer keys, models or listening transcripts. */
 export async function loadLearnerWeek(number: number): Promise<LearnerWeek | null> {
@@ -82,6 +82,8 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
 
   return {
     title: week.title, canDo: week.canDo,
+    speakingModel: { text: week.speaking.model, audioUrl: (week.speaking as typeof week.speaking & { audioUrl?: string }).audioUrl ?? null },
+    shadowingChunks: (week.speaking.shadowingChunks ?? []).map((chunk: { chunk: string; listenFor: string; audioUrl?: string }) => ({ text: chunk.chunk, note: chunk.listenFor, audioUrl: chunk.audioUrl ?? null })),
     speakingPrompt: week.speaking.prompt, speakingLength: week.speaking.flow.record.match(/\b\d+[–-]\d+\s*s\b/)?.[0].replace(/\s*s$/, ' seconds') ?? null, cueCard: week.speaking.cueCard,
     writingPrompt: week.writing.prompt,
     reading: { title: reading.title, text: reading.text, questions: questionsFor('reading', reading.questions) },

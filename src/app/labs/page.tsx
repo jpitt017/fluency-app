@@ -18,7 +18,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
   const viewer = await getViewer();
   const weekParam = (await searchParams).week;
   const weekNumber = weekParam ? learnerWeekFromParam(weekParam) : await currentLearnerWeek();
-  const selectedWeek = weekParam ? await loadLearnerWeek(weekNumber) : null;
+  const selectedWeek = await loadLearnerWeek(weekNumber);
   const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
   const freeContext: LessonLabContext = {
@@ -98,7 +98,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
         <ShadowingLab
           title="Listen-and-Compare Shadowing Studio"
           pronunciationFocus={pronunciationFocus}
-          targets={[
+          targets={selectedWeek?.shadowingChunks.length ? selectedWeek.shadowingChunks.map((chunk, index) => ({ label: `Week ${weekNumber} · Chunk ${index + 1}`, text: chunk.text, note: chunk.note, audioUrl: chunk.audioUrl })) : [
             {
               label: 'Narrative pacing · Turning point',
               text: 'I had been teaching for six years when I finally booked a one-way ticket.',

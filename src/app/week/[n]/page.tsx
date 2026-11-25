@@ -5,6 +5,7 @@ import ListeningTrialPlayer from '@/components/b1b2/ListeningTrialPlayer';
 import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
 import WeekInputTask from '@/components/b1b2/WeekInputTask';
+import SpeakingModelPlayer from '@/components/b1b2/SpeakingModelPlayer';
 import { getViewer } from '@/lib/b1b2/data';
 import { notFound } from 'next/navigation';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
@@ -43,6 +44,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       {grammar && <GrammarPractice grammar={grammar} week={number} signedIn={viewer.signedIn} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
       {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} />}
       <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Reading: {details.reading.title}</h2><p className="whitespace-pre-line leading-7">{details.reading.text}</p><WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} /></section>
+      <section className="space-y-3 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Speaking: model answer</h2><p className="whitespace-pre-line leading-7">{details.speakingModel.text}</p><SpeakingModelPlayer text={details.speakingModel.text} audioUrl={details.speakingModel.audioUrl} /></section>
       <section className="space-y-4 rounded-xl border border-stone-200 p-5"><h2 className="text-xl font-semibold">Listening: {details.listening.title}</h2>
         <ListeningBeforePlayer support={details.listeningSupport.support} />
         {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio} /></> : details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}

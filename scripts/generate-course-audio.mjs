@@ -848,16 +848,49 @@ async function speakingGenerate() {
 }
 
 async function releaseSpeaking(weeks) {
-  if (!weeks.length) throw new Error('--speaking-release requires one or more weeks');
+  if (weeks.length !== 1) throw new Error('--speaking-release requires exactly one week per run');
   weeks.forEach((week) => assertTrialWeek(week));
   const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
   if (!verdict.ok) throw new Error(verdict.reason);
   const client = requireSupabase();
   for (const week of weeks) {
     const keys = await publishSpeakingWeek(client, week, (message) => console.log(message));
-    console.log(`Week ${week}: ${keys.length} speaking clips copied to public ${AUDIO_BUCKET}.`);
-    console.log('This command does not modify Shadowing Studio URLs or database approval state.');
+    await setSpeakingWeekPublished(client, week, true);
+    console.log(`Week ${week}: ${keys.length} speaking clips copied to public ${AUDIO_BUCKET}; learner audio URLs enabled.`);
   }
+}
+
+async function revokeSpeaking(weeks) {
+  if (weeks.length !== 1) throw new Error('--speaking-revoke requires exactly one week per run');
+  const [week] = weeks;
+  assertTrialWeek(week);
+  const verdict = checkApprovalTarget({ url: supabaseUrl, bypass: isApprovalBypassRequested() });
+  if (!verdict.ok) throw new Error(verdict.reason);
+  const client = requireSupabase();
+  const { deleteReleasedFiles } = await import('./lib/course-audio/publish.mjs');
+  const removed = await deleteReleasedFiles(client, week);
+  await setSpeakingWeekPublished(client, week, false);
+  console.log(`Week ${week}: speaking clips revoked; removed ${removed.length} public object(s), learner audio URLs cleared.`);
+}
+
+/** Persist learner playback URLs in the existing syllabus-week JSON payload. */
+async function setSpeakingWeekPublished(client, week, released) {
+  const { data, error } = await client.from('syllabus_week_details').select('payload').eq('week_number', week).maybeSingle();
+  if (error || !data?.payload) throw new Error(`Could not load Week ${week} syllabus payload: ${JSON.stringify(error)}`);
+  const payload = structuredClone(data.payload);
+  if (!payload.speaking) throw new Error(`Week ${week} syllabus has no speaking section`);
+  if (released) {
+    const publicBase = `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/${AUDIO_BUCKET}/weeks-01-04/ai-trial`;
+    payload.speaking.audioUrl = `${publicBase}/speaking-week-${week}-model.mp3`;
+    payload.speaking.shadowingChunks = payload.speaking.shadowingChunks.map((chunk, index) => ({
+      ...chunk, audioUrl: `${publicBase}/speaking-week-${week}-shadowing-${index + 1}.mp3`,
+    }));
+  } else {
+    delete payload.speaking.audioUrl;
+    payload.speaking.shadowingChunks = payload.speaking.shadowingChunks.map((chunk) => { const clean = { ...chunk }; delete clean.audioUrl; return clean; });
+  }
+  const update = await client.from('syllabus_week_details').update({ payload }).eq('week_number', week);
+  if (update.error) throw new Error(`Could not update Week ${week} speaking URLs: ${JSON.stringify(update.error)}`);
 }
 
 async function speakingVoiceCheck() {
@@ -895,6 +928,8 @@ async function main() {
   if (args.includes('--speaking-generate')) return speakingGenerate();
   const speakingReleaseWeekList = listArg('--speaking-release');
   if (speakingReleaseWeekList) return releaseSpeaking(speakingReleaseWeekList);
+  const speakingRevokeWeekList = listArg('--speaking-revoke');
+  if (speakingRevokeWeekList) return revokeSpeaking(speakingRevokeWeekList);
   const weekList = listArg('--week') ?? listArg('--weeks');
   const reviewWeekList = listArg('--review');
   const releaseWeekList = listArg('--release');
