@@ -52,7 +52,6 @@ export type LearnerListening = {
 };
 export type LearnerReadingSupport = {
   context: string;
-  predict: string;
   keyWords: { word: string; meaning: string; es: string; example: string; note: string | null }[];
   glosses: { tap: string; meaning: string; es: string }[];
   cardWords: { word: string; meaning?: string }[];
@@ -139,7 +138,7 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   };
   const readingQuestions = questionsFor('reading', reading.questions);
   const listeningQuestions = questionsFor('listening', listening.questions);
-  const readingSupport = await loadReadingSupport(number, readingQuestions, reading.text, reading.predict);
+  const readingSupport = await loadReadingSupport(number, readingQuestions, reading.text);
   const listeningSupport = await loadListeningSupport(number, listeningQuestions, listening.script);
 
   return {
@@ -174,7 +173,6 @@ async function loadReadingSupport(
   weekNumber: number,
   questions: LearnerQuestion[],
   text: string,
-  predict: string,
 ): Promise<LearnerReading> {
   const authored = readingSupportContent.weeks.find((entry) => entry.week === weekNumber);
   const cardTerms = (authored?.cardWords ?? []).map((entry) => entry.card);
@@ -196,9 +194,11 @@ async function loadReadingSupport(
   }
   const answered = questions.filter((question) => answeredIds.has(question.id)).length;
   const questionsAnswered = questions.length > 0 && answered === questions.length;
+  // The authored "Title: … First line: … ?" predict line is deliberately not
+  // projected: teachers keep it in the JSON and on the teacher page, but the
+  // learner's pre-reading is only the context line and the two key words.
   const support = projectReadingSupport(readingSupportContent, weekNumber, {
     text,
-    predict,
     cardMeanings: cardMeanings(weekNumber, cardTerms),
     questionsAnswered,
   });

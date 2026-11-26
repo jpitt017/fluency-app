@@ -17,6 +17,10 @@ export default function PracticeItemPager({
   visibleIds,
   selectedItemId,
   onSelectItem,
+  unit = 'Item',
+  previousLabel,
+  nextLabel,
+  showPrevious = true,
 }: {
   label: string;
   items: Page[];
@@ -26,8 +30,16 @@ export default function PracticeItemPager({
   /** Optional controlled selection for a caller that remembers its position. */
   selectedItemId?: string;
   onSelectItem?: (id: string) => void;
+  /** "Item" for grammar/vocabulary, "Question" for input, "Word" for the check. */
+  unit?: string;
+  previousLabel?: string;
+  nextLabel?: string;
+  showPrevious?: boolean;
 }) {
   const baseId = useId();
+  const unitLower = unit.toLowerCase();
+  const previousText = previousLabel ?? `Previous ${unitLower}`;
+  const nextText = nextLabel ?? `Next ${unitLower}`;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const visible = visibleIds ? items.filter((item) => visibleIds.has(item.id)) : items;
@@ -78,20 +90,20 @@ export default function PracticeItemPager({
       {total > 0 && (
         <>
           <h4 ref={headingRef} tabIndex={-1} aria-live="polite" className="scroll-mt-20 text-sm font-semibold text-stone-700">
-            Item {selectedIndex + 1} of {total}
+            {unit} {selectedIndex + 1} of {total}
           </h4>
           <div
             role="progressbar"
-            aria-label={`${label} item position`}
+            aria-label={`${label} ${unitLower} position`}
             aria-valuemin={0}
             aria-valuemax={total}
             aria-valuenow={selectedIndex + 1}
-            aria-valuetext={`Item ${selectedIndex + 1} of ${total}`}
+            aria-valuetext={`${unit} ${selectedIndex + 1} of ${total}`}
             className="sr-only"
           />
           <div
             role="tablist"
-            aria-label={`${label} item progress`}
+            aria-label={`${label} ${unitLower} progress`}
             className="grid gap-1"
             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(1.5rem, 1fr))' }}
           >
@@ -104,7 +116,7 @@ export default function PracticeItemPager({
                   type="button"
                   role="tab"
                   id={`${baseId}-tab-${panelIndex}`}
-                  aria-label={`Go to item ${index + 1} of ${total}`}
+                  aria-label={`Go to ${unitLower} ${index + 1} of ${total}`}
                   aria-selected={index === selectedIndex}
                   aria-controls={`${baseId}-panel-${panelIndex}`}
                   tabIndex={index === selectedIndex ? 0 : -1}
@@ -135,22 +147,24 @@ export default function PracticeItemPager({
         );
       })}
       {total > 0 && (
-        <div role="group" aria-label={`${label} item navigation`} className="flex justify-between gap-2">
-          <button
-            type="button"
-            disabled={selectedIndex === 0}
-            onClick={() => show(selectedIndex - 1, true)}
-            className="min-h-11 rounded-lg border border-stone-300 px-4 py-2 text-sm font-semibold disabled:opacity-40"
-          >
-            Previous item
-          </button>
+        <div role="group" aria-label={`${label} ${unitLower} navigation`} className={`flex gap-2 ${showPrevious ? 'justify-between' : 'justify-end'}`}>
+          {showPrevious && (
+            <button
+              type="button"
+              disabled={selectedIndex === 0}
+              onClick={() => show(selectedIndex - 1, true)}
+              className="min-h-11 rounded-lg border border-stone-300 px-4 py-2 text-sm font-semibold disabled:opacity-40"
+            >
+              {previousText}
+            </button>
+          )}
           <button
             type="button"
             disabled={selectedIndex === total - 1}
             onClick={() => show(selectedIndex + 1, true)}
             className="min-h-11 rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-40"
           >
-            Next item
+            {nextText}
           </button>
         </div>
       )}

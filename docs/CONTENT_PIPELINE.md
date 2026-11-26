@@ -43,12 +43,63 @@ expands it into `syllabus_stages`, `syllabus_weeks`, `syllabus_checkpoints`,
 structure into the core `courses`, `modules` and `checkpoints` tables. Re-running
 it never deletes learner rows.
 
-Apply it to a project with the Supabase migration tool or `psql`:
+For a local, preview or isolated E2E database, apply it with the Supabase migration tool or `psql`:
 
 ```bash
-supabase link --project-ref ebzmkhrssgnzmixfsuso
+supabase link --project-ref <project-ref>
 supabase db push
 ```
+
+### 3.1 Applying a migration to live with a numeric history row
+
+**Live target:** `ebzmkhrssgnzmixfsuso`. Do **not** use `supabase db push` or the
+connector's `create_migration` tool against it: those apply paths write a
+**timestamp** version into `supabase_migrations.schema_migrations`, which then
+has to be corrected by hand. That is exactly what happened with `0061`
+([record](MIGRATION_HISTORY.md#0061-apply-record-2026-11-26)). A hand correction
+is a live history write, and therefore needs the owner's approval first.
+
+The way to get the numeric version straight away is to apply the **reviewed
+migration file's SQL** and record its history row in the **same** reviewed
+`execute_query` statement. That path does not generate a version of its own, so
+the only row created is the numeric one we write:
+
+1. Check the number is unique on `main`, in live
+   `supabase_migrations.schema_migrations`, and in every open PR touching
+   `supabase-b1-b2/migrations/`. Use numeric `NNNN_name.sql`; never edit an
+   already-applied file.
+2. If the migration replaces a function, capture the live
+   `pg_get_functiondef(...)` output first and keep it with the rollout notes.
+3. Send **one** reviewed statement to the live project via `execute_query`:
+   the migration file's SQL verbatim, followed by the history row. Example
+   shape (fill in from the actual file; review every line before sending):
+
+   ```sql
+   -- 1. The contents of 0062_example_name.sql, unchanged.
+   --    ... reviewed DDL / DML ...
+
+   -- 2. Record the same numeric version the repo file uses.
+   insert into supabase_migrations.schema_migrations
+     (version, name, statements)
+   values
+     ('0062', 'example_name', null)
+   on conflict (version) do nothing;
+   ```
+
+   Use `array['...']::text[]` for `statements` when the reviewed SQL should be
+   kept in history; `null` matches several existing numeric rows. Never wrap
+   this in `begin;` / `rollback;` expecting a dry run: connector SQL commits
+   immediately (see [`AGENTS.md`](../AGENTS.md), "Never send trial SQL to the
+   live project").
+4. Verify read-only: query `version, name` for the new number, confirm no new
+   timestamp row appeared, and confirm the fresh replay in CI still matches. Do
+   not update, rename or delete any other history row.
+
+**Approval:** the reviewed migration apply itself follows the usual PR/owner
+process, but **any change to existing live migration history — including a
+version/name correction like 0061's — needs the owner's explicit approval
+before it is made.** If an apply tool does write a timestamp row, stop and ask
+rather than correcting it.
 
 ## 4. Author Weeks 1–4 detail and assessments
 

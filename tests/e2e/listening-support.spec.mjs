@@ -37,6 +37,13 @@ test('the intro replaces the old predict line and shows the key words', async ({
   await expect(listening.getByRole('heading', { name: 'Two words to know' })).toBeVisible();
   await expect(listening.getByTestId('listening-picture-placeholder')).toBeVisible();
 
+  // The old "Title: … Caption: … ?" predict line is nowhere on the learner
+  // page. It stays in the teacher's JSON; the structured intro above is the
+  // replacement, not a second copy of the old sentence.
+  const copy = await listening.textContent();
+  expect(copy).not.toContain(week1Listening.predict);
+  expect(copy).not.toContain('Caption:');
+
   // Ideas are not rendered at all until asked for, which also keeps them out of
   // the initial payload rather than merely hiding them.
   await expect(page.getByText('no shops nearby')).toHaveCount(0);

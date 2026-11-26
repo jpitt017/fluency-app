@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LearnerQuestion } from '@/lib/curriculum/learner-week';
+import PracticeItemPager from './PracticeItemPager';
+import { inputSummary, isShortOptionSet } from '@/lib/curriculum/week-input-ui.mjs';
 
 type Marked = { correct: boolean; reason: string | null; sourceLine?: string | null };
 
@@ -29,6 +31,13 @@ function Question({
   const [marked, setMarked] = useState<Marked | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const shortOptions = isShortOptionSet(question.options);
+
+  function choose(value: string) {
+    setAnswer(value);
+    setMarked(null);
+    onChanged(question.id);
+  }
 
   async function check() {
     setError('');
@@ -56,12 +65,34 @@ function Question({
   }
 
   return (
-    <li className="rounded-xl bg-stone-50 p-4">
+    <div className="rounded-xl bg-stone-50 p-4">
       <fieldset>
         <legend className="font-medium">
           {index + 1}. {question.question}
         </legend>
-        {question.options.length ? (
+        {shortOptions ? (
+          // True / False and Yes / No: two large buttons side by side. aria-pressed
+          // tells a screen reader which one is chosen; a real button keeps Enter,
+          // Space and focus handling for free.
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {question.options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={answer === option}
+                disabled={busy || finishing}
+                onClick={() => choose(option)}
+                className={`min-h-14 rounded-xl border-2 px-3 py-3 text-base font-semibold disabled:opacity-50 ${
+                  answer === option
+                    ? 'border-indigo-700 bg-indigo-700 text-white'
+                    : 'border-stone-300 bg-white text-stone-900'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        ) : question.options.length ? (
           <div className="mt-2 space-y-1">
             {question.options.map((option) => (
               <label key={option} className="flex gap-2 text-sm text-stone-700">
@@ -71,11 +102,7 @@ function Question({
                   value={option}
                   checked={answer === option}
                   disabled={busy || finishing}
-                  onChange={() => {
-                    setAnswer(option);
-                    setMarked(null);
-                    onChanged(question.id);
-                  }}
+                  onChange={() => choose(option)}
                 />
                 {option}
               </label>
@@ -87,11 +114,7 @@ function Question({
             maxLength={500}
             value={answer}
             disabled={busy || finishing}
-            onChange={(event) => {
-              setAnswer(event.target.value);
-              setMarked(null);
-              onChanged(question.id);
-            }}
+            onChange={(event) => choose(event.target.value)}
             className="mt-2 w-full rounded border border-stone-300 bg-white p-2"
           />
         )}
@@ -100,7 +123,7 @@ function Question({
         type="button"
         disabled={!signedIn || busy || finishing || !answer.trim()}
         onClick={check}
-        className="mt-2 rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="mt-3 min-h-11 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
         {busy ? 'Checking…' : 'Check'}
       </button>
@@ -116,7 +139,7 @@ function Question({
           {error}
         </p>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -140,6 +163,14 @@ export default function WeekInputTask({
 
   const answered = Object.keys(results).length;
   const correct = Object.values(results).filter(Boolean).length;
+  const complete = questions.length > 0 && answered === questions.length;
+
+  // Every answer is saved by /mark. Refreshing the server tree once the last one
+  // is checked is what opens the transcript and card-word meanings: those gates
+  // read the saved rows on the server, never a browser flag.
+  useEffect(() => {
+    if (complete && available && signedIn) router.refresh();
+  }, [complete, available, signedIn, router]);
 
   async function finish() {
     setBusy(true);
@@ -168,40 +199,56 @@ export default function WeekInputTask({
     }
   }
 
+  // The pager keeps every question mounted but hidden, so a draft, its mark and
+  // its reason all survive jumping back and forwards.
+  const pages = questions.map((question, index) => ({
+    id: question.id,
+    content: (
+      <Question
+        week={week}
+        skill={skill}
+        question={question}
+        index={index}
+        signedIn={signedIn}
+        finishing={busy}
+        onAnswered={(id, isCorrect) => {
+          setMessage('');
+          setResults((prev) => ({ ...prev, [id]: isCorrect }));
+        }}
+        onChanged={(id) => {
+          setMessage('');
+          setResults((prev) => {
+            if (!(id in prev)) return prev;
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          });
+        }}
+      />
+    ),
+  }));
+
   return (
     <div className="space-y-4">
-      <ol className="space-y-4">
-        {questions.map((question, index) => (
-          <Question
-            key={question.id}
-            week={week}
-            skill={skill}
-            question={question}
-            index={index}
-            signedIn={signedIn}
-            finishing={busy}
-            onAnswered={(id, isCorrect) => {
-              setMessage('');
-              setResults((prev) => ({ ...prev, [id]: isCorrect }));
-            }}
-            onChanged={(id) => {
-              setMessage('');
-              setResults((prev) => {
-                if (!(id in prev)) return prev;
-                const next = { ...prev };
-                delete next[id];
-                return next;
-              });
-            }}
-          />
-        ))}
-      </ol>
-      {answered > 0 && (
+      <PracticeItemPager
+        label={skill === 'reading' ? 'Reading' : 'Listening'}
+        unit="Question"
+        previousLabel="Previous"
+        nextLabel="Next"
+        items={pages}
+        initiallyAnswered={{}}
+      />
+      {answered > 0 && !complete && (
         <p className="text-sm text-stone-600">
           {correct} of {answered} correct so far.
         </p>
       )}
-      {available && signedIn && answered === questions.length && (
+      {complete && (
+        <p role="status" className="rounded-xl bg-indigo-50 p-4 text-lg font-semibold text-indigo-950">
+          {inputSummary(answered, correct, questions.length)}
+        </p>
+      )}
+      {available && signedIn && complete && (
         <button
           type="button"
           disabled={busy}

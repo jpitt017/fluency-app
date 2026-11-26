@@ -2,6 +2,7 @@ import { expect, test } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
+import { isShortOptionSet } from '../../lib/curriculum/week-input-ui.mjs';
 
 const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2.json', import.meta.url)));
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
@@ -107,6 +108,7 @@ test('checked reading answers are saved and Finish records the week', async ({ p
   const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
   test.skip(!url || !key, 'The saved-answer flow needs a confirmed test user');
   test.setTimeout(240_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, 'reading-finish');
   try {
@@ -117,23 +119,36 @@ test('checked reading answers are saved and Finish records the week', async ({ p
     await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
     await page.goto('/week/1');
     const section = page.locator('#reading-practice');
-    const items = section.locator('ol > li');
-    const count = await items.count();
-    expect(count).toBe(details.reading.weeks[0].questions.length);
-    for (let index = 0; index < count; index++) {
-      const item = items.nth(index);
-      const radios = item.getByRole('radio');
-      if (await radios.count()) await radios.first().check();
-      else await item.locator('input:not([type="radio"])').fill('My answer');
-      await item.getByRole('button', { name: 'Check', exact: true }).click();
-      await expect(item.getByRole('status')).toContainText(/Correct|Not quite/);
+    const questionsRegion = section.locator('#reading-questions');
+    const bank = details.reading.weeks[0].questions;
+    const count = bank.length;
+    await expect(questionsRegion.getByRole('heading', { name: `Question 1 of ${count}` })).toBeVisible();
+    await expect(questionsRegion.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+    // One question at a time: Next advances, the bar jumps back to any question,
+    // and each panel keeps its own Check, mark and reason.
+    for (let index = 0; index < count; index += 1) {
+      await expect(questionsRegion.getByRole('heading', { name: `Question ${index + 1} of ${count}` })).toBeVisible();
+      const panel = questionsRegion.getByRole('tabpanel');
+      const question = bank[index];
+      if (isShortOptionSet(question.options)) {
+        await panel.getByRole('button', { name: question.options[0], exact: true }).click();
+      } else if (question.options.length) {
+        await panel.getByRole('radio').first().check();
+      } else {
+        await panel.locator('input:not([type="radio"])').fill('My answer');
+      }
+      await panel.getByRole('button', { name: 'Check', exact: true }).click();
+      await expect(panel.getByRole('status')).toContainText(/Correct|Not quite/);
+      if (index < count - 1) await questionsRegion.getByRole('button', { name: 'Next', exact: true }).click();
     }
     const finish = section.getByRole('button', { name: 'Finish and save' });
     await expect(finish).toBeVisible();
+    await expect(section.getByText(/You answered 10 of 10\. \d+ (?:was|were) right\./)).toBeVisible();
 
     // Editing a checked answer makes it unchecked again, until the learner
     // checks the new choice. It must not count the old mark on screen.
-    const first = items.first();
+    await questionsRegion.getByRole('tab', { name: `Go to question 1 of ${count}` }).click();
+    const first = questionsRegion.getByRole('tabpanel');
     await first.getByRole('radio').nth(1).check();
     await expect(finish).toHaveCount(0);
     await first.getByRole('button', { name: 'Check', exact: true }).click();

@@ -72,6 +72,9 @@ jobs:
       # The week page and labs wiring: back-to-week, counting, the AI bar, and
       # the Again/Easy line above the review grade buttons.
       - run: node --test tests/unit/learner-week-ui.test.mjs
+      # One question/word at a time, short options, the reading text overlay,
+      # the small replay player, and the 0061 migration-history documentation.
+      - run: node --test tests/unit/week-input-layout.test.mjs tests/unit/migration-history-docs.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/ai-request-logging.test.mjs

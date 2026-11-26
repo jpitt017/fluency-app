@@ -103,7 +103,8 @@ If you are unsure whether a statement is read-only, it is not.
   across all three. Two migrations once claimed `0040` (`ai_failure_alerts`
   and `vocabulary_attempts`): live could record only one, so a fresh replay
   could never reproduce it. `ai_failure_alerts` is now `0045`.
-- **For every new migration, use numeric `NNNN_name` and record it in live `supabase_migrations.schema_migrations` under the same numeric version (e.g. `0050`), never a timestamp; leave existing history rows unchanged.**
+- **For every new migration, use numeric `NNNN_name` and record it in live `supabase_migrations.schema_migrations` under the same numeric version (e.g. `0050`), never a timestamp; leave existing history rows unchanged.** Apply live migrations with the procedure in [`docs/CONTENT_PIPELINE.md`](docs/CONTENT_PIPELINE.md) §3.1: the reviewed file SQL and the numeric history row go in one `execute_query` statement, so no apply tool writes a timestamp that needs a hand correction. Never edit an applied migration file (`0020` is the frozen example).
+- **Any future change to live migration history — a version/name correction, a backfill, a deletion or a rename — requires the owner's explicit approval first.** Read-only checks (`list_migrations`, `information_schema`) are fine; a write to `supabase_migrations.schema_migrations` is not fine without approval. Migration 0061's apply tool wrote a timestamp and the row was corrected by hand to `0061`; that incident is recorded in [`docs/MIGRATION_HISTORY.md`](docs/MIGRATION_HISTORY.md) §"0061 apply record" and must not be repeated.
 - **Before applying a migration that replaces a function, save the live
   `pg_get_functiondef(...)` output for comparison.** Capture it before the
   migration runs and keep it with the rollout notes or PR context so the new
