@@ -11,17 +11,13 @@ const firstItem = content.weeks.find((week) => week.week === 1).glossCheck[0];
 const answer = firstItem.options[firstItem.answerIndex];
 const request = (body) => ({ json: async () => body });
 
-function makePost({ progressThrows = false, progressError = null, saveThrows = false, saveError = null } = {}) {
+function makePost({ missingCurrentWeek = false, saveThrows = false, saveError = null } = {}) {
   const logs = [];
   const writes = [];
   let postgrestOptions = null;
   const client = {
     auth: { getUser: async () => ({ data: { user: { id: 'learner-1' } } }) },
-    async rpc(name) {
-      assert.equal(name, 'refresh_current_week');
-      if (progressThrows) throw new Error('database statement timeout while refreshing');
-      return { data: 1, error: progressError };
-    },
+    async rpc() { throw new Error('gloss POST must not refresh progress'); },
   };
   const admin = {
     from(table) {
@@ -51,6 +47,7 @@ function makePost({ progressThrows = false, progressError = null, saveThrows = f
     '@/supabase-b1-b2/content/curriculum/listening-support-weeks-01-04.json': content,
     '@/lib/curriculum/listening-support.mjs': { markGloss },
     '@/utils/supabase/server': { createServerSupabase: async () => client },
+    '@/lib/curriculum/stored-current-week': { readStoredCurrentWeek: async () => missingCurrentWeek ? null : 1 },
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
   };
   runInNewContext(compiled, {
@@ -68,13 +65,12 @@ function makePost({ progressThrows = false, progressError = null, saveThrows = f
 
 const validRequest = () => request({ week: 1, itemId: 'gloss-1-1', answer });
 
-test('a thrown database timeout while checking progress becomes a retryable 503, not an unhandled 500', async () => {
-  const fixture = makePost({ progressThrows: true });
+test('a missing stored week refuses the gloss before any save', async () => {
+  const fixture = makePost({ missingCurrentWeek: true });
   const response = await fixture.post(validRequest());
   assert.equal(response.status, 503);
   assert.equal(response.body.error, 'Could not check your progress. Please try again.');
   assert.equal(fixture.writes.length, 0, 'do not attempt a save until the week gate is checked');
-  assert.match(fixture.logs.join('\n'), /database statement timeout/);
   assert.doesNotMatch(JSON.stringify(response.body), /database|timeout/i);
 });
 

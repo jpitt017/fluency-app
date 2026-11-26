@@ -4,6 +4,7 @@ import SpeakingLab from '@/components/labs/SpeakingLab';
 import ConversationalSpeakingLab from '@/components/labs/ConversationalSpeakingLab';
 import ShadowingLab from '@/components/b1b2/ShadowingLab';
 import type { LessonLabContext } from '@/components/labs/LessonLabContext';
+import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 import { getViewer } from '@/lib/b1b2/data';
 import { loadUnlockedModels } from '@/lib/curriculum/week-models';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
@@ -49,6 +50,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+      <RefreshCurrentWeekOnVisit enabled={viewer.signedIn} currentWeek={!weekParam ? weekNumber : undefined} />
       <header className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

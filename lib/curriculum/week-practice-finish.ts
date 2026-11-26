@@ -2,6 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { practicePlan, type PracticePlan } from './week-practice-plan';
 import { readPracticeAttempts, type PracticeAttemptTable } from './week-practice-attempts';
+import { readStoredCurrentWeek } from './stored-current-week';
 import { effectiveGrammarMark } from './week-grammar-saved-mark';
 import { updateReviewFromWeeklyPractice } from '@/lib/b1b2/week-vocab-review';
 import { practiceErrorCard } from './week-practice-review.mjs';
@@ -107,9 +108,9 @@ export async function finishPractice({
     return { ok: false, status: 404, error: 'This practice is not available.' };
   }
 
-  const { data: current, error: progressError } = await client.rpc('refresh_current_week');
-  if (progressError) return { ok: false, status: 503, error: 'Could not check your progress.' };
-  if (week > Number(current)) return { ok: false, status: 403, error: 'This week is not open yet.' };
+  const current = await readStoredCurrentWeek(client, userId);
+  if (current === null) return { ok: false, status: 503, error: 'Could not check your progress.' };
+  if (week > current) return { ok: false, status: 403, error: 'This week is not open yet.' };
 
   const { rows, error } = await readPracticeAttempts(admin, TABLES[skill], userId, week);
   if (error) return { ok: false, status: 503, error: 'Could not read your answers.' };

@@ -3,6 +3,7 @@ import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.jso
 import content from '@/supabase-b1-b2/content/curriculum/reading-support-weeks-01-04.json';
 import { markReadingGloss } from '@/lib/curriculum/reading-support.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
 /** Optional reading gloss practice, available only after all checked reading answers are saved. */
@@ -18,9 +19,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 });
   }
   const week = body.week as number;
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  if (week > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (week > currentWeek) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
 
   const fallbackQuestions = details.reading.weeks.find((entry) => entry.week === week)?.questions ?? [];
   const questionBank = await client

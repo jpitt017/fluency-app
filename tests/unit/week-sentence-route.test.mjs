@@ -62,7 +62,8 @@ test('the route requires an authenticated learner before anything else', () => {
 });
 
 test('the route refuses a week that is not open yet', () => {
-  assert.match(route, /refresh_current_week/);
+  assert.match(route, /readStoredCurrentWeek/);
+  assert.doesNotMatch(route, /refresh_current_week/);
   assert.match(route, /This week is not open yet\./);
 });
 

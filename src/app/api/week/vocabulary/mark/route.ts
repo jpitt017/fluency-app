@@ -4,6 +4,7 @@ import { markVocabularyAnswer } from '@/lib/curriculum/vocabulary-marking.mjs';
 import { termForExercise } from '@/lib/curriculum/vocabulary-review-link.mjs';
 import { updateReviewFromWeeklyPractice } from '@/lib/b1b2/week-vocab-review';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
 /** The answer bank remains server-side; only the checked item's feedback is returned. */
@@ -17,9 +18,9 @@ export async function POST(request: Request) {
   }
   const week = bank.weeks.find(entry => entry.week === body.week);
   if (!week) return NextResponse.json({ error: 'This activity is not available.' }, { status: 404 });
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  if (week.week > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (week.week > currentWeek) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   let result: { correct: boolean; feedback: string; nearly?: boolean };
   try { result = markVocabularyAnswer(week, body.id, body.answer); }
   catch { return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 }); }

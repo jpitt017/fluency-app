@@ -136,7 +136,7 @@ function speakingRequest(prompt = week1.speaking.prompt, weekNumber = 1, isAudio
   };
 }
 
-test('the real weekly writing and speaking routes record the correct week and refresh progression', async () => {
+test('the real weekly writing and speaking routes record the correct week without refreshing each POST', async () => {
   const fixture = setup();
   const writing = await fixture.writing(writingRequest(`${week1.writing.prompt} Target grammar: past tense.`));
   const speaking = await fixture.speaking(speakingRequest());
@@ -150,7 +150,7 @@ test('the real weekly writing and speaking routes record the correct week and re
     { user_id: 'learner-1', week_number: 1, skill: 'writing' },
     { user_id: 'learner-1', week_number: 1, skill: 'speaking' },
   ]));
-  assert.equal(fixture.refreshes(), 2);
+  assert.equal(fixture.refreshes(), 0, 'progress recomputes on explicit page visits, not task POSTs');
 });
 
 test('the week speaking route stores notes, the first take and the optional retry under one attempt', async () => {
@@ -202,11 +202,11 @@ test('a failed weekly save preserves feedback but reports that the task did not 
   }
 });
 
-test('a refresh failure does not erase or misreport an already saved weekly task', async () => {
-  const fixture = setup({ failRefresh: true });
+test('recording a weekly task does not invoke the progress RPC', async () => {
+  const fixture = setup();
   const response = await fixture.writing(writingRequest());
   assert.equal(response.status, 200);
   assert.equal(response.body.weekRecorded, true);
   assert.equal(fixture.rows.length, 1);
-  assert.ok(fixture.logs.some((line) => line.includes('private refresh failure')));
+  assert.equal(fixture.refreshes(), 0);
 });

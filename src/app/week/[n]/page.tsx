@@ -18,6 +18,7 @@ import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
+import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const cards = learnerVocabulary(number);
   const vocabulary = learnerVocabularyExercises(number);
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
+    <RefreshCurrentWeekOnVisit enabled={viewer.signedIn} />
     <FocusWeekSection week={number} />
     {!viewer.signedIn && <RememberWeek week={number} />}
     <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>

@@ -129,12 +129,13 @@ test('the week page sends learners to Start speaking/writing task, keeping the w
 
 test('the dashboard shows AI practice as a simple bar with B1 labels', () => {
   const page = read('src/app/dashboard/page.tsx');
-  assert.match(page, /Plenty left today/);
-  assert.match(page, /Nearly finished for today/);
-  assert.match(page, /Finished for today/);
-  assert.match(page, /role="progressbar"/);
-  assert.match(page, /aria-label="AI practice left today"/);
-  assert.match(page, /Your AI practice starts again every night at midnight\. This is Madrid time\./);
+  const disclosure = read('components/b1b2/AiUsageDisclosure.tsx');
+  assert.match(disclosure, /Plenty left today/);
+  assert.match(disclosure, /Nearly finished for today/);
+  assert.match(disclosure, /Finished for today/);
+  assert.match(disclosure, /role="progressbar"/);
+  assert.match(disclosure, /aria-label="AI practice left today"/);
+  assert.match(disclosure, /Your AI practice starts again every night at midnight\. This is Madrid time\./);
   assert.match(read('supabase-b1-b2/migrations/0035_ai_pilot_limits.sql'), /date_trunc\('day', v_now at time zone 'Europe\/Madrid'\)/);
   // The raw units are not a sentence the learner has to do sums with.
   assert.ok(!page.includes('AI practice left today: ${'), 'the old numeric line is gone');

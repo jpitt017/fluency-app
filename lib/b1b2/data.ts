@@ -628,11 +628,3 @@ export async function loadTeacherRoster(): Promise<{
 
   return { signedIn: true, authorized: true, learners };
 }
-
-export async function loadAiUsageStatus(): Promise<{ daily_unit_limit: number; daily_units_remaining: number } | null> {
-  const supabase = await createServerSupabase();
-  if (!supabase) return null;
-  const { data, error } = await supabase.rpc('get_ai_usage_status');
-  if (error || !data || !Number.isInteger(data.daily_unit_limit) || !Number.isInteger(data.daily_units_remaining)) return null;
-  return { daily_unit_limit: data.daily_unit_limit, daily_units_remaining: data.daily_units_remaining };
-}

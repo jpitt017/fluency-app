@@ -38,6 +38,7 @@ function setup({ signedIn = true, progressError = false, currentWeek = 1, adminA
     } },
     '@/utils/supabase/server': { createServerSupabase: async () => client },
     '@/utils/supabase/admin': { createAdminSupabase: () => adminAvailable ? admin : null },
+    '@/lib/curriculum/stored-current-week': { readStoredCurrentWeek: async () => progressError ? null : currentWeek },
   };
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },

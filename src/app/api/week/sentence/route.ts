@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import vocabularyBank from '@/supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { logAiRequest } from '@/lib/b1b2/observability';
@@ -118,9 +119,9 @@ export async function POST(request: Request) {
   if (!item) return NextResponse.json({ error: 'This sentence is not available.' }, { status: 404 });
 
   // A week that is not open yet cannot be practised, same rule as the fixed items.
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  if (week > Number(progress.data)) {
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (week > currentWeek) {
     return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   }
 

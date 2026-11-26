@@ -7,6 +7,7 @@ import { projectSupport } from './listening-support.mjs';
 import { projectReadingSupport } from './reading-support.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { projectInputQuestions } from './input-marking.mjs';
+import { getCachedSafeInputItems, getCachedSafeWeekDetails, projectSafeInputQuestion, projectSafeWeekDetails } from './syllabus-cache';
 
 export type LearnerQuestion = { id: string; question: string; options: string[] };
 type Input = { title: string; text?: string; audioUrl?: string; questions: LearnerQuestion[] };
@@ -78,12 +79,54 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   try {
     const client = await createServerSupabase();
     if (client) {
-      const [detail, questions] = await Promise.all([
-        client.from('syllabus_week_details_safe').select('payload').eq('week_number', number).maybeSingle(),
-        client.from('syllabus_input_items_safe').select('mode,payload').eq('week_number', number).order('sort_order'),
+      const [cachedDetail, cachedQuestions] = await Promise.all([
+        getCachedSafeWeekDetails(number),
+        getCachedSafeInputItems(number),
       ]);
-      if (!detail.error && detail.data?.payload) week = detail.data.payload as typeof bundledWeek;
-      if (!questions.error && questions.data) dbQuestions = questions.data;
+      let detail = cachedDetail;
+      let questions = cachedQuestions;
+      // Local environments without a service-role key still use the signed-in
+      // safe views, but are deliberately uncached rather than caching a
+      // request-scoped authenticated response across learners.
+      if (detail === null || questions === null) {
+        const [detailResult, questionsResult] = await Promise.all([
+          detail === null
+            ? client.from('syllabus_week_details_safe').select('payload').eq('week_number', number).maybeSingle()
+            : Promise.resolve(null),
+          questions === null
+            ? client.from('syllabus_input_items_safe').select('mode,payload,sort_order').eq('week_number', number).order('sort_order')
+            : Promise.resolve(null),
+        ]);
+        if (detail === null && !detailResult?.error && detailResult?.data?.payload) {
+          detail = projectSafeWeekDetails(detailResult.data.payload);
+        }
+        if (questions === null && !questionsResult?.error && questionsResult?.data) {
+          questions = questionsResult.data.flatMap((row) => {
+            const projected = projectSafeInputQuestion(row.payload);
+            return projected ? [{ mode: String(row.mode), payload: projected, sort_order: Number(row.sort_order) }] : [];
+          });
+        }
+      }
+      if (detail) {
+        week = {
+          ...bundledWeek,
+          ...(detail.title ? { title: detail.title } : {}),
+          ...(detail.canDo ? { canDo: detail.canDo } : {}),
+          speaking: {
+            ...bundledWeek.speaking,
+            ...(detail.speaking?.prompt ? { prompt: detail.speaking.prompt } : {}),
+            ...(detail.speaking?.cueCard ? { cueCard: detail.speaking.cueCard } : {}),
+            ...(detail.speaking?.record ? {
+              flow: { ...bundledWeek.speaking.flow, record: detail.speaking.record },
+            } : {}),
+            ...(detail.speaking?.shadowingChunks ? { shadowingChunks: detail.speaking.shadowingChunks } : {}),
+          },
+          ...(detail.writing?.prompt ? {
+            writing: { ...bundledWeek.writing, prompt: detail.writing.prompt },
+          } : {}),
+        } as typeof bundledWeek;
+      }
+      if (questions) dbQuestions = questions;
     }
   } catch {
     // The explicitly projected bundled content is safe for signed-out/offline use.

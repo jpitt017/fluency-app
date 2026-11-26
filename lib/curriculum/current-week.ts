@@ -2,6 +2,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { learnerWeekFromParam } from './syllabus';
+import { readStoredCurrentWeek } from './stored-current-week';
 
 /** Signed-in progress is authoritative; the browser cookie is only for visitors. */
 export async function currentLearnerWeek(): Promise<number> {
@@ -13,13 +14,8 @@ export async function currentLearnerWeek(): Promise<number> {
       return 1;
     }
     if (user) {
-      const { data, error } = await client.rpc('refresh_current_week');
-      if (error) {
-        console.error('[week] Could not calculate progress:', error.message);
-        const profile = await client.from('profiles').select('current_week').eq('id', user.id).maybeSingle();
-        return learnerWeekFromParam(String(profile.data?.current_week ?? 1));
-      }
-      return learnerWeekFromParam(String(data));
+      const week = await readStoredCurrentWeek(client, user.id);
+      return learnerWeekFromParam(String(week ?? 1));
     }
   }
   return learnerWeekFromParam((await cookies()).get('learner_week')?.value);

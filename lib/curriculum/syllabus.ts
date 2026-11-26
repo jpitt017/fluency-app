@@ -9,6 +9,7 @@
  */
 import { createServerSupabase } from '@/utils/supabase/server';
 import { resolveMediation } from './mediation-fallback';
+import { getCachedSyllabusWeek, projectSafeSyllabusWeek } from './syllabus-cache';
 import syllabusJson from '../../supabase-b1-b2/content/curriculum/two-stage-syllabus.json';
 
 export type RequirementKind = 'optional' | 'either' | 'required' | 'recommended';
@@ -207,33 +208,58 @@ function bundledContent(reason: string): SyllabusContent {
   return { weeks: syllabus.weeks, checkpoints: syllabus.checkpoints, source: 'bundled' };
 }
 
-/** Read the canonical week/checkpoint rows from Supabase, with a safe local fallback. */
-export async function loadSyllabusContent(): Promise<SyllabusContent> {
+/** Read canonical curriculum rows; the shared week rows are cached by week for one hour. */
+export async function loadSyllabusContent(weekNumber?: number): Promise<SyllabusContent> {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) return bundledContent('Supabase client unavailable');
+    if (weekNumber !== undefined && (!Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > syllabus.course.totalWeeks)) {
+      return bundledContent(`invalid requested week ${weekNumber}`);
+    }
 
-    const [weeksRes, checkpointsRes] = await Promise.all([
-      supabase
-        .from('syllabus_weeks')
-        .select(
-          'week_number, stage_number, phase, theme, main_grammar, secondary_grammar_label, secondary_grammar, skills_focus, cefr, grammar, mediation',
-        )
-        .order('week_number', { ascending: true }),
+    const requestedWeeks = weekNumber === undefined
+      ? Array.from({ length: syllabus.course.totalWeeks }, (_, index) => index + 1)
+      : [weekNumber];
+    const [cachedRows, checkpointsRes] = await Promise.all([
+      Promise.all(requestedWeeks.map((number) => getCachedSyllabusWeek(number))),
       supabase
         .from('syllabus_checkpoints')
         .select('checkpoint_number, stage_number, after_week, code, assessed')
         .order('checkpoint_number', { ascending: true }),
     ]);
 
+    let weekRows = cachedRows.filter((row): row is NonNullable<typeof row> => row !== null);
+    let weekError: { message: string } | null = cachedRows.some((row) => row === null)
+      ? { message: 'Server cache unavailable; using request-scoped read' }
+      : null;
+    if (weekError) {
+      const query = supabase.from('syllabus_weeks')
+        .select('week_number,stage_number,phase,theme,main_grammar,secondary_grammar_label,secondary_grammar,skills_focus,cefr,grammar,mediation');
+      const response = weekNumber === undefined
+        ? await query.order('week_number', { ascending: true })
+        : await query.eq('week_number', weekNumber).maybeSingle();
+      if (response.error) {
+        weekError = response.error;
+        weekRows = [];
+      } else {
+        const rows = response.data ? (Array.isArray(response.data) ? response.data : [response.data]) : [];
+        weekRows = rows.flatMap((row) => {
+          const projected = projectSafeSyllabusWeek(row as unknown as Record<string, unknown>);
+          return projected ? [projected] : [];
+        });
+        weekError = null;
+      }
+    }
+
+    const expectedWeeks = weekNumber === undefined ? syllabus.course.totalWeeks : 1;
     if (
-      weeksRes.error ||
+      weekError ||
       checkpointsRes.error ||
-      weeksRes.data?.length !== syllabus.course.totalWeeks ||
+      weekRows.length !== expectedWeeks ||
       checkpointsRes.data?.length !== syllabus.checkpoints.length
     ) {
       return bundledContent(
-        `published rows failed or incomplete (weeks=${weeksRes.data?.length ?? 'error'}, checkpoints=${checkpointsRes.data?.length ?? 'error'})`,
+        `published rows failed or incomplete (weeks=${weekRows.length}, checkpoints=${checkpointsRes.data?.length ?? 'error'})`,
       );
     }
 
@@ -242,18 +268,18 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
     const fallbackField = (week: number, field: string) =>
       console.warn(`[syllabus] Week ${week}: published ${field} is empty; using bundled content`);
 
-    const weeks: SyllabusWeek[] = weeksRes.data.map((row) => {
-      const weekNumber = Number(row.week_number);
-      const bundled = syllabus.weeks.find((item) => item.number === weekNumber);
+    const weeks: SyllabusWeek[] = weekRows.map((row) => {
+      const currentWeek = Number(row.week_number);
+      const bundled = syllabus.weeks.find((item) => item.number === currentWeek);
       const dbCefr = row.cefr as WeekCefr | null;
       const dbGrammar = row.grammar as SyllabusWeek['grammar'] | null;
       const dbMediation = row.mediation as WeekMediation | null;
 
-      if (!hasContent(dbCefr) && bundled?.cefr) fallbackField(weekNumber, 'cefr');
-      if (!hasContent(dbGrammar) && bundled?.grammar) fallbackField(weekNumber, 'grammar');
+      if (!hasContent(dbCefr) && bundled?.cefr) fallbackField(currentWeek, 'cefr');
+      if (!hasContent(dbGrammar) && bundled?.grammar) fallbackField(currentWeek, 'grammar');
 
       return {
-        number: weekNumber,
+        number: currentWeek,
         stage: Number(row.stage_number),
         phase: String(row.phase),
         theme: String(row.theme),
@@ -263,7 +289,7 @@ export async function loadSyllabusContent(): Promise<SyllabusContent> {
         skillsFocus: row.skills_focus ? String(row.skills_focus) : null,
         cefr: (hasContent(dbCefr) ? dbCefr : bundled?.cefr) as WeekCefr,
         grammar: (hasContent(dbGrammar) ? dbGrammar : bundled?.grammar) as SyllabusWeek['grammar'],
-        mediation: resolveMediation(weekNumber, dbMediation, bundled?.mediation) as SyllabusWeek['mediation'],
+        mediation: resolveMediation(currentWeek, dbMediation, bundled?.mediation) as SyllabusWeek['mediation'],
       };
     });
 

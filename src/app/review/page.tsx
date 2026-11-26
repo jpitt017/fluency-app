@@ -4,6 +4,7 @@ import MediationTask from '@/components/b1b2/MediationTask';
 import { loadDashboard, loadReviewQueue } from '@/lib/b1b2/data';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
+import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
   const [{ queue, signedIn, totalDue }, { telemetry }, syllabusContent] = await Promise.all([
     loadReviewQueue(),
     loadDashboard(),
-    loadSyllabusContent(),
+    loadSyllabusContent(weekNumber),
   ]);
   const week = syllabusContent.weeks.find((item) => item.number === weekNumber);
 
@@ -49,6 +50,7 @@ export default async function AdaptiveReviewPage({ searchParams }: ReviewProps) 
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-10 sm:px-6">
+      <RefreshCurrentWeekOnVisit enabled={signedIn} currentWeek={!weekParam ? weekNumber : undefined} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Your review</p>

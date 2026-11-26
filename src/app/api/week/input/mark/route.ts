@@ -3,6 +3,7 @@ import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.jso
 import reasons from '@/lib/curriculum/input-reasons.json';
 import { markInputAnswer } from '@/lib/curriculum/input-marking.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
 type Skill = 'reading' | 'listening';
@@ -39,9 +40,9 @@ export async function POST(request: Request) {
   if (!item) return NextResponse.json({ error: 'This question is not available.' }, { status: 404 });
 
   // A question only opens with its week.
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  if (weekNumber > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (weekNumber > currentWeek) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
 
   let marked: { correct: boolean; reason: string | null };
   try {

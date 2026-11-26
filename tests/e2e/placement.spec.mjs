@@ -1,5 +1,5 @@
 import { expect, test } from './helpers/isolated-test.mjs';
-import { isExpectedCancelledRscPrefetch } from './helpers/request-failure-filter.mjs';
+import { isExpectedCancelledRscPrefetch, isExpectedCancelledVisitRefresh } from './helpers/request-failure-filter.mjs';
 
 /**
  * Regression cover for the placement quiz "Continue to Writing Sample →" freeze.
@@ -21,8 +21,8 @@ function watchPage(page) {
   page.on('pageerror', (error) => problems.pageErrors.push(`${error.name}: ${error.message}`));
   page.on('requestfailed', (request) => {
     const failure = request.failure()?.errorText ?? 'unknown';
-    // Only canceled, non-navigation _rsc prefetches are expected; other aborts fail.
-    if (isExpectedCancelledRscPrefetch(request)) return;
+    // Only canceled, non-navigation _rsc prefetches and visit-refresh POSTs are expected.
+    if (isExpectedCancelledRscPrefetch(request) || isExpectedCancelledVisitRefresh(request)) return;
     problems.failedRequests.push(`${request.method()} ${request.url()} :: ${failure}`);
   });
   page.on('response', (response) => {

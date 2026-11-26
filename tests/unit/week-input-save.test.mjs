@@ -38,20 +38,15 @@ function route(path, dependencies, logs) {
   return exports.POST;
 }
 
-function setup({ noAdmin = false, writeError = null, throwWrite = false, readError = null, trial = null, refreshError = false, throwRefresh = false } = {}) {
+function setup({ noAdmin = false, writeError = null, throwWrite = false, readError = null, trial = null } = {}) {
   const attempts = [];
   const completions = [];
   const logs = [];
   let refreshes = 0;
   const client = {
     auth: { getUser: async () => ({ data: { user: { id: 'learner-1' } } }) },
-    rpc: async (name) => {
-      assert.equal(name, 'refresh_current_week');
-      refreshes += 1;
-      // Fail only the post-save refresh: the initial call checks the week gate.
-      if (refreshes === 2 && throwRefresh) throw new Error('private progress exception');
-      if (refreshes === 2 && refreshError) return { data: null, error: { message: 'private progress error' } };
-      return { data: 1, error: null };
+    rpc: async () => {
+      throw new Error('task routes must not refresh progress');
     },
     from(table) {
       assert.equal(table, 'week_input_answers');
@@ -83,6 +78,7 @@ function setup({ noAdmin = false, writeError = null, throwWrite = false, readErr
   };
   const dependencies = {
     '@/utils/supabase/server': { createServerSupabase: async () => client },
+    '@/lib/curriculum/stored-current-week': { readStoredCurrentWeek: async () => 1 },
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
     '@/lib/curriculum/learner-week': { loadLearnerWeek: async () => ({
       reading: { questions: questions.reading },
@@ -140,7 +136,7 @@ test('finish counts saved checked answers, not placeholders supplied by the brow
   assert.equal(fixture.completions.length, 1);
   assert.equal(fixture.completions[0].week_number, 1);
   assert.equal(fixture.completions[0].skill, 'reading');
-  assert.ok(fixture.refreshes() >= 2, 'the completion refreshes week progression');
+  assert.equal(fixture.refreshes(), 0, 'task requests read the stored value; a page visit owns the refresh');
 });
 
 test('a read failure cannot report a saved completion', async () => {
@@ -167,19 +163,15 @@ test('a completion-write failure never reports that the week was saved', async (
   }
 });
 
-test('a post-save progress failure reports that answers were saved', async () => {
-  for (const config of [{ refreshError: true }, { throwRefresh: true }]) {
-    const fixture = setup(config);
-    for (const question of questions.reading) {
-      fixture.attempts.push({ user_id: 'learner-1', week_number: 1, skill: 'reading', item_id: question.id });
-    }
-    const result = await fixture.finish(request({ week: 1, skill: 'reading' }));
-    assert.equal(result.status, 503);
-    assert.equal(result.body.error, 'Your answers are saved, but we could not update your progress. Please try again.');
-    assert.equal(fixture.completions.length, 1, 'the saved completion is not lost');
-    assert.ok(fixture.logs.some((line) => line.includes('private progress')), 'the failure is logged');
-    assert.doesNotMatch(JSON.stringify(result.body), /private|exception|SQL/i);
+test('completion saves return the stored week without repeating the progress RPC', async () => {
+  const fixture = setup();
+  for (const question of questions.reading) {
+    fixture.attempts.push({ user_id: 'learner-1', week_number: 1, skill: 'reading', item_id: question.id });
   }
+  const result = await fixture.finish(request({ week: 1, skill: 'reading' }));
+  assert.equal(result.status, 200);
+  assert.equal(result.body.currentWeek, 1);
+  assert.equal(fixture.refreshes(), 0);
 });
 
 test('listening completion uses the same approved-audio gate as the page', async () => {

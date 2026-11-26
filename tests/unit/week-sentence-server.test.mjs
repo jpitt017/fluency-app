@@ -44,6 +44,7 @@ function setup({ result = null, hasKey = true, failure = false } = {}) {
     '@/supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json': vocabularyBank,
     '@/utils/supabase/server': { createServerSupabase: async () => client },
     '@/utils/supabase/admin': { createAdminSupabase: () => client },
+    '@/lib/curriculum/stored-current-week': { readStoredCurrentWeek: async () => ({ week: 1, error: null }) },
     '@/lib/b1b2/ai-guard': { enforceAiUsage: async () => { guardCalls += 1; return { allowed: true, headers: {} }; } },
     '@/lib/b1b2/observability': { logAiRequest: async () => {} },
     '@/lib/b1b2/provider-failure-response': { providerFailureResponse: async () => ({ response: { status: 503, body: { error: 'Please try again.' } } }) },
