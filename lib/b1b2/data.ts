@@ -1,6 +1,7 @@
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
+import { weekSpeakingAttemptRecordings } from './week-speaking-recordings.mjs';
 import { orderQueue, planQueue } from './review-queue.mjs';
 import type {
   AiObservabilitySummary,
@@ -620,10 +621,39 @@ export async function loadTeacherRoster(): Promise<{
     attemptsByUser.set(row.user_id, list);
   }
 
-  const learners = ((Array.isArray(data) ? data : []) as TeacherRosterLearner[]).map((learner) => ({
+  const roster = (Array.isArray(data) ? data : []) as TeacherRosterLearner[];
+  const recordingsByUser = new Map<string, ReturnType<typeof weekSpeakingAttemptRecordings>>();
+  // The roster RPC is already staff-gated. Use the service-role client for the
+  // weekly rows when available so teacher playback works before 0062 is applied
+  // to a project; otherwise the authenticated client's staff RLS policy applies.
+  const recordingClient = createAdminSupabase() ?? supabase;
+  if (roster.length > 0) {
+    const { data: recordingRows, error: recordingError } = await recordingClient
+      .from('week_speaking_attempts')
+      .select('id,user_id,week_number,first_recording_path,second_recording_path,created_at')
+      .in('user_id', roster.map((learner) => learner.user_id))
+      .order('created_at', { ascending: false })
+      .order('week_number', { ascending: true })
+      .limit(500);
+    if (recordingError) {
+      console.error('teacher weekly recordings failed:', recordingError.message);
+    } else {
+      for (const row of recordingRows ?? []) {
+        const list = recordingsByUser.get(row.user_id) ?? [];
+        list.push(...weekSpeakingAttemptRecordings(row));
+        recordingsByUser.set(row.user_id, list);
+      }
+      for (const list of recordingsByUser.values()) {
+        list.sort((a, b) => a.weekNumber - b.weekNumber || a.takeNumber - b.takeNumber);
+      }
+    }
+  }
+
+  const learners = roster.map((learner) => ({
     ...learner,
     pilot: pilotRes.error ? null : (pilotRes.data ?? []).some((row) => row.user_id === learner.user_id),
     mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
+    weekly_recordings: recordingsByUser.get(learner.user_id) ?? [],
   }));
 
   return { signedIn: true, authorized: true, learners };

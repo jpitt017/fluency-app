@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Award, CheckCircle2, Mic, PenLine, UserCheck } from 'lucide-react';
+import WeekSpeakingRecordings from './WeekSpeakingRecordings';
 import type { TeacherRosterLearner } from '@/lib/b1b2/types';
 
 export default function TeacherConsoleClient({ learners }: { learners: TeacherRosterLearner[] }) {
@@ -384,6 +385,14 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
               </div>
             )}
           </div>
+
+          {/* Weekly speaking recordings: staff playback uses the same short-lived
+              server-signed links as the learner's own week page. */}
+          <WeekSpeakingRecordings
+            recordings={selected.weekly_recordings ?? []}
+            title="Weekly speaking recordings"
+            emptyMessage="No weekly speaking recordings yet."
+          />
 
           {/* Writing review */}
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
