@@ -12,11 +12,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.SUPABASE_LIVE_URL;
-const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_LIVE_ANON_KEY;
+const apiKey = process.env.SUPABASE_LIVE_ANON_KEY;
 
 if (!url || !apiKey) {
   throw new Error(
-    'Live schema check requires SUPABASE_LIVE_URL and an explicit live Supabase API key.',
+    'Live schema check requires SUPABASE_LIVE_URL and the read-only SUPABASE_LIVE_ANON_KEY.',
   );
 }
 

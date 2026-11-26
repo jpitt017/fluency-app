@@ -9,80 +9,12 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
-      production_ai_test:
-        description: 'Run live login, writing and speaking smoke test'
-        type: boolean
-        default: false
-      production_issue_test:
-        description: 'Send one production test issue and delete the test user'
-        type: boolean
-        default: false
-      production_placement_test:
-        description: 'Answer all placement questions on production, signed out and signed in'
-        type: boolean
-        default: false
-      placement_live:
-        description: 'Walk the placement quiz on production, phone and desktop, signed out and in'
-        type: boolean
-        default: false
       live_prompt_evals:
         description: 'Run the live Groq prompt gate (spends the day''s Groq quota for the app)'
         type: boolean
         default: false
 
 jobs:
-  production-ai-test:
-    if: github.event_name == 'workflow_dispatch' && inputs.production_ai_test == true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Run real AI feedback smoke test
-        run: node tests/production/ai-feedback.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-  production-placement-test:
-    if: github.event_name == 'workflow_dispatch' && (inputs.production_placement_test == true || inputs.placement_live == true)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Answer the whole placement quiz on production
-        run: node tests/production/placement.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-  production-issue-test:
-    if: github.event_name == 'workflow_dispatch' && inputs.production_issue_test == true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Send one production issue and check alert
-        run: node scripts/test-production-issue.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
   build-and-offline-evals:
     runs-on: ubuntu-latest
     steps:
@@ -175,8 +107,8 @@ jobs:
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/provider-alert.test.mjs
       - run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
 
   live-schema-check:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -193,7 +125,6 @@ jobs:
         env:
           SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_LIVE_ANON_KEY: ${{ secrets.SUPABASE_LIVE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   playwright-e2e:
     runs-on: ubuntu-latest
@@ -240,6 +171,27 @@ jobs:
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --yes
+      - name: Verify AI limits and pilot access on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-ai-limits.mjs
+      - name: Verify issue alert grouping on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-issue-alert-grouping.mjs
+      - name: Verify Postgres RLS isolation and deletion coverage on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-rls.mjs
       - name: Seed isolated E2E learner and minimal fixture
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -438,42 +390,3 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
-
-  rls-isolation:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check SUPABASE_SERVICE_ROLE_KEY availability
-        id: check
-        env:
-          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: echo "available=$([ -n "$SERVICE_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        if: steps.check.outputs.available == 'true'
-      - uses: actions/setup-node@v5
-        if: steps.check.outputs.available == 'true'
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-        if: steps.check.outputs.available == 'true'
-      - name: Verify live AI limits and pilot access
-        if: steps.check.outputs.available == 'true'
-        run: node scripts/test-ai-limits.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      - name: Verify live issue alert grouping
-        if: steps.check.outputs.available == 'true'
-        run: node scripts/test-issue-alert-grouping.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      - name: Verify Postgres RLS isolation & deletion coverage
-        if: steps.check.outputs.available == 'true'
-        run: node scripts/test-rls.mjs
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
