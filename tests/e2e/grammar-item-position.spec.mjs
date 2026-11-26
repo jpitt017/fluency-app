@@ -156,10 +156,10 @@ for (const width of [375, 1280]) {
       await step(grammar, 'Next').click();
       await submit(page, grammar.getByRole('button', { name: 'Finish grammar' }), '/api/week/practice/finish');
       const summary = grammar.getByRole('status').filter({ hasText: 'You answered' });
-      await expect(summary).toHaveText('You answered 6 of 22. 6 were right. Great work! You can come back and finish the other questions.');
+      await expect(summary).toHaveText('You answered 6 of 22. 6 were right. Great work! You know this grammar well. You can come back and finish the other questions.');
       await page.reload();
       await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeVisible();
-      await expect(summary).toHaveText('You answered 6 of 22. 6 were right. Great work! You can come back and finish the other questions.');
+      await expect(summary).toHaveText('You answered 6 of 22. 6 were right. Great work! You know this grammar well. You can come back and finish the other questions.');
       await step(grammar, 'Previous').click();
       await step(grammar, 'Previous').click();
       await position(grammar, 'Fix it', 1, 6);

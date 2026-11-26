@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import * as React from 'react';
+import * as jsxRuntime from 'react/jsx-runtime';
+import { renderToStaticMarkup } from 'react-dom/server';
+import ts from 'typescript';
 
 import {
   canFinish,
@@ -11,6 +16,7 @@ import {
   resumeStep,
   nextTaskAfter,
   practiceCounts,
+  practiceScoreBand,
   summarySentence,
   unmarkedRequired,
   vocabularyItemFlags,
@@ -88,26 +94,101 @@ test('vocabulary week 1 counts 16 fixed questions', () => {
   assert.equal(perStep.reduce((total, value) => total + value, 0), 16);
 });
 
-test('partial summaries use checked answers as the score denominator and the exact thresholds', () => {
-  const high = summarySentence({ answered: 5, correct: 4, total: 22 }); // exactly 80%
-  assert.equal(high, 'You answered 5 of 22. 4 were right. Great work! You can come back and finish the other questions.');
+test('score bands use checked answers and the exact 50% and 80% thresholds', () => {
+  for (const [answered, correct, band] of [
+    [0, 0, 'none'],
+    [1, 0, 'low'],
+    [100, 49, 'low'],
+    [20000, 9999, 'low'], // 49.995% must not round up
+    [2, 1, 'middle'],     // exactly 50%
+    [100, 79, 'middle'],
+    [10000, 7999, 'middle'], // 79.99% must not round up
+    [5, 4, 'high'],       // exactly 80%
+    [22, 22, 'high'],
+  ]) {
+    assert.equal(practiceScoreBand({ answered, correct }), band, `${correct} of ${answered}`);
+  }
+});
+
+test('grammar and vocabulary summaries keep counts, give the matching advice, and mention unanswered items', () => {
   assert.equal(
-    summarySentence({ answered: 7, correct: 6, total: 22 }),
-    'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.',
+    summarySentence({ answered: 100, correct: 49, total: 100, skill: 'grammar' }),
+    "You answered 100 of 100. 49 were right. This grammar is new for you. That's OK! Read the examples again, then practise the questions you got wrong.",
   );
   assert.equal(
-    summarySentence({ answered: 4, correct: 3, total: 22 }),
-    'You answered 4 of 22. 3 were right. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.',
+    summarySentence({ answered: 5, correct: 0, total: 16, skill: 'vocabulary' }),
+    "You answered 5 of 16. 0 were right. These words are new for you. That's OK! Look at the words again, then practise them. You can come back and finish the other questions.",
   );
-  assert.match(summarySentence({ answered: 2, correct: 1, total: 22 }), /1 was right\. Good effort!/); // exactly 50%
-  assert.match(summarySentence({ answered: 100, correct: 79, total: 100 }), /Good effort!/); // not rounded up
-  assert.match(summarySentence({ answered: 4, correct: 3, total: 4, reviewReady: false }), /Good effort! Press Finish again to add your mistakes to Review\./);
-  assert.match(summarySentence({ answered: 100, correct: 49, total: 100 }), /This grammar is new\. Look at 'See it' again, then try your Review cards\./);
-  assert.match(summarySentence({ answered: 5, correct: 0, total: 16, skill: 'vocabulary' }), /This vocabulary is new\. Look at 'Words' again, then try your Review cards\./);
-  const complete = summarySentence({ answered: 22, correct: 22, total: 22 });
-  assert.equal(complete, 'You answered 22 of 22. 22 were right. Great work!');
-  assert.doesNotMatch(complete, /come back/);
-  assert.match(summarySentence({ answered: 0, correct: 0, total: 22 }), /Answer and check a question to see your score\./);
+  for (const skill of ['grammar', 'vocabulary']) {
+    assert.equal(
+      summarySentence({ answered: 2, correct: 1, total: 22, skill }),
+      'You answered 2 of 22. 1 was right. Good effort! Your mistakes are in Review, so you can practise them. You can come back and finish the other questions.',
+    );
+    assert.match(summarySentence({ answered: 100, correct: 79, total: 100, skill }), /Good effort!/);
+    assert.match(summarySentence({ answered: 4, correct: 3, total: 4, skill, reviewReady: false }),
+      /Good effort! Press Finish again to add your mistakes to Review\./);
+    assert.doesNotMatch(summarySentence({ answered: 5, correct: 0, total: 5, skill, reviewReady: false }),
+      /mistakes are in Review/);
+  }
+  assert.equal(
+    summarySentence({ answered: 5, correct: 4, total: 22, skill: 'grammar' }),
+    'You answered 5 of 22. 4 were right. Great work! You know this grammar well. You can come back and finish the other questions.',
+  );
+  assert.equal(
+    summarySentence({ answered: 16, correct: 16, total: 16, skill: 'vocabulary' }),
+    'You answered 16 of 16. 16 were right. Great work! You know these words well.',
+  );
+  assert.equal(
+    summarySentence({ answered: 0, correct: 0, total: 22 }),
+    'You answered 0 of 22. 0 were right. Answer and check a question to see your score. You can come back and finish the other questions.',
+  );
+});
+
+test('the Finish panel warns about incomplete Review and later answers', () => {
+  // Render the real client component without a browser or a live database.
+  const compiled = ts.transpileModule(read('components/b1b2/PracticeFeedback.tsx'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+  }).outputText;
+  const exports = {};
+  const Link = ({ children, href, className }) => React.createElement('a', { href, className }, children);
+  runInNewContext(compiled, {
+    exports,
+    require: (name) => {
+      if (name === 'react') return React;
+      if (name === 'react/jsx-runtime') return jsxRuntime;
+      if (name === 'next/link') return Link;
+      if (name === '@/lib/curriculum/week-practice.mjs') return { practiceScoreBand };
+      throw new Error(`Unexpected dependency: ${name}`);
+    },
+  });
+
+  for (const skill of ['grammar', 'vocabulary']) {
+    const props = { title: 'Finished', skill, nextLabel: 'Next', nextHref: '#next', onRevisit() {} };
+    const counts = { answered: 2, correct: 1, wrong: 1, total: skill === 'grammar' ? 22 : 16 };
+    const incomplete = renderToStaticMarkup(React.createElement(exports.FinishSummary, {
+      ...props,
+      summary: { ...counts, reviewMistakes: 0, sentence: summarySentence({ ...counts, skill, reviewReady: false }) },
+    }));
+    assert.match(incomplete, /Press Finish again to add your mistakes to Review/);
+    assert.match(incomplete, /Some mistakes may not be in Review yet/);
+    assert.doesNotMatch(incomplete, /Your mistakes are in Review/);
+
+    const lowCounts = { ...counts, correct: 0, wrong: 2 };
+    const incompleteLow = renderToStaticMarkup(React.createElement(exports.FinishSummary, {
+      ...props,
+      summary: { ...lowCounts, reviewMistakes: 0, sentence: summarySentence({ ...lowCounts, skill, reviewReady: false }) },
+    }));
+    assert.match(incompleteLow, /Some mistakes may not be in Review yet/);
+    assert.match(incompleteLow, /href="\/review"/);
+    assert.doesNotMatch(incompleteLow, /Your mistakes are in Review/);
+
+    const stale = renderToStaticMarkup(React.createElement(exports.FinishSummary, {
+      ...props,
+      summary: { ...counts, reviewMistakes: 1, sentence: summarySentence({ ...counts, skill }), scoreNeedsRefresh: true },
+    }));
+    assert.match(stale, /Your latest answers may not match this score/);
+    assert.match(stale, /New mistakes may not be in Review yet/);
+  }
 });
 
 test('a checked fixed answer enables a partial finish, but optional work alone does not', () => {

@@ -213,7 +213,7 @@ test('phone: an in-flight vocabulary check survives navigation and Finish waits'
     });
     await page.route('**/api/week/practice/finish', async (route) => {
       await heldFinish;
-      await route.fulfill({ status: 200, json: { saved: true, summary: { answered: 3, correct: 3, wrong: 0, total: 16, reviewMistakes: 0, sentence: 'You answered 3 of 16. 3 were right. Great work! You can come back and finish the other questions.', next: 'reading' } } });
+      await route.fulfill({ status: 200, json: { saved: true, summary: { answered: 3, correct: 3, wrong: 0, total: 16, reviewMistakes: 0, sentence: 'You answered 3 of 16. 3 were right. Great work! You know these words well. You can come back and finish the other questions.', next: 'reading' } } });
     });
     await page.goto('/week/1');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });

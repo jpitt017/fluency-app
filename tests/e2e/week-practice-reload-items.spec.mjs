@@ -35,7 +35,7 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     await step(grammar, 'Next').click();
     await step(grammar, 'Next').click();
     await submit(page, grammar.getByRole('button', { name: 'Finish grammar' }), '/api/week/practice/finish');
-    const grammarSummary = 'You answered 1 of 22. 1 was right. Great work! You can come back and finish the other questions.';
+    const grammarSummary = 'You answered 1 of 22. 1 was right. Great work! You know this grammar well. You can come back and finish the other questions.';
     await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
 
     for (let n = 0; n < 3; n += 1) await step(vocabulary, 'Next').click();
@@ -52,7 +52,7 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     await expect(vocabulary.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
     await step(vocabulary, 'Next').click();
     await submit(page, vocabulary.getByRole('button', { name: 'Finish vocabulary' }), '/api/week/practice/finish');
-    const vocabularySummary = 'You answered 3 of 16. 3 were right. Great work! You can come back and finish the other questions.';
+    const vocabularySummary = 'You answered 3 of 16. 3 were right. Great work! You know these words well. You can come back and finish the other questions.';
     await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
 
     // Unanswered questions and the optional rewrite are not counted as wrong

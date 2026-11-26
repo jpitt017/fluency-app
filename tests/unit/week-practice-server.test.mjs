@@ -105,7 +105,7 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
   }, logs);
   const finish = load('lib/curriculum/week-practice-finish.ts', {
     'server-only': {}, './week-practice-plan': plan, './week-practice-attempts': attempts,
-    './stored-current-week': { readStoredCurrentWeek: async () => ({ week: currentWeek, error: null }) },
+    './stored-current-week': { readStoredCurrentWeek: async () => currentWeek },
     './week-grammar-saved-mark': savedMark,
     './week-practice-review.mjs': review, './week-practice.mjs': rules,
     '@/lib/b1b2/week-vocab-review': { updateReviewFromWeeklyPractice: async (_db, userId, term, correct, _now, options) => {
@@ -130,6 +130,23 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
   return { tables, addAttempt, reviewUpdates, logs, plan, progress, finish: route.POST };
 }
 const request = (skill, extra = {}) => ({ json: async () => ({ week: 1, skill, ...extra }) });
+
+test('Finish fails closed when stored progress is unavailable or the week is locked', async () => {
+  for (const skill of ['grammar', 'vocabulary']) {
+    for (const { currentWeek, week, status, error } of [
+      { currentWeek: null, week: 1, status: 503, error: 'Could not check your progress.' },
+      { currentWeek: 1, week: 2, status: 403, error: 'This week is not open yet.' },
+    ]) {
+      const fixture = setup({ currentWeek });
+      const response = await fixture.finish(request(skill, { week }));
+      assert.equal(response.status, status, `${skill}, week ${week}`);
+      assert.equal(response.body.error, error);
+      assert.equal(fixture.tables.week_skill_completions.length, 0);
+      assert.equal(fixture.tables.error_review_cards.length, 0);
+      assert.equal(fixture.reviewUpdates.length, 0);
+    }
+  }
+});
 
 test('Week 2 sentence repair and Week 3 word order produce clear, answerable Review cards', async () => {
   const fixture = setup({ currentWeek: 3 });
@@ -174,7 +191,7 @@ test('real finish route counts seven checked questions, adds only the wrong one,
   const summary = plain(response.body.summary);
   assert.deepEqual({ total: summary.total, answered: summary.answered, correct: summary.correct, wrong: summary.wrong },
     { total: 22, answered: 7, correct: 6, wrong: 1 });
-  assert.equal(summary.sentence, 'You answered 7 of 22. 6 were right. Great work! You can come back and finish the other questions.');
+  assert.equal(summary.sentence, 'You answered 7 of 22. 6 were right. Great work! You know this grammar well. You can come back and finish the other questions.');
   assert.equal(fixture.tables.error_review_cards.length, 1);
   assert.match(fixture.tables.error_review_cards[0].prompt_sentence, /^Answer this question: /);
   assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'Yes');
@@ -221,13 +238,29 @@ test('vocabulary wrong answers use real word cards or a repair card, never an in
   assert.deepEqual(plain({ total: response.body.summary.total, answered: response.body.summary.answered,
     correct: response.body.summary.correct, wrong: response.body.summary.wrong }),
   { total: 16, answered: 4, correct: 1, wrong: 3 });
-  assert.match(response.body.summary.sentence, /This vocabulary is new\. Look at 'Words' again/);
+  assert.match(response.body.summary.sentence, /These words are new for you\. That's OK! Look at the words again/);
   assert.deepEqual(fixture.reviewUpdates, [{ userId: 'learner', term: 'make a big decision', correct: false, ensureOnly: true }]);
   assert.equal(fixture.tables.error_review_cards.length, 2);
   assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'I took a risk and applied for a job abroad.');
   const reloaded = await fixture.progress.loadWeekPracticeProgress(1);
   assert.equal(reloaded.vocabulary.summary.sentence, response.body.summary.sentence);
   assert.equal(reloaded.vocabulary.summary.wrong, 3);
+});
+
+test('older incomplete Review snapshots do not claim all mistakes were saved', async () => {
+  for (const skill of ['grammar', 'vocabulary']) {
+    const fixture = setup();
+    fixture.tables.week_skill_completions.push({
+      user_id: 'learner', week_number: 1, skill,
+      answered: 2, correct: 1, total: skill === 'grammar' ? 22 : 16,
+      review_count: 0, completed_at: '2025-01-01T00:00:00Z',
+    });
+    const summary = (await fixture.progress.loadWeekPracticeProgress(1))[skill].summary;
+    assert.equal(summary.wrong, 1);
+    assert.equal(summary.reviewMistakes, 0);
+    assert.match(summary.sentence, /Good effort! Press Finish again to add your mistakes to Review\./);
+    assert.doesNotMatch(summary.sentence, /mistakes are in Review/);
+  }
 });
 
 test('zero checked fixed questions cannot be finished even if an optional answer exists', async () => {

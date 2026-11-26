@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type RefObject } from 'react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
 import type { LearnerVocabularyCard } from '@/lib/curriculum/learner-vocabulary';
 import type { VocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import {
@@ -274,6 +274,7 @@ export default function VocabularyPractice({
   const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(progress?.answers ?? {});
   const [summary, setSummary] = useState(progress?.summary ?? null);
   const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
+  const wordsRef = useRef<HTMLDivElement>(null);
   const { checking, setChecking } = usePendingChecks();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
@@ -341,14 +342,18 @@ export default function VocabularyPractice({
     {summary && (
       <FinishSummary
         title="Vocabulary practice finished"
+        skill="vocabulary"
         summary={summary}
         nextLabel={next.label}
         nextHref={next.href}
+        onRevisit={() => { setStep(0); focusStep(wordsRef); }}
         onNext={goToNextTask}
       />
     )}
     {!signedIn && <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>}
-    {step === 0 && <WordGroups cards={cards} careful={exercises.careful} onPlay={play} onPageChanged={focusStep} />}
+    {step === 0 && <div ref={wordsRef} id="vocabulary-words" role="group" aria-label="Words for this week" tabIndex={-1} className="scroll-mt-20">
+      <WordGroups cards={cards} careful={exercises.careful} onPlay={play} onPageChanged={focusStep} />
+    </div>}
     {step === 1 && <p className="text-sm text-stone-600">{exercises.match.instruction}</p>}
     {/* Step 3: the gaps sit inside the text. The plain version below only runs
         if a future bank edit leaves a gap without an item — the parse tests

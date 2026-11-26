@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useSyncExternalStore, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
 import type { LearnerGrammar, LearnerGrammarItem, LearnerGrammarStep } from '@/lib/curriculum/learner-grammar';
 import { visibleItems } from '@/lib/curriculum/grammar-branch.mjs';
 import {
@@ -260,6 +260,7 @@ export default function GrammarPractice({
   const [savedAnswers, setSavedAnswers] = useState<Record<string, SavedAnswer>>(initialAnswers);
   const [summary, setSummary] = useState(progress?.summary ?? null);
   const { sectionRef, stepHeadingRef, focusStep } = usePracticeNavigation();
+  const examplesRef = useRef<HTMLParagraphElement>(null);
   const { checking, setChecking } = usePendingChecks();
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState('');
@@ -333,7 +334,7 @@ export default function GrammarPractice({
     focusNextTask(next.href.replace('#', ''));
   }
 
-  function changeStep(nextIndex: number) {
+  function changeStep(nextIndex: number, target?: RefObject<HTMLElement | null>) {
     const nextStep = steps[Math.max(0, Math.min(steps.length - 1, nextIndex))];
     if (!nextStep) return;
     positionStore.update((previous) => {
@@ -345,7 +346,7 @@ export default function GrammarPractice({
       }
       return { step: nextStep.title, items };
     });
-    focusStep();
+    focusStep(target);
   }
 
   return (
@@ -362,14 +363,16 @@ export default function GrammarPractice({
       {summary && (
         <FinishSummary
           title="Grammar practice finished"
+          skill="grammar"
           summary={summary}
           nextLabel={next.label}
           nextHref={next.href}
+          onRevisit={() => changeStep(0, examplesRef)}
           onNext={goToNextTask}
         />
       )}
       {current.title === 'See it' && (
-        <p className="whitespace-pre-line rounded-xl bg-indigo-50 p-4 text-sm leading-7">{grammar.notice}</p>
+        <p ref={examplesRef} id="grammar-examples" tabIndex={-1} className="scroll-mt-20 whitespace-pre-line rounded-xl bg-indigo-50 p-4 text-sm leading-7">{grammar.notice}</p>
       )}
       {!signedIn && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>
