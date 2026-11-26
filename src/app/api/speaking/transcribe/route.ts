@@ -17,9 +17,11 @@ export async function POST(req: NextRequest) {
   let statusCode = 200;
   let audioSeconds = 0;
   let errorMessage: string | null = null;
+  let isSignedIn = false;
 
   try {
     const guard = await enforceAiUsage(supabase, QUOTA_ENDPOINT, 2);
+    isSignedIn = Boolean(guard.userId);
     if (!guard.allowed && guard.response) {
       statusCode = guard.response.status;
       return guard.response;
@@ -74,6 +76,6 @@ export async function POST(req: NextRequest) {
       promptTokens: 0,
       completionTokens: 0,
       errorMessage,
-    });
+    }, isSignedIn);
   }
 }

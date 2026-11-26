@@ -1,4 +1,6 @@
+import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminSupabase } from '@/utils/supabase/admin';
 
 /**
  * Approximate Groq pricing for cost telemetry:
@@ -32,8 +34,13 @@ export async function logAiRequest(
     completionTokens?: number;
     errorMessage?: string | null;
   },
+  isSignedIn = false,
 ): Promise<void> {
-  if (!supabase) return;
+  // Authenticated callers retain their JWT so auth.uid() remains authoritative.
+  // Anonymous or unavailable sessions use the trusted server client, whose
+  // auth.uid() is null; no user id is ever passed as an RPC argument.
+  const logger = isSignedIn && supabase ? supabase : createAdminSupabase();
+  if (!logger) return;
   try {
     const estimatedCostUsd = estimateAiCostUsd({
       promptTokens: params.promptTokens,
@@ -42,7 +49,7 @@ export async function logAiRequest(
       cacheHit: params.cacheHit,
     });
 
-    await supabase.rpc('log_ai_request', {
+    await logger.rpc('log_ai_request', {
       p_endpoint: params.endpoint,
       p_model: params.model,
       p_status_code: params.statusCode,

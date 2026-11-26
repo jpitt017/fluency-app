@@ -74,6 +74,7 @@ jobs:
       - run: node --test tests/unit/learner-week-ui.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
+      - run: node --test tests/unit/ai-request-logging.test.mjs
       - run: node --test tests/unit/usage-messages.test.mjs
       - run: node --test tests/unit/text-utils.test.mjs
       - run: node --test tests/unit/placement-questions.test.mjs
@@ -218,6 +219,7 @@ jobs:
           E2E_STUB_LLM: 'true'
           E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          GROQ_API_KEY: ''
 
       - name: Verify no browser requests reached the live Supabase project
         if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success' && steps.run_e2e.outcome != 'skipped'

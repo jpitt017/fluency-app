@@ -28,6 +28,7 @@ import { matchesGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
  */
 
 const MODEL_ID = SENTENCE_MODEL_ID;
+const LOG_ENDPOINT = '/api/week/sentence';
 const MAX_ANSWER = 600;
 
 type Body = { week?: unknown; id?: unknown; answer?: unknown };
@@ -150,6 +151,14 @@ export async function POST(request: Request) {
   if (!onTarget) {
     // Do not charge a learner or invent a wrong mark if there is no checker.
     if (!process.env.GROQ_API_KEY) {
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT,
+        model: MODEL_ID,
+        statusCode: 503,
+        latencyMs: Date.now() - startedAt,
+        inputChars: answer.length,
+        errorMessage: 'AI checker is not configured',
+      }, true);
       return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503 });
     }
     const guard = await enforceAiUsage(client, '/api/review/check-rewrite', 1);
@@ -161,6 +170,14 @@ export async function POST(request: Request) {
       if (!result) {
         // No verdict is not a mistake. Leave the text in the learner's box and
         // do not save a false mark or make a Review card for an unknown result.
+        await logAiRequest(client, {
+          endpoint: LOG_ENDPOINT,
+          model: MODEL_ID,
+          statusCode: 503,
+          latencyMs: Date.now() - startedAt,
+          inputChars: answer.length,
+          errorMessage: 'AI checker returned no verdict',
+        }, true);
         return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503, headers });
       }
       usedLlm = true;
@@ -168,16 +185,33 @@ export async function POST(request: Request) {
       completionTokens = result.completionTokens;
       onTarget = result.onTarget;
       feedback = result.feedback;
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT,
+        model: MODEL_ID,
+        statusCode: 200,
+        latencyMs: Date.now() - startedAt,
+        inputChars: answer.length,
+        promptTokens,
+        completionTokens,
+      }, true);
     } catch (err) {
       // The attempt is stored below either way, so the work is saved; the B1
       // wording for that lives in provider-errors, never the provider's words.
       const failure = await providerFailureResponse({
         admin: client,
-        endpoint: '/api/review/check-rewrite',
+        endpoint: LOG_ENDPOINT,
         model: MODEL_ID,
         error: err,
         workSaved: false,
       });
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT,
+        model: MODEL_ID,
+        statusCode: failure.status,
+        latencyMs: Date.now() - startedAt,
+        inputChars: answer.length,
+        errorMessage: failure.errorMessage,
+      }, true);
       return failure.response;
     }
   }
@@ -222,18 +256,6 @@ export async function POST(request: Request) {
     }
   }
 
-  if (usedLlm) {
-    await logAiRequest(client, {
-      endpoint: '/api/review/check-rewrite',
-      model: MODEL_ID,
-      statusCode: 200,
-      latencyMs: Date.now() - startedAt,
-      inputChars: answer.length,
-      promptTokens,
-      completionTokens,
-      errorMessage: null,
-    });
-  }
 
   return NextResponse.json(
     {

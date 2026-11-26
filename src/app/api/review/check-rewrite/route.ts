@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
   let inputChars = 0;
   let errorMessage: string | null = null;
   let responseHeaders: Record<string, string> = {};
+  let isSignedIn = false;
 
   try {
     if (!supabase) {
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
       statusCode = 401;
       return NextResponse.json({ error: 'Sign in to check your answer.' }, { status: 401 });
     }
+    isSignedIn = true;
 
     const body = await request.json().catch(() => null);
     const parsed = CheckRewriteSchema.safeParse(body);
@@ -179,6 +181,7 @@ export async function POST(request: NextRequest) {
         return guard.response;
       }
 
+      usedLlm = true;
       try {
         const semantic = await checkSemanticEquivalence({
           original: card.prompt_sentence,
@@ -187,15 +190,25 @@ export async function POST(request: NextRequest) {
           rewrite: sanitizedRewrite,
         });
         if (semantic) {
-          usedLlm = true;
           promptTokens = semantic.promptTokens;
           completionTokens = semantic.completionTokens;
           fixed = semantic.fixed;
           reason = semantic.reason;
+        } else {
+          statusCode = 503;
+          errorMessage = 'Semantic checker returned no verdict';
         }
       } catch {
-        /* Fall back to deterministic result if semantic check fails */
+        /* Fall back to deterministic result if semantic check fails. */
+        statusCode = 503;
+        errorMessage = 'Semantic checker failed';
       }
+    } else if (!fixed) {
+      // Keep the deterministic result but record that the requested semantic
+      // check could not run because the provider is not configured.
+      usedLlm = true;
+      statusCode = 503;
+      errorMessage = 'Semantic checker is not configured';
     }
 
     let mastered = Boolean(card.mastered);
@@ -260,7 +273,7 @@ export async function POST(request: NextRequest) {
         promptTokens,
         completionTokens,
         errorMessage,
-      });
+      }, isSignedIn);
     }
   }
 }

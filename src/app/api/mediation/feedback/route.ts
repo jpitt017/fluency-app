@@ -103,9 +103,11 @@ export async function POST(req: NextRequest) {
   let statusCode = 200;
   let inputChars = 0;
   let errorMessage: string | null = null;
+  let isSignedIn = false;
 
   try {
     const guard = await enforceAiUsage(supabase, QUOTA_ENDPOINT, MEDIATION_FEEDBACK_UNITS);
+    isSignedIn = Boolean(guard.userId);
     if (!guard.allowed && guard.response) {
       statusCode = guard.response.status;
       return guard.response;
@@ -316,6 +318,6 @@ export async function POST(req: NextRequest) {
       cacheHit: false,
       inputChars,
       errorMessage,
-    });
+    }, isSignedIn);
   }
 }
