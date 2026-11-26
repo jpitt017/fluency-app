@@ -9,3 +9,14 @@ export function isExpectedCancelledRscPrefetch(request) {
     return false;
   }
 }
+
+/** The visit-refresh POST is fire-and-forget and may be canceled by fast SPA navigation. */
+export function isExpectedCancelledVisitRefresh(request) {
+  if (request.failure()?.errorText !== ABORTED || request.isNavigationRequest() || request.method() !== 'POST') return false;
+  try {
+    const url = new URL(request.url());
+    return url.pathname === '/api/week/refresh';
+  } catch {
+    return false;
+  }
+}
