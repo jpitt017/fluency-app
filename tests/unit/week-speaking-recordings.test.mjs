@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   WEEK_SPEAKING_BUCKET,
   WEEK_SPEAKING_SIGNED_URL_SECONDS,
@@ -205,4 +205,11 @@ test('CI runs the new unit checks and applies migrations only to the isolated E2
   assert.match(ci, /node --test tests\/unit\/week-speaking-recordings\.test\.mjs/);
   assert.match(ci, /db push --db-url "\$E2E_SUPABASE_DB_URL" --include-all --yes/);
   assert.doesNotMatch(ci, /db push[^\n]*--include-all[^\n]*SUPABASE_LIVE/);
+  // PR #105 applied 0059 to the shared E2E project. The CI-only ledger shim
+  // satisfies db push without adding a 0059 migration to this branch.
+  assert.match(ci, /CI-only ledger shim/);
+  assert.match(ci, /0059_week_sentence_writing_support\.sql/);
+  assert.match(ci, /to_regclass\('public\.week_sentence_practice'\) is null/);
+  assert.equal(existsSync('supabase-b1-b2/migrations/0059_week_sentence_writing_support.sql'), false);
+  assert.doesNotMatch(ci, /migration repair --status reverted 0059/);
 });

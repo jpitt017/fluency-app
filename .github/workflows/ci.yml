@@ -177,9 +177,22 @@ jobs:
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
-          # The E2E project can have reserved older numeric versions already
-          # applied; include every unapplied local version on this verified
-          # isolated target. Never use --include-all against production.
+          # PR #105 already applied 0059 to this shared isolated E2E project,
+          # while current main reserves that number for its open branch. The CLI
+          # refuses to push when a remote version has no local file, so add a
+          # CI-only ledger shim in the temp workdir (never a repo migration).
+          # It fails closed if the real 0059 schema is absent from a fresh DB.
+          cat > "$workdir/supabase/migrations/0059_week_sentence_writing_support.sql" <<'SQL'
+          -- CI-only ledger shim. This file is not part of the repository.
+          do $$
+          begin
+            if to_regclass('public.week_sentence_practice') is null then
+              raise exception 'E2E project lacks the real 0059 schema; refusing a ledger placeholder';
+            end if;
+          end $$;
+          SQL
+          # Include every unapplied local version on this verified isolated
+          # target. Never use --include-all against production.
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
