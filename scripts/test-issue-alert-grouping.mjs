@@ -1,12 +1,12 @@
-// Integration test against the authorized database. No emails are sent.
+// Integration test against the isolated E2E database. No emails are sent.
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { assertE2ESupabaseApiTarget } from './assert-e2e-supabase-target.mjs';
 import { createTestUser, deleteTestUser } from './lib/test-user.mjs';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-if (url !== 'https://ebzmkhrssgnzmixfsuso.supabase.co' || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Authorized production database credentials required');
-const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const { projectUrl: url, serviceRoleKey } = assertE2ESupabaseApiTarget();
+const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
 const path = `/test-alert-${randomUUID()}`;
 const hash = createHash('sha256').update(path).digest('hex');
 let user;

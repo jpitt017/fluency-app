@@ -26,22 +26,13 @@ function jwtProjectRef(value) {
   }
 }
 
-export function assertE2ESupabaseTarget(env = process.env) {
+export function assertE2ESupabaseApiTarget(env = process.env) {
   const projectRef = required(env, 'E2E_SUPABASE_PROJECT_REF');
   const projectUrl = required(env, 'E2E_SUPABASE_URL');
   const anonKey = required(env, 'E2E_SUPABASE_ANON_KEY');
   const serviceRoleKey = required(env, 'E2E_SUPABASE_SERVICE_ROLE_KEY');
-  const databaseUrl = required(env, 'E2E_SUPABASE_DB_URL');
-  const runId = required(env, 'E2E_RUN_ID');
-  const runAttempt = required(env, 'E2E_RUN_ATTEMPT');
-  const userEmail = required(env, 'E2E_USER_EMAIL');
-  required(env, 'E2E_USER_PASSWORD');
   if (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_LIVE_URL || env.SUPABASE_LIVE_ANON_KEY) {
     throw new Error('Refusing E2E configuration with legacy production Supabase credentials');
-  }
-
-  if (userEmail !== `e2e-${runId}-${runAttempt}@example.invalid`) {
-    throw new Error('E2E_USER_EMAIL must be unique to this GitHub run and attempt');
   }
 
   if (projectRef !== E2E_PROJECT_REF) {
@@ -67,17 +58,6 @@ export function assertE2ESupabaseTarget(env = process.env) {
     throw new Error('Refusing E2E app configuration: public anon key must match E2E_SUPABASE_ANON_KEY');
   }
 
-  let parsedDatabaseUrl;
-  try {
-    parsedDatabaseUrl = new URL(databaseUrl);
-  } catch {
-    throw new Error('E2E_SUPABASE_DB_URL must be a valid Postgres URL');
-  }
-  const databaseTarget = `${decodeURIComponent(parsedDatabaseUrl.username)} ${parsedDatabaseUrl.hostname}`;
-  if (!databaseTarget.includes(E2E_PROJECT_REF) || databaseUrl.includes(LIVE_PROJECT_REF)) {
-    throw new Error(`Refusing E2E migration access: database URL must target project ${E2E_PROJECT_REF}`);
-  }
-
   for (const [name, key] of [
     ['E2E_SUPABASE_ANON_KEY', anonKey],
     ['E2E_SUPABASE_SERVICE_ROLE_KEY', serviceRoleKey],
@@ -88,7 +68,33 @@ export function assertE2ESupabaseTarget(env = process.env) {
     }
   }
 
-  return { projectRef: E2E_PROJECT_REF, projectUrl: E2E_PROJECT_URL };
+  return { projectRef: E2E_PROJECT_REF, projectUrl: E2E_PROJECT_URL, anonKey, serviceRoleKey };
+}
+
+export function assertE2ESupabaseTarget(env = process.env) {
+  const { projectRef, projectUrl } = assertE2ESupabaseApiTarget(env);
+  const databaseUrl = required(env, 'E2E_SUPABASE_DB_URL');
+  const runId = required(env, 'E2E_RUN_ID');
+  const runAttempt = required(env, 'E2E_RUN_ATTEMPT');
+  const userEmail = required(env, 'E2E_USER_EMAIL');
+  required(env, 'E2E_USER_PASSWORD');
+
+  if (userEmail !== `e2e-${runId}-${runAttempt}@example.invalid`) {
+    throw new Error('E2E_USER_EMAIL must be unique to this GitHub run and attempt');
+  }
+
+  let parsedDatabaseUrl;
+  try {
+    parsedDatabaseUrl = new URL(databaseUrl);
+  } catch {
+    throw new Error('E2E_SUPABASE_DB_URL must be a valid Postgres URL');
+  }
+  const databaseTarget = `${decodeURIComponent(parsedDatabaseUrl.username)} ${parsedDatabaseUrl.hostname}`;
+  if (!databaseTarget.includes(projectRef) || databaseUrl.includes(LIVE_PROJECT_REF)) {
+    throw new Error(`Refusing E2E migration access: database URL must target project ${projectRef}`);
+  }
+
+  return { projectRef, projectUrl };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

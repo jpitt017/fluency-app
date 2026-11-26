@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  assertE2ESupabaseApiTarget,
   assertE2ESupabaseTarget,
   E2E_PROJECT_REF,
   E2E_PROJECT_URL,
@@ -26,6 +27,23 @@ test('accepts only the configured isolated E2E Supabase project', () => {
     projectRef: E2E_PROJECT_REF,
     projectUrl: E2E_PROJECT_URL,
   });
+});
+
+test('RLS API checks require dedicated E2E credentials and fail closed on production credentials', () => {
+  const env = goodEnv();
+  assert.deepEqual(assertE2ESupabaseApiTarget(env), {
+    projectRef: E2E_PROJECT_REF,
+    projectUrl: E2E_PROJECT_URL,
+    anonKey: env.E2E_SUPABASE_ANON_KEY,
+    serviceRoleKey: env.E2E_SUPABASE_SERVICE_ROLE_KEY,
+  });
+
+  const missing = { ...env };
+  delete missing.E2E_SUPABASE_SERVICE_ROLE_KEY;
+  assert.throws(() => assertE2ESupabaseApiTarget(missing), /Missing required E2E configuration: E2E_SUPABASE_SERVICE_ROLE_KEY/);
+
+  const unsafe = { ...env, SUPABASE_SERVICE_ROLE_KEY: jwt(LIVE_PROJECT_REF) };
+  assert.throws(() => assertE2ESupabaseApiTarget(unsafe), /legacy production Supabase credentials/);
 });
 
 test('fails closed if required E2E configuration is missing', () => {
@@ -112,16 +130,42 @@ test('the live schema check is absent on PR builds and runs only on main push, s
   assert.doesNotMatch(live, /https:\/\//);
   assert.equal((workflow.match(/npm run check:live-schema/g) ?? []).length, 1);
 
+  assert.doesNotMatch(workflow, /production-(?:ai|placement|issue)-test:/);
+  assert.doesNotMatch(workflow, /ebzmkhrssgnzmixfsuso/);
+  assert.equal((workflow.match(/secrets\.SUPABASE_SERVICE_ROLE_KEY/g) ?? []).length, 0, 'CI jobs never receive the production service-role key');
+  assert.match(live, /SUPABASE_LIVE_ANON_KEY/);
+  assert.doesNotMatch(live, /SUPABASE_SERVICE_ROLE_KEY/);
+  for (const script of ['test-ai-limits.mjs', 'test-issue-alert-grouping.mjs', 'test-rls.mjs']) {
+    const content = readFileSync(new URL(`../../scripts/${script}`, import.meta.url), 'utf8');
+    assert.match(content, /assertE2ESupabaseApiTarget\(\)/, `${script} validates the isolated target`);
+    assert.doesNotMatch(content, /ebzmkhrssgnzmixfsuso|process\.env\.SUPABASE_SERVICE_ROLE_KEY|process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
+  }
+});
+
+test('the required rls-isolation job waits for E2E migrations and targets only the isolated project', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const e2eStart = workflow.indexOf('  playwright-e2e:\n');
   const rlsStart = workflow.indexOf('  rls-isolation:\n');
+  assert.ok(e2eStart >= 0 && rlsStart > e2eStart);
+  const e2e = workflow.slice(e2eStart, rlsStart);
   const rls = workflow.slice(rlsStart);
-  assert.match(rls, /github\.event_name == 'push' \|\| github\.event_name == 'workflow_dispatch'/);
-  assert.doesNotMatch(rls, /github\.event_name == 'schedule'|github\.event_name == 'pull_request'/);
+  assert.match(e2e, /Apply repository migrations to the isolated E2E project/);
+  assert.match(rls, /needs: playwright-e2e/);
+  assert.match(rls, /group: e2e-isolated\n\s+cancel-in-progress: false/);
+  assert.match(rls, /vars\.E2E_SUPABASE_URL/);
+  assert.match(rls, /vars\.E2E_SUPABASE_ANON_KEY/);
+  assert.match(rls, /secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(rls, /node scripts\/test-ai-limits\.mjs/);
+  assert.match(rls, /node scripts\/test-issue-alert-grouping\.mjs/);
+  assert.match(rls, /node scripts\/test-rls\.mjs/);
+  assert.doesNotMatch(rls, /github\.event_name|ebzmkhrssgnzmixfsuso|secrets\.SUPABASE_SERVICE_ROLE_KEY|secrets\.NEXT_PUBLIC_SUPABASE_URL/);
 });
 
 test('the live-schema script has no app-URL fallback', () => {
   const script = readFileSync(new URL('../../scripts/check-live-schema.mjs', import.meta.url), 'utf8');
   assert.match(script, /const url = process\.env\.SUPABASE_LIVE_URL;/);
-  assert.doesNotMatch(script, /NEXT_PUBLIC_SUPABASE_URL/);
+  assert.match(script, /const apiKey = process\.env\.SUPABASE_LIVE_ANON_KEY;/);
+  assert.doesNotMatch(script, /NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY/);
 });
 
 test('Supabase CLI action uses the Node 24-compatible composite v3 release', () => {

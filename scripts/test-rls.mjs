@@ -5,22 +5,16 @@
  * Verifies that an authenticated User A cannot read, update, or delete User B's
  * `learner_errors`, `error_review_cards`, or `ai_request_logs`.
  *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (skipped gracefully if unset).
+ * Requires verified E2E_SUPABASE_URL, E2E_SUPABASE_ANON_KEY and
+ * E2E_SUPABASE_SERVICE_ROLE_KEY; missing or unsafe configuration fails closed.
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { assertE2ESupabaseApiTarget } from './assert-e2e-supabase-target.mjs';
 import { createTestUser, deleteTestUser } from './lib/test-user.mjs';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!url || !anonKey || !serviceKey) {
-  console.log('Skipping live RLS test: NEXT_PUBLIC_SUPABASE_URL / ANON / SERVICE_ROLE_KEY not configured.');
-  process.exit(0);
-}
-
-const admin = createClient(url, serviceKey);
+const { projectUrl: url, anonKey, serviceRoleKey } = assertE2ESupabaseApiTarget();
+const admin = createClient(url, serviceRoleKey);
 
 async function run() {
   const userA = await createTestUser(admin, 'rls-a');
