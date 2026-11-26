@@ -93,7 +93,7 @@ jobs:
       # git rev-parse --short origin/main instead of judging by eye.
       - run: node --test tests/unit/deploy-version.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
-      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/placement-request-filter.test.mjs
+      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/e2e-migration-history.test.mjs tests/unit/placement-request-filter.test.mjs
       - run: node --test tests/unit/listening-gloss-save.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -165,7 +165,14 @@ jobs:
         shell: bash
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: |
           set -euo pipefail
           workdir="$RUNNER_TEMP/e2e-supabase"
@@ -174,9 +181,12 @@ jobs:
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
-          # Versions 0050–0059 are reserved for the writing-support work and
-          # can be older than already-applied 0060/0061 on this test project.
-          # The target guard above still refuses every non-E2E project.
+          # Read-only reconciliation for an explicitly recognised migration
+          # already applied by another PR. A temporary sentinel fails if run;
+          # no migration-history row is created, repaired, or removed by it.
+          node scripts/prepare-e2e-migration-history.mjs "$workdir"
+          # Writing-support 0059 can be older than already-applied 0060/0061.
+          # Both target guards refuse every non-E2E project.
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
