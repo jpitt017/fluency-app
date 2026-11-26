@@ -8,50 +8,18 @@ state is healthy when nobody has pushed; the one job it no longer runs is
 
 ## Required checks
 
-Three checks are required to merge. The build and prompt evaluations are
-offline; Playwright and RLS use a dedicated isolated Supabase project.
+Three checks are required to merge. All three are offline, deterministic and
+need no external API:
 
 | Check | What it proves |
 | --- | --- |
-| `build-and-offline-evals` | lint, syllabus/details validators, offline prompt evaluations, unit suites and a production build |
-| `playwright-e2e` | browser journeys against the isolated test project, with a per-run learner and a check that browser traffic does not reach live Supabase |
-| `rls-isolation` | row-level security between learners on that isolated project |
-
-The separate `live-schema-check` runs on main pushes, schedules and dispatches,
-not on pull requests.
+| `build-and-offline-evals` | lint, syllabus/details validators, `eval:prompts --offline` (60 cases + 2 rewrite-injection checks), the unit suites (including `week-practice-finish`: what counts towards finishing grammar and vocabulary, and that the score comes from saved rows), the live schema check, and a production build |
+| `playwright-e2e` | the placement walk, the writing step, request timeouts and the service-worker install |
+| `rls-isolation` | row-level security between learners |
 
 `production-*` jobs only run on manual dispatch with their input ticked, and
 `live-prompt-evals` only runs on manual dispatch with its input ticked. They are
 not merge gates.
-
-## Shared isolated E2E migration history
-
-The Playwright and RLS jobs use the dedicated E2E Supabase project, never live,
-with the `e2e-isolated` concurrency group. A PR can apply a new migration to
-that shared project before the migration reaches `main`. Supabase CLI then
-refuses `db push` for a checkout that does not yet contain that remote version,
-even with `--include-all`. For example, PR #106 applied `0062` to E2E before
-the post-merge run for PR #105 failed in its migration step; that checkout could
-not reconcile the extra version, though the unavailable Actions logs prevent
-confirming it was the only failure. The feature's earlier PR checks had passed.
-
-The E2E migration step runs `scripts/prepare-e2e-migration-history.mjs` after
-verifying the project and credentials. It reads E2E history in a read-only
-transaction and accepts **only** the explicitly listed, already-tested remote
-version, name, and stored-SQL SHA-256. If its real file is absent from the
-checkout, the script writes a CLI ledger sentinel under `RUNNER_TEMP`, outside
-the repository. The sentinel unconditionally raises an exception if executed,
-so it cannot create a history row on a fresh project or if history changes
-between the read and push. If the real migration is present, its source hash
-must also match. Unknown or changed remote-only migrations fail closed with an
-annotation. No history row is repaired, deleted or inserted by the preflight;
-`db push --include-all` remains restricted to the verified isolated project.
-
-Remove the temporary `0062` exception once no tested checkout predates the real
-migration. If a different remote-only migration is encountered, investigate its
-identity and compatibility rather than repairing history or adding a blanket
-placeholder. A separate fresh-database job still replays repository migrations
-and tests learner-data deletion independently of the shared E2E project.
 
 ## Why `live-prompt-evals` is not required
 
