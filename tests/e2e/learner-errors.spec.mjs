@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 
 test('login hides provider details and shows the B1 technical-error line', async ({ page }) => {
   let calls = 0;

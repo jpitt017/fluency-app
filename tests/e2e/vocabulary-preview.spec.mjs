@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/isolated-test.mjs';
 
 test('reading card meanings stay gated while vocabulary practice remains available', async ({ page }) => {
   const response = await page.goto('/week/1');

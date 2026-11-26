@@ -6,7 +6,9 @@ import { createClient } from '@supabase/supabase-js';
  */
 export function createAdminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // E2E jobs provide only the isolated project key; production environments
+  // continue to use the existing SUPABASE_SERVICE_ROLE_KEY setting.
+  const serviceKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) return null;
 
   return createClient(url, serviceKey, {

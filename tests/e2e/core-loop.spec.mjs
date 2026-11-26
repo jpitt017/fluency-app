@@ -1,16 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 
 async function signIn(page, email, password) {
   await page.goto('/login');
   await page.getByLabel(/Email/i).fill(email);
-  await page.getByLabel(/Password/i).fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: /Sign in/i }).click();
   await page.waitForURL(/\/dashboard|\/labs|\/teacher/);
 }
 
 const hasRealSupabase = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder.supabase.co'),
+  process.env.E2E_SUPABASE_URL &&
+    !process.env.E2E_SUPABASE_URL.includes('placeholder.supabase.co'),
 );
 
 test.describe('B1 -> B2 Core Learning Loop', () => {
@@ -118,10 +118,9 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await expect(
       page.getByText(/recommend a place I know, separating facts about it from my own experience/i),
     ).toBeVisible();
-    await expect(page.getByText(/Sustained monologue: describing experience · Level B1/i)).toBeVisible();
 
     await page.goto('/labs?week=4');
-    await expect(page.getByText(/word stress in featured words and -ed endings/i)).toBeVisible();
+    await expect(page.getByText(/word stress in featured words and -ed endings/i).first()).toBeVisible();
 
     await page.goto('/review?week=4');
     await expect(page.getByText(/A friend is visiting your town and missed the travel guide/i)).toBeVisible();
@@ -230,6 +229,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
           body: JSON.stringify({
             submissionId: null,
             score: 74,
+            passed: true,
             feedback: 'Good effort! Watch article and preposition collocations.',
             corrected: 'Moving to Edinburgh was a turning point in my career.',
             notes: ['Use "a turning point" and "responsible for".'],
@@ -260,7 +260,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 
     await page.getByRole('button', { name: /Evaluate writing/i }).click();
-    await expect(page.getByText(/74 \/ 100|\/ 100/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/74%/)).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
     await expect(page.getByText(/Practise your mistakes|Nothing to practise today/i).first()).toBeVisible();

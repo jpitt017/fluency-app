@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
@@ -12,8 +12,8 @@ import { practiceErrorCard } from '../../lib/curriculum/week-practice-review.mjs
  * rather than by answering real exercises, so each test is about one behaviour
  * and not about the content of week 1.
  */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.E2E_SUPABASE_URL;
+const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
 
 async function signIn(page, user) {

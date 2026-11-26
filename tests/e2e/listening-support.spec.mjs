@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
@@ -20,8 +20,8 @@ const week1Listening = details.listening.weeks.find((week) => week.week === 1);
  * every listening question has a saved answer, checked on the server. A test
  * that only looked for CSS hiding would pass on a page that shipped the script.
  */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.E2E_SUPABASE_URL;
+const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 /** The week's real listening question ids, straight from the item bank. */
 const listeningIds = week1Listening.questions.map((question) => question.id);
