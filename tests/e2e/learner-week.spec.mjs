@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
@@ -65,8 +65,8 @@ test('free practice keeps the B1 prompt and still uses the current week for pron
 });
 
 test('signing in from a weekly writing task keeps the week in the submitted request', async ({ page }) => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.E2E_SUPABASE_URL;
+  const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
   test.skip(!url || !key, 'The sign-in flow needs a confirmed test user');
   test.setTimeout(120_000);
   const admin = createClient(url, key, { auth: { persistSession: false } });
@@ -103,8 +103,8 @@ test('signing in from a weekly writing task keeps the week in the submitted requ
 });
 
 test('checked reading answers are saved and Finish records the week', async ({ page }) => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.E2E_SUPABASE_URL;
+  const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
   test.skip(!url || !key, 'The saved-answer flow needs a confirmed test user');
   test.setTimeout(240_000);
   const admin = createClient(url, key, { auth: { persistSession: false } });

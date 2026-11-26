@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 
 async function signIn(page, email, password) {
   await page.goto('/login');
@@ -9,8 +9,8 @@ async function signIn(page, email, password) {
 }
 
 const hasRealSupabase = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder.supabase.co'),
+  process.env.E2E_SUPABASE_URL &&
+    !process.env.E2E_SUPABASE_URL.includes('placeholder.supabase.co'),
 );
 
 test.describe('B1 -> B2 Core Learning Loop', () => {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 import { answerReadingAndFinish, canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
 test('reading context, prediction, key words and tappable glosses appear before the questions', async ({ page }) => {

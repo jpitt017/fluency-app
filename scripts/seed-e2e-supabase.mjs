@@ -4,23 +4,15 @@ import { assertE2ESupabaseTarget } from './assert-e2e-supabase-target.mjs';
 
 /**
  * Prepare only disposable fixtures after migrations have been applied. The
- * configured learner is deleted and recreated after the profile trigger exists,
- * so a dashboard-created user from before migration does not leave the E2E
- * project with an auth user but no learner profile. One minimal writing task is
- * needed by the issue-report E2E case; no production rows are imported.
+ * learner identity is unique to this GitHub run and attempt; this script never
+ * searches for, deletes, or reuses another run's account. A cleanup step removes
+ * exactly this run's learner after Playwright finishes. One minimal writing task
+ * is needed by the issue-report E2E case; no production rows are imported.
  */
 export async function seedE2ESupabase({ admin, env = process.env }) {
   assertE2ESupabaseTarget(env);
   const email = env.E2E_USER_EMAIL;
   const password = env.E2E_USER_PASSWORD;
-
-  const { data: users, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (listError) throw new Error(`Could not inspect isolated E2E users: ${listError.message}`);
-  const oldUser = users.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
-  if (oldUser) {
-    const { error } = await admin.auth.admin.deleteUser(oldUser.id);
-    if (error) throw new Error(`Could not reset isolated E2E learner: ${error.message}`);
-  }
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,

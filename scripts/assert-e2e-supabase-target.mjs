@@ -32,8 +32,17 @@ export function assertE2ESupabaseTarget(env = process.env) {
   const anonKey = required(env, 'E2E_SUPABASE_ANON_KEY');
   const serviceRoleKey = required(env, 'E2E_SUPABASE_SERVICE_ROLE_KEY');
   const databaseUrl = required(env, 'E2E_SUPABASE_DB_URL');
-  required(env, 'E2E_USER_EMAIL');
+  const runId = required(env, 'E2E_RUN_ID');
+  const runAttempt = required(env, 'E2E_RUN_ATTEMPT');
+  const userEmail = required(env, 'E2E_USER_EMAIL');
   required(env, 'E2E_USER_PASSWORD');
+  if (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_LIVE_URL || env.SUPABASE_LIVE_ANON_KEY) {
+    throw new Error('Refusing E2E configuration with legacy production Supabase credentials');
+  }
+
+  if (userEmail !== `e2e-${runId}-${runAttempt}@example.invalid`) {
+    throw new Error('E2E_USER_EMAIL must be unique to this GitHub run and attempt');
+  }
 
   if (projectRef !== E2E_PROJECT_REF) {
     throw new Error(`Refusing E2E database access: expected dedicated project ${E2E_PROJECT_REF}`);
@@ -50,6 +59,12 @@ export function assertE2ESupabaseTarget(env = process.env) {
   }
   if (projectUrl.includes(LIVE_PROJECT_REF)) {
     throw new Error('Refusing E2E API access: the live project is not an E2E target');
+  }
+  if (env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_URL !== E2E_PROJECT_URL) {
+    throw new Error('Refusing E2E app configuration: NEXT_PUBLIC_SUPABASE_URL must target the dedicated E2E project');
+  }
+  if (env.NEXT_PUBLIC_SUPABASE_ANON_KEY && env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== anonKey) {
+    throw new Error('Refusing E2E app configuration: public anon key must match E2E_SUPABASE_ANON_KEY');
   }
 
   let parsedDatabaseUrl;
@@ -79,7 +94,7 @@ export function assertE2ESupabaseTarget(env = process.env) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const target = assertE2ESupabaseTarget();
-    console.log(`E2E Supabase target verified: ${target.projectRef}`);
+    console.log(`E2E Supabase target verified: ${target.projectRef}; run ${process.env.E2E_RUN_ID}, attempt ${process.env.E2E_RUN_ATTEMPT}`);
   } catch (error) {
     // Put the non-secret reason on the check run itself so CI configuration
     // failures are diagnosable even if Actions log downloads are unavailable.

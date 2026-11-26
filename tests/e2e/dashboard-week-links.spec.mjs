@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/isolated-test.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
 
@@ -10,8 +10,8 @@ const sections = [
   ['Grammar', 'grammar-practice'],
   ['Vocabulary', 'vocabulary-practice'],
 ];
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.E2E_SUPABASE_URL;
+const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 async function expectSection(page, id) {
   const heading = page.locator(`#${id} h2`).first();

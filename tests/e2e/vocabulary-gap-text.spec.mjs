@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
@@ -15,8 +15,8 @@ import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } 
  * the reading-card meaning gate.
  */
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.E2E_SUPABASE_URL;
+const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 const bank = JSON.parse(
   readFileSync(new URL('../../supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json', import.meta.url)),

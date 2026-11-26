@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
@@ -20,8 +20,8 @@ import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs'
  * would make the spec about the browser's speed, and the finish route reads the
  * saved rows either way -- the same rows the buttons would have written.
  */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.E2E_SUPABASE_URL;
+const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 const vocabularyBank = JSON.parse(
   readFileSync(new URL('../../supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json', import.meta.url)),

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
 import { grammarPositionKey } from '../../lib/curriculum/grammar-practice-position.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 

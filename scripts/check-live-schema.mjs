@@ -5,21 +5,18 @@
  * compares tables, columns, functions, RLS policies, triggers and storage
  * buckets against the inventory parsed from the repo migrations.
  *
- * Set SUPABASE_LIVE_URL to check a specific project in CI; otherwise the app's
- * NEXT_PUBLIC_SUPABASE_URL is used.
+ * This check is deliberately fail-closed: CI must provide the live URL and an
+ * explicit key. It never falls back to the app's NEXT_PUBLIC settings.
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.SUPABASE_LIVE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const apiKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_LIVE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const url = process.env.SUPABASE_LIVE_URL;
+const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_LIVE_ANON_KEY;
 
 if (!url || !apiKey) {
   throw new Error(
-    'Live schema check requires SUPABASE_LIVE_URL (or NEXT_PUBLIC_SUPABASE_URL) and a Supabase API key.',
+    'Live schema check requires SUPABASE_LIVE_URL and an explicit live Supabase API key.',
   );
 }
 

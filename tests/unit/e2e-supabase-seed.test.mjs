@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { cleanupE2ESupabase } from '../../scripts/cleanup-e2e-supabase.mjs';
 import { seedE2ESupabase } from '../../scripts/seed-e2e-supabase.mjs';
 import { E2E_PROJECT_REF, E2E_PROJECT_URL, LIVE_PROJECT_REF } from '../../scripts/assert-e2e-supabase-target.mjs';
 
@@ -10,7 +11,9 @@ const env = () => ({
   E2E_SUPABASE_ANON_KEY: jwt(E2E_PROJECT_REF),
   E2E_SUPABASE_SERVICE_ROLE_KEY: jwt(E2E_PROJECT_REF),
   E2E_SUPABASE_DB_URL: `postgresql://postgres.${E2E_PROJECT_REF}:not-a-real-password@aws-0-eu-west-1.pooler.supabase.com:5432/postgres`,
-  E2E_USER_EMAIL: 'e2e@example.invalid',
+  E2E_RUN_ID: 'seed-run-456',
+  E2E_RUN_ATTEMPT: '1',
+  E2E_USER_EMAIL: 'e2e-seed-run-456-1@example.invalid',
   E2E_USER_PASSWORD: 'not-a-real-password',
 });
 
@@ -22,7 +25,10 @@ function fakeAdmin({ hasProfile = true, hasTask = false } = {}) {
       admin: {
         async listUsers() {
           calls.push(['listUsers']);
-          return { data: { users: [{ id: 'old-user', email: 'E2E@example.invalid' }] }, error: null };
+          return { data: { users: [
+            { id: 'other-run-user', email: 'e2e-other-run-2@example.invalid' },
+            { id: 'current-run-user', email: 'E2E-seed-run-456-1@example.invalid' },
+          ] }, error: null };
         },
         async deleteUser(id) {
           calls.push(['deleteUser', id]);
@@ -66,13 +72,14 @@ function fakeAdmin({ hasProfile = true, hasTask = false } = {}) {
   };
 }
 
-test('resets the configured account after migrations and creates only a minimal E2E writing-task fixture', async () => {
+test('creates a unique per-run learner without looking up or deleting another run account', async () => {
   const admin = fakeAdmin();
   await seedE2ESupabase({ admin, env: env() });
 
-  assert.ok(admin.calls.some(([name, id]) => name === 'deleteUser' && id === 'old-user'));
+  assert.equal(admin.calls.some(([name]) => name === 'listUsers'), false);
+  assert.equal(admin.calls.some(([name]) => name === 'deleteUser'), false);
   const created = admin.calls.find(([name]) => name === 'createUser');
-  assert.equal(created[1].email, 'e2e@example.invalid');
+  assert.equal(created[1].email, 'e2e-seed-run-456-1@example.invalid');
   assert.equal(created[1].password, 'not-a-real-password');
   assert.equal(created[1].email_confirm, true);
   const outputs = admin.calls.find(([name, table]) => name === 'upsert' && table === 'week_output_submissions');
@@ -89,6 +96,12 @@ test('resets the configured account after migrations and creates only a minimal 
     word_min: 1,
     word_max: 100,
   });
+});
+
+test('cleanup deletes only this run attempt user, never another account', async () => {
+  const admin = fakeAdmin();
+  await cleanupE2ESupabase({ admin, env: env() });
+  assert.deepEqual(admin.calls.filter(([name]) => name === 'deleteUser'), [['deleteUser', 'current-run-user']]);
 });
 
 test('does not touch Supabase when the project ref is not the dedicated E2E ref', async () => {

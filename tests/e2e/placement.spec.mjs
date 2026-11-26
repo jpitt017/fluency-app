@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/isolated-test.mjs';
+import { isExpectedCancelledRscPrefetch } from './helpers/request-failure-filter.mjs';
 
 /**
  * Regression cover for the placement quiz "Continue to Writing Sample →" freeze.
@@ -20,9 +21,8 @@ function watchPage(page) {
   page.on('pageerror', (error) => problems.pageErrors.push(`${error.name}: ${error.message}`));
   page.on('requestfailed', (request) => {
     const failure = request.failure()?.errorText ?? 'unknown';
-    // Next.js cancels in-flight RSC prefetches when a test navigates away. This
-    // is expected client navigation behavior, not an app/network failure.
-    if (failure === 'net::ERR_ABORTED') return;
+    // Only canceled, non-navigation _rsc prefetches are expected; other aborts fail.
+    if (isExpectedCancelledRscPrefetch(request)) return;
     problems.failedRequests.push(`${request.method()} ${request.url()} :: ${failure}`);
   });
   page.on('response', (response) => {

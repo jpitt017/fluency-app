@@ -157,7 +157,7 @@ jobs:
       # git rev-parse --short origin/main instead of judging by eye.
       - run: node --test tests/unit/deploy-version.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
-      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs
+      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/placement-request-filter.test.mjs
       - run: node --test tests/unit/listening-gloss-save.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -173,17 +173,13 @@ jobs:
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/provider-failure-response.test.mjs
       # Alerting: groups per endpoint and kind, never throws, sends no learner data.
       - run: node --conditions=react-server --experimental-strip-types --test tests/unit/provider-alert.test.mjs
-      - run: npm run check:live-schema
-        env:
-          SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ebzmkhrssgnzmixfsuso.supabase.co' }}
-          SUPABASE_LIVE_ANON_KEY: ${{ secrets.SUPABASE_LIVE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViem1raHJzc2duem1peGZzdXNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjA5MjEsImV4cCI6MjExMDY5NjkyMX0.W_pWAeLld7lrpme3SNkLPlPThEDAZxhJu_rfdIUhDhU' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
 
-  playwright-e2e:
+  live-schema-check:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -192,20 +188,45 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: supabase/setup-cli@v1
+      - name: Check live Supabase schema
+        run: npm run check:live-schema
+        env:
+          SUPABASE_LIVE_URL: ${{ secrets.SUPABASE_LIVE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_LIVE_ANON_KEY: ${{ secrets.SUPABASE_LIVE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  playwright-e2e:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: e2e-isolated
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v3
         with:
           version: 3.2.0
       - name: Verify isolated E2E Supabase configuration
+        id: verify_e2e_target
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
           E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: node scripts/assert-e2e-supabase-target.mjs
       - name: Apply repository migrations to the isolated E2E project
+        id: apply_e2e_migrations
         shell: bash
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -226,29 +247,66 @@ jobs:
           E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: node scripts/seed-e2e-supabase.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - name: Build against the verified isolated E2E project
         env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$E2E_SUPABASE_URL"
+          test -n "$E2E_SUPABASE_ANON_KEY"
+          npm run build
       # Every user these tests sign in as is created with
       # auth.admin.createUser({ email_confirm: true }); the guard earlier in this
       # job fails the build if a test ever goes back to an email-sending flow.
       - name: Run Playwright E2E tests
+        id: run_e2e
         # Includes the placement walk that answers all 24 v2 questions through to
         # the writing step on a phone viewport, the writing-step word counter and
         # hint, both request timeouts, and the service-worker install.
-        run: npm run test:e2e -- --reporter=line,github
+        run: |
+          mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
+          : > "$E2E_NETWORK_AUDIT_FILE"
+          npm run test:e2e -- --reporter=line,github
         env:
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
           E2E_STUB_LLM: 'true'
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Verify no browser requests reached the live Supabase project
+        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success' && steps.run_e2e.outcome != 'skipped'
+        env:
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+        run: node scripts/report-e2e-network-audit.mjs
+
+      - name: Delete this run's isolated E2E learner
+        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success'
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: node scripts/cleanup-e2e-supabase.mjs
 
       - name: Turn the Playwright report into readable annotations
         if: always()
@@ -308,7 +366,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: 3.2.0
       - name: Start local Supabase without project migrations
@@ -382,6 +440,7 @@ jobs:
         run: supabase stop --no-backup
 
   rls-isolation:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check SUPABASE_SERVICE_ROLE_KEY availability
