@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
     const start = Date.now();
     try {
       message = await transcribeAudio(audio);
-      await logAiRequest(client, { endpoint: '/api/issues/transcribe', model: 'whisper-large-v3-turbo', statusCode: 200, latencyMs: Date.now() - start, audioSeconds: Math.ceil((audio.size - 44) / 32000) });
+      await logAiRequest(client, { endpoint: '/api/issues/transcribe', model: 'whisper-large-v3-turbo', statusCode: 200, latencyMs: Date.now() - start, audioSeconds: Math.ceil((audio.size - 44) / 32000) }, true);
     } catch {
-      await logAiRequest(client, { endpoint: '/api/issues/transcribe', model: 'whisper-large-v3-turbo', statusCode: 500, latencyMs: Date.now() - start });
+      await logAiRequest(client, { endpoint: '/api/issues/transcribe', model: 'whisper-large-v3-turbo', statusCode: 500, latencyMs: Date.now() - start }, true);
       return NextResponse.json({ error: 'Could not hear your recording. Please try again.' }, { status: 503 });
     }
     if (!message) return NextResponse.json({ error: 'We could not hear any words. Please try again.' }, { status: 400 });

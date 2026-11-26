@@ -48,9 +48,11 @@ export async function POST(req: NextRequest) {
   let promptTokens = 0;
   let completionTokens = 0;
   let errorMessage: string | null = null;
+  let isSignedIn = false;
 
   try {
     const guard = await enforceAiUsage(supabase, ENDPOINT, 2);
+    isSignedIn = Boolean(guard.userId);
     if (!guard.allowed && guard.response) {
       statusCode = guard.response.status;
       return guard.response;
@@ -274,6 +276,6 @@ ${wrapLearnerSubmission(text)}`;
       promptTokens,
       completionTokens,
       errorMessage,
-    });
+    }, isSignedIn);
   }
 }

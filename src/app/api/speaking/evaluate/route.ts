@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
   let supportAttemptId = '';
   let takeNumber = 0;
   let supportNotesRaw: unknown = null;
+  let isSignedIn = false;
   let recordingFile: File | null = null;
   // Declared outside the try so the catch can tell a recording from typed text
   // and choose wording the learner can actually act on.
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
 
     // Speaking with Whisper audio transcription costs 6 units vs 3 for text-only (writing = 2)
     const guard = await enforceAiUsage(supabase, ENDPOINT, isAudio ? 6 : 3);
+    isSignedIn = Boolean(guard.userId);
     if (!guard.allowed && guard.response) {
       statusCode = guard.response.status;
       return guard.response;
@@ -373,6 +375,6 @@ ${wrapLearnerSubmission(transcript)}`;
       promptTokens,
       completionTokens,
       errorMessage,
-    });
+    }, isSignedIn);
   }
 }
