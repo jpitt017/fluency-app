@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { loadPlayableTrialAudio } from '@/lib/curriculum/load-listening-audio';
@@ -14,12 +15,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Please check your answers.' }, { status: 400 });
   }
   const weekNumber = body.week as number;
-  const { data: current, error: progressError } = await client.rpc('refresh_current_week');
-  if (progressError) {
-    console.error('[input] Could not check progress:', progressError);
-    return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  }
-  if (weekNumber < 1 || weekNumber > Number(current)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+  const current = await readStoredCurrentWeek(client, user.id);
+  if (current === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (weekNumber < 1 || weekNumber > current) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   const week = await loadLearnerWeek(weekNumber);
   const task = week?.[body.skill];
   // The page accepts either its original recording or an approved trial track.
@@ -61,14 +59,6 @@ export async function POST(request: Request) {
     console.error('[input] Could not save completion:', error);
     return NextResponse.json({ error: 'We could not save your answers. Please try again.' }, { status: 503 });
   }
-  try {
-    const refreshed = await client.rpc('refresh_current_week');
-    if (refreshed.error) throw refreshed.error;
-    return NextResponse.json({ saved: true, currentWeek: refreshed.data });
-  } catch (error) {
-    // Completion is already saved; distinguish that from a failed save even
-    // when the progress refresh throws instead of returning an error.
-    console.error('[input] Answers saved but progress could not be updated:', error);
-    return NextResponse.json({ error: 'Your answers are saved, but we could not update your progress. Please try again.' }, { status: 503 });
-  }
+  // Progress recomputes on the next explicit page visit, not on every task POST.
+  return NextResponse.json({ saved: true, currentWeek: current });
 }

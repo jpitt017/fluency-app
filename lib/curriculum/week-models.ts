@@ -34,17 +34,7 @@ export async function recordWeekSubmission(userId: string, weekNumber: unknown, 
     console.error('[week] Failed to record submission:', error);
     return null;
   }
-  // A refresh failure must not pretend the already-saved submission vanished:
-  // progression is recomputed on the next refresh as well.
-  try {
-    const client = await createServerSupabase();
-    if (client) {
-      const { error: progressError } = await client.rpc('refresh_current_week');
-      if (progressError) console.error('[week] Could not refresh progress:', progressError);
-    }
-  } catch (error) {
-    console.error('[week] Could not refresh progress:', error);
-  }
+  // Progress is recomputed by the next explicit page visit, never on task POSTs.
   return model;
 }
 

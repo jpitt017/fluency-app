@@ -62,7 +62,7 @@ export default async function WeekPage({ params }: PageProps) {
   if (!Number.isInteger(weekNumber)) notFound();
 
   const [{ weeks, source }, detailed] = await Promise.all([
-    loadSyllabusContent(),
+    loadSyllabusContent(weekNumber),
     loadDetailedContent({ includeAnswers: true }),
   ]);
   const week = weeks.find((item) => item.number === weekNumber) ?? getWeek(weekNumber);

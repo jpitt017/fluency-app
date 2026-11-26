@@ -3,6 +3,7 @@ import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.jso
 import { markLearnerGrammarAnswer } from '@/lib/curriculum/learner-grammar-marking.mjs';
 import { learnerGrammarReason } from '@/lib/curriculum/learner-grammar-reasons.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
 export async function POST(request: Request) {
@@ -16,9 +17,9 @@ export async function POST(request: Request) {
   const week = details.weeks.find(entry => entry.number === body.week);
   const item = week?.grammar.practice.items.find(entry => entry.id === body.id);
   if (!week || !item || item.step === 'Use it') return NextResponse.json({ error: 'This question is not available.' }, { status: 404 });
-  const progress = await client.rpc('refresh_current_week');
-  if (progress.error) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
-  if (week.number > Number(progress.data)) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
+  if (week.number > currentWeek) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   let correct: boolean;
   try { correct = markLearnerGrammarAnswer(item, answer); }
   catch { return NextResponse.json({ error: 'Please check your answer.' }, { status: 400 }); }

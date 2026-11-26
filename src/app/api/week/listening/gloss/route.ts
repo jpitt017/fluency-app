@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server';
 import content from '@/supabase-b1-b2/content/curriculum/listening-support-weeks-01-04.json';
 import { markGloss } from '@/lib/curriculum/listening-support.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 
 /**
  * Mark one gloss-check item.
  *
  * The four items are one encouraged bonus task: they do not unlock anything, so
- * this route never advances the learner's week. `refresh_current_week` reads
- * speaking, writing and the listening/reading submission flags only, and this
- * route writes none of those.
+ * this route never advances the learner's week. Progress is read from the last
+ * explicit page-visit refresh; this POST does not run the progress RPC.
  *
  * Where the attempt goes: the same `week_input_answers` table that already holds
  * per-question reading and listening answers, under `skill = 'listening'` and an
@@ -38,18 +38,11 @@ export async function POST(request: Request) {
   }
 
   const week = body.week as number;
-  let progress: { data: number | null; error: { message?: string } | null };
-  try {
-    progress = await client.rpc('refresh_current_week');
-  } catch (error) {
-    console.error('[gloss] Could not check progress:', error);
+  const currentWeek = await readStoredCurrentWeek(client, user.id);
+  if (currentWeek === null) {
     return NextResponse.json({ error: 'Could not check your progress. Please try again.' }, { status: 503 });
   }
-  if (progress.error) {
-    console.error('[gloss] Could not check progress:', progress.error);
-    return NextResponse.json({ error: 'Could not check your progress. Please try again.' }, { status: 503 });
-  }
-  if (week > Number(progress.data)) {
+  if (week > currentWeek) {
     return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
   }
 
