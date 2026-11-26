@@ -16,7 +16,9 @@ import {
   resumeStep,
 } from '@/lib/curriculum/week-practice.mjs';
 import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
+import type { SentencePractice, SentencePracticeByItem } from '@/lib/curriculum/week-sentence-practice';
 import SentenceBox from './SentenceBox';
+import PersonalSentenceBox from './PersonalSentenceBox';
 import PracticeItemPager from './PracticeItemPager';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
 import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
@@ -58,6 +60,7 @@ function Item({
   week,
   signedIn,
   saved,
+  personal,
   largeOptions = false,
   finishing = false,
   onMarked,
@@ -68,6 +71,7 @@ function Item({
   signedIn: boolean;
   /** The saved answer from the server, when there is one. */
   saved?: Marked & { answer: string };
+  personal?: SentencePractice;
   largeOptions?: boolean;
   finishing?: boolean;
   onMarked: (id: string, saved: SavedAnswer) => void;
@@ -89,9 +93,15 @@ function Item({
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState(false);
 
-  // Rewrite items and the "Use it" sentences are marked by the app, against the
-  // week's target grammar rather than one key. Both get the same box, and the
-  // result is reported back so the adaptive rules still see the outcome.
+  // Personal Use it writing has its own guidance and two saved versions.
+  // Fix it rewrites keep their existing sentence box and marking.
+  if (item.step === 'Use it' && item.useItSupport) {
+    return <PersonalSentenceBox
+      week={week} id={item.id} prompt={item.prompt} kind="grammar-use-it" guidance={item.useItSupport}
+      signedIn={signedIn} initial={personal} initialAnswer={saved?.answer}
+      onChecked={(onTarget, answer) => onMarked(item.id, { answer, correct: onTarget, reason: null })}
+    />;
+  }
   if (item.needsAi) {
     return (
       <SentenceBox
@@ -228,6 +238,7 @@ export default function GrammarPractice({
   signedIn,
   userId,
   progress,
+  sentencePractice,
   hasVocabulary,
 }: {
   grammar: LearnerGrammar;
@@ -237,6 +248,7 @@ export default function GrammarPractice({
   userId: string | null;
   /** What the server has saved for this learner, so a reload restores their marks. */
   progress?: PracticeProgress | null;
+  sentencePractice?: SentencePracticeByItem;
   hasVocabulary?: boolean;
 }) {
   const steps = grammar.steps;
@@ -374,6 +386,12 @@ export default function GrammarPractice({
       {current.title === 'See it' && (
         <p ref={examplesRef} id="grammar-examples" tabIndex={-1} className="scroll-mt-20 whitespace-pre-line rounded-xl bg-indigo-50 p-4 text-sm leading-7">{grammar.notice}</p>
       )}
+      {current.title === 'Use it' && grammar.useItModel && (
+        <div className="rounded-xl bg-indigo-50 p-4 text-sm leading-7">
+          <p className="font-semibold">An example by an imaginary learner</p>
+          <p>{grammar.useItModel}</p>
+        </div>
+      )}
       {!signedIn && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>
       )}
@@ -390,6 +408,7 @@ export default function GrammarPractice({
             week={week}
             signedIn={signedIn}
             saved={savedAnswers[item.id]}
+            personal={sentencePractice?.[item.id]}
             largeOptions={paged}
             finishing={!item.needsAi && item.target !== 'Extra' && busy}
             onCheckingChange={!item.needsAi && item.target !== 'Extra' ? setChecking : undefined}

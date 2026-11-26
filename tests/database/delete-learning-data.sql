@@ -2,11 +2,12 @@
 begin;
 do $$
 declare
-  u uuid := gen_random_uuid(); c uuid; m uuid; l uuid; p uuid; sp uuid; wr uuid;
+  u uuid := gen_random_uuid(); other_user uuid := gen_random_uuid(); c uuid; m uuid; l uuid; p uuid; sp uuid; wr uuid;
   d uuid; v uuid; vc uuid; cp uuid; b uuid; n bigint; t record; result jsonb;
 begin
   insert into auth.users(id, email, raw_user_meta_data, raw_app_meta_data, aud, role)
-    values (u, 'deletion-isolated@example.test', '{}', '{}', 'authenticated', 'authenticated');
+    values (u, 'deletion-isolated@example.test', '{}', '{}', 'authenticated', 'authenticated'),
+           (other_user, 'deletion-other@example.test', '{}', '{}', 'authenticated', 'authenticated');
   insert into public.courses(slug,title,description,total_hours) values ('delete-test','test','test',1) returning id into c;
   insert into public.modules(course_id,module_number,title,summary,lesson_start,lesson_end,vocabulary_topic) values (c,999,'test','test',1,1,'test') returning id into m;
   insert into public.lessons(course_id,module_id,lesson_number,module_lesson_number,title,objective,can_do) values (c,m,999,1,'test','test','test') returning id into l;
@@ -57,6 +58,16 @@ begin
   if to_regclass('public.week_vocabulary_attempts') is not null then
     execute 'insert into public.week_vocabulary_attempts(user_id,week_number,item_id,answer,correct) values ($1,1,''V1-R1'',''test'',false)' using u;
   end if;
+  -- Both checked versions and an unfinished draft belong to the learner.
+  insert into public.week_sentence_practice(user_id, week_number, item_id, kind,
+    first_answer, first_feedback, first_on_target, second_answer, second_feedback, second_on_target, draft_answer)
+    values
+      (u, 1, 'W1-U1', 'grammar-use-it', 'first version', '{"corrected":"first correction"}', false,
+       'second version', '{"corrected":"second correction"}', true, 'unfinished draft'),
+      (u, 1, 'V1-S1', 'vocabulary-sentence', 'first sentence', '{"corrected":"first sentence"}', true,
+       'second sentence', '{"corrected":"second sentence"}', true, null),
+      (other_user, 1, 'W1-U1', 'grammar-use-it', 'other learner', '{"corrected":"other learner"}', true,
+       null, null, null, null);
   if to_regclass('public.week_skill_completions') is not null then
     execute 'insert into public.week_skill_completions(user_id,week_number,skill,answered,correct,total,review_count) values ($1,1,''grammar'',22,18,22,4)' using u;
     execute 'insert into public.week_skill_completions(user_id,week_number,skill,answered,correct,total,review_count) values ($1,1,''vocabulary'',16,13,16,3)' using u;
@@ -93,6 +104,9 @@ begin
     elsif n <> 0 then raise exception 'Learner rows remain in %: %',t.table_name,n;
     end if;
   end loop;
+  if not exists (select 1 from public.week_sentence_practice where user_id=other_user and first_answer='other learner') then
+    raise exception 'Deleting one learner removed another learner’s sentence';
+  end if;
   if not exists (select 1 from public.profiles where id=u and role='learner' and xp_total=0 and longest_streak=0 and placement_result is null and not onboarding_completed) then raise exception 'Profile not reset'; end if;
   if not (public.verify_delete_my_learning_data_coverage()->>'covered')::boolean then raise exception 'Coverage check failed: %',public.verify_delete_my_learning_data_coverage(); end if;
 end $$;

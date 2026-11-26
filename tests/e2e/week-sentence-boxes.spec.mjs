@@ -81,7 +81,7 @@ test('vocabulary step 7 has a text box and Check button', async ({ page }) => {
       await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
     }
     await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-    await expect(vocabulary.getByText(/Write one sentence about something that was difficult at first/)).toBeVisible();
+    await expect(vocabulary.getByText('Write about something that was difficult at first, but now feels normal.')).toBeVisible();
     await expect(vocabulary.getByRole('textbox').first()).toBeVisible();
     await expect(vocabulary.getByRole('button', { name: 'Check', exact: true }).first()).toBeDisabled();
     await expect(vocabulary.getByText('Write your sentences and press Check. The app will give you feedback.').first()).toBeVisible();

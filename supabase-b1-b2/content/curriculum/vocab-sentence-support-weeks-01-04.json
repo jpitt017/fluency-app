@@ -1,0 +1,92 @@
+{
+  "version": "vocab-sentence-support-v1",
+  "status": "pilot draft: second-teacher review pending",
+  "how": [
+    "Show the new prompt and a Pattern box in plain words.",
+    "Show example 1 on the first tap and example 2 on the second tap.",
+    "Help me start puts the starter in the box for the learner to complete.",
+    "Keep the existing onTargetWhen marking."
+  ],
+  "items": [
+    {
+      "id": "V1-S1",
+      "prompt": "Write about something that was difficult at first, but now feels normal.",
+      "pattern": "get used to + something / doing something",
+      "starter": "I got used to ______ .",
+      "examples": [
+        "It took me a few weeks to get used to working from home.",
+        "It took me a long time to get used to the cold weather."
+      ]
+    },
+    {
+      "id": "V1-S2",
+      "prompt": "Write about a decision you made. Are you happy about it now?",
+      "pattern": "I've never regretted + doing something  ·  The biggest challenge was + something",
+      "starter": "I've never regretted ______ .",
+      "examples": [
+        "I've never regretted learning to drive.",
+        "The biggest challenge was finding a flat."
+      ]
+    },
+    {
+      "id": "V2-S1",
+      "prompt": "Write about a plan you have for this year.",
+      "pattern": "I intend to ...  ·  I'm going to ...",
+      "starter": "This year, I intend to ______ .",
+      "examples": [
+        "I intend to take an English exam in June.",
+        "I'm going to save money for a holiday."
+      ]
+    },
+    {
+      "id": "V2-S2",
+      "prompt": "Write about something you're excited about.",
+      "pattern": "I'm looking forward to + something / doing something",
+      "starter": "I'm really looking forward to ______ .",
+      "examples": [
+        "I'm looking forward to visiting my cousins in May.",
+        "I'm looking forward to the summer holidays."
+      ]
+    },
+    {
+      "id": "V3-S1",
+      "prompt": "Write one rule for a shared flat.",
+      "pattern": "We have to / We don't have to / We should ...  ·  with arrange or routine",
+      "starter": "We should arrange ______ .",
+      "examples": [
+        "We should arrange a time to clean the kitchen together.",
+        "We have to keep to a cleaning routine."
+      ]
+    },
+    {
+      "id": "V3-S2",
+      "prompt": "Write about someone you know well.",
+      "pattern": "I get on (well) with + a person",
+      "starter": "I get on well with ______ because ______ .",
+      "examples": [
+        "I get on well with my neighbours, so we often chat in the lift.",
+        "I don't get on with my upstairs neighbour, because he's very noisy."
+      ]
+    },
+    {
+      "id": "V4-S1",
+      "prompt": "Write about a place in your town. Say what is done or sold there.",
+      "pattern": "______ is / are + sold, made, held, built…  ·  and use local",
+      "starter": "______ is sold at the local ______ .",
+      "examples": [
+        "Fresh fish is sold at the local market every morning.",
+        "Local cheese is made in the village near my town."
+      ]
+    },
+    {
+      "id": "V4-S2",
+      "prompt": "Tell a visitor about a custom or tradition in your town.",
+      "pattern": "It's a tradition to ...  ·  It's a local custom to ...",
+      "starter": "In my town, it's a tradition to ______ .",
+      "examples": [
+        "In my town, visitors are invited to join the summer festival in August.",
+        "It's a local custom to eat grapes at midnight on New Year's Eve."
+      ]
+    }
+  ]
+}
