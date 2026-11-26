@@ -92,6 +92,11 @@ function setup({ noAdmin = false, failWrite = false, throwWrite = false, failRef
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
     '@/lib/curriculum/week-speaking-support': { speakingSupportLabels: (week) => week === 1 ? supportLabels : null },
+    '@/lib/b1b2/week-speaking-recordings.mjs': {
+      weekSpeakingRecordingPath: ({ userId, weekNumber, attemptId, takeNumber }) =>
+        `${userId}/week-speaking/${weekNumber}/${attemptId}/take-${takeNumber}.webm`,
+      recordingContentTypeFromPath: () => 'audio/webm',
+    },
     '@/lib/b1b2/ai-guard': { enforceAiUsage: async () => ({ allowed: true, headers: {}, userId: 'learner-1' }) },
     '@/lib/b1b2/eval-cache': { buildEvalCacheKey: () => 'fake', readEvalCache: async () => validated, writeEvalCache: async () => {} },
     '@/lib/b1b2/feedback-schema': {

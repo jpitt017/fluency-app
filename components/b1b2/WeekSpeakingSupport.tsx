@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SpeakingModelPlayer from './SpeakingModelPlayer';
+import WeekSpeakingRecordings, { type WeekSpeakingRecordingLink } from './WeekSpeakingRecordings';
 import { phrasesUsed, splitHighlightedText } from '@/lib/curriculum/speaking-support.mjs';
 
 type Feedback = {
@@ -31,6 +32,7 @@ type Props = {
   firstFeedback: Record<string, unknown> | null;
   secondTranscript: string | null;
   secondFeedback: Record<string, unknown> | null;
+  recordings: WeekSpeakingRecordingLink[];
   model: Model | null;
 };
 
@@ -93,6 +95,8 @@ export default function WeekSpeakingSupport(props: Props) {
       } else if (data.supportSaved) {
         setSecondTranscript(data.transcript ?? null);
         setSecondFeedback(data);
+        // Refresh the server projection so the second playback link appears.
+        router.refresh();
       }
       if (data.supportSaved === false) setError('Your feedback is ready, but we could not save this attempt. Please try again.');
     } catch (caught) {
@@ -165,6 +169,7 @@ export default function WeekSpeakingSupport(props: Props) {
       </div>
       {firstFeedback && <Evaluation feedback={firstFeedback} week={week} />}
       {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+      <WeekSpeakingRecordings recordings={props.recordings} />
     </section>
 
     {unlockedModel && <>

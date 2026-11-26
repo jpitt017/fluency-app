@@ -3,6 +3,7 @@ import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details
 import speakingSupport from '../../supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { publicSpeakingSupport } from './speaking-support.mjs';
+import { weekSpeakingAttemptRecordings } from '@/lib/b1b2/week-speaking-recordings.mjs';
 
 const pilot = speakingSupport as {
   weeks: { week: number; noticePhrases: string[]; planNotes: string[]; retryGoal: string }[];
@@ -10,6 +11,8 @@ const pilot = speakingSupport as {
 
 type SavedAttempt = {
   id: string;
+  user_id: string;
+  week_number: number;
   notes: { label: string; note: string }[] | null;
   first_recording_path: string | null;
   first_transcript: string | null;
@@ -32,7 +35,7 @@ export async function loadWeekSpeakingSupport(weekNumber: number) {
     const user = client ? (await client.auth.getUser()).data.user : null;
     if (client && user) {
       const result = await client.from('week_speaking_attempts')
-        .select('id,notes,first_recording_path,first_transcript,first_feedback,second_recording_path,second_transcript,second_feedback')
+        .select('id,user_id,week_number,notes,first_recording_path,first_transcript,first_feedback,second_recording_path,second_transcript,second_feedback')
         .eq('user_id', user.id).eq('week_number', weekNumber).order('created_at', { ascending: false }).limit(1).maybeSingle();
       if (!result.error && result.data) attempt = result.data as SavedAttempt;
     }
@@ -50,6 +53,9 @@ export async function loadWeekSpeakingSupport(weekNumber: number) {
     firstFeedback: unlocked ? attempt?.first_feedback ?? null : null,
     secondTranscript: attempt?.second_recording_path ? attempt.second_transcript : null,
     secondFeedback: attempt?.second_recording_path ? attempt.second_feedback : null,
+    // Playback links do not contain Storage keys or signed URLs. Unlocking still
+    // uses the saved first recording/transcript, unchanged from 0060.
+    recordings: weekSpeakingAttemptRecordings(attempt),
     // The model and its audio URL are projected only after the server observes
     // a saved first recording. Neither is present in the locked page payload.
     model: unlocked ? { text: staticWeek.speaking.model, audioUrl: modelAudioUrl } : null,

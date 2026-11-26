@@ -4,8 +4,12 @@ import { useState } from 'react';
 
 export default function SpeakingRecording({
   recordingUrl,
+  label = 'Speaking recording',
+  dataTestId,
 }: {
   recordingUrl?: string | null;
+  label?: string;
+  dataTestId?: string;
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -22,6 +26,8 @@ export default function SpeakingRecording({
       controls
       preload="none"
       src={recordingUrl}
+      aria-label={label}
+      data-testid={dataTestId}
       onError={() => setFailed(true)}
       className="h-8 w-full"
     />

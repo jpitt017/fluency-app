@@ -721,4 +721,12 @@ export interface TeacherRosterLearner {
     disputed: boolean;
     created_at: string;
   }[];
+  weekly_recordings: {
+    id: string;
+    attemptId: string;
+    weekNumber: number;
+    takeNumber: number;
+    label: string;
+    href: string;
+  }[];
 }

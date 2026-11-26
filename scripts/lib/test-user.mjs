@@ -1,3 +1,5 @@
+import { clearUserStorage } from '../../lib/b1b2/delete-user-storage.mjs';
+
 /**
  * Shared helpers for production-safe Supabase test users.
  *
@@ -53,6 +55,7 @@ const USER_TABLES = [
   'week_sentence_practice',
   'week_input_answers',
   'week_skill_completions',
+  'week_speaking_attempts',
   'issue_reports',
   'issue_report_attempts',
   'writing_submissions',
@@ -91,8 +94,15 @@ export async function createTestUser(admin, prefix) {
 /** Remove every row linked to a test user, then delete the auth user itself. */
 export async function deleteTestUser(admin, id) {
   if (!id) return;
-  const files = await admin.storage.from('issue-attachments').list(id, { limit: 1000 });
-  if (!files.error && files.data?.length) await admin.storage.from('issue-attachments').remove(files.data.map((file) => `${id}/${file.name}`));
+  // Weekly takes are nested under <user id>/week-speaking/...; clear both
+  // private buckets recursively so a failed test leaves no orphaned audio.
+  for (const bucket of ['issue-attachments', 'speaking-recordings']) {
+    try {
+      await clearUserStorage(admin.storage, bucket, id);
+    } catch (error) {
+      console.warn(`Could not clear ${bucket} for test user ${id}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
   for (const table of USER_TABLES) {
     // Some deployments may not have every optional table; ignore "not found".
     const { error } = await admin.from(table).delete().eq('user_id', id);
