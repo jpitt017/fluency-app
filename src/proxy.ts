@@ -16,6 +16,9 @@ export async function proxy(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const pathname = request.nextUrl.pathname.replace(/\/$/, '');
   const isAiProtected = AI_PROTECTED_PATHS.has(pathname);
+  // This endpoint serves only authored teaching examples. It needs neither a
+  // session nor an AI provider, including when Supabase is unavailable.
+  const isPublicSentenceExample = pathname === '/api/week/sentence/example' && request.method === 'GET';
 
   // Forward Supabase PKCE / OTP callbacks that land on `/` directly to `/auth/callback`.
   if (
@@ -30,7 +33,7 @@ export async function proxy(request: NextRequest) {
 
   // Fail closed on protected AI API routes when auth is not configured.
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder.supabase.co')) {
-    if (request.nextUrl.pathname.startsWith('/api/') && pathname !== '/api/lessons/generate') {
+    if (request.nextUrl.pathname.startsWith('/api/') && pathname !== '/api/lessons/generate' && !isPublicSentenceExample) {
       console.error('[proxy] authentication and usage controls are not configured');
       return NextResponse.json(
         { error: pathname.startsWith('/api/teacher/')

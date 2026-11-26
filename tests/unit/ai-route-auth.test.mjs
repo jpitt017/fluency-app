@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import ts from 'typescript';
 
 const proxy = readFileSync('src/proxy.ts', 'utf8');
 const pathBlock = proxy.match(/const AI_PROTECTED_PATHS = new Set\(\[([\s\S]*?)\]\)/)?.[1];
@@ -39,4 +41,27 @@ test('proxy refreshes the session but leaves authorization to the routes', () =>
   assert.doesNotMatch(proxy, /status: 401/);
   assert.match(proxy, /request\.cookies\.set\(name, value\)/);
   assert.match(proxy, /response\.cookies\.set\(name, value/);
+});
+
+test('only the public example GET bypasses the no-Supabase API fail-closed rule', async () => {
+  const compiled = ts.transpileModule(proxy, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const exports = {};
+  runInNewContext(compiled, {
+    exports, process: { env: {} }, console: { error() {} },
+    require(name) {
+      if (name === 'next/server') return { NextResponse: {
+        next: () => ({ status: 200 }),
+        json: (body, init) => ({ body, status: init.status }),
+      } };
+      if (name === '@supabase/ssr') return { createServerClient: () => { throw new Error('No client expected'); } };
+      throw new Error(name);
+    },
+  });
+  const request = (pathname, method = 'GET') => ({
+    method, nextUrl: { pathname, searchParams: new URLSearchParams() },
+  });
+  assert.equal((await exports.proxy(request('/api/week/sentence/example'))).status, 200);
+  assert.equal((await exports.proxy(request('/api/week/sentence/example', 'POST'))).status, 503);
+  assert.equal((await exports.proxy(request('/api/week/sentence', 'POST'))).status, 503);
+  assert.equal((await exports.proxy(request('/api/writing/correct', 'POST'))).status, 503);
 });

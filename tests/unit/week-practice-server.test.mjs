@@ -13,6 +13,8 @@ import * as review from '../../lib/curriculum/week-practice-review.mjs';
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const details = JSON.parse(read('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
 const vocabularyBank = JSON.parse(read('supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json'));
+const grammarSupport = JSON.parse(read('supabase-b1-b2/content/curriculum/grammar-use-it-support-weeks-01-04.json'));
+const vocabularySupport = JSON.parse(read('supabase-b1-b2/content/curriculum/vocab-sentence-support-weeks-01-04.json'));
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 /** Execute the actual server modules, with an in-memory Supabase, never live SQL. */
@@ -87,9 +89,11 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
   const grammar = load('lib/curriculum/learner-grammar.ts', {
     'server-only': {}, '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json': details,
     './grammar-marking.mjs': grammarMarking,
+    './week-sentence-support': { grammarUseItSupport: (week) => grammarSupport.weeks.find((entry) => entry.week === week) ?? null },
   }, logs);
   const vocabulary = load('lib/curriculum/learner-vocabulary-exercises.ts', {
     'server-only': {}, '../../supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json': vocabularyBank,
+    '../../supabase-b1-b2/content/curriculum/vocab-sentence-support-weeks-01-04.json': vocabularySupport,
     './vocabulary-exercise-projection.mjs': vocabularyProjection,
   }, logs);
   const plan = load('lib/curriculum/week-practice-plan.ts', {

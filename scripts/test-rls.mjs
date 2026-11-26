@@ -52,6 +52,34 @@ async function run() {
     const { error: spoofUnlockError } = await clientA.from('week_output_submissions').insert({ user_id: userAId, week_number: 1, skill: 'writing' });
     if (!spoofUnlockError) throw new Error('Learner could create a model unlock directly');
 
+    // Both checked sentence versions and drafts are private. Learners can
+    // read only their own work; only the service can create or change marks,
+    // claim a check, or release a slot.
+    const sentenceRows = [
+      { user_id: userAId, week_number: 1, item_id: 'W1-U1', kind: 'grammar-use-it', first_answer: 'A first.', first_feedback: { corrected: 'A first.' }, first_on_target: true },
+      { user_id: userBId, week_number: 1, item_id: 'W1-U1', kind: 'grammar-use-it', first_answer: 'B first.', first_feedback: { corrected: 'B first.' }, first_on_target: true, second_answer: 'B second.', second_feedback: { corrected: 'B second.' }, second_on_target: true, draft_answer: 'B private draft.' },
+    ];
+    const sentenceSeed = await admin.from('week_sentence_practice').insert(sentenceRows);
+    if (sentenceSeed.error) throw new Error(`Sentence fixture failed: ${sentenceSeed.error.message}`);
+    const ownSentences = await clientA.from('week_sentence_practice').select('first_answer').eq('user_id', userAId);
+    if (ownSentences.error || ownSentences.data?.length !== 1) throw new Error('Learner could not read own sentence');
+    const foreignSentences = await clientA.from('week_sentence_practice').select('*').eq('user_id', userBId);
+    if (foreignSentences.error || foreignSentences.data?.length) throw new Error('Learner could read another learner’s sentence versions');
+    const anonSentences = await anonClient.from('week_sentence_practice').select('*');
+    if (!anonSentences.error && anonSentences.data?.length) throw new Error('Anonymous user could read sentence versions');
+    const spoofSentence = await clientA.from('week_sentence_practice').insert({ user_id: userAId, week_number: 1, item_id: 'W1-U2', kind: 'grammar-use-it' });
+    if (!spoofSentence.error) throw new Error('Learner could create sentence marks directly');
+    const changeSentence = await clientA.from('week_sentence_practice').update({ first_answer: 'changed' }).eq('user_id', userBId).select();
+    if (!changeSentence.error && changeSentence.data?.length) throw new Error('Learner changed another learner’s sentence');
+    const deleteSentence = await clientA.from('week_sentence_practice').delete().eq('user_id', userBId).select();
+    if (!deleteSentence.error && deleteSentence.data?.length) throw new Error('Learner deleted another learner’s sentence');
+    const spoofClaim = await clientA.rpc('claim_week_sentence_check', { p_user_id: userBId, p_week_number: 1, p_item_id: 'W1-U2', p_kind: 'grammar-use-it', p_answer: 'Spoof.', p_version: 1 });
+    if (!spoofClaim.error) throw new Error('Learner could claim another learner’s sentence check');
+    const foreignAfter = await admin.from('week_sentence_practice').select('first_answer,second_answer,draft_answer').eq('user_id', userBId).single();
+    if (foreignAfter.error || foreignAfter.data?.first_answer !== 'B first.' || foreignAfter.data?.second_answer !== 'B second.' || foreignAfter.data?.draft_answer !== 'B private draft.') {
+      throw new Error('Another learner’s sentence versions did not remain unchanged');
+    }
+
     // Week progression is shared across sessions and requires all three tasks.
     const startWeek = await clientA.rpc('refresh_current_week');
     if (startWeek.error || startWeek.data !== 1) throw new Error('New learner should start at Week 1');

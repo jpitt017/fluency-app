@@ -52,13 +52,15 @@ test('the prose-key guard rejects the authored instruction strings', () => {
   }
 });
 
-test('the route requires an authenticated learner before anything else', () => {
-  const authIndex = route.indexOf('await client.auth.getUser()');
-  // The call, not the import at the top of the file.
-  const markIndex = route.indexOf('await enforceAiUsage(');
-  assert.ok(authIndex > 0 && markIndex > 0);
-  assert.ok(authIndex < markIndex, 'usage is charged before the learner is identified');
-  assert.match(route, /status: 401/);
+test('the route requires an authenticated learner before invoking either checker', () => {
+  // The personal checker is declared above POST, so check execution order in
+  // POST rather than comparing source positions across function declarations.
+  const post = route.slice(route.indexOf('export async function POST'));
+  const authIndex = post.indexOf('await client.auth.getUser()');
+  const personalIndex = post.indexOf('return checkPersonalSentence(');
+  const rewriteIndex = post.indexOf('await enforceAiUsage(');
+  assert.ok(authIndex > 0 && personalIndex > authIndex && rewriteIndex > authIndex);
+  assert.match(post, /status: 401/);
 });
 
 test('the route refuses a week that is not open yet', () => {
@@ -67,22 +69,30 @@ test('the route refuses a week that is not open yet', () => {
   assert.match(route, /This week is not open yet\./);
 });
 
-test('all three boxes are routed to a table "Delete my data" already clears', () => {
-  // Reusing the existing attempt tables is what makes the deletion requirement
-  // work without a new migration.
+test('all three boxes and both personal versions are covered by Delete my data', () => {
   assert.match(route, /'week_grammar_attempts' \| 'week_vocabulary_attempts'/);
   assert.match(route, /kind === 'vocabulary-sentence' \? 'week_vocabulary_attempts' : 'week_grammar_attempts'/);
-  const migrations = readFileSync(new URL('../../supabase-b1-b2/migrations/0044_repair_deletion_function.sql', import.meta.url), 'utf8');
+  const repair = readFileSync(new URL('../../supabase-b1-b2/migrations/0044_repair_deletion_function.sql', import.meta.url), 'utf8');
   for (const table of ['week_vocabulary_attempts', 'week_grammar_attempts', 'week_input_answers']) {
-    assert.ok(migrations.includes(table), `${table} is not covered by the deletion repair`);
+    assert.ok(repair.includes(table), `${table} is not covered by the deletion repair`);
   }
+  const migration = readFileSync(new URL('../../supabase-b1-b2/migrations/0059_week_sentence_writing_support.sql', import.meta.url), 'utf8');
+  assert.match(migration, /delete from public\.week_sentence_practice where user_id = \$1/);
+  assert.match(migration, /first_answer/);
+  assert.match(migration, /second_answer/);
 });
 
 test('a miss becomes a review card, and the attempt is stored either way', () => {
   assert.match(route, /from\('error_review_cards'\)/);
   assert.match(route, /addedToReview/);
-  // The attempt insert happens before the card, so a card failure cannot lose it.
-  assert.ok(route.indexOf("from(table).insert") < route.indexOf("from('error_review_cards').insert"));
+  // Both paths save their attempt before creating a card. The personal path
+  // saves the checked version and attempt atomically in a service-only RPC.
+  const personal = route.slice(route.indexOf('async function checkPersonalSentence'), route.indexOf('export async function POST'));
+  const rewrite = route.slice(route.indexOf('export async function POST'));
+  const personalSave = personal.indexOf("rpc('finish_week_sentence_check'");
+  const rewriteSave = rewrite.indexOf('from(table).insert');
+  assert.ok(personalSave >= 0 && personalSave < personal.indexOf("from('error_review_cards').insert"));
+  assert.ok(rewriteSave >= 0 && rewriteSave < rewrite.indexOf("from('error_review_cards').insert"));
 });
 
 test('AI failures use the shared B1 wording and the usual usage accounting', () => {

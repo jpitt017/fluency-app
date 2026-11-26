@@ -10,6 +10,7 @@ import { loadUnlockedModels } from '@/lib/curriculum/week-models';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
+import { grammarWritingIdeas, loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,9 @@ export default async function LabsPage({ searchParams }: LabsProps) {
   const pronunciationWeek = await loadLearnerWeek(weekNumber);
   const selectedWeek = weekParam ? pronunciationWeek : null;
   const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
+  const grammarIdeas = selectedWeek && viewer.signedIn
+    ? grammarWritingIdeas(await loadWeekSentencePractice(weekNumber), weekNumber)
+    : [];
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
   const freeContext: LessonLabContext = {
     prompt:
@@ -107,7 +111,7 @@ export default async function LabsPage({ searchParams }: LabsProps) {
               <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>
             )}
           </div>
-          <WritingLab unlockedModel={unlockedModels?.writing} lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext} />
+          <WritingLab unlockedModel={unlockedModels?.writing} grammarIdeas={grammarIdeas} lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext} />
         </section>
 
         <section id="speaking" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">

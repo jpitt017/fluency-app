@@ -8,8 +8,12 @@ import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
 import { sentenceFeedback, SENTENCE_MODEL_ID, type SentenceContext } from '@/lib/b1b2/week-sentence-feedback';
-import { normaliseFeedback, normaliseSentence, praiseFor, reviewCardFor } from '@/lib/curriculum/free-text-marking.mjs';
+import { normaliseFeedback, praiseFor, reviewCardFor } from '@/lib/curriculum/free-text-marking.mjs';
 import { matchesGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
+import { copiesExample, grammarSentenceCount, hasUnfilledStarter } from '@/lib/curriculum/week-sentence-copy.mjs';
+import { sentenceExamples, sentenceSupport } from '@/lib/curriculum/week-sentence-support';
+import { grammarUseItFeedback } from '@/lib/b1b2/grammar-use-it-feedback';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * One route for the three free-text boxes on /week/[n]:
@@ -18,20 +22,19 @@ import { matchesGrammarAnswer } from '@/lib/curriculum/grammar-marking.mjs';
  *   grammar "Use it" sentences       step: 'Use it'
  *   vocabulary step 7 sentences      id "V<n>-S<n>" in the vocabulary bank
  *
- * They share everything that matters: the target form is resolved on the server
- * from the private item bank, the answer is checked against it before any model
- * call, the attempt is stored in the week attempt tables so "Delete my data"
- * already covers it, and a miss becomes a Review card.
+ * The target comes from the private item bank and a miss can create a Review
+ * card. Fix it keeps its existing deterministic check and attempt table.
+ * Personal items reject copied examples and atomically save up to two checked
+ * versions alongside their attempts. Delete my data clears every version.
  *
- * Nothing from the item bank reaches the browser except the feedback for the
- * sentence the learner just wrote.
+ * Marking criteria never reach the browser; teaching examples are separate.
  */
 
 const MODEL_ID = SENTENCE_MODEL_ID;
 const LOG_ENDPOINT = '/api/week/sentence';
 const MAX_ANSWER = 600;
 
-type Body = { week?: unknown; id?: unknown; answer?: unknown };
+type Body = { week?: unknown; id?: unknown; answer?: unknown; version?: unknown };
 
 type Resolved = {
   context: SentenceContext;
@@ -66,8 +69,9 @@ function resolveItem(week: number, id: string): Resolved | null {
     return {
       context: {
         prompt: grammarItem.prompt,
-        // The week's grammar is what the model is told the sentence must use.
-        target: grammarWeek?.grammar.main ?? 'the grammar from this week',
+        // Use it has a distinct authored target for each item (including the
+        // week's secondary form); a week-wide label is not specific enough.
+        target: grammarItem.step === 'Use it' && key ? key : grammarWeek?.grammar.main ?? 'the grammar from this week',
         kind: grammarItem.step === 'Rewrite' ? 'grammar-rewrite' : 'grammar-use-it',
       },
       category: 'tense',
@@ -78,22 +82,165 @@ function resolveItem(week: number, id: string): Resolved | null {
   const vocabularyWeek = vocabularyBank.weeks.find((entry) => entry.week === week);
   const sentence = vocabularyWeek?.yourSentence.find((entry) => entry.id === id);
   if (sentence) {
+    const support = sentenceSupport(week, id);
     return {
-      // onTargetWhen is a prose note for the teacher, so it is passed to the
-      // model as context only. The model answers (there is one) is the best
-      // single answer available, and is used for the deterministic check.
-      context: { prompt: sentence.prompt, target: sentence.onTargetWhen, kind: 'vocabulary-sentence' },
+      // Keep the authored onTargetWhen exactly as it was: it is the criterion
+      // passed to the model, not the new prompt, starter, or teaching examples.
+      context: {
+        prompt: support?.kind === 'vocabulary-sentence' ? support.prompt : sentence.prompt,
+        target: sentence.onTargetWhen,
+        kind: 'vocabulary-sentence',
+      },
       category: 'word_choice',
-      accepted: sentence.model ? [sentence.model] : [],
+      accepted: [],
     };
   }
 
   return null;
 }
 
-/** Which week attempt table stores this answer; reuse, no new table. */
+/** Which week attempt table stores this answer; the optional checks also use it for progress. */
 function attemptTable(kind: SentenceContext['kind']): 'week_grammar_attempts' | 'week_vocabulary_attempts' {
   return kind === 'vocabulary-sentence' ? 'week_vocabulary_attempts' : 'week_grammar_attempts';
+}
+
+type Claim = { status?: string; claimToken?: string; version?: number; previous?: { answer?: string } | null };
+
+/** Personal items have a durable, server-enforced two-check limit per item. */
+async function checkPersonalSentence({
+  client, admin, userId, week, id, answer, item, version, startedAt,
+}: {
+  client: SupabaseClient;
+  admin: SupabaseClient;
+  userId: string;
+  week: number;
+  id: string;
+  answer: string;
+  item: Resolved;
+  version: unknown;
+  startedAt: number;
+}) {
+  const examples = sentenceExamples(week, id);
+  if (!examples.length) return NextResponse.json({ error: 'This sentence is not available.' }, { status: 503 });
+  // This is feedback, not a failed mark: do not charge, save a Review card, or
+  // use up either of the learner's checks for a copied teaching example.
+  if (copiesExample(answer, examples)) {
+    return NextResponse.json({ copiedExample: true, message: 'Try to write about your own life.' }, { headers: { 'Cache-Control': 'no-store' } });
+  }
+  if (hasUnfilledStarter(answer)) {
+    return NextResponse.json({ error: 'Fill in the blanks with your own ideas first.' }, { status: 400 });
+  }
+  if (item.context.kind === 'grammar-use-it' && ![2, 3].includes(grammarSentenceCount(answer))) {
+    return NextResponse.json({ error: 'Write 2–3 sentences about your own life.' }, { status: 400 });
+  }
+  if (item.context.kind === 'vocabulary-sentence' && answer.length > 500) {
+    return NextResponse.json({ error: 'Please keep your sentence under 500 characters.' }, { status: 400 });
+  }
+  // A stale first-check request is never silently treated as a rewrite. Older
+  // clients that omit the field can only request the first check.
+  const requestedVersion = version === undefined ? 1 : version;
+  if (requestedVersion !== 1 && requestedVersion !== 2) {
+    return NextResponse.json({ error: 'Please reload this page and try again.' }, { status: 400 });
+  }
+  const { data, error: claimError } = await admin.rpc('claim_week_sentence_check', {
+    p_user_id: userId, p_week_number: week, p_item_id: id, p_kind: item.context.kind,
+    p_answer: answer, p_version: requestedVersion,
+  });
+  const claim = data as Claim | null;
+  if (claimError || !claim) return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
+  if (claim.status === 'limit') return NextResponse.json({ error: 'You have checked this item twice.' }, { status: 409 });
+  if (claim.status === 'busy') return NextResponse.json({ error: 'A check is already in progress. Please wait.' }, { status: 409 });
+  if (claim.status === 'stale') return NextResponse.json({ error: 'Your saved work has changed. Please reload this page.' }, { status: 409 });
+  if (claim.status !== 'claimed' || typeof claim.claimToken !== 'string' || claim.version !== requestedVersion) {
+    return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
+  }
+  const token = claim.claimToken;
+  let completed = false;
+  let headers: Record<string, string> = {};
+  try {
+    if (requestedVersion === 2 && typeof claim.previous?.answer !== 'string') {
+      return NextResponse.json({ error: 'Could not load your first answer. Please try again.' }, { status: 503 });
+    }
+    if (!process.env.GROQ_API_KEY) {
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT, model: MODEL_ID, statusCode: 503, latencyMs: Date.now() - startedAt,
+        inputChars: answer.length, errorMessage: 'AI checker is not configured',
+      }, true);
+      return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503 });
+    }
+    const guard = await enforceAiUsage(client, '/api/review/check-rewrite', 1);
+    headers = guard.headers;
+    if (!guard.allowed && guard.response) return guard.response;
+
+    let result;
+    try {
+      result = item.context.kind === 'grammar-use-it'
+        ? await grammarUseItFeedback(item.context, answer, claim.previous?.answer)
+        : await sentenceFeedback(item.context, answer);
+    } catch (err) {
+      const failure = await providerFailureResponse({
+        admin: client, endpoint: LOG_ENDPOINT, model: MODEL_ID, error: err, workSaved: true,
+      });
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT, model: MODEL_ID, statusCode: failure.status, latencyMs: Date.now() - startedAt,
+        inputChars: answer.length, errorMessage: failure.errorMessage,
+      }, true);
+      return failure.response;
+    }
+    if (!result) {
+      await logAiRequest(client, {
+        endpoint: LOG_ENDPOINT, model: MODEL_ID, statusCode: 503, latencyMs: Date.now() - startedAt,
+        inputChars: answer.length, errorMessage: 'AI checker returned no verdict',
+      }, true);
+      return NextResponse.json({ error: 'We could not check your sentence. Please try again.' }, { status: 503, headers });
+    }
+    await logAiRequest(client, {
+      endpoint: LOG_ENDPOINT, model: MODEL_ID, statusCode: 200, latencyMs: Date.now() - startedAt,
+      inputChars: answer.length, promptTokens: result.promptTokens, completionTokens: result.completionTokens,
+    }, true);
+
+    const { data: saved, error: saveError } = await admin.rpc('finish_week_sentence_check', {
+      p_user_id: userId, p_week_number: week, p_item_id: id, p_claim_token: token,
+      p_on_target: result.onTarget, p_feedback: result.feedback,
+    });
+    if (saveError || !saved || saved.status !== 'completed') {
+      return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503, headers });
+    }
+    completed = true;
+
+    let addedToReview = false;
+    if (!result.onTarget) {
+      const card = reviewCardFor({
+        kind: 'use-it', prompt: answer, answer, corrected: result.feedback.corrected,
+        target: item.context.target, category: item.category,
+      });
+      if (card) {
+        const { error: cardError } = await admin.from('error_review_cards').insert({ user_id: userId, ...card });
+        addedToReview = !cardError;
+        if (cardError && cardError.code !== '23505') console.error('[week-sentence] Failed to add review card:', cardError.message);
+      }
+    }
+    return NextResponse.json({
+      onTarget: result.onTarget,
+      corrected: result.feedback.corrected,
+      addedToReview,
+      checkedWith: 'model',
+      version: saved.version,
+      first: saved.first,
+      second: saved.second,
+    }, { headers: { ...headers, 'Cache-Control': 'no-store', 'X-Check-Latency-Ms': String(Date.now() - startedAt) } });
+  } finally {
+    if (!completed) {
+      try {
+        const { error } = await admin.rpc('release_week_sentence_check', {
+          p_user_id: userId, p_week_number: week, p_item_id: id, p_claim_token: token,
+        });
+        if (error) console.error('[week-sentence] Could not release check:', error.message);
+      } catch (error) {
+        console.error('[week-sentence] Could not release check:', error);
+      }
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -129,13 +276,15 @@ export async function POST(request: Request) {
   const admin = createAdminSupabase();
   if (!admin) return NextResponse.json({ error: 'Could not save your answer.' }, { status: 503 });
 
+  if (item.context.kind !== 'grammar-rewrite') {
+    return checkPersonalSentence({ client, admin, userId: user.id, week, id: body.id, answer, item, version: body.version, startedAt });
+  }
+
   // Deterministic first: an answer that matches one of the authored correct
   // answers is accepted without a model call, so it costs no AI units. Anything
   // else is judged by the model, which is what lets a differently-worded but
   // correct sentence through -- the point of not marking against one key.
-  let onTarget = item.context.kind === 'grammar-rewrite'
-    ? item.accepted.some((candidate) => matchesGrammarAnswer(candidate, answer, true))
-    : item.accepted.map(normaliseSentence).includes(normaliseSentence(answer));
+  let onTarget = item.accepted.some((candidate) => matchesGrammarAnswer(candidate, answer, true));
 
   let feedback = normaliseFeedback(null, {
     good: praiseFor(item.context.target, true) ?? 'You wrote a clear sentence.',

@@ -1,6 +1,7 @@
 import 'server-only';
 import details from '../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import { projectLearnerGrammar } from './grammar-marking.mjs';
+import { grammarUseItSupport } from './week-sentence-support';
 
 /**
  * The learner's grammar practice: five steps instead of the teacher page's nine.
@@ -30,6 +31,8 @@ export type LearnerGrammarItem = {
   blankCount: number;
   /** Rewrite items cannot be marked against one fixed answer. */
   needsAi: boolean;
+  /** Learner-facing guidance only; the examples arrive one at a time. */
+  useItSupport?: { pattern: string; starters: string[] };
 };
 
 export type LearnerGrammarStep = {
@@ -43,6 +46,8 @@ export type LearnerGrammarStep = {
 
 export type LearnerGrammar = {
   notice: string;
+  /** A short example by an imaginary learner, shown before the Use it boxes. */
+  useItModel: string | null;
   steps: LearnerGrammarStep[];
 };
 
@@ -50,7 +55,7 @@ const INSTRUCTIONS: Record<LearnerGrammarStep['title'], string> = {
   'See it': 'Read the short text, then answer what each form means.',
   Practise: 'Choose the right form, then complete each sentence.',
   'Fix it': 'Find the mistake, then write the sentence again correctly.',
-  'Use it': 'Write two sentences about your own life. The app will check them.',
+  'Use it': 'Write 2–3 sentences about your own life. The app will check them.',
   Remember: 'Try one more point from this week, then an item from an earlier week.',
 };
 
@@ -81,15 +86,22 @@ export function learnerGrammar(weekNumber: number): LearnerGrammar | null {
   const targets = new Map(
     (practice.items as { id: string; target?: GrammarTarget }[]).map((item) => [item.id, item.target ?? 'Main']),
   );
+  const useItSupport = grammarUseItSupport(weekNumber);
   const steps = LEARNER_STEPS.map((definition) => {
     const items = projected.items
       .filter((item) => definition.matches.test(String(item.step)))
       .map((item) => {
         const step = String(item.step);
+        const support = step === 'Use it' ? useItSupport?.items.find((entry) => entry.id === item.id) : undefined;
+        if (step === 'Use it' && weekNumber <= 4 && !support) {
+          throw new Error(`Missing Use it support for ${item.id}`);
+        }
         return {
           ...item,
           target: targets.get(item.id) ?? 'Main',
           needsAi: step === 'Rewrite' || step === 'Use it',
+          // Never serialize the example list in the initial page payload.
+          useItSupport: support ? { pattern: support.pattern, starters: [...support.starters] } : undefined,
         };
       });
     const adaptive: LearnerGrammarStep['adaptive'] | undefined =
@@ -110,5 +122,5 @@ export function learnerGrammar(weekNumber: number): LearnerGrammar | null {
     const lost = projected.items.filter((item) => !known.has(item.id)).map((item) => `${item.id} (${item.step})`);
     throw new Error(`Grammar step mapping dropped ${lost.length} item(s): ${lost.join(', ')}`);
   }
-  return { notice: projected.notice, steps };
+  return { notice: projected.notice, useItModel: useItSupport?.model ?? null, steps };
 }

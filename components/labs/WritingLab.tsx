@@ -17,6 +17,8 @@ export interface WritingLabProps {
   lessonContext?: LessonLabContext;
   compactLesson?: boolean;
   unlockedModel?: string | null;
+  /** Corrected personal sentences from this exact week's grammar practice. */
+  grammarIdeas?: string[];
 }
 
 interface WritingFeedbackResponse {
@@ -38,6 +40,7 @@ export default function WritingLab({
   lessonContext,
   compactLesson = false,
   unlockedModel = null,
+  grammarIdeas = [],
 }: WritingLabProps) {
   const activePrompt =
     lessonContext?.prompt ??
@@ -138,6 +141,16 @@ export default function WritingLab({
             ))}
           </div>
         </div>
+      )}
+
+      {grammarIdeas.length > 0 && (
+        <section className="space-y-2 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <h3 className="font-semibold">Ideas from your grammar practice</h3>
+          <p className="text-sm text-stone-700">These are your corrected sentences. Use them if they help.</p>
+          <ul className="list-disc space-y-1 pl-5 text-sm">
+            {grammarIdeas.map((idea, index) => <li key={`${index}:${idea}`}>{idea}</li>)}
+          </ul>
+        </section>
       )}
 
       <textarea
