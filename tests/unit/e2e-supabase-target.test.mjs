@@ -130,8 +130,27 @@ test('the live schema check is absent on PR builds and runs only on main push, s
   assert.doesNotMatch(live, /https:\/\//);
   assert.equal((workflow.match(/npm run check:live-schema/g) ?? []).length, 1);
 
-  const rls = workflow.slice(e2eStart, workflow.indexOf('  # Manual dispatch only', e2eStart));
-  assert.ok(rls.length > 0);
+  assert.doesNotMatch(workflow, /production-(?:ai|placement|issue)-test:/);
+  assert.doesNotMatch(workflow, /ebzmkhrssgnzmixfsuso/);
+  assert.equal((workflow.match(/secrets\.SUPABASE_SERVICE_ROLE_KEY/g) ?? []).length, 0, 'CI jobs never receive the production service-role key');
+  assert.match(live, /SUPABASE_LIVE_ANON_KEY/);
+  assert.doesNotMatch(live, /SUPABASE_SERVICE_ROLE_KEY/);
+  for (const script of ['test-ai-limits.mjs', 'test-issue-alert-grouping.mjs', 'test-rls.mjs']) {
+    const content = readFileSync(new URL(`../../scripts/${script}`, import.meta.url), 'utf8');
+    assert.match(content, /assertE2ESupabaseApiTarget\(\)/, `${script} validates the isolated target`);
+    assert.doesNotMatch(content, /ebzmkhrssgnzmixfsuso|process\.env\.SUPABASE_SERVICE_ROLE_KEY|process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
+  }
+});
+
+test('the required rls-isolation job waits for E2E migrations and targets only the isolated project', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const e2eStart = workflow.indexOf('  playwright-e2e:\n');
+  const rlsStart = workflow.indexOf('  rls-isolation:\n');
+  assert.ok(e2eStart >= 0 && rlsStart > e2eStart);
+  const e2e = workflow.slice(e2eStart, rlsStart);
+  const rls = workflow.slice(rlsStart);
+  assert.match(e2e, /Apply repository migrations to the isolated E2E project/);
+  assert.match(rls, /needs: playwright-e2e/);
   assert.match(rls, /group: e2e-isolated\n\s+cancel-in-progress: false/);
   assert.match(rls, /vars\.E2E_SUPABASE_URL/);
   assert.match(rls, /vars\.E2E_SUPABASE_ANON_KEY/);
@@ -139,17 +158,7 @@ test('the live schema check is absent on PR builds and runs only on main push, s
   assert.match(rls, /node scripts\/test-ai-limits\.mjs/);
   assert.match(rls, /node scripts\/test-issue-alert-grouping\.mjs/);
   assert.match(rls, /node scripts\/test-rls\.mjs/);
-  assert.doesNotMatch(rls, /ebzmkhrssgnzmixfsuso|secrets\.SUPABASE_SERVICE_ROLE_KEY|secrets\.NEXT_PUBLIC_SUPABASE_URL/);
-  for (const script of ['test-ai-limits.mjs', 'test-issue-alert-grouping.mjs', 'test-rls.mjs']) {
-    const content = readFileSync(new URL(`../../scripts/${script}`, import.meta.url), 'utf8');
-    assert.match(content, /assertE2ESupabaseApiTarget\(\)/, `${script} validates the isolated target`);
-    assert.doesNotMatch(content, /ebzmkhrssgnzmixfsuso|process\.env\.SUPABASE_SERVICE_ROLE_KEY|process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
-  }
-  assert.doesNotMatch(workflow, /production-(?:ai|placement|issue)-test:/);
-  assert.doesNotMatch(workflow, /ebzmkhrssgnzmixfsuso/);
-  assert.equal((workflow.match(/secrets\.SUPABASE_SERVICE_ROLE_KEY/g) ?? []).length, 0, 'CI jobs never receive the production service-role key');
-  assert.match(live, /SUPABASE_LIVE_ANON_KEY/);
-  assert.doesNotMatch(live, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(rls, /github\.event_name|ebzmkhrssgnzmixfsuso|secrets\.SUPABASE_SERVICE_ROLE_KEY|secrets\.NEXT_PUBLIC_SUPABASE_URL/);
 });
 
 test('the live-schema script has no app-URL fallback', () => {

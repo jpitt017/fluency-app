@@ -171,27 +171,6 @@ jobs:
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --yes
-      - name: Verify AI limits and pilot access on isolated E2E project
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-ai-limits.mjs
-      - name: Verify issue alert grouping on isolated E2E project
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-issue-alert-grouping.mjs
-      - name: Verify Postgres RLS isolation and deletion coverage on isolated E2E project
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-rls.mjs
       - name: Seed isolated E2E learner and minimal fixture
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -390,3 +369,38 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
+
+  rls-isolation:
+    needs: playwright-e2e
+    runs-on: ubuntu-latest
+    concurrency:
+      group: e2e-isolated
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify AI limits and pilot access on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-ai-limits.mjs
+      - name: Verify issue alert grouping on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-issue-alert-grouping.mjs
+      - name: Verify Postgres RLS isolation and deletion coverage on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/test-rls.mjs
