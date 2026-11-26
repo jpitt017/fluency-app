@@ -18,6 +18,7 @@ import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
+import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const { n } = await params;
   if (!/^(?:[1-9]|[12][0-9]|3[0-2])$/.test(n)) notFound();
   const number = Number(n);
-  const [details, syllabus, viewer, trialAudio, practice, speakingSupport] = await Promise.all([
+  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice] = await Promise.all([
     loadLearnerWeek(number),
     loadSyllabusContent(),
     getViewer(),
@@ -35,6 +36,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     // the server so a reload shows the practice as it was left, not empty.
     loadWeekPracticeProgress(number),
     loadWeekSpeakingSupport(number),
+    loadWeekSentencePractice(number),
   ]);
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
@@ -60,7 +62,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     <FocusWeekSection week={number} />
     {!viewer.signedIn && <RememberWeek week={number} />}
     {header}
-    {grammar && <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} hasVocabulary={Boolean(cards && vocabulary)} />}
+    {grammar && <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} sentencePractice={sentencePractice} hasVocabulary={Boolean(cards && vocabulary)} />}
     <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20">
       <h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2>
       <ReadingPracticeLayout
@@ -70,7 +72,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         after={<ReadingAfterQuestions week={number} reading={details.readingSupport} />}
       />
     </section>
-    {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} />}
+    {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} sentencePractice={sentencePractice} />}
     <section id="listening-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Listening: {details.listening.title}</h2>
       <ListeningBeforePlayer support={details.listeningSupport.support} />
       {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio}>{listeningQuestions}{listeningAfterQuestions}</ListeningTrialPlayer></> : <>{details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}{listeningQuestions}{listeningAfterQuestions}</>}

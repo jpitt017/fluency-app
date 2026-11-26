@@ -9,8 +9,9 @@ import {
   nextTaskAfter,
 } from '@/lib/curriculum/week-practice.mjs';
 import type { PracticeProgress, SavedAnswer } from '@/lib/curriculum/week-practice-progress';
+import type { SentencePracticeByItem } from '@/lib/curriculum/week-sentence-practice';
 import { parseGapText, gapsCoverItems } from '@/lib/curriculum/vocabulary-gap-text.mjs';
-import SentenceBox from './SentenceBox';
+import PersonalSentenceBox from './PersonalSentenceBox';
 import PracticeItemPager from './PracticeItemPager';
 import GapText from './GapText';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
@@ -28,7 +29,7 @@ const STEP_INSTRUCTIONS = [
   'Choose the verb that fits the sentence.',
   'Choose the right form of the word.',
   'Type the word that matches the meaning.',
-  'Write your own sentence with two of the new words.',
+  'Write your own sentences about your life.',
 ];
 
 /** Four or five cards at a time: enough to scan, not enough to overwhelm. */
@@ -250,12 +251,14 @@ export default function VocabularyPractice({
   exercises,
   signedIn,
   progress,
+  sentencePractice,
 }: {
   cards: LearnerVocabularyCard[];
   exercises: VocabularyExercises;
   signedIn: boolean;
   /** What the server has saved for this learner. */
   progress?: PracticeProgress | null;
+  sentencePractice?: SentencePracticeByItem;
 }) {
   const steps = ['Words', 'Match', 'Complete the text', 'Choose the verb', 'Word forms', 'Type the word', 'Your sentences'];
   const groups: Question[][] = [[], exercises.match.words.map(q => ({ id: q.id, prompt: q.word, options: exercises.match.meanings })), exercises.text.items.map(q => ({ id: q.id, prompt: `Gap ${q.gap}`, options: exercises.text.wordBox })), exercises.chooseVerb.map(q => ({ id: q.id, prompt: q.question, options: q.options })), exercises.wordForms.map(q => ({ id: q.id, prompt: q.question, options: q.options })), exercises.typeTheWord.items.map(q => ({ id: q.id, prompt: `${q.meaning} (${q.hint})` }))];
@@ -420,8 +423,9 @@ export default function VocabularyPractice({
         initiallyAnswered={progress?.answers ?? {}}
         items={exercises.yourSentence.map((q) => ({
           id: q.id,
-          content: <SentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn}
-            rows={2} initialAnswer={savedAnswers[q.id]?.answer} freezeWhileChecking
+          content: <PersonalSentenceBox key={q.id} week={exercises.week} id={q.id} prompt={q.prompt} signedIn={signedIn}
+            kind="vocabulary-sentence" guidance={{ pattern: q.pattern ?? 'Use the words from this week.', starter: q.starter }}
+            initial={sentencePractice?.[q.id]} initialAnswer={savedAnswers[q.id]?.answer}
             onChecked={(onTarget, answer) => {
               setResults((prev) => ({ ...prev, [q.id]: onTarget }));
               setSavedAnswers((prev) => ({ ...prev, [q.id]: { answer, correct: onTarget, reason: null } }));

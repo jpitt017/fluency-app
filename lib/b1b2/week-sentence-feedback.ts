@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 import { z } from 'zod';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
-import { UNTRUSTED_DATA_SYSTEM_RULE, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
+import { sanitizeLearnerText, UNTRUSTED_DATA_SYSTEM_RULE, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 import { normaliseFeedback } from '@/lib/curriculum/free-text-marking.mjs';
 
 export const SENTENCE_MODEL_ID = 'openai/gpt-oss-20b';
@@ -66,7 +66,7 @@ Task given to the learner: ${context.prompt}
 Target form the sentence must use: ${context.target}
 
 Learner sentence:
-${wrapLearnerSubmission(answer)}`;
+${wrapLearnerSubmission(sanitizeLearnerText(answer, 600).text)}`;
 }
 
 /**

@@ -56,7 +56,7 @@ jobs:
       - run: node --test tests/unit/grammar-practice-position.test.mjs
       # Grammar alternatives, sentence verdicts, and Review scheduling stay
       # server-side and are exercised with fake providers and an in-memory DB.
-      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-vocab-review-server.test.mjs
+      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-sentence-support.test.mjs tests/unit/week-sentence-practice.test.mjs tests/unit/week-sentence-rollout.test.mjs tests/unit/grammar-use-it-feedback.test.mjs tests/unit/week-vocab-review-server.test.mjs
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
@@ -177,22 +177,10 @@ jobs:
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
-          # PR #105 already applied 0059 to this shared isolated E2E project,
-          # while current main reserves that number for its open branch. The CLI
-          # refuses to push when a remote version has no local file, so add a
-          # CI-only ledger shim in the temp workdir (never a repo migration).
-          # It fails closed if the real 0059 schema is absent from a fresh DB.
-          cat > "$workdir/supabase/migrations/0059_week_sentence_writing_support.sql" <<'SQL'
-          -- CI-only ledger shim. This file is not part of the repository.
-          do $$
-          begin
-            if to_regclass('public.week_sentence_practice') is null then
-              raise exception 'E2E project lacks the real 0059 schema; refusing a ledger placeholder';
-            end if;
-          end $$;
-          SQL
-          # Include every unapplied local version on this verified isolated
-          # target. Never use --include-all against production.
+          # Versions 0050–0059 are reserved for the writing-support work and
+          # can be older than already-applied 0060/0062 on this test project.
+          # The target guard above still refuses every non-E2E project; never
+          # use --include-all against production.
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
@@ -374,6 +362,7 @@ jobs:
           done
 
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/week-sentence-practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
           # Idempotency, without a second replay: applying the later additive
@@ -388,6 +377,12 @@ jobs:
           echo "re-applying the additive migrations (must be no-ops)"
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0043_week_input_answers.sql
           psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0044_repair_deletion_function.sql
+          # Test deletion BEFORE reapplying 0059: the older repair must not drop
+          # the new branch and a rerun must not hide such a regression.
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/week-sentence-practice.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          psql "$db" -v ON_ERROR_STOP=1 -q -f supabase-b1-b2/migrations/0059_week_sentence_writing_support.sql
+          psql "$db" -v ON_ERROR_STOP=1 -f tests/database/week-sentence-practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
 
       - name: Stop local Supabase

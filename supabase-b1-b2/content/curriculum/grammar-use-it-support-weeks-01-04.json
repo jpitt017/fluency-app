@@ -1,0 +1,78 @@
+{
+  "version": "grammar-use-it-support-v1",
+  "status": "draft for teacher review",
+  "weeks": [
+    {
+      "week": 1,
+      "model": "When I was a child, I used to play in the park after school, but I don't go there now. Since I started my new job, I have made some good friends.",
+      "items": [
+        {
+          "id": "W1-U1",
+          "pattern": "Say what you used to do, then say what you do now: I used to ... . Now I ... .",
+          "starters": ["When I was a child, I used to ______ .", "After school, I would ______ .", "Now I ______ ."],
+          "examples": ["I used to ride my bike to school. I walk to work now."]
+        },
+        {
+          "id": "W1-U2",
+          "pattern": "Say when the change started and what has changed since then: Since I started ... , I have ... .",
+          "starters": ["Since I started ______, I have ______ .", "I have also ______ .", "Now I feel ______ ."],
+          "examples": ["Since I started my course, I have met new people. I feel more confident now."]
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "model": "I'm going to learn to cook next month. I'm meeting my cousin on Saturday to make our first meal. If I had more time, I would learn to bake too.",
+      "items": [
+        {
+          "id": "W2-U1",
+          "pattern": "Say what you plan to do: I'm going to ... . Then say what you have arranged: I'm meeting ... on ... .",
+          "starters": ["Next month, I'm going to ______ .", "I'm meeting ______ on ______ .", "I'm also going to ______ ."],
+          "examples": ["I'm going to visit my aunt next month. I'm meeting her at the station on Saturday."]
+        },
+        {
+          "id": "W2-U2",
+          "pattern": "Imagine a different situation: If I had ... , I would ... .",
+          "starters": ["If I had a free year, I would ______ .", "I would also ______ .", "I would like to ______ because ______ ."],
+          "examples": ["If I had a free year, I would travel around Scotland. I would learn to take better photos too."]
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "model": "In our flat, you have to wash your dishes, you mustn't leave the door open, and you don't have to cook for everyone. What time do you leave home? Do you usually cook in the evening?",
+      "items": [
+        {
+          "id": "W3-U1",
+          "pattern": "Give your flatmate a rule with have to, a rule with mustn't, and a choice with don't have to.",
+          "starters": ["You have to ______ .", "You mustn't ______ .", "You don't have to ______ ."],
+          "examples": ["You have to wash your dishes. You mustn't leave the door open. You don't have to cook for everyone."]
+        },
+        {
+          "id": "W3-U2",
+          "pattern": "Ask about your flatmate's usual day: Do you ... ? What time do you ... ?",
+          "starters": ["What time do you ______ ?", "Do you usually ______ ?", "When do you ______ ?"],
+          "examples": ["What time do you usually leave home? Do you cook in the evening?"]
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "model": "The old market in my town was built a hundred years ago. Fresh bread is sold there every morning. My town is quieter than the city nearby, and it's the friendliest place I know.",
+      "items": [
+        {
+          "id": "W4-U1",
+          "pattern": "Say when the place was built, then say what happens there now: It was built ... . It is used ... .",
+          "starters": ["The ______ in my town was built ______ .", "Today, it is used for ______ .", "It is visited by ______ ."],
+          "examples": ["The old library in my town was built in 1900. Today, it is used for music classes."]
+        },
+        {
+          "id": "W4-U2",
+          "pattern": "Say how two places are different: My town is quieter than ... . Then say which place you like best.",
+          "starters": ["My town is ______ than ______ .", "It is the ______ place I know.", "I like ______ best because ______ ."],
+          "examples": ["My town is quieter than the city nearby. It is the friendliest place I know."]
+        }
+      ]
+    }
+  ]
+}
