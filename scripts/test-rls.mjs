@@ -9,8 +9,10 @@
  * E2E_SUPABASE_SERVICE_ROLE_KEY; missing or unsafe configuration fails closed.
  */
 
+import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { assertE2ESupabaseApiTarget } from './assert-e2e-supabase-target.mjs';
+import { weekSpeakingRecordingPath } from '../lib/b1b2/week-speaking-recordings.mjs';
 import { createTestUser, deleteTestUser } from './lib/test-user.mjs';
 
 const { projectUrl: url, anonKey, serviceRoleKey } = assertE2ESupabaseApiTarget();
@@ -187,6 +189,66 @@ async function run() {
       throw new Error('RLS BREACH: User A modified User B mediation attempt!');
     }
 
+    // 3c. Weekly speaking recordings: private bucket, owner-prefixed paths,
+    // owner playback only, and staff read. User A must not see User B's files.
+    const attemptId = randomUUID();
+    const audio = new Blob(['weekly speaking audio fixture'], { type: 'audio/webm' });
+    const recordingPath = weekSpeakingRecordingPath({
+      userId: userBId,
+      weekNumber: 1,
+      attemptId,
+      takeNumber: 1,
+      mimeType: 'audio/webm',
+    });
+    const { data: bucket, error: bucketError } = await admin.storage.getBucket('speaking-recordings');
+    if (bucketError || !bucket) throw new Error(`Could not inspect speaking-recordings: ${bucketError?.message}`);
+    if (bucket.public) throw new Error('PRIVACY BREACH: speaking-recordings is a public bucket');
+
+    const { error: uploadError } = await admin.storage
+      .from('speaking-recordings')
+      .upload(recordingPath, audio, { contentType: 'audio/webm', upsert: true });
+    if (uploadError) throw new Error(`Seed weekly recording failed: ${uploadError.message}`);
+    const { error: weeklyRowError } = await admin.from('week_speaking_attempts').insert({
+      id: attemptId,
+      user_id: userBId,
+      week_number: 1,
+      notes: [],
+      first_recording_path: recordingPath,
+      first_transcript: 'Weekly speaking RLS fixture',
+    });
+    if (weeklyRowError) throw new Error(`Seed weekly attempt failed: ${weeklyRowError.message}`);
+
+    const { data: foreignWeeklyRows, error: foreignWeeklyReadError } = await clientA
+      .from('week_speaking_attempts')
+      .select('id,first_recording_path')
+      .eq('id', attemptId);
+    if (foreignWeeklyReadError) throw new Error(`Weekly attempt RLS read failed: ${foreignWeeklyReadError.message}`);
+    if ((foreignWeeklyRows ?? []).length > 0) {
+      throw new Error('RLS BREACH: User A could read User B weekly speaking attempt!');
+    }
+
+    const { data: foreignObjects, error: foreignListError } = await clientA.storage
+      .from('speaking-recordings')
+      .list(`${userBId}/week-speaking/1/${attemptId}`, { limit: 10 });
+    const denied = foreignListError
+      && /permission|not authorized|access denied|403|row-level security/i.test(foreignListError.message ?? '');
+    if (foreignListError && !denied) throw new Error(`Foreign Storage listing failed: ${foreignListError.message}`);
+    if (!denied && (foreignObjects ?? []).length > 0) {
+      throw new Error('RLS BREACH: learner could see another learner’s weekly recording files!');
+    }
+    const foreignSigned = await clientA.storage
+      .from('speaking-recordings')
+      .createSignedUrl(recordingPath, 60);
+    if (foreignSigned.data?.signedUrl) {
+      throw new Error('RLS BREACH: learner minted a signed URL for another learner’s weekly recording!');
+    }
+    const anonSigned = await anonClient.storage
+      .from('speaking-recordings')
+      .createSignedUrl(recordingPath, 60);
+    if (anonSigned.data?.signedUrl) {
+      throw new Error('RLS BREACH: anonymous viewer minted a signed URL for a weekly recording!');
+    }
+
     // 4. Answer tables: anon and learners see no rows; staff see the locked tables.
     const { error: roleErr } = await admin
       .from('profiles')
@@ -197,6 +259,25 @@ async function run() {
     const clientB = createClient(url, anonKey);
     const { error: teacherSignInErr } = await clientB.auth.signInWithPassword({ email: userB.email, password: userB.password });
     if (teacherSignInErr) throw teacherSignInErr;
+
+    // Staff can read a learner's weekly row and mint a 60-second link, but
+    // Storage policies must not let staff write into a learner's folder.
+    const { data: staffWeeklyRows, error: staffWeeklyReadError } = await clientB
+      .from('week_speaking_attempts')
+      .select('id,first_recording_path')
+      .eq('id', attemptId);
+    if (staffWeeklyReadError) throw new Error(`STAFF WEEKLY READ FAILED: ${staffWeeklyReadError.message}`);
+    if ((staffWeeklyRows ?? []).length !== 1) throw new Error('STAFF READ FAILED: teacher could not see weekly speaking attempt');
+    const staffWeeklySigned = await clientB.storage
+      .from('speaking-recordings')
+      .createSignedUrl(recordingPath, 60);
+    if (!staffWeeklySigned.data?.signedUrl) {
+      throw new Error(`STAFF READ FAILED: teacher could not sign weekly recording: ${staffWeeklySigned.error?.message}`);
+    }
+    const { error: staffWeeklyWriteError } = await clientB.storage
+      .from('speaking-recordings')
+      .upload(`${userAId}/week-speaking/1/${randomUUID()}/take-1.webm`, audio, { contentType: 'audio/webm' });
+    if (!staffWeeklyWriteError) throw new Error('RLS BREACH: teacher could write into another learner’s weekly folder');
 
     const staffFile = await clientB.storage.from('issue-attachments').createSignedUrl(issueFile, 60);
     if (staffFile.error) throw new Error('Teacher could not read issue attachment');

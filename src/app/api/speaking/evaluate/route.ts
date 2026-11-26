@@ -4,6 +4,7 @@ import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { validSupportNotes } from '@/lib/curriculum/speaking-support.mjs';
 import { speakingSupportLabels } from '@/lib/curriculum/week-speaking-support';
+import { recordingContentTypeFromPath, weekSpeakingRecordingPath } from '@/lib/b1b2/week-speaking-recordings.mjs';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
 import {
@@ -293,9 +294,16 @@ ${wrapLearnerSubmission(transcript)}`;
       supportSaved = false;
       const admin = createAdminSupabase();
       if (admin) {
-        const extension = recordingFile.type.includes('mp4') ? 'm4a' : recordingFile.type.includes('ogg') ? 'ogg' : 'webm';
-        const contentType = extension === 'm4a' ? 'audio/mp4' : extension === 'ogg' ? 'audio/ogg' : 'audio/webm';
-        const storagePath = `${guard.userId}/week-speaking/${weekNumber}/${supportAttemptId}/take-${takeNumber}.${extension}`;
+        // The canonical owner-prefixed key is shared by the playback route and
+        // the privacy tests. It rejects a path outside the learner's folder.
+        const storagePath = weekSpeakingRecordingPath({
+          userId: guard.userId,
+          weekNumber: weekNumber as number,
+          attemptId: supportAttemptId,
+          takeNumber,
+          mimeType: recordingFile.type,
+        });
+        const contentType = recordingContentTypeFromPath(storagePath) ?? 'audio/webm';
         const upload = await admin.storage.from('speaking-recordings').upload(storagePath, recordingFile, {
           contentType, upsert: true,
         });

@@ -41,6 +41,9 @@ jobs:
       # Week speaking flow: model gating, exact phrase highlighting, note validation,
       # removed focus/noticing answers, and retained deletion coverage for recordings.
       - run: node --test tests/unit/week-speaking-support.test.mjs
+      # Private weekly recording keys, 60-second server links, learner/teacher
+      # playback views, deletion replay and the 0062 print-only rollout helper.
+      - run: node --test tests/unit/week-speaking-recordings.test.mjs
       # The actual speaking/writing route and recording helper: weekly work
       # counts only when saved, while feedback survives a progress-save error.
       - run: node --test tests/unit/week-output-counting.test.mjs
@@ -174,7 +177,10 @@ jobs:
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
-          supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --yes
+          # The E2E project can have reserved older numeric versions already
+          # applied; include every unapplied local version on this verified
+          # isolated target. Never use --include-all against production.
+          supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz

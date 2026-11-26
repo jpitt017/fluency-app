@@ -29,3 +29,7 @@ begin
 
   raise notice 'Fresh verify_app_schema: %', actual;
 end $$;
+
+-- Weekly recording privacy, staff RLS and Delete-my-data coverage. This is a
+-- separate file so the general deletion fixture stays readable.
+\ir week-speaking-recordings.sql

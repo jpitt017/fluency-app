@@ -8,16 +8,21 @@ const details = JSON.parse(readFileSync(new URL('../../../supabase-b1-b2/content
 
 export const canUseReadingGateFixture = Boolean(url && key);
 
+/** Sign in an admin-created confirmed user without sending auth email. */
+export async function signInExistingLearner(page, user) {
+  await page.goto('/login');
+  await page.getByLabel(/Email/i).fill(user.email);
+  await page.getByLabel('Password', { exact: true }).fill(user.password);
+  await page.getByRole('button', { name: /Sign in/i }).click();
+  await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
+}
+
 /** Create a confirmed test learner and sign in without sending auth email. */
 export async function createReadingLearner(page, prefix) {
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, prefix);
   try {
-    await page.goto('/login');
-    await page.getByLabel(/Email/i).fill(user.email);
-    await page.getByLabel('Password', { exact: true }).fill(user.password);
-    await page.getByRole('button', { name: /Sign in/i }).click();
-    await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
+    await signInExistingLearner(page, user);
     return { admin, user };
   } catch (error) {
     await deleteTestUser(admin, user.id);
