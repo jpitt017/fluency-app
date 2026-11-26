@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { LearnerListening, LearnerListeningSupport } from '@/lib/curriculum/learner-week';
+import PracticeItemPager from './PracticeItemPager';
+import { glossCheckScore } from '@/lib/curriculum/week-input-ui.mjs';
 
 /**
  * Before you listen: the topic intro, the predictions and the two key words.
@@ -212,11 +214,12 @@ export function Transcript({ support }: { support: LearnerListeningSupport }) {
 }
 
 /**
- * The four-item gloss check.
+ * The four-item gloss check ("Check four words").
  *
- * One question at a time with one line of feedback, so the learner can read the
- * reason before moving on. Marked on the server; the right answer arrives only
- * after an answer has been chosen.
+ * One word at a time, large option buttons, one line of feedback after each
+ * answer and a short score at the end. Panels stay mounted, so moving between
+ * words never loses a mark or its feedback. Marked on the server; the right
+ * answer arrives only after an answer has been chosen.
  */
 export function GlossCheck({
   week,
@@ -263,56 +266,77 @@ export function GlossCheck({
     }
   }
 
+  const markedCount = Object.keys(result).length;
+  const correctCount = Object.values(result).filter((entry) => entry.correct).length;
+  const pages = items.map((item) => {
+    const marked = result[item.id];
+    return {
+      id: item.id,
+      content: (
+        <div className="rounded-xl bg-stone-50 p-4">
+          <fieldset>
+            <legend className="font-medium">{item.stem}</legend>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {item.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={choice[item.id] === option}
+                  disabled={busy === item.id || Boolean(marked)}
+                  onClick={() => {
+                    setChoice((previous) => ({ ...previous, [item.id]: option }));
+                    setResult((previous) => {
+                      const next = { ...previous };
+                      delete next[item.id];
+                      return next;
+                    });
+                  }}
+                  className={`min-h-14 rounded-xl border-2 px-3 py-3 text-left text-base font-medium disabled:opacity-50 ${
+                    choice[item.id] === option
+                      ? 'border-indigo-700 bg-indigo-700 text-white'
+                      : 'border-stone-300 bg-white text-stone-900'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <button
+            type="button"
+            disabled={!choice[item.id] || busy === item.id || Boolean(marked)}
+            onClick={() => check(item.id)}
+            className="mt-3 min-h-11 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {busy === item.id ? 'Checking…' : 'Check'}
+          </button>
+          {marked && (
+            <div role="status" className={marked.correct ? 'mt-2 text-sm text-emerald-800' : 'mt-2 text-sm text-amber-900'}>
+              <strong>{marked.correct ? 'Correct. ' : `Not quite. The answer is "${marked.answer}". `}</strong>
+              {marked.feedback}
+            </div>
+          )}
+        </div>
+      ),
+    };
+  });
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-stone-600">{description}</p>
-      <ol className="space-y-4">
-        {items.map((item) => {
-          const marked = result[item.id];
-          return (
-            <li key={item.id} className="rounded-xl bg-stone-50 p-4">
-              <fieldset>
-                <legend className="font-medium">{item.stem}</legend>
-                <div className="mt-2 space-y-1">
-                  {item.options.map((option) => (
-                    <label key={option} className="flex gap-2 text-sm text-stone-700">
-                      <input
-                        type="radio"
-                        name={item.id}
-                        value={option}
-                        checked={choice[item.id] === option}
-                        onChange={() => {
-                          setChoice((previous) => ({ ...previous, [item.id]: option }));
-                          setResult((previous) => {
-                            const next = { ...previous };
-                            delete next[item.id];
-                            return next;
-                          });
-                        }}
-                      />
-                      {option}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <button
-                type="button"
-                disabled={!choice[item.id] || busy === item.id || Boolean(marked)}
-                onClick={() => check(item.id)}
-                className="mt-2 min-h-11 rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {busy === item.id ? 'Checking…' : 'Check'}
-              </button>
-              {marked && (
-                <div role="status" className={marked.correct ? 'mt-2 text-sm text-emerald-800' : 'mt-2 text-sm text-amber-900'}>
-                  <strong>{marked.correct ? 'Correct. ' : `Not quite. The answer is "${marked.answer}". `}</strong>
-                  {marked.feedback}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+      <PracticeItemPager
+        label="Check four words"
+        unit="Word"
+        nextLabel="Next"
+        showPrevious={false}
+        items={pages}
+        initiallyAnswered={{}}
+      />
+      {items.length > 0 && markedCount === items.length && (
+        <p role="status" className="rounded-xl bg-indigo-50 p-4 font-semibold text-indigo-950">
+          {glossCheckScore(correctCount, items.length)}
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-sm text-red-700">
           {error}

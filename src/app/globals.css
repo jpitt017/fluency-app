@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Responsive class strings shared by the week-page components live in a .mjs
+   helper so tests can reuse them; make sure Tailwind scans that file too. */
+@source "../../lib/curriculum/week-input-ui.mjs";
+
 :root {
   --background: #faf9f6;
   --foreground: #18181b;

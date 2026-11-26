@@ -1,6 +1,23 @@
 # Migration history format (live vs repo)
 
-**Status:** historical read-only audit plus the prospective convention below. The observations record read-only checks performed on 2026-11-24; no migration files, live schema, or `supabase_migrations.schema_migrations` rows were changed by that audit. The convention applies only to new migrations and does not authorize rewriting existing history.
+**Status:** historical read-only audit plus the prospective convention below. The observations record read-only checks performed on 2026-11-24; no migration files, live schema, or `supabase_migrations.schema_migrations` rows were changed by that audit. The convention applies only to new migrations and does not authorize rewriting existing history. The 0061 note below records a live history correction that was already made by the owner; it is documentation, not permission to make another one.
+
+## 0061 apply record (2026-11-26)
+
+`supabase-b1-b2/migrations/0061_log_ai_request_hardening.sql` was applied to the live project `ebzmkhrssgnzmixfsuso`. The apply tool wrote its `supabase_migrations.schema_migrations` row with a **timestamp version**, not the repo's numeric filename version. That row was then **corrected by hand to `0061`** so a fresh replay and live history agree. No applied migration file was edited, and no other history row was changed as part of that correction.
+
+A read-only check of live history on 2026-11-26 (`list_migrations`, plus a `select version, name, created_by, (statements is not null)` from `supabase_migrations.schema_migrations`) now shows:
+
+| Live version | Live name | Stored statements |
+|---|---|---|
+| `0060` | `week_speaking_support` | present |
+| `0061` | `log_ai_request_hardening` | present |
+
+There is no leftover timestamped `log_ai_request_hardening` row, so the timestamp value the tool originally generated is not retained in live history. The existing legacy timestamp rows (including `20261124212925 week_skill_completions`) were left exactly as they were; see "Historical reconciliation plan" below.
+
+This is the incident the apply procedure in [`docs/CONTENT_PIPELINE.md`](CONTENT_PIPELINE.md) §3.1 prevents: record the numeric version in the same reviewed statement as the migration, instead of letting an apply tool choose a timestamp and fixing it afterwards.
+
+> **Approval rule:** any future change to live `supabase_migrations.schema_migrations` — including a version or name correction — requires the owner's explicit approval **before** it is made. Read-only inspection is always allowed; a write to history is not. Document the intended change and wait for approval.
 
 ## Scope checked (read-only)
 
@@ -60,6 +77,8 @@ Live rows for 0042–0046 and 20261122190000/20261122190100 have `statements = n
 **Adopted convention:** Every new migration uses the repo's numeric, zero-padded filename format and is recorded in live `supabase_migrations.schema_migrations` under that same numeric version. For example, a new file `0050_example_name.sql` is recorded with version `0050` and name `example_name`, not with a timestamp. Keep the applied SQL in `statements` when the apply path supports it.
 
 This is a forward-looking rule, not a cleanup or renumbering of the historical rows above. In particular, leave the existing 0038/0039, 0041, and 0047/0048 history entries exactly as documented here: do not edit, rename, replace, or normalize those rows as part of adopting the convention. Any separate reconciliation plan remains subject to explicit approval.
+
+Follow [`docs/CONTENT_PIPELINE.md`](CONTENT_PIPELINE.md) §3.1, "Applying a migration to live with a numeric history row", so the numeric version is recorded from the start. Any later correction to a live history row needs the owner's approval first (see the 0061 note above).
 
 Before adding a new migration, check the newest number on `main`, live history, and open PRs that touch `supabase-b1-b2/migrations/`; the numeric version must be unique across all three.
 

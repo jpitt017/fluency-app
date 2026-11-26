@@ -1,12 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
+import { formatClock as formatTime } from '@/lib/curriculum/week-input-ui.mjs';
 
-export function formatClock(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
+/** Shared with the small replay player; the name stays for the speaking player. */
+export const formatClock: (seconds: number) => string = formatTime;
 
 type Props = {
   id: string;
