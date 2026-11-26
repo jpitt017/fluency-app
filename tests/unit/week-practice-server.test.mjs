@@ -105,6 +105,7 @@ function setup({ failReview = false, failCard = false, failCompletion = false, f
   }, logs);
   const finish = load('lib/curriculum/week-practice-finish.ts', {
     'server-only': {}, './week-practice-plan': plan, './week-practice-attempts': attempts,
+    './stored-current-week': { readStoredCurrentWeek: async () => ({ week: currentWeek, error: null }) },
     './week-grammar-saved-mark': savedMark,
     './week-practice-review.mjs': review, './week-practice.mjs': rules,
     '@/lib/b1b2/week-vocab-review': { updateReviewFromWeeklyPractice: async (_db, userId, term, correct, _now, options) => {

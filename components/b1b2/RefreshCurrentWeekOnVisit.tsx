@@ -15,7 +15,7 @@ export default function RefreshCurrentWeekOnVisit({ enabled, currentWeek }: { en
   useEffect(() => {
     if (!enabled || started.current) return;
     started.current = true;
-    void fetch('/api/week/refresh', { method: 'POST', cache: 'no-store', credentials: 'same-origin' })
+    void fetch('/api/week/refresh', { method: 'POST', cache: 'no-store', credentials: 'same-origin', keepalive: true })
       .then(async (response) => {
         if (!response.ok) return;
         const payload = await response.json() as { currentWeek?: unknown };
