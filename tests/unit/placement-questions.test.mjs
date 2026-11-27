@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import {
-  countWords,
-  writingHint,
-  writingTaskStatus,
-  writingWordCounter,
-} from '../../lib/b1b2/text-utils.mjs';
+import { runInNewContext } from 'node:vm';
+import * as React from 'react';
+import * as jsxRuntime from 'react/jsx-runtime';
+import { renderToStaticMarkup } from 'react-dom/server';
+import ts from 'typescript';
+import * as textUtils from '../../lib/b1b2/text-utils.mjs';
+
+const { countWords, writingHint, writingTaskStatus, writingWordCounter } = textUtils;
 
 /**
  * The placement loader's query shape, plus the writing-step helpers the page uses.
@@ -21,6 +23,8 @@ import {
  */
 
 const data = readFileSync(new URL('../../lib/b1b2/data.ts', import.meta.url), 'utf8');
+const client = readFileSync(new URL('../../components/b1b2/PlacementQuizClient.tsx', import.meta.url), 'utf8');
+const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2.json', import.meta.url), 'utf8'));
 const loader = data.slice(
   data.indexOf('export async function loadPlacementQuestions'),
   data.indexOf('export async function loadPlacementTexts'),
@@ -36,6 +40,56 @@ test('the placement loader asks for the v2 questions only', () => {
 test('the loader dedupes by sort_order, so a question cannot appear twice', () => {
   assert.match(loader, /const seen = new Set<number>\(\)/);
   assert.match(loader, /if \(seen\.has\(order\)\) return false;/);
+});
+
+test('the loader retains area and also supplies the question skill', () => {
+  const selected = loader.match(/\.select\('([^']+)'\)/)?.[1].split(',').map((field) => field.trim()) ?? [];
+  assert.ok(selected.includes('area'));
+  assert.ok(selected.includes('skill'));
+  assert.match(loader, /area:\s*String\(row\.area\)/);
+  assert.match(loader, /skill:\s*row\.skill/);
+});
+
+test('every placement question renders its skill without rendering its area', () => {
+  // Render the real client component with each item as the current question.
+  // A unique area sentinel avoids false positives when an area (e.g. "have to")
+  // is legitimately one of the answer options.
+  const compiled = ts.transpileModule(client, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+  }).outputText;
+  const exports = {};
+  const Link = ({ children, href, className }) => React.createElement('a', { href, className }, children);
+  runInNewContext(compiled, {
+    exports,
+    require: (name) => {
+      if (name === 'react') return React;
+      if (name === 'react/jsx-runtime') return jsxRuntime;
+      if (name === 'next/link') return Link;
+      if (name === 'next/navigation') return { useRouter: () => ({ refresh() {}, push() {} }) };
+      if (name === '@/utils/supabase/client') return { createClient: () => { throw new Error('Not needed during server rendering'); } };
+      if (name === '@/lib/b1b2/text-utils.mjs') return textUtils;
+      throw new Error(`Unexpected dependency: ${name}`);
+    },
+  });
+
+  const labels = { grammar: 'Grammar', vocabulary: 'Vocabulary', reading: 'Reading' };
+  const texts = bank.texts.map(({ id, title, text }) => ({ id, title, body: text }));
+  const rows = bank.questions.map((question) => ({ ...question, text_id: question.textId }));
+  for (const [index, question] of rows.entries()) {
+    const area = `PrivateArea_${question.id}`;
+    const questions = [{ ...question, area }, ...rows.filter((_, otherIndex) => otherIndex !== index)];
+    const html = renderToStaticMarkup(React.createElement(exports.default, { questions, texts }));
+    assert.ok(!html.includes(area), `${question.id} exposed its area`);
+    assert.match(html, new RegExp(`data-testid="placement-skill"[^>]*>${labels[question.skill]}<`), question.id);
+    assert.match(html, /24 questions and a writing task/);
+    assert.doesNotMatch(html, /24-questions/);
+  }
+
+  // An unexpected missing skill must not fall back to the diagnostic area.
+  const row = { ...bank.questions[0], text_id: null, skill: null, area: 'PrivateArea_missing' };
+  const html = renderToStaticMarkup(React.createElement(exports.default, { questions: [row], texts }));
+  assert.ok(!html.includes(row.area));
+  assert.doesNotMatch(html, /data-testid="placement-skill"/);
 });
 
 test('the writing counter reads the way a learner reads it', () => {

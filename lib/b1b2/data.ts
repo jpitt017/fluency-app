@@ -513,7 +513,7 @@ export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> 
   // version explicitly and dedupe by position so a question is never shown twice.
   const { data, error } = await supabase
     .from('placement_questions_safe')
-    .select('id, sort_order, area, question, options, code, text_id, version')
+    .select('id, sort_order, area, skill, question, options, code, text_id, version')
     .eq('version', PLACEMENT_VERSION)
     .order('sort_order', { ascending: true });
   if (error || !data) return [];
@@ -530,6 +530,7 @@ export async function loadPlacementQuestions(): Promise<PlacementQuestionRow[]> 
       sort_order: Number(row.sort_order),
       code: String(row.code),
       text_id: row.text_id ? String(row.text_id) : null,
+      skill: row.skill === 'grammar' || row.skill === 'vocabulary' || row.skill === 'reading' ? row.skill : null,
       area: String(row.area),
       question: String(row.question),
       options: Array.isArray(row.options) ? row.options.map(String) : [],
