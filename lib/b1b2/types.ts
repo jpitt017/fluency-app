@@ -577,9 +577,12 @@ export type ReviewQueueCard =
       hasTypedAnswer: false;
     };
 
+export type PlacementSkill = 'grammar' | 'vocabulary' | 'reading';
+
 export interface PlacementQuestionRow {
   id: string;
   sort_order: number;
+  skill: PlacementSkill | null;
   area: string;
   question: string;
   options: string[];

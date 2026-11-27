@@ -11,6 +11,11 @@ type Placement = 'foundation' | 'stage1' | 'stage2';
 
 const SCORE_TIMEOUT_MS = 20_000;
 const WRITING_TIMEOUT_MS = 20_000;
+const SKILL_LABELS: Record<NonNullable<PlacementQuestionRow['skill']>, string> = {
+  grammar: 'Grammar',
+  vocabulary: 'Vocabulary',
+  reading: 'Reading',
+};
 const MIN_WRITING_WORDS = 15;
 const TARGET_WRITING_WORDS = 60;
 /**
@@ -53,6 +58,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     return createClient();
   }, []);
   const question = questions[currentIndex];
+  const skillLabel = question?.skill ? SKILL_LABELS[question.skill] : null;
   const missingPassage = Boolean(question?.text_id && !texts.some((text) => text.id === question.text_id));
 
   function clearStuckTimer() {
@@ -212,16 +218,18 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
       <div className="w-full space-y-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-xs">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-            English B1 → B2 · {questions.length}-questions and a writing task
+            English B1 → B2 · {questions.length} questions and a writing task
           </span>
           {stage === 'quiz' ? (
             <div className="mt-2 flex items-center justify-between gap-2">
               <h1 className="text-xl font-bold text-stone-900">
                 Question {currentIndex + 1} of {questions.length}
               </h1>
-              <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-600">
-                {question.area}
-              </span>
+              {skillLabel && (
+                <span data-testid="placement-skill" className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-600">
+                  {skillLabel}
+                </span>
+              )}
             </div>
           ) : stage === 'writing' ? (
             <h1 className="mt-2 text-xl font-bold text-stone-900">
