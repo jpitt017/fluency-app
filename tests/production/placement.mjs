@@ -50,8 +50,8 @@ async function walk(page, label, viewport) {
   assert.equal(response?.status(), 200, `${label}: placement page did not return 200`);
 
   await page.getByRole('heading', { name: /Question 1 of \d+/ }).waitFor({ timeout: 30_000 });
-  const bannerText = await page.getByText(/\d+-questions and a writing task/).evaluate((element) => element.textContent ?? '');
-  const total = Number(bannerText.match(/(\d+)-questions/)?.[1] ?? 0);
+  const bannerText = await page.getByText(/\d+ questions and a writing task/).evaluate((element) => element.textContent ?? '');
+  const total = Number(bannerText.match(/(\d+) questions/)?.[1] ?? 0);
   assert.ok(total >= 24, `${label}: expected 24 v2 questions, found ${total}`);
   announce(`${label}_questions=${total}`);
 
@@ -95,8 +95,8 @@ async function checkWatchdogStaysQuiet(page) {
 async function checkSmallPhoneLayout(page) {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto(`${BASE}/onboarding/placement`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  const bannerText = await page.getByText(/\d+-questions and a writing task/).evaluate((element) => element.textContent ?? '');
-  const total = Number(bannerText.match(/(\d+)-questions/)?.[1] ?? 24);
+  const bannerText = await page.getByText(/\d+ questions and a writing task/).evaluate((element) => element.textContent ?? '');
+  const total = Number(bannerText.match(/(\d+) questions/)?.[1] ?? 24);
   for (let question = 1; question < total; question++) {
     await page.getByRole('heading', { name: `Question ${question} of ${total}` }).waitFor({ timeout: 20_000 });
     await page.locator('main .space-y-2\\.5 > button').first().click();

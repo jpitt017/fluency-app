@@ -19,7 +19,7 @@ async function openGrammarUseIt(page) {
   return { grammar, item: grammar.getByText(grammarPrompt, { exact: true }).locator('..') };
 }
 
-async function openVocabularySentences(page) {
+async function openVocabularySentences(page, prompt = vocabularyPrompt) {
   await openWeekTask(page, 'vocabulary-practice');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
   await expect(vocabulary.getByText(/Step \d of 7:/)).toBeVisible();
@@ -28,7 +28,7 @@ async function openVocabularySentences(page) {
     await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
   }
   await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
-  return { vocabulary, item: vocabulary.getByText(vocabularyPrompt, { exact: true }).locator('..') };
+  return { vocabulary, item: vocabulary.getByText(prompt, { exact: true }).locator('..') };
 }
 
 test('grammar guidance and staged vocabulary examples work for a signed-out learner', async ({ page }) => {
@@ -62,7 +62,7 @@ test('grammar guidance and staged vocabulary examples work for a signed-out lear
 test('each of Weeks 2–4 shows its own imaginary learner model', async ({ page }) => {
   const models = [
     "I'm going to learn to cook next month. I'm meeting my cousin on Saturday to make our first meal. If I had more time, I would learn to bake too.",
-    "In our flat, you have to wash your dishes, you mustn't leave the door open, and you don't have to cook for everyone. What time do you leave home? Do you usually cook in the evening?",
+    "In our flat, you have to wash your dishes. You mustn't leave the front door open. You don't have to cook for everyone. What time do you usually leave home?",
     "The old market in my town was built a hundred years ago. Fresh bread is sold there every morning. My town is quieter than the city nearby, and it's the friendliest place I know.",
   ];
   for (let week = 2; week <= 4; week += 1) {
@@ -72,7 +72,31 @@ test('each of Weeks 2–4 shows its own imaginary learner model', async ({ page 
     await expect(grammar.getByText('An example by an imaginary learner')).toBeVisible();
     await expect(grammar.getByText(models[week - 2], { exact: true })).toBeVisible();
     await expect(grammar.getByText(/Pattern:/).first()).toBeVisible();
+    if (week === 2) {
+      const item = grammar.getByText('What would you do if you had a free year with no work or study?', { exact: true }).locator('..');
+      await item.getByRole('button', { name: 'Help me start' }).click();
+      const starter = 'If I had more money, I would ______ .';
+      await item.getByRole('button', { name: starter, exact: true }).click();
+      await expect(item.getByRole('textbox')).toHaveValue(starter);
+    }
   }
+});
+
+test('Week 4 vocabulary reveals the revised first example before the unchanged second example', async ({ page }) => {
+  const first = "In my town, it's a tradition to have a big festival in August, and visitors are invited to join.";
+  const second = "It's a local custom to eat grapes at midnight on New Year's Eve.";
+  await page.goto('/week/4');
+  const { vocabulary, item } = await openVocabularySentences(page, 'Tell a visitor about a custom or tradition in your town.');
+  await vocabulary.getByRole('tab', { name: 'Go to item 2 of 2' }).click();
+  await expect(item).toBeVisible();
+  await expect(item.getByText(first)).toHaveCount(0);
+  await expect(item.getByText(second)).toHaveCount(0);
+  await item.getByRole('button', { name: 'Show an example' }).click();
+  await expect(item.getByText(first)).toBeVisible();
+  await expect(item.getByText(second)).toHaveCount(0);
+  await item.getByRole('button', { name: 'Show an example' }).click();
+  await expect(item.getByText(second)).toBeVisible();
+  await expect(item.getByRole('button', { name: 'Show an example' })).toBeDisabled();
 });
 
 test('copied examples do not spend a check; the UI displays one rewrite and both feedback versions', async ({ page }) => {

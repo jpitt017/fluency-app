@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from './helpers/isolated-test.mjs';
 import { isExpectedCancelledRscPrefetch, isExpectedCancelledVisitRefresh } from './helpers/request-failure-filter.mjs';
+
+const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2.json', import.meta.url)));
 
 /**
  * Regression cover for the placement quiz "Continue to Writing Sample →" freeze.
@@ -58,10 +61,10 @@ async function answerCurrentQuestion(page, questionNumber, total) {
 
 /** The full 24-question walk that used to freeze before the writing step. */
 async function answerWholePlacementQuiz(page) {
-  const banner = page.getByText(/\d+-questions and a writing task/);
+  const banner = page.getByText(/\d+ questions and a writing task/);
   await expect(banner).toBeVisible();
   // The banner is uppercased by CSS, so read the text content rather than the rendered text.
-  const total = Number((await banner.evaluate((element) => element.textContent ?? '')).match(/(\d+)-questions/)?.[1] ?? 0);
+  const total = Number((await banner.evaluate((element) => element.textContent ?? '')).match(/(\d+) questions/)?.[1] ?? 0);
   expect(total).toBeGreaterThanOrEqual(24);
 
   const readingSections = new Set();
@@ -136,6 +139,37 @@ test.describe('placement quiz reaches the writing step', () => {
     await page.context().clearCookies();
   });
 
+  test('each question shows only its skill, not its area', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto('/onboarding/placement');
+    await expect(page.getByText(`${bank.questions.length} questions and a writing task`, { exact: false })).toBeVisible();
+    await expect(page.getByText(/\d+-questions and a writing task/)).toHaveCount(0);
+
+    const skills = { grammar: 'Grammar', vocabulary: 'Vocabulary', reading: 'Reading' };
+    const main = page.locator('main');
+    for (const [index, question] of bank.questions.entries()) {
+      const heading = main.getByRole('heading', { name: `Question ${index + 1} of ${bank.questions.length}` });
+      await expect(heading).toBeVisible();
+      await expect(main.getByText(question.question, { exact: true })).toBeVisible();
+      await expect(page.getByTestId('placement-skill')).toHaveText(skills[question.skill]);
+      await expect(heading.locator('..')).toHaveText(new RegExp(`^Question ${index + 1} of ${bank.questions.length}\\s*${skills[question.skill]}$`));
+
+      const passage = bank.texts.find((text) => text.id === question.textId)?.text ?? '';
+      const legitimateContent = [question.question, ...question.options, passage].join('\n');
+      if (!legitimateContent.includes(question.area)) {
+        await expect(main).not.toContainText(question.area);
+      }
+      // An area can legitimately be an answer option (P03: "have to"). It
+      // must not appear a second time as a diagnostic label.
+      const matchingOptions = question.options.filter((option) => option === question.area).length;
+      await expect(main.getByText(question.area, { exact: true })).toHaveCount(matchingOptions);
+
+      await page.getByTestId('placement-option').first().click();
+      await page.getByTestId('placement-continue').click();
+    }
+    await expect(page.getByRole('heading', { name: /Write a short text/ })).toBeVisible();
+  });
+
   test('signed out: all 24 v2 questions continue into the writing step', async ({ page }) => {
     const problems = watchPage(page);
     const response = await page.goto('/onboarding/placement');
@@ -170,8 +204,8 @@ test.describe('placement quiz reaches the writing step', () => {
     await page.setViewportSize(SMALL_SCREEN);
     await page.goto('/onboarding/placement');
 
-    const banner = page.getByText(/\d+-questions and a writing task/);
-    const total = Number((await banner.evaluate((element) => element.textContent ?? '')).match(/(\d+)-questions/)?.[1] ?? 24);
+    const banner = page.getByText(/\d+ questions and a writing task/);
+    const total = Number((await banner.evaluate((element) => element.textContent ?? '')).match(/(\d+) questions/)?.[1] ?? 24);
     for (let question = 1; question < total; question++) {
       await page.locator('main .space-y-2\\.5 > button').first().click();
       await page.getByRole('button', { name: 'Next Question', exact: true }).click();
