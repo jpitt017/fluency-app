@@ -80,6 +80,25 @@ test('rejects a database connection string that points to another Supabase proje
   assert.throws(() => assertE2ESupabaseTarget(env), /Refusing E2E migration access/);
 });
 
+test('database reset guard accepts exact direct and pooler tenants only', () => {
+  const direct = goodEnv();
+  direct.E2E_SUPABASE_DB_URL = `postgresql://postgres:not-a-real-password@db.${E2E_PROJECT_REF}.supabase.co:5432/postgres?sslmode=require`;
+  assert.doesNotThrow(() => assertE2ESupabaseTarget(direct));
+  for (const url of [
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@db.other-project.supabase.co:5432/postgres`,
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@attacker.example:5432/postgres`,
+    `postgresql://postgres.${E2E_PROJECT_REF}-extra:pw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres`,
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?host=db.other-project.supabase.co`,
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?user=postgres.other-project`,
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=disable`,
+    `postgresql://postgres.${E2E_PROJECT_REF}:pw@aws-0-eu-west-1.pooler.supabase.com:6543/postgres`,
+    `https://postgres.${E2E_PROJECT_REF}:pw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres`,
+  ]) {
+    const env = goodEnv(); env.E2E_SUPABASE_DB_URL = url;
+    assert.throws(() => assertE2ESupabaseTarget(env), /Refusing E2E migration access/, url);
+  }
+});
+
 test('rejects project-bound JWT keys copied from the live project', () => {
   const env = goodEnv();
   env.E2E_SUPABASE_SERVICE_ROLE_KEY = jwt(LIVE_PROJECT_REF);
@@ -116,7 +135,7 @@ test('the Playwright workflow has no live-project fallback', () => {
   // The speaking browser fixtures call the same fail-closed API guard inside
   // the test process, not just in the preceding workflow verification step.
   const testStepStart = job.indexOf('      - name: Run Playwright E2E tests\n');
-  const testStepEnd = job.indexOf('      - name: Verify no browser requests', testStepStart);
+  const testStepEnd = job.indexOf('      # Keep schema rebuild', testStepStart);
   assert.ok(testStepStart >= 0 && testStepEnd > testStepStart);
   const testStep = job.slice(testStepStart, testStepEnd);
   assert.match(testStep, new RegExp(`E2E_SUPABASE_PROJECT_REF: ${E2E_PROJECT_REF}`));
@@ -154,23 +173,36 @@ test('the live schema check is absent on PR builds and runs only on main push, s
   }
 });
 
-test('the required rls-isolation job waits for E2E migrations and targets only the isolated project', () => {
+test('RLS and real Storage tests run under the same lock as the rebuilt E2E schema', () => {
   const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   const e2eStart = workflow.indexOf('  playwright-e2e:\n');
+  const e2eEnd = workflow.indexOf('  # Manual dispatch only', e2eStart);
   const rlsStart = workflow.indexOf('  rls-isolation:\n');
-  assert.ok(e2eStart >= 0 && rlsStart > e2eStart);
-  const e2e = workflow.slice(e2eStart, rlsStart);
+  assert.ok(e2eStart >= 0 && e2eEnd > e2eStart && rlsStart > e2eEnd);
+  const e2e = workflow.slice(e2eStart, e2eEnd);
   const rls = workflow.slice(rlsStart);
-  assert.match(e2e, /Apply repository migrations to the isolated E2E project/);
+  assert.match(e2e, /group: e2e-isolated\n\s+cancel-in-progress: false/);
+  const rebuild = e2e.indexOf('Apply repository migrations to the isolated E2E project');
+  const browser = e2e.indexOf('Run Playwright E2E tests');
+  const cleanup = e2e.indexOf('Delete this run\'s isolated E2E learner');
+  assert.ok(rebuild >= 0 && browser > rebuild && cleanup > browser);
+  for (const script of ['test-ai-limits.mjs', 'test-issue-alert-grouping.mjs', 'test-rls.mjs']) {
+    const position = e2e.indexOf(`run: node scripts/${script}`);
+    assert.ok(position > browser && position < cleanup, `${script} must run before cleanup without releasing the lock`);
+    const stepStart = e2e.lastIndexOf('      - name:', position);
+    const step = e2e.slice(stepStart, position);
+    assert.match(step, new RegExp(`E2E_SUPABASE_PROJECT_REF: ${E2E_PROJECT_REF}`));
+    assert.match(step, /vars\.E2E_SUPABASE_URL/);
+    assert.match(step, /vars\.E2E_SUPABASE_ANON_KEY/);
+    assert.match(step, /secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY/);
+    assert.match(step, /E2E_TAG_TEST_USERS: 'true'/);
+    assert.match(step, /E2E_RUN_ID: \$\{\{ github\.run_id \}\}/);
+    assert.match(step, /E2E_RUN_ATTEMPT: \$\{\{ github\.run_attempt \}\}/);
+  }
+  // Preserve the required check, but do not reacquire the shared schema in a
+  // second job where a different run may have reset it in the meantime.
   assert.match(rls, /needs: playwright-e2e/);
-  assert.match(rls, /group: e2e-isolated\n\s+cancel-in-progress: false/);
-  assert.match(rls, /vars\.E2E_SUPABASE_URL/);
-  assert.match(rls, /vars\.E2E_SUPABASE_ANON_KEY/);
-  assert.match(rls, /secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(rls, /node scripts\/test-ai-limits\.mjs/);
-  assert.match(rls, /node scripts\/test-issue-alert-grouping\.mjs/);
-  assert.match(rls, /node scripts\/test-rls\.mjs/);
-  assert.doesNotMatch(rls, /github\.event_name|ebzmkhrssgnzmixfsuso|secrets\.SUPABASE_SERVICE_ROLE_KEY|secrets\.NEXT_PUBLIC_SUPABASE_URL/);
+  assert.doesNotMatch(rls, /node scripts\/test-|SUPABASE_|group: e2e-isolated/);
 });
 
 test('the live-schema script has no app-URL fallback', () => {
