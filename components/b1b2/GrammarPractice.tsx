@@ -22,6 +22,7 @@ import PersonalSentenceBox from './PersonalSentenceBox';
 import PracticeItemPager from './PracticeItemPager';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
 import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { usePendingChecks } from './usePendingChecks';
 
 type Marked = { correct: boolean; reason: string | null };
@@ -362,13 +363,7 @@ export default function GrammarPractice({
   }
 
   return (
-    <section
-      ref={sectionRef}
-      id="grammar-practice"
-      className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"
-      aria-label="Grammar practice"
-    >
-      <h2 tabIndex={-1} className="text-xl font-semibold">Grammar practice</h2>
+    <section ref={(node) => { sectionRef.current = node?.closest<HTMLElement>('section[id]') ?? node; }} className="space-y-4">
       <ProgressBar current={current.number} total={steps.length} title={current.title} headingRef={stepHeadingRef} />
       <p className="text-sm text-stone-600">{current.instruction}</p>
       {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}
@@ -459,21 +454,21 @@ export default function GrammarPractice({
               type="button"
               disabled={!signedIn || busy || checking || !canFinishRule(planned, results)}
               onClick={finish}
-              className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              className={ACTION_BUTTON_CLASS}
             >
               {busy ? 'Saving…' : 'Finish grammar'}
             </button>
             {checking ? (
-              <span role="status" className="text-xs text-stone-600">Checking your answers. Please wait to finish.</span>
+              <span role="status" className="text-sm text-stone-600">Checking your answers. Please wait to finish.</span>
             ) : signedIn && !summary && finishHint(planned, results) && (
-              <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
+              <span className="text-sm text-stone-600">{finishHint(planned, results)}</span>
             )}
           </div>
         ) : (
           <button
             type="button"
             onClick={() => changeStep(index + 1)}
-            className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white"
+            className={ACTION_BUTTON_CLASS}
           >
             Next step
           </button>

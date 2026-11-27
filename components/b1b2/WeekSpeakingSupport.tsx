@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import SpeakingModelPlayer from './SpeakingModelPlayer';
 import SpeakingFeedbackDetails, { RecordButton } from './SpeakingFeedbackDetails';
 import WeekSpeakingRecordings, { type WeekSpeakingRecordingLink } from './WeekSpeakingRecordings';
@@ -40,7 +41,7 @@ function Comparison({ before, after, phrases }: { before: WeekTake; after: WeekT
     <p><strong>Phrases found:</strong> {listPhrases(before)} → {listPhrases(after)}</p>
     <p><strong>Time:</strong> {seconds(before)} → {seconds(after)}</p>
     <p><strong>Cue-card points found:</strong> {points(before)} → {points(after)}</p>
-    <p className="text-xs text-stone-600">Points are based on words found in the transcripts, not a score.</p>
+    <p className="text-sm text-stone-600">Points are based on words found in the transcripts, not a score.</p>
   </div>;
 }
 
@@ -105,7 +106,7 @@ export default function WeekSpeakingSupport(props: Props) {
   }
   const canPractise = (take: WeekTake) => Boolean(take.id && checksRemaining > 0 && !blocked);
   const details = (take: WeekTake) => take.feedback && <>
-    {!take.id && <p className="text-xs text-stone-600">Scores for older recordings used a different method, so they are not shown here.</p>}
+    {!take.id && <p className="text-sm text-stone-600">Scores for older recordings used a different method, so they are not shown here.</p>}
     <SpeakingFeedbackDetails
       key={take.id ?? `legacy-${take.sequence}`} feedback={take.feedback} practice={take.practice}
       practiceAllowed={canPractise(take)}
@@ -147,7 +148,7 @@ export default function WeekSpeakingSupport(props: Props) {
       {!model && <div className="flex flex-wrap gap-2">
         <RecordButton label={first ? `Record again (${Math.max(0, 3 - props.firstVersions)} left)` : 'Start recording'}
           disabled={blocked || props.firstVersions >= 3 || !checksRemaining} onRecorded={(blob, generation) => void save(blob, 'first', undefined, generation)} />
-        {first?.id && ['ready', 'checking'].includes(first.status) && <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(first.id!)} className="min-h-11 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50">{busy ? 'Checking…' : 'Keep and check this recording'}</button>}
+        {first?.id && ['ready', 'checking'].includes(first.status) && <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(first.id!)} className={ACTION_BUTTON_CLASS}>{busy ? 'Checking…' : 'Keep and check this recording'}</button>}
       </div>}
       {!model && first && <p className="text-sm">First recording version {props.firstVersions} of 3 is ready to keep.</p>}
       {!model && checksRemaining === 0 && <p className="text-sm">You have used all five checks. This recording cannot be checked or counted.</p>}
@@ -157,20 +158,20 @@ export default function WeekSpeakingSupport(props: Props) {
             : <p className="text-sm">We could not check whether this recording counts. Please refresh the page.</p>}
         {details(first)}
       </div>}
-      <p className="text-xs text-stone-600">{props.checksUsed} of 5 weekly checks used.</p>
+      <p className="text-sm text-stone-600">{props.checksUsed} of 5 weekly checks used.</p>
       <WeekSpeakingRecordings recordings={props.recordings} />
     </section>
 
     {model && <section className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
       <h3 className="font-semibold">3. Listen to the model</h3>
-      {!showModel && <button type="button" onClick={() => setShowModel(true)} className="min-h-11 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">Listen to the model</button>}
+      {!showModel && <button type="button" onClick={() => setShowModel(true)} className={ACTION_BUTTON_CLASS}>Listen to the model</button>}
       {showModel && <>
         <SpeakingModelPlayer text={model.text.replace(/^>\s*/, '')} audioUrl={model.audioUrl} />
         <button type="button" onClick={() => setScriptShown((shown) => !shown)} aria-expanded={scriptShown} aria-controls="speaking-model-script" className="min-h-11 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-950">{scriptShown ? 'Hide the script' : 'Show the script'}</button>
         {scriptShown && <div id="speaking-model-script" className="space-y-3 rounded-xl bg-white p-4" aria-label="Model script with cue points and purposes">
           <h4 className="font-semibold">Model script</h4>
           {model.parts.map((part, index) => <div key={`${index}:${part.text}`} className="border-l-2 border-emerald-200 pl-3">
-            <p className="text-xs font-semibold text-emerald-800">{part.cuePoints.join(' · ')} — {part.purpose}</p>
+            <p className="text-sm font-semibold text-emerald-800">{part.cuePoints.join(' · ')} — {part.purpose}</p>
             <Transcript text={part.text} phrases={usefulPhrases} />
           </div>)}
         </div>}
@@ -188,7 +189,7 @@ export default function WeekSpeakingSupport(props: Props) {
       </label>)}</div>
       <div className="rounded-lg border border-amber-300 bg-white p-3 text-sm" aria-label="Your phrase card"><p className="font-semibold">Your phrase card</p><p>{chosen.length ? chosen.join(' · ') : 'Choose up to two phrases to keep them here while you record.'}</p></div>
       {needsCheck && lastTry?.id ? <div className="space-y-2">
-        <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(lastTry.id!)} className="min-h-11 rounded-lg bg-amber-800 px-4 py-2 font-semibold text-white disabled:opacity-50">Check your saved try</button>
+        <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(lastTry.id!)} className={ACTION_BUTTON_CLASS}>Check your saved try</button>
         {lastTry.canMoveOn && props.retryCount < 3 && checksRemaining > 0 && <>
           <p className="text-sm">The check failed. You can check this recording again, or record the next try. The unchecked recording stays saved.</p>
           <RecordButton label={`Record try ${props.retryCount + 1}`} disabled={blocked} onRecorded={(blob, generation) => void save(blob, 'retry', undefined, generation)} />

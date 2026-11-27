@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useState } from 'react';
 
 type Feedback = { onTarget: boolean; good: string; corrected: string; tip: string; addedToReview: boolean };
@@ -97,7 +98,7 @@ export default function SentenceBox({
         type="button"
         disabled={!signedIn || busy || !answer.trim()}
         onClick={check}
-        className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className={ACTION_BUTTON_CLASS}
       >
         {busy ? 'Checking…' : 'Check'}
       </button>

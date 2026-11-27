@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useEffect, useRef, useState } from 'react';
 import { parseGapText, gapsCoverItems } from '@/lib/curriculum/vocabulary-gap-text.mjs';
 import { SavedTick } from './PracticeFeedback';
@@ -278,7 +279,7 @@ export default function GapText({
                     }}
                     className="fixed inset-x-3 bottom-3 z-50 block max-h-[45vh] overflow-y-auto rounded-xl border border-stone-300 bg-white p-3 text-left shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:z-20 sm:mt-1 sm:max-h-72 sm:w-72"
                   >
-                    <span className="mb-2 block text-xs font-semibold text-stone-600">
+                    <span className="mb-2 block text-sm font-semibold text-stone-600">
                       Choose a word for gap {gap}
                     </span>
                     <span className="block space-y-1">
@@ -296,7 +297,7 @@ export default function GapText({
                             onClick={() => choose(word)}
                             className={`block w-full rounded-lg border px-3 py-2 text-left text-sm font-medium ${
                               usedIn !== null
-                                ? 'cursor-not-allowed border-stone-200 bg-stone-50 text-stone-400'
+                                ? 'cursor-not-allowed border-stone-200 bg-stone-50 text-stone-600'
                                 : selected
                                   ? 'border-indigo-400 bg-indigo-50 text-indigo-900'
                                   : 'border-stone-200 bg-white text-stone-800 hover:bg-stone-100'
@@ -304,7 +305,7 @@ export default function GapText({
                           >
                             {word}
                             {usedIn !== null && (
-                              <span className="text-xs font-normal"> · used in gap {usedIn}</span>
+                              <span className="text-sm font-normal"> · used in gap {usedIn}</span>
                             )}
                           </button>
                         );
@@ -347,13 +348,13 @@ export default function GapText({
           data-testid="gap-check"
           disabled={!signedIn || busy || finishing || !allFilled}
           onClick={checkAll}
-          className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className={ACTION_BUTTON_CLASS}
         >
           {busy ? 'Checking…' : 'Check'}
         </button>
         <SavedTick saved={savedTick} saving={busy} />
         {signedIn && !allFilled && (
-          <span className="text-xs text-stone-600">Choose a word for every gap to check.</span>
+          <span className="text-sm text-stone-600">Choose a word for every gap to check.</span>
         )}
       </div>
       {checked && (

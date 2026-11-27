@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -98,7 +99,7 @@ test('phone: grammar items, keyboard progress and unchanged See it/Use it', asyn
 test('phone: vocabulary keeps Steps 1–3 and pages Steps 4–7', async ({ page }) => {
   await page.setViewportSize(phone);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/week/1');
+  await page.goto('/week/1#vocabulary-practice');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
 
   await expect(vocabulary.getByText('Page 1 of 4')).toBeVisible();
@@ -173,6 +174,7 @@ for (const week of [2, 3, 4]) {
     await step(grammar, 'Next').click();
     await assertPosition(grammar, 'Grammar Remember', 1, 5);
 
+    await openWeekTask(page, 'vocabulary-practice');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
     for (let n = 0; n < 3; n += 1) await step(vocabulary, 'Next').click();
     await assertPosition(vocabulary, 'Vocabulary Choose the verb', 1, 3);
@@ -215,7 +217,7 @@ test('phone: an in-flight vocabulary check survives navigation and Finish waits'
       await heldFinish;
       await route.fulfill({ status: 200, json: { saved: true, summary: { answered: 3, correct: 3, wrong: 0, total: 16, reviewMistakes: 0, sentence: 'You answered 3 of 16. 3 were right. Great work! You know these words well. You can come back and finish the other questions.', next: 'reading' } } });
     });
-    await page.goto('/week/1');
+    await page.goto('/week/1#vocabulary-practice');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
     for (let n = 0; n < 3; n += 1) await step(vocabulary, 'Next').click();
     await vocabulary.getByRole('radio', { name: 'took', exact: true }).check();

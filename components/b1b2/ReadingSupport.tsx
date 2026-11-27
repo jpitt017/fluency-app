@@ -138,7 +138,7 @@ export function ReadingPracticeLayout({
           <div className={READING_TEXT_INNER_CLASS}>
             <h3 className="sr-only">Reading text</h3>
             <div className="space-y-3">{text}</div>
-            <p className="mt-3 text-xs text-stone-600">Amber words open a meaning and Spanish translation. Green words come from your vocabulary cards.</p>
+            <p className="mt-3 text-sm text-stone-600">Amber words open a meaning and Spanish translation. Green words come from your vocabulary cards.</p>
           </div>
         </section>
         <div ref={questionColumnRef} className="min-w-0 pb-24 lg:pb-0" data-testid="reading-question-column">

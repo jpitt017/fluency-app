@@ -75,7 +75,7 @@ export function RecordButton({ label, disabled, onRecorded }: { label: string; d
   }
   return <div className="space-y-1">
     {recording
-      ? <button type="button" onClick={() => recorder.current?.stop()} className="min-h-11 rounded-lg bg-rose-700 px-3 py-2 text-sm font-semibold text-white">Stop recording</button>
+      ? <button type="button" onClick={() => recorder.current?.stop()} className="min-h-11 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white">Stop recording</button>
       : <button type="button" disabled={disabled || starting} onClick={() => void start()} className="min-h-11 rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm font-semibold text-indigo-900 disabled:opacity-50">{starting ? 'Starting microphone…' : label}</button>}
     {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
   </div>;

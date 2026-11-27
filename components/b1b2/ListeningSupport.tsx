@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { LearnerListening, LearnerListeningSupport } from '@/lib/curriculum/learner-week';
 import PracticeItemPager from './PracticeItemPager';
@@ -11,10 +12,10 @@ import { glossCheckScore } from '@/lib/curriculum/week-input-ui.mjs';
  * Replaces the old one-line predict sentence. Every part of it is optional
  * preparation: nothing here is marked, and nothing blocks the player.
  *
- * The picture is a placeholder box on purpose. The pilot content carries a brief
- * for the illustrator ("Map of the UK with London and Inverness marked…"), not an
- * image, so a real <img> would be a lie and a broken one would be worse. The
- * brief itself is not shown to learners.
+ * The picture shows only when the week has a real image URL. The pilot content
+ * carries a brief for the illustrator ("Map of the UK with London and Inverness
+ * marked…"), not an image, and the empty box helped nobody, so weeks without a
+ * picture show none. The brief itself is not sent to learners.
  */
 export function ListeningIntro({ support }: { support: LearnerListeningSupport }) {
   const [ideasShown, setIdeasShown] = useState(false);
@@ -29,14 +30,12 @@ export function ListeningIntro({ support }: { support: LearnerListeningSupport }
         <p className="text-sm leading-6 text-stone-700">{support.intro.context}</p>
       </div>
 
-      <div
-        role="img"
-        data-testid="listening-picture-placeholder"
-        aria-label="Picture for this listening: coming soon"
-        className="flex h-40 items-center justify-center rounded-xl border-2 border-dashed border-stone-300 bg-stone-50 text-sm text-stone-500"
-      >
-        Picture coming soon
-      </div>
+      {support.intro.pictureUrl ? (
+        <figure data-testid="listening-picture" className="overflow-hidden rounded-xl border border-stone-200">
+          {/* eslint-disable-next-line @next/next/no-img-element -- a content-provided URL is not a static import */}
+          <img src={support.intro.pictureUrl} alt={support.intro.title} className="w-full" />
+        </figure>
+      ) : null}
 
       <div className="rounded-xl bg-indigo-50 p-4">
         <p className="font-medium text-indigo-950">{support.intro.predict}</p>
@@ -45,7 +44,7 @@ export function ListeningIntro({ support }: { support: LearnerListeningSupport }
           onClick={() => setIdeasShown((shown) => !shown)}
           aria-expanded={ideasShown}
           aria-controls="listening-ideas"
-          className="mt-2 min-h-11 rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white"
+          className={`mt-2 ${ACTION_BUTTON_CLASS}`}
         >
           {ideasShown ? 'Hide ideas' : 'Show some ideas'}
         </button>
@@ -306,7 +305,7 @@ export function GlossCheck({
             type="button"
             disabled={!choice[item.id] || busy === item.id || Boolean(marked)}
             onClick={() => check(item.id)}
-            className="mt-3 min-h-11 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className={`mt-3 ${ACTION_BUTTON_CLASS}`}
           >
             {busy === item.id ? 'Checking…' : 'Check'}
           </button>

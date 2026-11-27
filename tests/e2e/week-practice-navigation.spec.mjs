@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { expect, test } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -63,6 +64,9 @@ for (const [motion, behavior] of [['no-preference', 'smooth'], ['reduce', 'insta
     try {
       await page.goto('/week/1');
       expect(await page.evaluate(() => window.practiceScrolls)).toEqual([]);
+      // Open vocabulary by its row toggle: the accordion must not scroll the
+      // page on its own, so the first recorded scroll stays the learner's.
+      await openWeekTask(page, 'vocabulary-practice');
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
 
       async function activate(button) {

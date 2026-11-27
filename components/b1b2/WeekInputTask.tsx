@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LearnerQuestion } from '@/lib/curriculum/learner-week';
@@ -123,7 +124,7 @@ function Question({
         type="button"
         disabled={!signedIn || busy || finishing || !answer.trim()}
         onClick={check}
-        className="mt-3 min-h-11 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className={`mt-3 ${ACTION_BUTTON_CLASS}`}
       >
         {busy ? 'Checking…' : 'Check'}
       </button>
@@ -253,7 +254,7 @@ export default function WeekInputTask({
           type="button"
           disabled={busy}
           onClick={finish}
-          className="rounded-xl bg-indigo-700 px-4 py-2 font-semibold text-white disabled:opacity-50"
+          className={ACTION_BUTTON_CLASS}
         >
           {busy ? 'Saving…' : 'Finish and save'}
         </button>
