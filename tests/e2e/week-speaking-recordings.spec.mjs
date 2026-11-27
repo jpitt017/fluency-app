@@ -12,24 +12,27 @@ const canUseFixture = Boolean(url && key) && canUseReadingGateFixture;
 /** Seed two learners' weekly takes with the admin client. No auth email is sent. */
 async function fixture({ withTeacher = false } = {}) {
   const admin = createClient(url, key, { auth: { persistSession: false } });
-  const learner = await createTestUser(admin, 'week-rec-owner');
-  const other = await createTestUser(admin, 'week-rec-other');
-  const teacher = withTeacher ? await createTestUser(admin, 'week-rec-teacher') : null;
-  const ownerAttemptId = randomUUID();
-  const otherAttemptId = randomUUID();
-  const ownerTakeId = randomUUID();
-  const otherTakeId = randomUUID();
-  const ownerPath = weekSpeakingRecordingPath({
-    userId: learner.id, weekNumber: 1, attemptId: ownerAttemptId, takeNumber: 1, mimeType: 'audio/webm',
-  });
-  const otherPath = weekSpeakingRecordingPath({
-    userId: other.id, weekNumber: 1, attemptId: otherAttemptId, takeNumber: 1, mimeType: 'audio/webm',
-  });
-  const ownerTakePath = `${learner.id}/week-speaking/1/${ownerAttemptId}/recording-${ownerTakeId}.webm`;
-  const otherTakePath = `${other.id}/week-speaking/1/${otherAttemptId}/recording-${otherTakeId}.webm`;
-  const audio = new Blob(['weekly speaking playback fixture'], { type: 'audio/webm' });
-
+  let learner = null;
+  let other = null;
+  let teacher = null;
   try {
+    learner = await createTestUser(admin, 'week-rec-owner');
+    other = await createTestUser(admin, 'week-rec-other');
+    teacher = withTeacher ? await createTestUser(admin, 'week-rec-teacher') : null;
+    const ownerAttemptId = randomUUID();
+    const otherAttemptId = randomUUID();
+    const ownerTakeId = randomUUID();
+    const otherTakeId = randomUUID();
+    const ownerPath = weekSpeakingRecordingPath({
+      userId: learner.id, weekNumber: 1, attemptId: ownerAttemptId, takeNumber: 1, mimeType: 'audio/webm',
+    });
+    const otherPath = weekSpeakingRecordingPath({
+      userId: other.id, weekNumber: 1, attemptId: otherAttemptId, takeNumber: 1, mimeType: 'audio/webm',
+    });
+    const ownerTakePath = `${learner.id}/week-speaking/1/${ownerAttemptId}/recording-${ownerTakeId}.webm`;
+    const otherTakePath = `${other.id}/week-speaking/1/${otherAttemptId}/recording-${otherTakeId}.webm`;
+    const audio = new Blob(['weekly speaking playback fixture'], { type: 'audio/webm' });
+
     if (teacher) {
       const teacherRole = await admin.from('profiles').update({ role: 'teacher' }).eq('id', teacher.id).select('id').single();
       if (teacherRole.error || !teacherRole.data) throw new Error(`Could not make teacher fixture staff: ${teacherRole.error?.message}`);
@@ -75,22 +78,29 @@ async function fixture({ withTeacher = false } = {}) {
     }
     return { admin, learner, other, teacher, ownerAttemptId, otherAttemptId, ownerPath, otherPath, ownerTakeId, otherTakeId, ownerTakePath, otherTakePath };
   } catch (error) {
+    const failures = [error];
     for (const user of [teacher, learner, other]) {
-      if (user) await deleteTestUser(admin, user.id);
+      if (!user) continue;
+      try { await deleteTestUser(admin, user.id); } catch (cleanupError) { failures.push(cleanupError); }
     }
+    if (failures.length > 1) throw new AggregateError(failures, 'Recording fixture setup and cleanup failed');
     throw error;
   }
 }
 
 async function cleanup(data) {
   if (!data) return;
+  const failures = [];
   for (const user of [data.teacher, data.learner, data.other]) {
-    if (user) await deleteTestUser(data.admin, user.id);
+    if (!user) continue;
+    try { await deleteTestUser(data.admin, user.id); } catch (error) { failures.push(error); }
   }
+  if (failures.length) throw new AggregateError(failures, 'Could not clean every recording fixture');
 }
 
 test('a learner gets a 60-second server link for their own recording, not another learner’s', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
+  test.setTimeout(180_000);
   let data;
   let ownerPage;
   try {
@@ -129,6 +139,7 @@ test('a learner gets a 60-second server link for their own recording, not anothe
 
 test('staff can play back another learner’s weekly recording from the teacher view', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
+  test.setTimeout(180_000);
   let data;
   try {
     data = await fixture({ withTeacher: true });

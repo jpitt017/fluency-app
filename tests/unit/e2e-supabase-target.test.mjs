@@ -120,6 +120,7 @@ test('the Playwright workflow has no live-project fallback', () => {
   assert.ok(testStepStart >= 0 && testStepEnd > testStepStart);
   const testStep = job.slice(testStepStart, testStepEnd);
   assert.match(testStep, new RegExp(`E2E_SUPABASE_PROJECT_REF: ${E2E_PROJECT_REF}`));
+  assert.match(testStep, /E2E_TAG_TEST_USERS: 'true'/);
   assert.match(testStep, /E2E_SUPABASE_URL: \$\{\{ vars\.E2E_SUPABASE_URL \}\}/);
   assert.match(testStep, /E2E_SUPABASE_ANON_KEY: \$\{\{ vars\.E2E_SUPABASE_ANON_KEY \}\}/);
   assert.match(testStep, /E2E_SUPABASE_SERVICE_ROLE_KEY: \$\{\{ secrets\.E2E_SUPABASE_SERVICE_ROLE_KEY \}\}/);

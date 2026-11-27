@@ -1,10 +1,13 @@
-import { expect, test } from './helpers/isolated-test.mjs';
+import { expect as baseExpect, test } from './helpers/isolated-test.mjs';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { assertE2ESupabaseApiTarget } from '../../scripts/assert-e2e-supabase-target.mjs';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
 import { canUseReadingGateFixture, signInExistingLearner } from './helpers/reading-gate.mjs';
 
+// The real isolated Storage and server refreshes can take longer than a local
+// render. Still require each observable state; do not skip or mock the save.
+const expect = baseExpect.configure({ timeout: 20_000 });
 // Every fixture is synthetic and requires the explicitly pinned E2E project.
 const canUseFixture = Boolean(process.env.E2E_SUPABASE_URL && process.env.E2E_SUPABASE_SERVICE_ROLE_KEY && canUseReadingGateFixture);
 
@@ -76,7 +79,7 @@ async function record(page, buttonName) {
 
 test('weekly versions, model, phrase card, three comparisons and deletion survive reload', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const target = assertE2ESupabaseApiTarget();
   const admin = createClient(target.projectUrl, target.serviceRoleKey, { auth: { persistSession: false } });
   const learner = await createTestUser(admin, 'week-speaking-feedback');
@@ -157,7 +160,7 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
 
 test('saved recordings recover from quota, provider and sentence-practice errors after reload', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const target = assertE2ESupabaseApiTarget();
   const admin = createClient(target.projectUrl, target.serviceRoleKey, { auth: { persistSession: false } });
   const learner = await createTestUser(admin, 'week-speaking-recovery');
@@ -198,7 +201,15 @@ test('saved recordings recover from quota, provider and sentence-practice errors
     await expect(point.getByRole('button', { name: 'Say it again' })).toBeEnabled();
     responses.push('failed');
     await record(page, 'Say it again');
-    await expect(point.getByRole('button', { name: 'Check this saved sentence again' })).toBeVisible();
+    try {
+      await expect(point.getByRole('button', { name: 'Check this saved sentence again' })).toBeVisible();
+    } catch (error) {
+      // Preserve useful synthetic-fixture diagnostics in CI annotations even
+      // where browser artifacts or live job logs cannot be downloaded.
+      const state = await admin.from('week_speaking_takes').select('kind,status').eq('user_id', learner.id);
+      const visibleText = await point.allTextContents();
+      throw new Error(`Saved sentence did not become recheckable; takes=${JSON.stringify(state.data)}, UI=${JSON.stringify(visibleText)}`, { cause: error });
+    }
     await expect(page.getByText('3 of 5 weekly checks used.')).toBeVisible();
     await page.reload();
     await page.getByRole('button', { name: 'Check this saved sentence again' }).click();
@@ -209,7 +220,7 @@ test('saved recordings recover from quota, provider and sentence-practice errors
 
 test('the speaking lab offers one sentence point, transcript-based fluency and neutral sound practice', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   const target = assertE2ESupabaseApiTarget();
   const admin = createClient(target.projectUrl, target.serviceRoleKey, { auth: { persistSession: false } });
   const learner = await createTestUser(admin, 'speaking-lab-feedback');

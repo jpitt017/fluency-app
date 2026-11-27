@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { cleanupE2ESupabase } from '../../scripts/cleanup-e2e-supabase.mjs';
 import { seedE2ESupabase } from '../../scripts/seed-e2e-supabase.mjs';
+import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
 import { E2E_PROJECT_REF, E2E_PROJECT_URL, LIVE_PROJECT_REF } from '../../scripts/assert-e2e-supabase-target.mjs';
 
 const jwt = (ref) => `header.${Buffer.from(JSON.stringify({ ref })).toString('base64url')}.signature`;
@@ -17,15 +18,16 @@ const env = () => ({
   E2E_USER_PASSWORD: 'not-a-real-password',
 });
 
-function fakeAdmin({ hasProfile = true, hasTask = false } = {}) {
+function fakeAdmin({ hasProfile = true, hasTask = false, pages } = {}) {
   const calls = [];
   return {
     calls,
+    supabaseUrl: E2E_PROJECT_URL,
     auth: {
       admin: {
-        async listUsers() {
-          calls.push(['listUsers']);
-          return { data: { users: [
+        async listUsers({ page }) {
+          calls.push(['listUsers', page]);
+          return { data: { users: pages ? (pages[page - 1] ?? []) : [
             { id: 'other-run-user', email: 'e2e-other-run-2@example.invalid' },
             { id: 'current-run-user', email: 'E2E-seed-run-456-1@example.invalid' },
           ] }, error: null };
@@ -100,8 +102,57 @@ test('creates a unique per-run learner without looking up or deleting another ru
 
 test('cleanup deletes only this run attempt user, never another account', async () => {
   const admin = fakeAdmin();
-  await cleanupE2ESupabase({ admin, env: env() });
-  assert.deepEqual(admin.calls.filter(([name]) => name === 'deleteUser'), [['deleteUser', 'current-run-user']]);
+  const cleaned = [];
+  await cleanupE2ESupabase({ admin, env: env(), cleanupUser: async (_admin, id, options) => cleaned.push([id, options]) });
+  assert.deepEqual(cleaned, [['current-run-user', { strict: true }]]);
+});
+
+test('tagged test users require the pinned E2E client and carry a run-scoped address and metadata', async () => {
+  const admin = fakeAdmin();
+  const tagged = { ...env(), E2E_TAG_TEST_USERS: 'true' };
+  const user = await createTestUser(admin, 'speaking', tagged);
+  const payload = admin.calls.find(([name]) => name === 'createUser')[1];
+  assert.equal(payload.email, user.email);
+  assert.match(payload.email, /^e2e-fixture-seed-run-456-1-[0-9]{13}-[0-9a-f]{8}@example\.test$/);
+  assert.deepEqual(payload.app_metadata, {
+    arena_e2e_fixture: true, arena_e2e_run_id: 'seed-run-456', arena_e2e_run_attempt: '1', arena_e2e_fixture_kind: 'speaking',
+  });
+  const wrongClient = fakeAdmin();
+  wrongClient.supabaseUrl = `https://${LIVE_PROJECT_REF}.supabase.co`;
+  await assert.rejects(createTestUser(wrongClient, 'speaking', tagged), /different Supabase client/);
+  assert.deepEqual(wrongClient.calls, []);
+});
+
+test('cleanup enumerates pages and selects only fixtures with both this run address and server metadata', async () => {
+  const address = (run, attempt, unique) => `e2e-fixture-${run}-${attempt}-1795780000000-${unique}@example.test`;
+  const metadata = (run, attempt) => ({ arena_e2e_fixture: true, arena_e2e_run_id: run, arena_e2e_run_attempt: attempt });
+  const unrelated = Array.from({ length: 1000 }, (_, index) => ({ id: `other-${index}`, email: `learner-${index}@example.test` }));
+  const admin = fakeAdmin({ pages: [unrelated, [
+    { id: 'seed', email: 'e2e-seed-run-456-1@example.invalid' },
+    { id: 'fixture', email: address('seed-run-456', 1, '12345678'), app_metadata: metadata('seed-run-456', '1') },
+    { id: 'wrong-metadata', email: address('seed-run-456', 1, '12345679'), app_metadata: metadata('other-run', '1') },
+    { id: 'wrong-email', email: address('other-run', 1, '12345680'), app_metadata: metadata('seed-run-456', '1') },
+    { id: 'untagged', email: address('seed-run-456', 1, '12345681') },
+  ]] });
+  const cleaned = [];
+  await cleanupE2ESupabase({ admin, env: env(), cleanupUser: async (_admin, id, options) => cleaned.push([id, options]) });
+  assert.deepEqual(admin.calls.filter(([name]) => name === 'listUsers'), [['listUsers', 1], ['listUsers', 2]]);
+  assert.deepEqual(cleaned, [['seed', { strict: true }], ['fixture', { strict: true }]]);
+});
+
+test('strict fixture cleanup retains auth if private Storage cleanup fails', async () => {
+  const admin = fakeAdmin();
+  admin.storage = { from: () => ({ list: async () => ({ data: null, error: new Error('storage offline') }) }) };
+  admin.from = () => ({ delete: () => ({ eq: async () => ({ error: null }) }) });
+  await assert.rejects(deleteTestUser(admin, 'fixture', { strict: true }), /storage offline/);
+  assert.equal(admin.calls.some(([name]) => name === 'deleteUser'), false);
+});
+
+test('cleanup fails before listing users when the client does not match the isolated target', async () => {
+  const admin = fakeAdmin();
+  admin.supabaseUrl = `https://${LIVE_PROJECT_REF}.supabase.co`;
+  await assert.rejects(cleanupE2ESupabase({ admin, env: env() }), /different Supabase client/);
+  assert.deepEqual(admin.calls, []);
 });
 
 test('does not touch Supabase when the project ref is not the dedicated E2E ref', async () => {

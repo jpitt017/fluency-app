@@ -1,4 +1,6 @@
 import { clearUserStorage } from '../../lib/b1b2/delete-user-storage.mjs';
+import { assertE2ESupabaseApiTarget } from '../assert-e2e-supabase-target.mjs';
+import { e2eFixtureScope, newE2EFixtureEmail } from './e2e-fixture-scope.mjs';
 
 /**
  * Shared helpers for production-safe Supabase test users.
@@ -73,13 +75,27 @@ const USER_TABLES = [
  * Returns the password as well as the email, because a test signs in with a
  * password rather than following a link from an inbox.
  */
-export async function createTestUser(admin, prefix) {
-  const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;
+export async function createTestUser(admin, prefix, env = process.env) {
+  let email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;
+  let appMetadata;
+  if (env.E2E_TAG_TEST_USERS === 'true') {
+    // The final CI cleanup can discover fixtures even if a browser test times
+    // out before its finally block. Never tag users on an unverified client.
+    const target = assertE2ESupabaseApiTarget(env);
+    if (admin.supabaseUrl !== target.projectUrl) throw new Error('Refusing to create a tagged fixture on a different Supabase client');
+    const scope = e2eFixtureScope(env);
+    email = newE2EFixtureEmail(scope);
+    appMetadata = {
+      arena_e2e_fixture: true, arena_e2e_run_id: scope.runId, arena_e2e_run_attempt: scope.runAttempt,
+      arena_e2e_fixture_kind: prefix,
+    };
+  }
   const password = `Test!${Math.random().toString(36).slice(2)}${Date.now()}`;
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
+    ...(appMetadata ? { app_metadata: appMetadata } : {}),
   });
   if (error || !data.user) throw new Error(`Could not create ${email}: ${error?.message ?? 'no user returned'}`);
   // Belt and braces: `email_confirm: true` is supposed to queue nothing, so
@@ -96,25 +112,33 @@ export async function createTestUser(admin, prefix) {
 }
 
 /** Remove every row linked to a test user, then delete the auth user itself. */
-export async function deleteTestUser(admin, id) {
+export async function deleteTestUser(admin, id, { strict = process.env.E2E_TAG_TEST_USERS === 'true' } = {}) {
   if (!id) return;
+  const failures = [];
+  const report = (message) => {
+    if (strict) failures.push(message);
+    else console.warn(message);
+  };
   // Weekly takes are nested under <user id>/week-speaking/...; clear both
   // private buckets recursively so a failed test leaves no orphaned audio.
   for (const bucket of ['issue-attachments', 'speaking-recordings']) {
     try {
       await clearUserStorage(admin.storage, bucket, id);
     } catch (error) {
-      console.warn(`Could not clear ${bucket} for test user ${id}: ${error instanceof Error ? error.message : String(error)}`);
+      report(`Could not clear ${bucket} for test user ${id}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   for (const table of USER_TABLES) {
     // Some deployments may not have every optional table; ignore "not found".
     const { error } = await admin.from(table).delete().eq('user_id', id);
     if (error && !/does not exist|could not find the table/i.test(error.message)) {
-      console.warn(`Could not clear ${table} for test user ${id}: ${error.message}`);
+      report(`Could not clear ${table} for test user ${id}: ${error.message}`);
     }
   }
-  await admin.from('profiles').delete().eq('id', id);
+  const { error: profileError } = await admin.from('profiles').delete().eq('id', id);
+  if (profileError) report(`Could not clear the profile for test user ${id}: ${profileError.message}`);
+  // Keep the tagged auth user discoverable if Storage or row cleanup failed.
+  if (failures.length) throw new Error(failures.join('; '));
   const { error } = await admin.auth.admin.deleteUser(id);
   if (error) throw new Error(`Could not delete test user ${id}: ${error.message}`);
 }
