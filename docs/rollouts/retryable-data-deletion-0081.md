@@ -169,8 +169,10 @@ assignments, and both lock orderings for cross-owner grouped alerts. SQL tests
 also exercise pending-job billing/retention exemptions, reject stale or reused
 recording keys, and reject learner or stale staff writes. The CI-wired isolated
 Supabase RLS fixture uploads synthetic late files, runs the same worker, and
-checks that new and other-user files survive; it is not a live production
-deletion. CI keeps that fixture in the same isolated-project lock as the schema
-rebuild and browser tests, so another branch cannot replace the schema between
+checks that new and other-user files survive. A separate isolated browser
+fixture interrupts the real two-phase deletion after the job begins, then
+resumes it and checks that an old receipt cannot erase later work. Neither is
+a live production deletion. CI keeps both fixtures in the same isolated-project
+lock as the schema rebuild, so another branch cannot replace the schema between
 phases. Hosted Storage, hosted CORS, and the new GitHub CI run still need to
 pass before rollout; synthetic Storage and browser fixtures do not prove them.
