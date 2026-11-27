@@ -278,6 +278,24 @@ test('every copied teaching example and weekly model gives the exact message wit
   assert.equal(fixture.tables.error_review_cards.length, 0);
 });
 
+test('the revised Week 3 model and V4-S2 example are copy-protected before any check or charge', async () => {
+  const fixture = setup({ currentWeek: 4 });
+  const model = "In our flat, you have to wash your dishes. You mustn't leave the front door open. You don't have to cook for everyone. What time do you usually leave home?";
+  const example = "In my town, it's a tradition to have a big festival in August, and visitors are invited to join.";
+  for (const [id, answer, week] of [
+    ['W3-U1', model, 3],
+    ['W3-U2', `${model} I also clean on Sundays.`, 3],
+    ['V4-S2', `${example} My sister comes too.`, 4],
+  ]) {
+    const response = await fixture.post(id, answer, 1, week);
+    assert.equal(response.status, 200, id);
+    assert.equal(response.body.copiedExample, true, id);
+    assert.equal(response.body.message, 'Try to write about your own life.', id);
+  }
+  assert.deepEqual(fixture.counts(), { guardCalls: 0, modelCalls: 0 });
+  assert.equal(fixture.calls.rpc.length, 0);
+});
+
 test('a copied example on the rewrite also leaves the second check available', async () => {
   const first = 'I got used to my new office.';
   const second = 'I got used to my new job quickly.';

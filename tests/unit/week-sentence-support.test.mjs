@@ -11,6 +11,8 @@ const grammar = JSON.parse(read('supabase-b1-b2/content/curriculum/grammar-use-i
 const vocabulary = JSON.parse(read('supabase-b1-b2/content/curriculum/vocab-sentence-support-weeks-01-04.json'));
 const details = JSON.parse(read('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
 const bank = JSON.parse(read('supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json'));
+const revisedWeek3Model = "In our flat, you have to wash your dishes. You mustn't leave the front door open. You don't have to cook for everyone. What time do you usually leave home?";
+const revisedV4Example = "In my town, it's a tradition to have a big festival in August, and visitors are invited to join.";
 
 const expectedVocabulary = [
   ['V1-S1', 'Write about something that was difficult at first, but now feels normal.', 'I got used to ______ .', 'It took me a long time to get used to the cold weather.'],
@@ -26,7 +28,10 @@ const expectedVocabulary = [
 test('each Week 1–4 grammar model and item has its own plain-language support', () => {
   assert.deepEqual(grammar.weeks.map((entry) => entry.week), [1, 2, 3, 4]);
   for (const week of grammar.weeks) {
-    assert.ok([2, 3].includes(grammarSentenceCount(week.model)), `Week ${week.week} needs a 2–3 sentence model`);
+    const count = grammarSentenceCount(week.model);
+    // Week 3's explicitly authored model contains four short sentences. The
+    // learner's own answers and per-item examples remain two or three.
+    assert.ok(week.week === 3 ? count === 4 : [2, 3].includes(count), `Unexpected Week ${week.week} model length`);
     const useIt = details.weeks.find((entry) => entry.number === week.week).grammar.practice.items.filter((item) => item.step === 'Use it');
     assert.deepEqual(week.items.map((item) => item.id), useIt.map((item) => item.id));
     for (const item of week.items) {
@@ -39,22 +44,23 @@ test('each Week 1–4 grammar model and item has its own plain-language support'
   }
 });
 
-test('each weekly model covers both of that week’s Use it targets', () => {
+test('each weekly model illustrates the week’s Use it target forms', () => {
   const [w1, w2, w3, w4] = grammar.weeks.map((entry) => entry.model);
   assert.match(w1, /used to/i);
   assert.match(w1, /since .* have /i);
   assert.match(w2, /going to/i);
   assert.match(w2, /I'm meeting/i);
   assert.match(w2, /if I had.*I would/i);
+  assert.equal(w3, revisedWeek3Model);
   assert.match(w3, /have to.*mustn't.*don't have to/i);
-  assert.equal((w3.match(/\?/g) ?? []).length, 2);
+  assert.equal((w3.match(/\?/g) ?? []).length, 1);
   assert.match(w4, /was built/i);
   assert.match(w4, /is sold/i);
   assert.match(w4, /quieter than/i);
   assert.match(w4, /friendliest/i);
 });
 
-test('vocabulary support preserves every attached prompt, starter and pair of examples', () => {
+test('vocabulary support preserves prompts, starters and second examples, with the revised V4-S2 first example', () => {
   assert.equal(vocabulary.status, 'pilot draft: second-teacher review pending');
   assert.equal(vocabulary.items.length, expectedVocabulary.length);
   for (const [id, prompt, starter, secondExample] of expectedVocabulary) {
@@ -65,9 +71,23 @@ test('vocabulary support preserves every attached prompt, starter and pair of ex
     assert.equal(item?.examples[1], secondExample, id);
     assert.doesNotMatch(item.pattern, /\b(?:noun|verb|gerund|participle)\b|-ing\b/i);
     const original = bank.weeks.flatMap((week) => week.yourSentence).find((entry) => entry.id === id);
-    assert.equal(item.examples[0], original.model, id);
+    assert.equal(item.examples[0], id === 'V4-S2' ? revisedV4Example : original.model, id);
     assert.ok(original.onTargetWhen.trim(), `${id} must keep its existing marking criterion`);
+    if (id === 'V4-S2') {
+      assert.equal(original.onTargetWhen, "custom or tradition is used correctly, with a clear meaning, about the learner's own town");
+      // The old private model is not the staged teaching example or a marking key.
+      assert.equal(original.model, 'In my town, visitors are invited to join the summer festival in August.');
+    }
   }
+});
+
+test('the third Week 2 second-conditional starter is updated without changing the other starters', () => {
+  const item = grammar.weeks.find((week) => week.week === 2).items.find((entry) => entry.id === 'W2-U2');
+  assert.deepEqual(item.starters, [
+    'If I had a free year, I would ______ .',
+    'I would also ______ .',
+    'If I had more money, I would ______ .',
+  ]);
 });
 
 test('vocabulary patterns keep the attachment’s wording except plain-language replacements for grammar terminology', () => {
@@ -144,6 +164,8 @@ test('the example route reveals only the requested example for the correct week 
   assert.equal(first.body.example, vocabulary.items[0].examples[0]);
   assert.equal(second.body.example, vocabulary.items[0].examples[1]);
   assert.deepEqual(Object.keys(first.body), ['example']);
+  assert.equal((await get('week=4&id=V4-S2&number=1')).body.example, revisedV4Example);
+  assert.equal((await get('week=4&id=V4-S2&number=2')).body.example, "It's a local custom to eat grapes at midnight on New Year's Eve.");
   assert.equal((await get('week=1&id=W1-U1&number=1')).body.example, grammar.weeks[0].items[0].examples[0]);
   assert.equal((await get('week=1&id=W1-U1&number=2')).status, 404);
   assert.equal((await get('week=2&id=V1-S1&number=1')).status, 404);

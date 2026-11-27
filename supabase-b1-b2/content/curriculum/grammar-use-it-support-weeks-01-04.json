@@ -33,14 +33,14 @@
         {
           "id": "W2-U2",
           "pattern": "Imagine a different situation: If I had ... , I would ... .",
-          "starters": ["If I had a free year, I would ______ .", "I would also ______ .", "I would like to ______ because ______ ."],
+          "starters": ["If I had a free year, I would ______ .", "I would also ______ .", "If I had more money, I would ______ ."],
           "examples": ["If I had a free year, I would travel around Scotland. I would learn to take better photos too."]
         }
       ]
     },
     {
       "week": 3,
-      "model": "In our flat, you have to wash your dishes, you mustn't leave the door open, and you don't have to cook for everyone. What time do you leave home? Do you usually cook in the evening?",
+      "model": "In our flat, you have to wash your dishes. You mustn't leave the front door open. You don't have to cook for everyone. What time do you usually leave home?",
       "items": [
         {
           "id": "W3-U1",
