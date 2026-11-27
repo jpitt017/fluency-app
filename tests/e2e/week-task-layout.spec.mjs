@@ -141,9 +141,15 @@ test('checked answers colour green for correct, amber for not quite, red only fo
     async function mark() {
       return panel.getByRole('status').filter({ hasText: /Correct|Not quite/ }).first();
     }
+    // The stored key can carry its reason ("False (…)") or match an option
+    // exactly; the clicked option is the one the key starts with.
+    const correctOption = (question) =>
+      question.options.find((option) => (question.key ?? '').startsWith(option)) ?? question.options[0];
+    const wrongOption = (question) =>
+      question.options.find((option) => !(question.key ?? '').startsWith(option)) ?? question.options[0];
     // Question 1, a wrong option: "Not quite" is amber, never red.
     const first = questions[0];
-    await answer(first.options.find((option) => option !== first.key) ?? first.options[0]);
+    await answer(wrongOption(first));
     const wrongMark = await mark();
     await expect(wrongMark).toContainText('Not quite');
     const wrongClass = await wrongMark.getAttribute('class');
@@ -152,7 +158,7 @@ test('checked answers colour green for correct, amber for not quite, red only fo
     // Question 2, the right option: green.
     await page.locator('#reading-questions').getByRole('tab', { name: `Go to question 2 of ${questions.length}` }).click();
     const second = questions[1];
-    await answer(second.key ?? second.options[0]);
+    await answer(correctOption(second));
     await expect(await mark()).toContainText('Correct');
     expect(await (await mark()).getAttribute('class')).toContain('emerald');
   } finally {
