@@ -186,7 +186,7 @@ test.describe('with a signed-in learner', () => {
         'You answered 22 of 22. 21 were right. Great work! You know this grammar well.',
       );
       // And the way on, not a dead end.
-      await expect(grammar.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
+      await expect(grammar.getByRole('button', { name: 'Next: Vocabulary →' }).first()).toBeVisible();
 
       // The completion is a row, not a browser flag.
       const saved = await admin
@@ -213,7 +213,7 @@ test.describe('with a signed-in learner', () => {
       await expect(
         reloaded.getByRole('status').filter({ hasText: 'You answered' }),
       ).toHaveText('You answered 22 of 22. 21 were right. Great work! You know this grammar well.');
-      await expect(reloaded.getByRole('button', { name: 'Next: Vocabulary →' })).toBeVisible();
+      await expect(reloaded.getByRole('button', { name: 'Next: Vocabulary →' }).first()).toBeVisible();
 
       // The saved answers are on screen, not only in the summary. The page
       // opened at the last step because everything before it is answered.
@@ -297,7 +297,7 @@ test.describe('with a signed-in learner', () => {
       // All sixteen fixed questions were answered correctly, and nothing was
       // written in step 7, so there is nothing to review.
       await expect(summary).toHaveText('You answered 16 of 16. 16 were right. Great work! You know these words well.');
-      await expect(vocabulary.getByRole('button', { name: 'Next: Reading →' })).toBeVisible();
+      await expect(vocabulary.getByRole('button', { name: 'Next: Reading →' }).first()).toBeVisible();
 
       const saved = await admin
         .from('week_skill_completions')
@@ -459,7 +459,7 @@ test.describe('with a signed-in learner', () => {
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
       await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
       await openWeekTask(page, 'vocabulary-practice');
-      await vocabulary.getByRole('button', { name: 'Next: Reading →' }).click();
+      await vocabulary.getByRole('button', { name: 'Next: Reading →' }).first().click();
       await expect(page.locator('#reading-practice h2')).toBeFocused();
       const calls = await page.evaluate(() => window.practiceScrolls);
       expect(calls.filter((call) => call.id === 'reading-practice').at(-1)?.behavior).toBe('instant');

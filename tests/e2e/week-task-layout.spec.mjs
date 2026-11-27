@@ -150,7 +150,7 @@ test('checked answers colour green for correct, amber for not quite, red only fo
     expect(wrongClass).toContain('amber');
     expect(wrongClass).not.toMatch(/red|rose/);
     // Question 2, the right option: green.
-    await page.locator('#reading-questions').getByRole('tab', { name: `Go to item 2 of ${questions.length}` }).click();
+    await page.locator('#reading-questions').getByRole('tab', { name: `Go to question 2 of ${questions.length}` }).click();
     const second = questions[1];
     await answer(second.options[second.answer_index]);
     await expect(await mark()).toContainText('Correct');

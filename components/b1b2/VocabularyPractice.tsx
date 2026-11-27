@@ -16,7 +16,7 @@ import PersonalSentenceBox from './PersonalSentenceBox';
 import PracticeItemPager from './PracticeItemPager';
 import GapText from './GapText';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
-import { usePracticeNavigation } from './usePracticeNavigation';
+import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 import { usePendingChecks } from './usePendingChecks';
 
 type Question = { id: string; prompt: string; options?: string[] };
@@ -334,6 +334,10 @@ export default function VocabularyPractice({
     }
   }
 
+  function goToNextTask() {
+    focusNextTask(next.href.replace('#', ''));
+  }
+
   return <section ref={(node) => { sectionRef.current = node?.closest<HTMLElement>('section[id]') ?? node; }} className="space-y-4">
     <StepProgress current={step + 1} total={steps.length} label={steps[step]} headingRef={stepHeadingRef} />
     <p className="text-sm text-stone-600">{STEP_INSTRUCTIONS[step]} This practice does not affect week unlocking.</p>
@@ -346,6 +350,7 @@ export default function VocabularyPractice({
         nextLabel={next.label}
         nextHref={next.href}
         onRevisit={() => { setStep(0); focusStep(wordsRef); }}
+        onNext={goToNextTask}
       />
     )}
     {!signedIn && <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to check and save your answers.</p>}

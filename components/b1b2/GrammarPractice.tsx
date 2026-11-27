@@ -21,7 +21,7 @@ import SentenceBox from './SentenceBox';
 import PersonalSentenceBox from './PersonalSentenceBox';
 import PracticeItemPager from './PracticeItemPager';
 import { FinishSummary, SavedTick, type PracticeSummary } from './PracticeFeedback';
-import { usePracticeNavigation } from './usePracticeNavigation';
+import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { usePendingChecks } from './usePendingChecks';
 
@@ -343,6 +343,10 @@ export default function GrammarPractice({
     }
   }
 
+  function goToNextTask() {
+    focusNextTask(next.href.replace('#', ''));
+  }
+
   function changeStep(nextIndex: number, target?: RefObject<HTMLElement | null>) {
     const nextStep = steps[Math.max(0, Math.min(steps.length - 1, nextIndex))];
     if (!nextStep) return;
@@ -371,6 +375,7 @@ export default function GrammarPractice({
           nextLabel={next.label}
           nextHref={next.href}
           onRevisit={() => changeStep(0, examplesRef)}
+          onNext={goToNextTask}
         />
       )}
       {current.title === 'See it' && (

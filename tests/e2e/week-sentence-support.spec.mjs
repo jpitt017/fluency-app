@@ -122,6 +122,8 @@ test('copied examples do not spend a check; the UI displays one rewrite and both
     await vocabItem.getByRole('textbox').fill(vocabularyExample2);
     await vocabItem.getByRole('button', { name: 'Check', exact: true }).click();
     await expect(vocabItem.getByRole('status')).toHaveText('Try to write about your own life.');
+    // One task is open at a time: go back to grammar before touching its item.
+    await openWeekTask(page, 'grammar-practice');
     const saved = await admin.from('week_sentence_practice').select('item_id').eq('user_id', user.id);
     if (saved.error) throw saved.error;
     expect(saved.data).toHaveLength(0);
