@@ -185,14 +185,6 @@ jobs:
           # The target guard above still refuses every non-E2E project; never
           # use --include-all against production.
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
-      # One-time recovery of exact synthetic users from interrupted run 46003905885.
-      - name: Clean interrupted isolated speaking fixtures
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/cleanup-interrupted-speaking-fixtures.mjs
       - name: Seed isolated E2E learner and minimal fixture
         env:
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
