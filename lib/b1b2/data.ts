@@ -590,6 +590,17 @@ export async function loadTeacherRoster(): Promise<{
     return { signedIn: true, authorized: false, learners: [] };
   }
 
+  // Pin learner generations before loading any roster data. If a deletion
+  // happens between these reads, the old generation makes a later pilot write
+  // fail closed instead of resurrecting an assignment from a stale page.
+  // 0080 has no such RPC; the old schema retains its existing behavior.
+  const generationRes = await supabase.rpc('teacher_get_data_deletion_generations');
+  if (generationRes.error && !['PGRST202', '42883'].includes(generationRes.error.code)) {
+    console.error('teacher deletion generations unavailable:', generationRes.error.message);
+  }
+  const generations = generationRes.data && typeof generationRes.data === 'object' && !Array.isArray(generationRes.data)
+    ? generationRes.data as Record<string, unknown> : {};
+
   const [{ data, error }, attemptsRes, pilotRes] = await Promise.all([
     supabase.rpc('teacher_get_roster'),
     supabase
@@ -667,6 +678,7 @@ export async function loadTeacherRoster(): Promise<{
   const learners = roster.map((learner) => ({
     ...learner,
     pilot: pilotRes.error ? null : (pilotRes.data ?? []).some((row) => row.user_id === learner.user_id),
+    deletion_generation: typeof generations[learner.user_id] === 'string' ? generations[learner.user_id] as string : null,
     mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
     weekly_recordings: recordingsByUser.get(learner.user_id) ?? [],
   }));

@@ -1,0 +1,18 @@
+{
+  "0081_retryable_learning_data_deletion.sql": {
+    "old_app_new_schema": [
+      "tests/unit/week-speaking-delete.test.mjs",
+      "tests/unit/teacher-deletion-generation.test.mjs"
+    ],
+    "new_app_old_schema": [
+      "tests/unit/week-speaking-delete.test.mjs",
+      "tests/unit/issue-deletion-generation.test.mjs",
+      "tests/unit/week-speaking-server.test.mjs",
+      "tests/unit/deletion-epoch.test.mjs",
+      "tests/unit/deletion-cors.test.mjs",
+      "tests/unit/eval-cache-deletion.test.mjs",
+      "tests/unit/teacher-deletion-generation.test.mjs"
+    ],
+    "overlap_notes": "The owner accepted the existing legacy deletion/upload race only during the mixed-version overlap, before pilot. The legacy fence and daily sweep are activated separately after old instances retire; see docs/rollouts/retryable-data-deletion-0081.md."
+  }
+}

@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
 import { parseWeekSpeakingTakePath } from '../../lib/b1b2/week-speaking-recordings.mjs';
+import { readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
 import { fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
 
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json')).weeks[0];
@@ -71,6 +72,9 @@ function fixture(options = {}) {
       };
     } },
     from(table) {
+      if (table === 'profiles') return { select: () => ({ eq: () => ({ maybeSingle: async () => options.oldSchema
+        ? { data: null, error: { code: '42703' } }
+        : { data: { data_deletion_generation: '44444444-4444-4444-8444-444444444444' }, error: null } }) }) };
       assert.equal(table, 'week_speaking_takes');
       const filters = {};
       const query = { select() { return query; }, eq(key, value) { filters[key] = value; return query; },
@@ -91,6 +95,7 @@ function fixture(options = {}) {
     'groq-sdk': FakeGroq,
     '@/utils/supabase/server': { createServerSupabase: async () => auth },
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
+    '@/lib/b1b2/deletion-generation.mjs': { readDeletionGeneration },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
     '@/lib/curriculum/week-speaking-support': { speakingSupportConfig: (week) => week === 1 ? support : null },
     '@/lib/b1b2/week-speaking-recordings.mjs': { parseWeekSpeakingTakePath },
@@ -132,8 +137,31 @@ test('first capture reserves an immutable private key, saves it, and spends no A
   const row = f.takes.get(response.body.takeId);
   assert.equal(row.status, 'ready');
   assert.equal(parseWeekSpeakingTakePath(row.path).userId, USER);
-  assert.equal(f.events.find((item) => Array.isArray(item) && item[0] === 'upload')[2].upsert, false);
+  const options = f.events.find((item) => Array.isArray(item) && item[0] === 'upload')[2];
+  assert.equal(options.upsert, false);
+  assert.equal(options.metadata.data_deletion_generation, '44444444-4444-4444-8444-444444444444');
   assert.equal(JSON.stringify(response.body).includes('week-speaking/'), false);
+});
+
+test('separate captures use fresh, non-overwriting recording keys', async () => {
+  const f = fixture();
+  const first = await f.capture(captureRequest());
+  const second = await f.capture(captureRequest());
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.notEqual(first.body.takeId, second.body.takeId);
+  const uploads = f.events.filter((item) => Array.isArray(item) && item[0] === 'upload');
+  assert.equal(uploads.length, 2);
+  assert.notEqual(uploads[0][1], uploads[1][1]);
+  assert.ok(uploads.every((item) => item[2].upsert === false));
+});
+
+test('weekly capture remains usable with the old schema and legacy metadata', async () => {
+  const f = fixture({ oldSchema: true });
+  assert.equal((await f.capture(captureRequest())).status, 200);
+  const options = f.events.find((item) => Array.isArray(item) && item[0] === 'upload')[2];
+  assert.equal(options.upsert, false);
+  assert.equal(options.metadata, undefined);
 });
 
 test('a checked weekly take requests Whisper segments and charges six units after reserving', async () => {

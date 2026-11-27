@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
+import { readDeletionGeneration } from '@/lib/b1b2/deletion-generation.mjs';
 import { validSupportNotes } from '@/lib/curriculum/speaking-support.mjs';
 import { speakingSupportConfig } from '@/lib/curriculum/week-speaking-support';
 import { parseWeekSpeakingTakePath } from '@/lib/b1b2/week-speaking-recordings.mjs';
@@ -22,6 +23,10 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: 'Sign in to save your recording.' }, { status: 401, headers: NO_STORE });
     userId = user.id;
+    // Mark new recordings so the daily safety net can distinguish even an
+    // unreferenced new file from an old upload that arrived after deletion.
+    // On 0080 this is null and the existing Storage path/behavior is retained.
+    const generation = await readDeletionGeneration(admin, user.id, req.headers);
     const form = await req.formData();
     const audio = form.get('audio') as File | null;
     const week = Number(form.get('weekNumber'));
@@ -64,7 +69,9 @@ export async function POST(req: NextRequest) {
     }
     const contentType = extension === 'm4a' ? 'audio/mp4' : `audio/${extension}`;
     uploadAttempted = true;
-    const uploaded = await admin.storage.from('speaking-recordings').upload(data.path, audio, { contentType, upsert: false });
+    const uploaded = await admin.storage.from('speaking-recordings').upload(data.path, audio, {
+      contentType, upsert: false, ...(generation ? { metadata: { data_deletion_generation: generation } } : {}),
+    });
     if (uploaded.error) {
       console.error('[week-speaking] upload failed:', uploaded.error);
       return NextResponse.json({ error: 'We could not save this recording. Please try again.' }, { status: 503, headers: NO_STORE });

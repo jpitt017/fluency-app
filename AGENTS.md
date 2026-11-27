@@ -90,6 +90,30 @@ and live agree.
 
 If you are unsure whether a statement is read-only, it is not.
 
+## Backwards-compatible database migrations
+
+From now on, every migration and its application changes must support both
+sides of a rolling deployment: the old app must keep working with the new
+schema, and the new app must keep working with the old schema. This includes
+reads, writes, permissions/RLS, Storage and data deletion—not just startup or
+a schema-check RPC. Design and test the overlap so deployment needs neither a
+maintenance gate nor downtime.
+
+Use additive expand/contract changes, compatibility shims and staged
+backfills as needed. Do not remove or rename objects, tighten constraints or
+revoke privileges while an old deployment may still need them. A later
+contract step is allowed only after the old consumers have retired and its
+own compatibility and rollback plan is reviewed. Test both app/schema pairs,
+including failure and retry paths. If compatibility cannot be demonstrated,
+stop and agree a safe plan with the owner rather than assuming a fast rollout
+is safe.
+
+For each new or changed migration, register executable tests for both app/schema
+pairs and describe any overlap risk in `tests/migration-compatibility.json`.
+The PR CI check runs those tests; it verifies evidence exists, not that the
+chosen tests cover every relevant behavior. Review the migration, permissions,
+Storage, deletion and operational rollback explicitly as well.
+
 ## This repo's other standing rules
 
 - Read the Next.js guidance block below before writing app code; this Next.js

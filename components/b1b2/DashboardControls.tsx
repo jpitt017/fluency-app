@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 import type { WeeklyReportRow } from '@/lib/b1b2/types';
 
 const PACE_OPTIONS = [
@@ -27,6 +28,7 @@ export function WeeklyPaceSelector({
   const dailyMinutes = Math.round((hours * 60) / 7);
 
   async function selectHours(nextHours: number) {
+    const deletionEpoch = browserDeletionGeneration();
     setHours(nextHours);
     setSaving(true);
     setStatus('');
@@ -38,7 +40,8 @@ export function WeeklyPaceSelector({
       const { error } = await supabase
         .from('profiles')
         .update({ weekly_goal_hours: nextHours })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .setHeader(DELETION_EPOCH_HEADER, deletionEpoch);
       if (error) throw error;
       setStatus(`Saved (${nextHours}h/wk)`);
       router.refresh();

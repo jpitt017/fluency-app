@@ -17,30 +17,62 @@ export default function DeleteDataButton({ userId }: { userId: string | null }) 
     setBusy(true);
     setStatus('');
     try {
+      // Persist the signed receipt before asking the server to remove files.
+      // If the final response is lost, the same receipt safely checks the same
+      // job on retry instead of deleting any new work a second time.
+      if (!userId) throw new Error('Sign in required.');
+      const receiptKey = `learning-data-deletion:${userId}`;
+      let receipt = window.localStorage.getItem(receiptKey);
+      if (!receipt) {
+        const begin = await fetch('/api/account/delete-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: 'DELETE', phase: 'begin' }),
+        });
+        const data = (await begin.json().catch(() => null)) as { error?: string; pending?: boolean; receipt?: string } | null;
+        if (!begin.ok || !data?.pending || !data.receipt) {
+          setStatus(data?.error || 'We could not start deleting your data. Please try again.');
+          return;
+        }
+        receipt = data.receipt;
+        // If browser storage is disabled, stop before any files are removed.
+        window.localStorage.setItem(receiptKey, receipt);
+      }
       const res = await fetch('/api/account/delete-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: 'DELETE' }),
+        body: JSON.stringify({ confirm: 'DELETE', phase: 'finish', receipt }),
       });
-      const data = (await res.json().catch(() => null)) as { error?: string; removedAudioFiles?: number } | null;
-      if (!res.ok || !data) {
-        // Technical detail stays in the log; the learner reads a B1 line.
-        console.error('[delete-data] request failed:', data?.error ?? res.status);
-        setStatus(data?.error || 'We could not delete your data. Please try again.');
+      const data = (await res.json().catch(() => null)) as { error?: string; code?: string; deleted?: boolean; alreadyCompleted?: boolean } | null;
+      if (!res.ok || !data?.deleted) {
+        if (data?.code === 'stale_receipt') {
+          // A key rotation or a different job makes this receipt unusable.
+          // Do not automatically start a new destructive request: the learner
+          // must explicitly confirm again after seeing the explanation.
+          try { window.localStorage.removeItem(receiptKey); } catch { /* allow retry if storage recovers */ }
+          setStatus('This saved request could not be verified. Confirm again to start or resume deletion of your current data.');
+        } else {
+          setStatus(data?.error || 'Deletion is pending. Some files may already be gone. Please try again.');
+        }
         return;
       }
-      try {
-        clearGrammarPositions(window.localStorage, userId);
-      } catch {
-        // Access to browser storage may itself be disabled; server data is deleted.
+      if (!data.alreadyCompleted) {
+        try {
+          clearGrammarPositions(window.localStorage, userId);
+        } catch {
+          // Server deletion is complete even if browser storage is unavailable.
+        }
       }
-      setStatus(`All learning data and ${data.removedAudioFiles ?? 0} audio recordings deleted.`);
+      try { window.localStorage.removeItem(receiptKey); } catch { /* same */ }
+      setStatus(data.alreadyCompleted
+        ? 'Your earlier deletion is complete. Data created afterwards was not deleted; start a new request if you want to erase it.'
+        : 'Your learning data and recordings have been deleted.');
       setConfirming(false);
       setTyped('');
       router.refresh();
     } catch (err) {
       console.error('[delete-data] request failed:', err);
-      setStatus('We could not delete your data. Please try again.');
+      setStatus('Deletion could not finish. Some files may already be gone. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -81,6 +113,7 @@ export default function DeleteDataButton({ userId }: { userId: string | null }) 
             </button>
             <button
               type="button"
+              disabled={busy}
               onClick={() => {
                 setConfirming(false);
                 setTyped('');

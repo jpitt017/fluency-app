@@ -24,7 +24,9 @@ export function buildEvalCacheKey(params: {
 export async function readEvalCache<T>(supabase: SupabaseClient | null, cacheKey: string): Promise<T | null> {
   if (!supabase) return null;
   try {
-    const { data, error } = await supabase.rpc('get_ai_eval_cache', { p_cache_key: cacheKey });
+    // The owned RPC is absent on the old schema: treat that as a cache miss,
+    // never as permission to read the old shared, ownerless cache.
+    const { data, error } = await supabase.rpc('get_owned_ai_eval_cache', { p_cache_key: cacheKey });
     if (error || !data) return null;
     return data as T;
   } catch {
@@ -38,7 +40,9 @@ export async function writeEvalCache(
 ): Promise<void> {
   if (!supabase) return;
   try {
-    await supabase.rpc('set_ai_eval_cache', {
+    // On the 0080 schema this RPC does not exist, so caching is temporarily
+    // disabled instead of retaining new unowned learner-derived feedback.
+    await supabase.rpc('set_owned_ai_eval_cache', {
       p_cache_key: params.cacheKey,
       p_endpoint: params.endpoint,
       p_model: params.model,

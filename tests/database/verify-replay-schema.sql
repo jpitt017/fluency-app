@@ -35,3 +35,5 @@ end $$;
 \ir week-speaking-recordings.sql
 \ir week-speaking-flow.sql
 \ir week-speaking-privacy.sql
+-- Pending jobs, both legacy/new app paths, generation fences and late files.
+\ir retryable-data-deletion.sql

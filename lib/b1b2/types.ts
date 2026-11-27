@@ -651,6 +651,8 @@ export interface MissedPracticeItem {
 
 export interface TeacherRosterLearner {
   pilot: boolean | null;
+  /** Opaque target version captured before loading the roster; absent on 0080. */
+  deletion_generation?: string | null;
   user_id: string;
   full_name: string;
   email: string | null;

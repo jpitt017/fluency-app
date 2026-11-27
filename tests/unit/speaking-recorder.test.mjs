@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
+import * as deletionEpoch from '../../lib/b1b2/deletion-epoch.mjs';
 
 // Exercise the real component handlers with lightweight hooks and media fakes.
 // Permission promises can resolve after a user leaves; no browser or remote
@@ -64,6 +65,7 @@ function fixture(kind, { constructorFails = false } = {}) {
     react,
     'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: Symbol('Fragment') },
     '@/lib/b1b2/speech': { speakPhrase() {} },
+    '@/lib/b1b2/deletion-epoch.mjs': deletionEpoch,
     '@/lib/b1b2/speaking-feedback.mjs': { structureUsed: () => false },
     '@/components/b1b2/SpeakingFeedbackDetails': { __esModule: true, default() {} },
   };
