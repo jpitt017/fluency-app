@@ -231,6 +231,9 @@ test('CI rebuilds the shared E2E schema from main plus this PR every run', () =>
   // migration can then never affect another branch's tests.
   assert.match(ci, /drop schema if exists public cascade/);
   assert.match(ci, /drop schema if exists supabase_migrations cascade/);
+  // the rebuild restores the standard Supabase default grants on public, so
+  // the migrations that rely on them (profiles et al) keep working.
+  assert.match(ci, /alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role/);
   assert.match(ci, /git archive origin\/main supabase-b1-b2\/migrations/);
   assert.match(ci, /cp supabase-b1-b2\/migrations\/\*\.sql/);
   // The rebuild and push only ever target the isolated E2E project, never

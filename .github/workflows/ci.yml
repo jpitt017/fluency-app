@@ -198,9 +198,9 @@ jobs:
           create schema public;
           grant usage on schema public to public, postgres, anon, authenticated, service_role;
           grant usage, create on schema public to pg_database_owner;
-          alter default privileges in schema public grant all on tables to postgres, supabase_admin;
-          alter default privileges in schema public grant all on functions to postgres, supabase_admin;
-          alter default privileges in schema public grant all on sequences to postgres, supabase_admin;
+          alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role, supabase_admin;
+          alter default privileges in schema public grant all on functions to postgres, anon, authenticated, service_role, supabase_admin;
+          alter default privileges in schema public grant all on sequences to postgres, anon, authenticated, service_role, supabase_admin;
           drop schema if exists supabase_migrations cascade;
           SQL
           workdir="$RUNNER_TEMP/e2e-supabase"
