@@ -245,8 +245,9 @@ test.describe('with a signed-in learner', () => {
       if (saved.error) throw saved.error;
       expect(saved.data?.length).toBe(listeningIds.length);
 
-      // Now the transcript is served, and it is the real script.
-      const unlocked = await page.goto('/week/1#listening-practice');
+      // Now the transcript is served, and it is the real script. The page is
+      // already on this URL, so reload to read the fresh server render.
+      const unlocked = await page.reload();
       const html = await unlocked.text();
       expect(html).toContain('Welcome back to Fresh Starts');
 

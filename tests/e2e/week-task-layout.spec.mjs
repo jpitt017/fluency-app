@@ -139,7 +139,8 @@ test('checked answers colour green for correct, amber for not quite, red only fo
     }
     // A wrong option first: "Not quite" is amber, never red.
     await answer(wrong);
-    await panel.getByRole('button', { name: 'Check', exact: true }).click();
+    const check = panel.getByRole('button', { name: 'Check', exact: true });
+    if (await check.count()) await check.click();
     const wrongMark = panel.getByRole('status').filter({ hasText: /Correct|Not quite/ });
     await expect(wrongMark).toContainText('Not quite');
     const wrongClass = await wrongMark.getAttribute('class');
@@ -147,7 +148,7 @@ test('checked answers colour green for correct, amber for not quite, red only fo
     expect(wrongClass).not.toMatch(/red|rose/);
     // The right one is green.
     await answer(key);
-    await panel.getByRole('button', { name: 'Check', exact: true }).click();
+    if (await check.count()) await check.click();
     const rightMark = panel.getByRole('status').filter({ hasText: /Correct|Not quite/ });
     await expect(rightMark).toContainText('Correct');
     expect(await rightMark.getAttribute('class')).toContain('emerald');

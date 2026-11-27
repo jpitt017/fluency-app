@@ -40,7 +40,9 @@ function DoneMark() {
 }
 
 export default function WeekTaskLayout({ tasks }: { tasks: WeekTaskEntry[] }) {
-  const [openKey, setOpenKey] = useState<string | null>(tasks[0]?.key ?? null);
+  // The first paint shows every task closed, so a deep link scrolls to a stable
+  // layout; the effect below then opens the hash's task (or the first one).
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   // Opening a task records it in the hash (without scrolling on its own), so a
   // reload or a shared link comes back to the same task.
@@ -52,17 +54,36 @@ export default function WeekTaskLayout({ tasks }: { tasks: WeekTaskEntry[] }) {
   };
 
   useEffect(() => {
+    function openWithScroll(match: WeekTaskEntry) {
+      setOpenKey(match.key);
+      // Opening a task changes the heights above the target, so the browser's
+      // (or FocusWeekSection's) scroll can land short. Scroll again once the
+      // open state has rendered, at a stable layout.
+      requestAnimationFrame(() => {
+        const section = document.getElementById(match.anchor);
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        section?.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'start' });
+      });
+    }
+    function arrive() {
+      const id = window.location.hash.slice(1);
+      const match = tasks.find((task) => task.anchor === id);
+      // Anything that isn't a task anchor (or no hash at all) opens the first
+      // task, so the page never arrives with every row collapsed.
+      if (match) openWithScroll(match);
+      else setOpenKey(tasks[0]?.key ?? null);
+    }
     function syncFromHash() {
       const id = window.location.hash.slice(1);
       const match = tasks.find((task) => task.anchor === id);
-      if (match) setOpenKey(match.key);
+      if (match) openWithScroll(match);
     }
     function onOpenEvent(event: Event) {
       const anchor = (event as CustomEvent<string>).detail;
       const match = tasks.find((task) => task.anchor === anchor);
       if (match) setOpenKey(match.key);
     }
-    syncFromHash();
+    arrive();
     window.addEventListener('hashchange', syncFromHash);
     window.addEventListener('week-task:open', onOpenEvent);
     return () => {

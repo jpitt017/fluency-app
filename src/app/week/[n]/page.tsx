@@ -89,6 +89,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       return [{
         ...task,
         heading: `Reading: ${details.reading.title}`,
+        regionLabel: 'Reading practice',
         done: details.readingSupport.questionsAnswered,
         body: <ReadingPracticeLayout
           before={<ReadingBeforeQuestions support={details.readingSupport.support} />}
@@ -102,6 +103,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       return [{
         ...task,
         heading: `Listening: ${details.listening.title}`,
+        regionLabel: 'Listening practice',
         done: details.listeningSupport.transcriptUnlocked,
         body: <>
           <ListeningBeforePlayer support={details.listeningSupport.support} />
@@ -113,6 +115,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       return [{
         ...task,
         heading: 'Speaking',
+        regionLabel: 'Speaking practice',
         done: speakingSupport ? speakingSupport.recordings.length > 0 : submissions.speaking,
         body: speakingSupport ? <WeekSpeakingSupport
           week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
@@ -127,6 +130,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     return [{
       ...task,
       heading: 'Writing',
+      regionLabel: 'Writing practice',
       done: submissions.writing,
       body: <div className="space-y-3"><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
     }];

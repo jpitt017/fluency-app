@@ -50,7 +50,8 @@ test('card meanings and the one-word-at-a-time gloss check open only after saved
     await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 
     await answerReadingAndFinish(page);
-    await page.goto('/week/1#reading-practice');
+    // Already on this URL: reload to get the server's unlocked card meanings.
+    await page.reload();
     const reading = page.locator('#reading-practice');
     const card = reading.getByRole('button', { name: 'challenge', exact: true });
     await expect(card).toBeVisible();

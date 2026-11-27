@@ -154,6 +154,9 @@ test('Check four words is one word at a time at 375 px and 1280 px', async ({ pa
     for (const [width, height] of [[375, 667], [1280, 800]]) {
       await page.setViewportSize({ width, height });
       await page.goto('/week/1#reading-practice');
+      // A same-URL goto does not reload, and the <details> state would carry
+      // across widths: reload so each width starts from a fresh render.
+      await page.reload();
       const reading = page.locator('#reading-practice');
       const summary = reading.getByText('Go further (2–3 min)', { exact: true });
       // The phone's fixed "Show the text" button sits at the bottom; centre the
