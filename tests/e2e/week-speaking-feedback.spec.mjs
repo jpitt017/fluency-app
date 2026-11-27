@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { assertE2ESupabaseApiTarget } from '../../scripts/assert-e2e-supabase-target.mjs';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
 import { canUseReadingGateFixture, signInExistingLearner } from './helpers/reading-gate.mjs';
+import { openWeekTask } from './helpers/week-tasks.mjs';
 
 // The real isolated Storage and server refreshes can take longer than a local
 // render. Still require each observable state; do not skip or mock the save.
@@ -88,12 +89,14 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
     await signInExistingLearner(page, learner);
     await fakeChecks(page, admin, learner.id);
     await page.goto('/week/1');
+    await openWeekTask(page, 'speaking-practice');
     await expect(page.getByRole('heading', { name: '3. Listen to the model' })).toHaveCount(0);
     await expect(page.getByText("Since then, I've", { exact: true })).toHaveCount(0);
 
     await record(page, 'Start recording');
     await expect(page.getByText('First recording version 1 of 3 is ready to keep.')).toBeVisible();
     await page.reload();
+    await openWeekTask(page, 'speaking-practice');
     await expect(page.getByRole('button', { name: 'Record again (2 left)' })).toBeVisible();
     await record(page, 'Record again (2 left)');
     await expect(page.getByText('First recording version 2 of 3 is ready to keep.')).toBeVisible();
@@ -141,6 +144,7 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
     }
     await expect(page.getByText('You have used all five checks for this task.')).toBeVisible();
     await page.reload();
+    await openWeekTask(page, 'speaking-practice');
     await expect(page.getByText('5 of 5 weekly checks used.')).toBeVisible();
     const allTakes = await admin.from('week_speaking_takes').select('id,recording_path,kind').eq('user_id', learner.id);
     expect(allTakes.data).toHaveLength(7);
@@ -176,6 +180,7 @@ test('saved recordings recover from quota, provider and sentence-practice errors
       return route.fulfill({ status: 503, json: { error: 'We could not save this recording. Please try again.' } });
     });
     await page.goto('/week/1');
+    await openWeekTask(page, 'speaking-practice');
     await record(page, 'Start recording');
     await expect(page.getByRole('alert').filter({ hasText: 'We could not save this recording.' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start recording', exact: true })).toBeEnabled();
@@ -186,6 +191,7 @@ test('saved recordings recover from quota, provider and sentence-practice errors
     await expect(page.getByRole('alert').filter({ hasText: 'Daily practice limit reached.' })).toBeVisible();
     await expect(page.getByText('0 of 5 weekly checks used.')).toBeVisible();
     await page.reload();
+    await openWeekTask(page, 'speaking-practice');
     await expect(page.getByRole('button', { name: 'Keep and check this recording' })).toBeEnabled();
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'The check is unavailable.' })).toBeVisible();
@@ -212,6 +218,7 @@ test('saved recordings recover from quota, provider and sentence-practice errors
     }
     await expect(page.getByText('3 of 5 weekly checks used.')).toBeVisible();
     await page.reload();
+    await openWeekTask(page, 'speaking-practice');
     await page.getByRole('button', { name: 'Check this saved sentence again' }).click();
     await expect(page.getByText('We found although in your transcript. This checks the pattern, not all your grammar or pronunciation.')).toBeVisible();
     await expect(page.getByText('4 of 5 weekly checks used.')).toBeVisible();
