@@ -126,9 +126,15 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
       await record(page, `Record try ${index}`);
       await expect(page.getByRole('heading', { name: `Try ${index}`, exact: true })).toBeVisible();
       const comparison = page.getByLabel(`Compare try ${index} with the previous recording`);
-      await expect(comparison.getByText(/Phrases found:/)).toBeVisible();
-      await expect(comparison.getByText(/Time:/)).toContainText('seconds');
-      await expect(comparison.getByText(/Cue-card points found:/)).toBeVisible();
+      const previousPhrase = index === 1 ? 'none found' : "Since then, I've";
+      const previousSeconds = index === 1 ? 33 : 30 + index - 1;
+      const previousPoint = index === 1 ? 'The change' : 'Now';
+      await expect(comparison.locator('p').filter({ hasText: 'Phrases found:' }))
+        .toHaveText(`Phrases found: ${previousPhrase} → Since then, I've`);
+      await expect(comparison.locator('p').filter({ hasText: 'Time:' }))
+        .toHaveText(`Time: ${previousSeconds} seconds → ${30 + index} seconds`);
+      await expect(comparison.locator('p').filter({ hasText: 'Cue-card points found:' }))
+        .toHaveText(`Cue-card points found: ${previousPoint} → Now`);
     }
     await expect(page.getByText('You have used all five checks for this task.')).toBeVisible();
     await page.reload();
