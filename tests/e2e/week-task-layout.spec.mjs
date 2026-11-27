@@ -127,31 +127,34 @@ test('checked answers colour green for correct, amber for not quite, red only fo
   const { admin, user } = await createReadingLearner(page, 'week-task-colours');
   try {
     await page.goto('/week/1#reading-practice');
+    const questions = details.reading.weeks[0].questions;
+    const clickable = (question) => question?.options && question.options.length >= 2;
+    test.skip(!clickable(questions[0]) || !clickable(questions[1]), 'The first two questions need options to click');
     const panel = page.locator('#reading-questions').getByRole('tabpanel');
-    const question = details.reading.weeks[0].questions[0];
-    test.skip(!question.options || question.options.length < 2, 'Question 1 has no options to click');
-    const key = question.options[question.answer_index];
-    const wrong = question.options.find((option) => option !== key);
     async function answer(option) {
       const button = panel.getByRole('button', { name: option, exact: true });
       if (await button.count()) await button.click();
       else await panel.getByRole('radio', { name: option, exact: true }).check();
+      const check = panel.getByRole('button', { name: 'Check', exact: true });
+      if (await check.count()) await check.click();
     }
-    // A wrong option first: "Not quite" is amber, never red.
-    await answer(wrong);
-    const check = panel.getByRole('button', { name: 'Check', exact: true });
-    if (await check.count()) await check.click();
-    const wrongMark = panel.getByRole('status').filter({ hasText: /Correct|Not quite/ });
+    async function mark() {
+      return panel.getByRole('status').filter({ hasText: /Correct|Not quite/ }).first();
+    }
+    // Question 1, a wrong option: "Not quite" is amber, never red.
+    const first = questions[0];
+    await answer(first.options.find((option) => option !== first.options[first.answer_index]));
+    const wrongMark = await mark();
     await expect(wrongMark).toContainText('Not quite');
     const wrongClass = await wrongMark.getAttribute('class');
     expect(wrongClass).toContain('amber');
     expect(wrongClass).not.toMatch(/red|rose/);
-    // The right one is green.
-    await answer(key);
-    if (await check.count()) await check.click();
-    const rightMark = panel.getByRole('status').filter({ hasText: /Correct|Not quite/ });
-    await expect(rightMark).toContainText('Correct');
-    expect(await rightMark.getAttribute('class')).toContain('emerald');
+    // Question 2, the right option: green.
+    await page.locator('#reading-questions').getByRole('tab', { name: `Go to item 2 of ${questions.length}` }).click();
+    const second = questions[1];
+    await answer(second.options[second.answer_index]);
+    await expect(await mark()).toContainText('Correct');
+    expect(await (await mark()).getAttribute('class')).toContain('emerald');
   } finally {
     await removeReadingLearner(admin, user);
   }

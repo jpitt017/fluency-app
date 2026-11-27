@@ -2,6 +2,10 @@ import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
+// A stuck action must fail with its locator call log instead of eating the
+// whole test budget.
+test.use({ actionTimeout: 30_000 });
+
 const grammarPrompt = "Tell me about something you used to do as a child that you don't do now.";
 const vocabularyPrompt = 'Write about something that was difficult at first, but now feels normal.';
 const grammarExample = 'I used to ride my bike to school. I walk to work now.';
@@ -113,6 +117,7 @@ test('copied examples do not spend a check; the UI displays one rewrite and both
 
     const { item: vocabItem } = await openVocabularySentences(page);
     await vocabItem.getByRole('button', { name: 'Show an example' }).click();
+    await expect(vocabItem.getByText(vocabularyExample1)).toBeVisible();
     await vocabItem.getByRole('button', { name: 'Show an example' }).click();
     await vocabItem.getByRole('textbox').fill(vocabularyExample2);
     await vocabItem.getByRole('button', { name: 'Check', exact: true }).click();

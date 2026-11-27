@@ -50,7 +50,7 @@ async function expectAdvice(region, skill, band, sentence) {
   const review = panel.getByRole('link', { name: reviewName });
   await expect(review).toHaveCount(band === 'high' ? 0 : 1);
   if (band !== 'high') await expect(review).toHaveAttribute('href', '/review');
-  await expect(panel.getByRole('button', { name: nextName })).toHaveCount(band === 'low' ? 0 : 1);
+  await expect(panel.getByRole('link', { name: nextName })).toHaveCount(band === 'low' ? 0 : 1);
   return panel;
 }
 
