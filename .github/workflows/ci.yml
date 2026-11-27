@@ -181,6 +181,18 @@ jobs:
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
+          # The shared test project records migrations from every open branch
+          # that ran CI. Supabase refuses db push when a remote version has no
+          # local file, so mirror each remote-only version as a no-op
+          # placeholder in the disposable workdir. The placeholder is skipped
+          # as already applied and never enters the repository; real
+          # repository files stay authoritative.
+          for v in $(psql "$E2E_SUPABASE_DB_URL" -Atc "select version from supabase_migrations.schema_migrations" 2>/dev/null || true); do
+            if ! compgen -G "$workdir/supabase/migrations/${v}_*.sql" > /dev/null; then
+              echo "shared test project already has version $v from another branch; workdir placeholder added"
+              printf '%s\n' "-- No-op placeholder: version $v was applied to this shared test project by another branch." "select 1;" > "$workdir/supabase/migrations/${v}_shared_project_history.sql"
+            fi
+          done
           # Versions 0050–0059 are reserved for the writing-support work and
           # can be older than already-applied 0060/0062 on this test project.
           # The target guard above still refuses every non-E2E project; never
