@@ -41,7 +41,13 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
   const signInHref = await page.getByRole('link', { name: 'Sign in for AI feedback →' }).getAttribute('href');
   expect(new URL(signInHref, 'http://localhost').searchParams.get('next')).toBe('/labs?week=1');
   await expect(page.getByText(details.weeks[0].writing.prompt)).toBeVisible();
-  await expect(page.getByText(details.weeks[0].speaking.prompt)).toBeVisible();
+  // Weeks 1–4 have a dedicated speaking flow on the week page rather than a
+  // duplicate weekly task in the lab. The lab remains available for practice.
+  const speaking = page.locator('#speaking');
+  await expect(speaking.getByText(details.weeks[0].speaking.prompt)).toHaveCount(0);
+  await expect(speaking.getByText('Practise speaking for 1–2 minutes.', { exact: false })).toBeVisible();
+  await expect(speaking.getByRole('link', { name: 'record it on the Week 1 page' })).toHaveAttribute('href', '/week/1#speaking-practice');
+  await expect(speaking.getByText(/This task counts for Week/)).toHaveCount(0);
   const labsHtml = await page.content();
   expect(labsHtml).not.toContain(details.weeks[0].speaking.model);
   expect(labsHtml).not.toContain(details.weeks[0].writing.modelAnswer);

@@ -6,11 +6,17 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), '
 
 test('account deletion removes exact database-recorded paths instead of searching Storage buckets', () => {
   const route = read('src/app/api/account/delete-data/route.ts');
-  assert.match(route, /from\('issue_reports'\)\.select\('audio_path,screenshot_path'\)\.eq\('user_id', user\.id\)/);
-  assert.match(route, /from\('speaking_attempts'\)\.select\('audio_path'\)/);
-  assert.match(route, /from\('week_speaking_attempts'\)\.select\('first_recording_path,second_recording_path'\)/);
-  assert.match(route, /admin\.storage\.from\('issue-attachments'\)\.remove\(issuePaths\)/);
-  assert.match(route, /admin\.storage\.from\(RECORDING_BUCKET\)\.remove\(recordingPaths\)/);
+  assert.match(route, /from\(table\)\.select\(columns, \{ count: 'exact' \}\)\.eq\('user_id', user!\.id\)/);
+  assert.match(route, /\.order\('id', \{ ascending: true \}\)\.range\(rows\.length, rows\.length \+ 499\)/);
+  assert.match(route, /readOwned\('issue_reports', 'audio_path,screenshot_path'\)/);
+  assert.match(route, /readOwned\('speaking_attempts', 'audio_path'\)/);
+  assert.match(route, /readOwned\('week_speaking_attempts', 'first_recording_path,second_recording_path'\)/);
+  assert.match(route, /readOwned\('week_speaking_takes', 'recording_path'\)/);
+  assert.match(route, /removeFiles\('issue-attachments', issuePaths\)/);
+  assert.match(route, /removeFiles\(RECORDING_BUCKET, recordingPaths\)/);
+  assert.match(route, /\.remove\(paths\.slice\(start, start \+ 100\)\)/);
+  assert.ok(route.indexOf("rpc('begin_week_speaking_deletion'") < route.indexOf("readOwned('week_speaking_takes'"));
+  assert.ok(route.indexOf('removeFiles(RECORDING_BUCKET, recordingPaths)') < route.indexOf("rpc('finish_week_speaking_deletion'"));
   assert.match(route, /path\.startsWith\(ownedPrefix\)/);
   assert.doesNotMatch(route, /\.list\(/);
   const deletionFunction = read('supabase-b1-b2/migrations/0024_reconcile_live_schema.sql');

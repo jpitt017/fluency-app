@@ -67,24 +67,32 @@ test('focus-question and phrase-noticing answer routes are removed', () => {
   assert.doesNotMatch(returnedState, /answerIndex|focusQuestion|distractors/);
 });
 
-test('the model and useful phrases stay server-gated until a saved first recording', () => {
+test('the model and useful phrases stay server-gated until the kept first recording is checked', () => {
   const projection = read('lib/curriculum/week-speaking-support.ts');
-  assert.match(projection, /const unlocked = Boolean\(attempt\?\.first_recording_path && attempt\.first_transcript\)/);
-  assert.match(projection, /model: unlocked \? \{ text: staticWeek\.speaking\.model, audioUrl: modelAudioUrl \} : null/);
+  assert.match(projection, /const unlocked = Boolean\(flow\?\.model_unlocked && attempt\?\.first_recording_path && attempt\.first_transcript\)/);
+  assert.match(projection, /model: unlocked \? \{ text: staticWeek\.speaking\.model, audioUrl: modelAudioUrl, parts: config\.modelParts \} : null/);
   assert.match(projection, /usefulPhrases: unlocked \? config\.noticePhrases : \[\]/);
   const page = read('src/app/week/[n]/page.tsx');
   assert.match(page, /loadWeekSpeakingSupport\(number\)/);
 });
 
-test('the model script is hidden until asked for, and Compare highlights phrases in both transcripts', () => {
+test('the model script is hidden until asked for, with labelled parts and comparisons', () => {
   const component = read('components/b1b2/WeekSpeakingSupport.tsx');
   assert.match(component, /const \[scriptShown, setScriptShown\] = useState\(false\)/);
   assert.match(component, /Show the script/);
   assert.match(component, /aria-expanded=\{scriptShown\}/);
-  assert.match(component, /<SpeakingModelPlayer text=\{unlockedModel\.text\}/);
-  assert.match(component, /<Transcript text=\{unlockedModel\.text\} phrases=\{realPhrases\}/);
-  assert.match(component, /<Transcript text=\{firstTranscript\} phrases=\{phrasesUsed\(firstTranscript, realPhrases\)\}/);
+  assert.match(component, /<SpeakingModelPlayer text=\{model\.text/);
+  assert.match(component, /part\.cuePoints\.join/);
+  assert.match(component, /part\.purpose/);
+  assert.match(component, /<Transcript text=\{part\.text\} phrases=\{usefulPhrases\}/);
+  assert.match(component, /phrasesUsed\(take\.transcript, phrases\)/);
+  assert.match(component, /Cue-card points found/);
   assert.doesNotMatch(component, /focusQuestion|markFocusAnswer|saveNotice|noticeSelected|Check and continue|tap the phrases you hear/);
+});
+
+test('older recordings explain why their previous scores are not shown', () => {
+  const component = read('components/b1b2/WeekSpeakingSupport.tsx');
+  assert.match(component, /!take\.id && <p[^>]*>Scores for older recordings used a different method/);
 });
 
 test('the speaking model uses the shared audio transport controls, including stop', () => {

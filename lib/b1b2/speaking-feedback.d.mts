@@ -1,0 +1,22 @@
+export type StructureKind = 'although' | 'which' | 'so that' | 'because of' | 'present perfect' | 'time or if clause' | 'modal' | 'passive' | 'conditional' | 'future perfect' | 'past modal';
+export type StructurePoint = { original: string; upgraded: string; explanation: string; structure: StructureKind };
+export type Fluency = { wordCount: number; seconds: number | null; wordsPerMinute: number | null; pauses: number | null };
+export type SoundTip = { word: string; label: string; tip: string };
+export type CuePointEvidence = { label: string; quote: string };
+export type ShortSpeakingFeedback = {
+  transcript?: string;
+  score?: number;
+  feedback?: string;
+  summary?: string;
+  structure?: StructurePoint | null;
+  fluency?: Fluency | null;
+  soundTips?: SoundTip[];
+  cuePoints?: CuePointEvidence[];
+};
+export function structureUsed(text: string, structure: StructureKind | string): boolean;
+export function sentenceList(text: string): string[];
+export function structurePoint(raw: unknown, transcript: string, weekNumber?: number | null): StructurePoint | null;
+export function fluencyFromWhisper(transcript: string, result: unknown): Fluency;
+export function soundTips(transcript: string): SoundTip[];
+export function cuePointEvidence(raw: unknown, transcript: string, labels: string[]): CuePointEvidence[];
+export function weekStructure(weekNumber?: number | null): StructureKind | null;

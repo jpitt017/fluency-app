@@ -12,6 +12,7 @@ declare
   path1 text;
   path2 text;
   other_path text;
+  deletion_lock uuid := gen_random_uuid();
   result jsonb;
 begin
   insert into auth.users(id, email, raw_user_meta_data, raw_app_meta_data, aud, role)
@@ -30,7 +31,8 @@ begin
       (other_attempt, other_user, 1, '[]'::jsonb, other_path, 'another learner', null, null);
 
   perform set_config('request.jwt.claim.sub', u::text, true);
-  result := public.delete_my_learning_data();
+  if not public.begin_week_speaking_deletion(u, deletion_lock) then raise exception 'Deletion lock unavailable'; end if;
+  result := public.finish_week_speaking_deletion(u, deletion_lock);
 
   if result->>'deleted' <> 'true' then
     raise exception 'Delete my data did not complete: %', result;

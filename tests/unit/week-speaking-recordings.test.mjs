@@ -7,6 +7,8 @@ import {
   createWeekSpeakingSignedUrl,
   isOwnedWeekSpeakingRecordingPath,
   parseWeekSpeakingRecordingPath,
+  parseWeekSpeakingTakePath,
+  weekSpeakingTakeRecording,
   recordingContentTypeFromPath,
   weekSpeakingAttemptRecordings,
   weekSpeakingRecordingHref,
@@ -129,14 +131,20 @@ test('learner and teacher views both use the same playback component', () => {
   assert.match(roster, /weekly_recordings:/);
 });
 
-test('the evaluate route keeps its existing unlocking call and shared canonical path', () => {
+test('weekly counting and model unlocking are atomic and use a private recording ledger', () => {
   const source = readFileSync('src/app/api/speaking/evaluate/route.ts', 'utf8');
+  const check = readFileSync('src/app/api/week/speaking/check/route.ts', 'utf8');
+  const capture = readFileSync('src/app/api/week/speaking/capture/route.ts', 'utf8');
+  const migration = readFileSync('supabase-b1-b2/migrations/0080_week_speaking_feedback.sql', 'utf8');
   const learnerProjection = readFileSync('lib/curriculum/week-speaking-support.ts', 'utf8');
-  assert.match(source, /recordWeekSubmission\(guard\.userId, weekNumber, 'speaking'\)/);
-  assert.match(source, /weekSpeakingRecordingPath\(\{/);
-  assert.match(source, /first_recording_path: storagePath/);
-  assert.match(source, /second_recording_path: storagePath/);
-  assert.match(learnerProjection, /recordings: weekSpeakingAttemptRecordings\(attempt\)/);
+  assert.match(source, /Record this weekly task on the Week/);
+  assert.match(check, /reserve_week_speaking_check/);
+  assert.match(check, /finish_week_speaking_check/);
+  assert.match(capture, /parseWeekSpeakingTakePath/);
+  assert.match(migration, /insert into public\.week_output_submissions/);
+  assert.match(migration, /model_unlocked = true/);
+  assert.match(learnerProjection, /weekSpeakingAttemptRecordings\(attempt\)/);
+  assert.match(learnerProjection, /weekSpeakingTakeRecording/);
 });
 
 test('migration 0062 keeps the bucket private and adds only read-only staff policies', () => {
@@ -214,4 +222,24 @@ test('CI runs the new unit checks and applies migrations only to the isolated E2
   assert.equal(existsSync('supabase-b1-b2/migrations/0059_week_sentence_writing_support.sql'), true);
   assert.match(ci, /cp supabase-b1-b2\/migrations\/\*\.sql/);
   assert.doesNotMatch(ci, /migration repair --status reverted 0059/);
+});
+
+test('immutable new take keys project only owner-validated playback routes', () => {
+  const takeId = '44444444-4444-4444-8444-444444444444';
+  const path = `${USER_ID}/week-speaking/2/${ATTEMPT_ID}/recording-${takeId}.webm`;
+  const take = { id: takeId, user_id: USER_ID, attempt_id: ATTEMPT_ID, week_number: 2,
+    kind: 'retry', sequence: 3, status: 'checked', recording_path: path };
+  assert.equal(parseWeekSpeakingTakePath(path).takeId, takeId);
+  assert.equal(weekSpeakingTakeRecording(take).href, `/api/week/speaking/take/${takeId}`);
+  assert.equal(weekSpeakingTakeRecording(take).label, 'Week 2 · Try 3');
+  assert.equal(weekSpeakingTakeRecording({ ...take, user_id: OTHER_USER_ID }), null);
+  assert.equal(weekSpeakingTakeRecording({ ...take, week_number: 3 }), null);
+  assert.equal(weekSpeakingTakeRecording({ ...take, status: 'upload_failed' }), null);
+  assert.equal(parseWeekSpeakingTakePath(path.replace('webm', 'exe')), null);
+  const route = readFileSync('src/app/api/week/speaking/take/[takeId]/route.ts', 'utf8');
+  assert.match(route, /supabase\.auth\.getUser\(\)/);
+  assert.match(route, /\.eq\('user_id', user\.id\)/);
+  assert.match(route, /parsed\.takeId !== take\.id/);
+  assert.match(route, /createWeekSpeakingSignedUrl\(readClient, take\.recording_path\)/);
+  assert.match(route, /'cache-control': 'private, no-store/);
 });

@@ -1,13 +1,12 @@
 {
-  "version": "speaking-support-v1",
+  "version": "speaking-support-v2",
   "status": "pilot draft: second-teacher review pending",
   "flow": [
     "1 Plan (2 min): one note box per cue-card point; model hidden",
-    "2 Record (60–90 s): existing speaking feedback with week context",
-    "3 Listen to the model (unlocked after the first recording): focus question, answer marked on the server",
-    "4 Notice: listen again and tap the phrases you hear (4 real, 2 not in the model); then see the model transcript with the phrases highlighted",
-    "5 Compare: model transcript beside the learner's transcript; phrases from the list that the learner used are highlighted",
-    "6 Try again (optional): record once more using two phrases; feedback says which phrases were used"
+    "2 Record: keep one of up to three privately saved first versions",
+    "3 Check the kept first recording and listen to the model",
+    "4 Read the labelled model and choose up to two phrases for a reminder card",
+    "5 Try again up to three times; compare each checked try with the one before it"
   ],
   "rules": {
     "modelHiddenUntilFirstRecording": true,
@@ -46,7 +45,72 @@
         "What helped",
         "Now"
       ],
-      "retryGoal": "In your second recording, try to use two phrases from the list."
+      "retryGoal": "Choose up to two phrases and try them in your next recording.",
+      "modelParts": [
+        {
+          "cuePoints": [
+            "The change"
+          ],
+          "purpose": "Introduces the change.",
+          "text": "When I moved to a new city last year, I didn't know anyone."
+        },
+        {
+          "cuePoints": [
+            "Before"
+          ],
+          "purpose": "Describes life before.",
+          "text": "In my old town, I used to see my friends every weekend, and we would often cook together on Sunday evenings."
+        },
+        {
+          "cuePoints": [
+            "What was hard"
+          ],
+          "purpose": "Names the challenge.",
+          "text": "So the biggest challenge I faced was meeting people outside work."
+        },
+        {
+          "cuePoints": [
+            "What was hard"
+          ],
+          "purpose": "Adds a difficult detail.",
+          "text": "It took me a few weeks to get used to spending my evenings alone."
+        },
+        {
+          "cuePoints": [
+            "What helped"
+          ],
+          "purpose": "Explains what helped.",
+          "text": "One evening, while I was walking home, I saw a poster for a running group."
+        },
+        {
+          "cuePoints": [
+            "What helped"
+          ],
+          "purpose": "Shows how the speaker made friends.",
+          "text": "I'd never run with a group before, so I was nervous at the first session, but I gradually got to know the other runners."
+        },
+        {
+          "cuePoints": [
+            "Now"
+          ],
+          "purpose": "Shows what is different now.",
+          "text": "Since then, I've made a few friends, and the city feels more like home."
+        },
+        {
+          "cuePoints": [
+            "Now"
+          ],
+          "purpose": "Adds the current routine.",
+          "text": "I've been running with the group for about six months now."
+        },
+        {
+          "cuePoints": [
+            "Now"
+          ],
+          "purpose": "Ends with a reflection.",
+          "text": "When I look back on those first few weeks, I'm really glad I went to that first session."
+        }
+      ]
     },
     {
       "week": 2,
@@ -77,7 +141,65 @@
         "When it's done...",
         "If it doesn't work out..."
       ],
-      "retryGoal": "In your second recording, try to use two phrases from the list."
+      "retryGoal": "Choose up to two phrases and try them in your next recording.",
+      "modelParts": [
+        {
+          "cuePoints": [
+            "My goal"
+          ],
+          "purpose": "States the goal.",
+          "text": "My goal is to start a career in design."
+        },
+        {
+          "cuePoints": [
+            "Already arranged"
+          ],
+          "purpose": "Gives an arrangement.",
+          "text": "I intend to take a short course this spring, and I'm meeting someone from the college on Thursday."
+        },
+        {
+          "cuePoints": [
+            "Already arranged"
+          ],
+          "purpose": "Adds something to look forward to.",
+          "text": "I'm looking forward to seeing some of the students' work."
+        },
+        {
+          "cuePoints": [
+            "Already arranged"
+          ],
+          "purpose": "Adds support already offered.",
+          "text": "A friend who did the course has offered to help me choose a project."
+        },
+        {
+          "cuePoints": [
+            "My goal"
+          ],
+          "purpose": "Adds an opinion about the goal.",
+          "text": "I think it'll be hard work, but it'll be worth it."
+        },
+        {
+          "cuePoints": [
+            "When it's done..."
+          ],
+          "purpose": "Explains the next step.",
+          "text": "When I finish the course, I'll apply for a few junior roles and use my project to show what I can do."
+        },
+        {
+          "cuePoints": [
+            "If it doesn't work out..."
+          ],
+          "purpose": "Gives a backup plan.",
+          "text": "If I don't get a place this spring, I'll take an evening class instead."
+        },
+        {
+          "cuePoints": [
+            "If it doesn't work out..."
+          ],
+          "purpose": "Adds an imagined alternative.",
+          "text": "And if I had more free time, I'd study full-time, but I need to keep working for now."
+        }
+      ]
     },
     {
       "week": 3,
@@ -109,7 +231,73 @@
         "Advice",
         "A question for them"
       ],
-      "retryGoal": "In your second recording, try to use two phrases from the list."
+      "retryGoal": "Choose up to two phrases and try them in your next recording.",
+      "modelParts": [
+        {
+          "cuePoints": [
+            "A shared job",
+            "A rule"
+          ],
+          "purpose": "Welcomes the flatmate and gives a shared job and a rule.",
+          "text": "Welcome to the flat! There are a few things you need to know. We have to clean up after cooking, and we mustn't leave the cooker on when we go out."
+        },
+        {
+          "cuePoints": [
+            "Something optional"
+          ],
+          "purpose": "Explains what is optional.",
+          "text": "You don't have to cook for everyone, but we usually eat together on Fridays."
+        },
+        {
+          "cuePoints": [
+            "Something optional"
+          ],
+          "purpose": "Explains what the flatmate can do.",
+          "text": "You can use the washing machine until ten."
+        },
+        {
+          "cuePoints": [
+            "A rule"
+          ],
+          "purpose": "Explains a rule and its reason.",
+          "text": "The neighbours can hear it through the wall, so if you need it later, please ask them politely first."
+        },
+        {
+          "cuePoints": [
+            "Advice"
+          ],
+          "purpose": "Reassures the flatmate.",
+          "text": "I couldn't cook at all when I moved in, so don't worry if you're still learning."
+        },
+        {
+          "cuePoints": [
+            "Advice"
+          ],
+          "purpose": "Suggests a useful plan.",
+          "text": "I think we should arrange a cleaning rota around our work hours."
+        },
+        {
+          "cuePoints": [
+            "A rule"
+          ],
+          "purpose": "Adds information about the routine.",
+          "text": "Apart from that, there's no fixed routine."
+        },
+        {
+          "cuePoints": [
+            "Advice"
+          ],
+          "purpose": "Encourages the flatmate to ask.",
+          "text": "We all get on with each other really well, so if you're not sure about something, just ask."
+        },
+        {
+          "cuePoints": [
+            "A question for them"
+          ],
+          "purpose": "Asks the flatmate a question.",
+          "text": "What time do you usually get home, by the way?"
+        }
+      ]
     },
     {
       "week": 4,
@@ -140,7 +328,66 @@
         "A comparison",
         "My recommendation"
       ],
-      "retryGoal": "In your second recording, try to use two phrases from the list."
+      "retryGoal": "Choose up to two phrases and try them in your next recording.",
+      "modelParts": [
+        {
+          "cuePoints": [
+            "My recommendation"
+          ],
+          "purpose": "Recommends a place to start.",
+          "text": "If you visit this town, start at the market hall."
+        },
+        {
+          "cuePoints": [
+            "A fact about the past",
+            "An event or custom"
+          ],
+          "purpose": "Gives a past fact and a regular event.",
+          "text": "It was built in 1890, and the food market is held there every Saturday."
+        },
+        {
+          "cuePoints": [
+            "An event or custom"
+          ],
+          "purpose": "Describes a local tradition.",
+          "text": "It's a local tradition, and you can try food from nearby farms."
+        },
+        {
+          "cuePoints": [
+            "My recommendation"
+          ],
+          "purpose": "Explains when to go.",
+          "text": "It's the busiest place in town on a Saturday morning, so I'd set off early."
+        },
+        {
+          "cuePoints": [
+            "An event or custom"
+          ],
+          "purpose": "Explains another local custom.",
+          "text": "There's also a local custom that surprises visitors: most shops are closed on Wednesday afternoons, so plan your shopping for another day."
+        },
+        {
+          "cuePoints": [
+            "My recommendation"
+          ],
+          "purpose": "Recommends another activity.",
+          "text": "Afterwards, take a walk by the river."
+        },
+        {
+          "cuePoints": [
+            "A comparison"
+          ],
+          "purpose": "Compares two places.",
+          "text": "It's quieter than the centre, and it's the spot where I go to relax."
+        },
+        {
+          "cuePoints": [
+            "A comparison"
+          ],
+          "purpose": "Ends with a positive comparison.",
+          "text": "The town isn't a famous destination, but it's one of the friendliest places I know."
+        }
+      ]
     }
   ]
 }
