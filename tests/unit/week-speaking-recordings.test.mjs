@@ -224,13 +224,24 @@ test('CI runs the new unit checks and applies migrations only to the isolated E2
   assert.doesNotMatch(ci, /migration repair --status reverted 0059/);
 });
 
-test('CI mirrors remote-only shared-project versions instead of failing db push', () => {
+test('CI rebuilds the shared E2E schema from main plus this PR every run', () => {
   const ci = readFileSync('.github/workflows/ci.yml', 'utf8');
-  // when another open branch applied a version to the shared test project,
-  // the apply step must tolerate it with disposable workdir placeholders
-  // rather than failing the whole job before any test runs.
-  assert.match(ci, /select version from supabase_migrations\.schema_migrations/);
-  assert.match(ci, /_shared_project_history\.sql/);
+  // The E2E run resets the shared test schema and its migration history, then
+  // re-applies main's migrations plus this PR's own files. One branch's
+  // migration can then never affect another branch's tests.
+  assert.match(ci, /drop schema if exists public cascade/);
+  assert.match(ci, /drop schema if exists supabase_migrations cascade/);
+  // the rebuild restores the standard Supabase default grants on public, so
+  // the migrations that rely on them (profiles et al) keep working.
+  assert.match(ci, /alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role/);
+  assert.match(ci, /git archive origin\/main supabase-b1-b2\/migrations/);
+  assert.match(ci, /cp supabase-b1-b2\/migrations\/\*\.sql/);
+  // The rebuild and push only ever target the isolated E2E project, never
+  // live, and the temporary placeholder workaround is gone entirely.
+  assert.match(ci, /Refusing to rebuild anything except the isolated E2E project/);
+  assert.match(ci, /psql "\$E2E_SUPABASE_DB_URL"/);
+  assert.doesNotMatch(ci, /shared_project_history/);
+  assert.doesNotMatch(ci, /No-op placeholder/);
   // the 0059-specific shim and history repair stay gone (see test above).
   assert.doesNotMatch(ci, /CI-only ledger shim/);
   assert.doesNotMatch(ci, /migration repair/);
