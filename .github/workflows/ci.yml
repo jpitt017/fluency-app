@@ -178,28 +178,44 @@ jobs:
           E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
+          # Rebuild the shared test schema at the start of every E2E run so
+          # one branch's migration can never affect another branch's tests.
+          # The reset and the push below only ever target the isolated E2E
+          # project: the verify step above refuses every non-E2E target and
+          # this guard refuses anything but the pinned project. None of it may
+          # ever run against live.
+          if [ "$E2E_SUPABASE_PROJECT_REF" != "frkciyjvjlnqpaifkwtz" ]; then
+            echo "Refusing to rebuild anything except the isolated E2E project." >&2
+            exit 1
+          fi
+          # Drop every object in public and start the migration history over.
+          # The schema itself and its grants stay, so the rebuild sees the
+          # same defaults this project already applies. Triggers and policies
+          # on storage.objects that call public functions go with the cascade;
+          # storage-internal triggers are left alone.
+          psql "$E2E_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q <<'SQL'
+          drop schema if exists public cascade;
+          create schema public;
+          grant usage on schema public to public, postgres, anon, authenticated, service_role;
+          grant usage, create on schema public to pg_database_owner;
+          alter default privileges in schema public grant all on tables to postgres, supabase_admin;
+          alter default privileges in schema public grant all on functions to postgres, supabase_admin;
+          alter default privileges in schema public grant all on sequences to postgres, supabase_admin;
+          drop schema if exists supabase_migrations cascade;
+          SQL
           workdir="$RUNNER_TEMP/e2e-supabase"
           mkdir -p "$workdir/supabase/migrations"
           cat > "$workdir/supabase/config.toml" <<EOF
           project_id = "$E2E_SUPABASE_PROJECT_REF"
           EOF
+          # Rebuild from main's migrations plus this PR's own files on top, so
+          # the shared schema is exactly main + this PR regardless of what any
+          # other branch pushed before.
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          mkdir -p "$workdir/from-main"
+          git archive origin/main supabase-b1-b2/migrations | tar -x -C "$workdir/from-main"
+          cp "$workdir/from-main/supabase-b1-b2/migrations/"*.sql "$workdir/supabase/migrations/"
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
-          # The shared test project records migrations from every open branch
-          # that ran CI. Supabase refuses db push when a remote version has no
-          # local file, so mirror each remote-only version as a no-op
-          # placeholder in the disposable workdir. The placeholder is skipped
-          # as already applied and never enters the repository; real
-          # repository files stay authoritative.
-          for v in $(psql "$E2E_SUPABASE_DB_URL" -Atc "select version from supabase_migrations.schema_migrations" 2>/dev/null || true); do
-            if ! compgen -G "$workdir/supabase/migrations/${v}_*.sql" > /dev/null; then
-              echo "shared test project already has version $v from another branch; workdir placeholder added"
-              printf '%s\n' "-- No-op placeholder: version $v was applied to this shared test project by another branch." "select 1;" > "$workdir/supabase/migrations/${v}_shared_project_history.sql"
-            fi
-          done
-          # Versions 0050–0059 are reserved for the writing-support work and
-          # can be older than already-applied 0060/0062 on this test project.
-          # The target guard above still refuses every non-E2E project; never
-          # use --include-all against production.
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
