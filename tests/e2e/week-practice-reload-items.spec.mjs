@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -38,6 +39,7 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     const grammarSummary = 'You answered 1 of 22. 1 was right. Great work! You know this grammar well. You can come back and finish the other questions.';
     await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
 
+    await openWeekTask(page, 'vocabulary-practice');
     for (let n = 0; n < 3; n += 1) await step(vocabulary, 'Next').click();
     await vocabulary.getByRole('radio', { name: 'took', exact: true }).check();
     await submit(page, vocabulary.getByRole('button', { name: 'Check', exact: true }), '/api/week/vocabulary/mark');
@@ -62,8 +64,8 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     expect(cards.data).toHaveLength(0);
 
     await page.reload();
+    await openWeekTask(page, 'grammar-practice');
     await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
-    await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
     // Grammar returns to the actual step last visited, then to the last
     // selected item in each paged step, with its saved answer and feedback.
     await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeVisible();
@@ -76,6 +78,8 @@ test('phone: real marks, optional rewrite and partial Finish survive reload on t
     await expect(grammar.getByRole('radio', { name: 'moved', exact: true })).toBeChecked();
     await expect(grammar.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
 
+    await openWeekTask(page, 'vocabulary-practice');
+    await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
     await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
     await step(vocabulary, 'Next').click();
     await step(vocabulary, 'Next').click();

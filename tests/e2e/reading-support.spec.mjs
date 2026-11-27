@@ -7,7 +7,7 @@ const items = content.weeks.find((week) => week.week === 1).glossCheck;
 
 test('reading context, two key words and tappable glosses appear before the questions, with no predict line', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  const response = await page.goto('/week/1');
+  const response = await page.goto('/week/1#reading-practice');
   expect(response.ok()).toBeTruthy();
   const reading = page.locator('#reading-practice');
   await expect(reading.getByText('Lucía is from Seville, in the south of Spain.', { exact: false })).toBeVisible();
@@ -43,14 +43,14 @@ test('card meanings and the one-word-at-a-time gloss check open only after saved
   await page.setViewportSize({ width: 1280, height: 800 });
   const { admin, user } = await createReadingLearner(page, 'reading-support-gate');
   try {
-    await page.goto('/week/1');
+    await page.goto('/week/1#reading-practice');
     const readingBeforeAnswer = page.locator('#reading-practice');
     await expect(readingBeforeAnswer).not.toContainText('something new and difficult that needs effort');
     await expect(readingBeforeAnswer.getByRole('button', { name: 'challenge', exact: true })).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
 
     await answerReadingAndFinish(page);
-    await page.goto('/week/1');
+    await page.goto('/week/1#reading-practice');
     const reading = page.locator('#reading-practice');
     const card = reading.getByRole('button', { name: 'challenge', exact: true });
     await expect(card).toBeVisible();

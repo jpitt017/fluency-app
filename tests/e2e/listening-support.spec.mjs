@@ -27,7 +27,7 @@ const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 const listeningIds = week1Listening.questions.map((question) => question.id);
 
 test('the intro replaces the old predict line and shows the key words', async ({ page }) => {
-  await page.goto('/week/1');
+  await page.goto('/week/1#listening-practice');
 
   // The new intro: title, context, prediction, ideas and two key words.
   await expect(page.getByRole('heading', { name: 'Fresh Starts, a podcast about big changes' })).toBeVisible();
@@ -35,7 +35,8 @@ test('the intro replaces the old predict line and shows the key words', async ({
   await expect(page.getByText('What could be difficult about moving from a big city to a small village?')).toBeVisible();
   const listening = page.locator('#listening-practice');
   await expect(listening.getByRole('heading', { name: 'Two words to know' })).toBeVisible();
-  await expect(listening.getByTestId('listening-picture-placeholder')).toBeVisible();
+  // The empty picture box is gone until the week has a real picture.
+  await expect(listening.getByTestId('listening-picture-placeholder')).toHaveCount(0);
 
   // The old "Title: … Caption: … ?" predict line is nowhere on the learner
   // page. It stays in the teacher's JSON; the structured intro above is the
@@ -67,7 +68,7 @@ test('the intro replaces the old predict line and shows the key words', async ({
 });
 
 test('the transcript is not in the page before the listening questions are answered', async ({ page }) => {
-  const response = await page.goto('/week/1');
+  const response = await page.goto('/week/1#listening-practice');
   const html = await response.text();
 
   // Not hidden with CSS: absent from the served markup.
@@ -83,7 +84,7 @@ test('the transcript is not in the page before the listening questions are answe
 });
 
 test('no answer key reaches the browser, in markup or in page data', async ({ page }) => {
-  await page.goto('/week/1');
+  await page.goto('/week/1#listening-practice');
 
   // The page's own scripts and flight data, not just the visible HTML.
   const payloads = await page.evaluate(() => {
@@ -147,7 +148,7 @@ test.describe('gloss interaction, with a signed-in learner', () => {
     try {
       await signIn(page, user);
       await answerListeningQuestions(page);
-      await page.goto('/week/1');
+      await page.goto('/week/1#listening-practice');
       await openGoFurther(page);
 
       // The gloss inside the transcript, not a key-word card.
@@ -177,7 +178,7 @@ test.describe('gloss interaction, with a signed-in learner', () => {
     try {
       await signIn(page, user);
       await answerListeningQuestions(page);
-      await page.goto('/week/1');
+      await page.goto('/week/1#listening-practice');
       await openGoFurther(page);
 
       const gloss = page.locator('#listening-practice details').getByRole('button', { name: 'realised', exact: true }).first();
@@ -222,7 +223,7 @@ test.describe('with a signed-in learner', () => {
       await signIn(page, user);
 
       // Still closed for this learner, who has answered nothing.
-      await page.goto('/week/1');
+      await page.goto('/week/1#listening-practice');
       await expect(page.getByText('Answer the listening questions first', { exact: false })).toBeVisible();
       expect(await page.content()).not.toContain('Welcome back to Fresh Starts');
 
@@ -245,7 +246,7 @@ test.describe('with a signed-in learner', () => {
       expect(saved.data?.length).toBe(listeningIds.length);
 
       // Now the transcript is served, and it is the real script.
-      const unlocked = await page.goto('/week/1');
+      const unlocked = await page.goto('/week/1#listening-practice');
       const html = await unlocked.text();
       expect(html).toContain('Welcome back to Fresh Starts');
 

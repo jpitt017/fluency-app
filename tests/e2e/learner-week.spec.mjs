@@ -8,7 +8,7 @@ const bank = JSON.parse(readFileSync(new URL('../fixtures/placement-questions-v2
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
 
 test('learner week 1 renders safe content and opens the weekly practice task', async ({ page }) => {
-  const response = await page.goto('/week/1');
+  const response = await page.goto('/week/1#listening-practice');
   expect(response?.status()).toBe(200);
   await expect(page.getByText('By the end of this week I can…', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Reading:/ })).toBeVisible();
@@ -18,6 +18,7 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
   const audioComingSoon = page.getByText('Audio coming soon.');
   const trialPlayer = page.getByText('AI voice – trial recording');
   await expect(audioComingSoon.or(trialPlayer)).toBeVisible();
+  await page.goto('/week/1#speaking-practice');
   await expect(page.getByText(details.weeks[0].speaking.cueCard)).toBeVisible();
   const html = await page.content();
   expect(html).not.toContain('"answer_index"');
@@ -29,6 +30,7 @@ test('learner week 1 renders safe content and opens the weekly practice task', a
   await expect(page.getByRole('heading', { name: 'Speaking: model answer' })).toHaveCount(0);
   expect(html).not.toContain(details.weeks[0].speaking.model);
   expect(html).not.toContain(details.weeks[0].writing.modelAnswer);
+  await page.goto('/week/1#writing-practice');
   await page.getByRole('link', { name: 'Start writing task' }).click();
   await expect(page).toHaveURL(/\/labs\?week=1#writing/);
   // The way back is on screen at the task itself (the #writing anchor scrolls
@@ -73,7 +75,7 @@ test('signing in from a weekly writing task keeps the week in the submitted requ
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const user = await createTestUser(admin, 'week-return');
   try {
-    await page.goto('/week/1');
+    await page.goto('/week/1#writing-practice');
     await page.getByRole('link', { name: 'Start writing task' }).click();
     await page.getByRole('link', { name: 'Sign in for AI feedback →' }).click();
     await page.getByLabel(/Email/i).fill(user.email);
@@ -117,7 +119,7 @@ test('checked reading answers are saved and Finish records the week', async ({ p
     await page.getByLabel('Password', { exact: true }).fill(user.password);
     await page.getByRole('button', { name: /Sign in/i }).click();
     await page.waitForURL(/\/dashboard|\/labs/, { timeout: 60_000 });
-    await page.goto('/week/1');
+    await page.goto('/week/1#reading-practice');
     const section = page.locator('#reading-practice');
     const questionsRegion = section.locator('#reading-questions');
     const bank = details.reading.weeks[0].questions;
@@ -189,7 +191,7 @@ for (const [placement, score, target, label] of [
 }
 
 test('learner navigation remembers the last opened week and hides staff links', async ({ page }) => {
-  await page.goto('/week/4');
+  await page.goto('/week/4#speaking-practice');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
   for (const label of ['Practice', 'Review', 'My work', 'Dashboard']) {

@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -140,10 +141,10 @@ export default function WeekSpeakingSupport(props: Props) {
   const usedOnRetry = secondTranscript ? phrasesUsed(secondTranscript, realPhrases) : [];
   const [scriptShown, setScriptShown] = useState(false);
 
-  return <section id="speaking-practice" className="space-y-5 rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm target:scroll-mt-20" aria-labelledby="week-speaking-title">
+  return <div className="space-y-5">
     <div>
       <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Week {week} · speaking</p>
-      <h2 id="week-speaking-title" tabIndex={-1} className="mt-1 text-xl font-semibold">Plan, record and compare</h2>
+      <h3 id="week-speaking-title" className="mt-1 text-xl font-semibold">Plan, record and compare</h3>
       <p className="mt-2 text-sm leading-6 text-stone-700">{prompt}</p>
     </div>
 
@@ -164,7 +165,7 @@ export default function WeekSpeakingSupport(props: Props) {
       <p className="text-sm text-stone-600">Cover each cue-card point. You’ll get the usual speaking feedback, and your first recording counts for Week {week}.</p>
       {!signedIn && <p className="rounded-lg bg-amber-50 p-3 text-sm">Sign in to save your notes and recordings. <Link href="/login" className="font-semibold text-indigo-700 underline">Sign in</Link></p>}
       <div className="flex flex-wrap gap-2">
-        {!recording ? (!firstTranscript && <button type="button" disabled={busy || !signedIn} onClick={() => void startRecording(1)} className="min-h-11 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50">{busy ? 'Transcribing & analysing…' : 'Start recording'}</button>)
+        {!recording ? (!firstTranscript && <button type="button" disabled={busy || !signedIn} onClick={() => void startRecording(1)} className={ACTION_BUTTON_CLASS}>{busy ? 'Transcribing & analysing…' : 'Start recording'}</button>)
           : <button type="button" onClick={stopRecording} className="min-h-11 animate-pulse rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white">Stop recording</button>}
       </div>
       {firstFeedback && <Evaluation feedback={firstFeedback} week={week} />}
@@ -203,16 +204,16 @@ export default function WeekSpeakingSupport(props: Props) {
       <section className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
         <h3 className="font-semibold">5. Try again · optional</h3>
         <p className="text-sm">{retryGoal}</p>
-        {secondTranscript ? <div className="space-y-3"><Evaluation feedback={secondFeedback ?? { transcript: secondTranscript }} week={week} /><p className="text-sm font-semibold">{usedOnRetry.length ? `Phrases used: ${usedOnRetry.join(' · ')}` : 'No useful phrases from the list were detected in this recording.'}</p><div className="rounded-lg bg-white p-3"><Transcript text={secondTranscript} phrases={usedOnRetry} /></div></div> : <button type="button" disabled={busy || recording} onClick={() => void startRecording(2)} className="min-h-11 rounded-lg bg-amber-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Record a second time</button>}
+        {secondTranscript ? <div className="space-y-3"><Evaluation feedback={secondFeedback ?? { transcript: secondTranscript }} week={week} /><p className="text-sm font-semibold">{usedOnRetry.length ? `Phrases used: ${usedOnRetry.join(' · ')}` : 'No useful phrases from the list were detected in this recording.'}</p><div className="rounded-lg bg-white p-3"><Transcript text={secondTranscript} phrases={usedOnRetry} /></div></div> : <button type="button" disabled={busy || recording} onClick={() => void startRecording(2)} className={ACTION_BUTTON_CLASS}>Record a second time</button>}
       </section>
     </>}
-  </section>;
+  </div>;
 }
 
 function Evaluation({ feedback, week }: { feedback: Feedback; week: number }) {
   return <div role="status" className="space-y-2 rounded-lg bg-stone-50 p-3 text-sm">
     {feedback.weekRecorded === true && <p className="font-semibold text-emerald-800">This counts for Week {week}.</p>}
-    {feedback.weekRecorded === false && <p className="font-semibold text-rose-700">We could not count this for Week {week}. Please try again.</p>}
+    {feedback.weekRecorded === false && <p className="font-semibold text-amber-800">We could not count this for Week {week}. Please try again.</p>}
     {typeof feedback.score === 'number' && <p className="font-semibold">Speaking score · {feedback.score}%</p>}
     {feedback.transcript && <div><p className="text-xs font-bold uppercase text-stone-500">Transcript</p><p className="mt-1 italic">{feedback.transcript}</p></div>}
     {feedback.improvedResponse && <div><p className="text-xs font-bold uppercase text-emerald-800">A better way to say it</p><p className="mt-1 rounded-lg bg-white p-3">{feedback.improvedResponse}</p></div>}

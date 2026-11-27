@@ -1,7 +1,8 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 
 test('reading card meanings stay gated while vocabulary practice remains available', async ({ page }) => {
-  const response = await page.goto('/week/1');
+  const response = await page.goto('/week/1#reading-practice');
   expect(response.ok()).toBeTruthy();
   const html = await response.text();
   expect(html).not.toContain('It took me a few weeks to get used to working from home.');
@@ -15,6 +16,7 @@ test('reading card meanings stay gated while vocabulary practice remains availab
   await expect(reading.getByText('challenge', { exact: true })).toBeVisible();
   await expect(reading).not.toContainText('something new and difficult that needs effort');
   await expect(page.getByRole('region', { name: 'Vocabulary practice' })).toBeVisible();
+  await openWeekTask(page, 'vocabulary-practice');
   await expect(page.getByRole('heading', { name: 'Words to use' })).toBeVisible();
 });
 

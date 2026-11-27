@@ -75,7 +75,7 @@ test('vocabulary step 7 has a text box and Check button', async ({ page }) => {
   test.setTimeout(180_000);
   const { admin, user } = await createReadingLearner(page, 'sentence-vocab-step7');
   try {
-    await page.goto('/week/1');
+    await page.goto('/week/1#vocabulary-practice');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
     for (let i = 0; i < 6; i += 1) {
       await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();
@@ -95,7 +95,7 @@ test('vocabulary step 1 groups the words and pages through them', async ({ page 
   test.setTimeout(180_000);
   const { admin, user } = await createReadingLearner(page, 'sentence-vocab-step1');
   try {
-    await page.goto('/week/1');
+    await page.goto('/week/1#vocabulary-practice');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
     await expect(vocabulary.getByText('Step 1 of 7: Words')).toBeVisible();
     await expect(vocabulary.getByText(/This week: 14 new words\./)).toBeVisible();

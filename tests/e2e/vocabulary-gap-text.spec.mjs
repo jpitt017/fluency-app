@@ -31,7 +31,7 @@ test.afterEach(async () => {
 });
 
 async function locateGapStep(page) {
-  await page.goto('/week/1');
+  await page.goto('/week/1#vocabulary-practice');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
   await expect(vocabulary.getByText('Step 1 of 7: Words')).toBeVisible();
   await vocabulary.getByRole('button', { name: 'Next step', exact: true }).click();

@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
@@ -144,7 +145,7 @@ test('signed out, the last grammar step offers Finish rather than a dead Next', 
 });
 
 test('signed out, reading card meanings stay gated while vocabulary remains available', async ({ page }) => {
-  await page.goto('/week/1');
+  await page.goto('/week/1#reading-practice');
   const reading = page.locator('#reading-practice');
   await reading.getByText('Go further (2–3 min)', { exact: true }).click();
   await expect(reading.getByText('Answer the reading questions first to open the card-word meanings and gloss check.')).toBeVisible();
@@ -284,7 +285,7 @@ test.describe('with a signed-in learner', () => {
       // and step 7 -- the optional writing step -- is the only gap left. That is
       // the whole point of restoring progress: the learner lands where they
       // stopped, with Finish on screen, rather than being walked from step 1.
-      await page.goto('/week/1');
+      await page.goto('/week/1#vocabulary-practice');
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       const finish = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
@@ -422,6 +423,7 @@ test.describe('with a signed-in learner', () => {
       await expect(more.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
 
+      await openWeekTask(page, 'vocabulary-practice');
       const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
       await expect(vocabulary.getByRole('heading', { name: 'Step 2 of 7: Match' })).toBeVisible();
       for (let step = 2; step < 7; step += 1) {
@@ -453,8 +455,10 @@ test.describe('with a signed-in learner', () => {
 
       await page.reload();
       await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(vocabularySummary);
+      await openWeekTask(page, 'grammar-practice');
       await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(grammarSummary);
       await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
+      await openWeekTask(page, 'vocabulary-practice');
       await vocabulary.getByRole('button', { name: 'Next: Reading →' }).click();
       await expect(page.locator('#reading-practice h2')).toBeFocused();
       const calls = await page.evaluate(() => window.practiceScrolls);

@@ -52,3 +52,23 @@ export async function loadUnlockedModels(week: number): Promise<{ speaking: stri
     writing: data.some((row) => row.skill === 'writing') ? modelFor(week, 'writing') : null,
   };
 }
+
+/**
+ * Which output skills have a saved submission for this week. This is the
+ * week overview's "done" signal for the writing task (the speaking task reads
+ * its own saved recordings), so it reports the saved rows themselves and does
+ * not depend on a model answer being authored.
+ */
+export async function loadWeekOutputSubmissions(week: number): Promise<{ speaking: boolean; writing: boolean }> {
+  const done = { speaking: false, writing: false };
+  const client = await createServerSupabase();
+  if (!client) return done;
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return done;
+  const { data, error } = await client.from('week_output_submissions').select('skill').eq('user_id', user.id).eq('week_number', week);
+  if (error || !data) return done;
+  return {
+    speaking: data.some((row) => row.skill === 'speaking'),
+    writing: data.some((row) => row.skill === 'writing'),
+  };
+}

@@ -78,6 +78,10 @@ jobs:
       # One question/word at a time, short options, the reading text overlay,
       # the small replay player, and the 0061 migration-history documentation.
       - run: node --test tests/unit/week-input-layout.test.mjs tests/unit/migration-history-docs.test.mjs
+      # The week overview cards, the one-task accordion and its "Next: … →"
+      # tour, the shared main-action button, the text-size and feedback-colour
+      # rules, and the listening picture slot.
+      - run: node --test tests/unit/week-task-overview.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/ai-request-logging.test.mjs

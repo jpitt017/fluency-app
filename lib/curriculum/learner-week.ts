@@ -20,7 +20,7 @@ type Input = { title: string; text?: string; audioUrl?: string; questions: Learn
  */
 export type LearnerTranscriptSegment = { text: string; gloss?: string; card?: string };
 export type LearnerListeningSupport = {
-  intro: { title: string; context: string; predict: string; ideas: string[] };
+  intro: { title: string; context: string; predict: string; ideas: string[]; pictureUrl: string | null };
   keyWords: { word: string; meaning: string; es: string; example: string; note: string | null }[];
   /** The transcript's 7 tap-to-see glosses; null until the transcript unlocks. */
   glosses: { tap: string; meaning: string; es: string }[] | null;

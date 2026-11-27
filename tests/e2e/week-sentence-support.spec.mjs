@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -19,6 +20,7 @@ async function openGrammarUseIt(page) {
 }
 
 async function openVocabularySentences(page) {
+  await openWeekTask(page, 'vocabulary-practice');
   const vocabulary = page.getByRole('region', { name: 'Vocabulary practice' });
   await expect(vocabulary.getByText(/Step \d of 7:/)).toBeVisible();
   for (let i = 0; i < 6; i += 1) {

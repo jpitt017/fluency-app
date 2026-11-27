@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import Link from 'next/link';
 import { useId } from 'react';
 import { practiceScoreBand } from '@/lib/curriculum/week-practice.mjs';
@@ -23,15 +24,15 @@ import { practiceScoreBand } from '@/lib/curriculum/week-practice.mjs';
 export function SavedTick({ saved, error, saving }: { saved: boolean; error?: string; saving?: boolean }) {
   if (error) {
     return (
-      <p role="alert" className="text-xs font-medium text-red-700">
+      <p role="alert" className="text-sm font-medium text-red-700">
         Not saved. {error}
       </p>
     );
   }
-  if (saving) return <p className="text-xs text-stone-500">Saving…</p>;
+  if (saving) return <p className="text-sm text-stone-500">Saving…</p>;
   if (!saved) return null;
   return (
-    <p role="status" className="text-xs font-medium text-emerald-800">
+    <p role="status" className="text-sm font-medium text-emerald-800">
       Saved ✓
     </p>
   );
@@ -73,7 +74,7 @@ export function FinishSummary({
 }) {
   const headingId = useId();
   const band = practiceScoreBand(summary);
-  const primaryAction = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white';
+  const primaryAction = ACTION_BUTTON_CLASS;
   const secondaryAction = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-indigo-700 bg-white px-4 py-2 text-sm font-semibold text-indigo-700';
   return (
     <section

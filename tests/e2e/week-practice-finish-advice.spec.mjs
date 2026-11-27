@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { expect, test } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -144,6 +145,7 @@ for (const { label, width, height, motion, behavior } of [
       await mark(page, 'grammar', 'W1-C1', 'moved', true);
       await mark(page, 'grammar', 'W1-C2', 'have made', true);
       await page.reload();
+      await openWeekTask(page, 'grammar-practice');
       // The server initially renders its first-unanswered fallback; hydration
       // then restores the last grammar position from this learner's browser.
       await expect(grammar.getByRole('heading', { name: 'Step 5 of 5: Remember' })).toBeVisible();
@@ -176,6 +178,7 @@ for (const { label, width, height, motion, behavior } of [
         { category: 'collocation', corrected_sentence: 'I took a risk and applied for a job abroad.' },
       ]));
       await page.goto('/week/1');
+      await openWeekTask(page, 'vocabulary-practice');
       await expectAdvice(vocabulary, 'vocabulary', 'low', vocabularyLow);
 
       await mark(page, 'vocabulary', 'V1-C1', 'took', true);
@@ -194,6 +197,7 @@ for (const { label, width, height, motion, behavior } of [
       await mark(page, 'vocabulary', 'V1-C2', 'making', true);
       await mark(page, 'vocabulary', 'V1-C3', 'make', true);
       await page.reload();
+      await openWeekTask(page, 'vocabulary-practice');
       await finish(page, vocabulary, 'vocabulary');
       await expectAdvice(vocabulary, 'vocabulary', 'high', vocabularyHigh);
       await page.reload();
