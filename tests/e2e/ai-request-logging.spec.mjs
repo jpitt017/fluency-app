@@ -107,10 +107,12 @@ test('0061 denies anon RPC, attributes signed-in requests, and preserves API rou
     const writing = await page.request.post('/api/writing/correct', { data: { text: 'test input' } });
     expect(writing.status() < 500 || writing.status() === 503).toBe(true);
 
+    // Use-it checks require two or three sentences. A one-sentence input now
+    // returns before the AI/logging path, so it cannot verify attribution.
     const sentence = await page.request.post('/api/week/sentence', {
-      data: { week: 1, id: 'W1-U1', answer: 'A deliberately incorrect sample sentence.' },
+      data: { week: 1, id: 'W1-U1', answer: 'I used to visit my grandmother every summer. Now I live far away.' },
     });
-    expect(sentence.status() < 500 || sentence.status() === 503).toBe(true);
+    expect([200, 503], `sentence check did not reach the provider/logging path: ${await sentence.text()}`).toContain(sentence.status());
 
     const evaluate = await page.request.post('/api/speaking/evaluate', { data: {} });
     expect(evaluate.status() < 500 || evaluate.status() === 503).toBe(true);

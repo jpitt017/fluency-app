@@ -246,6 +246,25 @@ async function run() {
     });
     if (weeklyRowError) throw new Error(`Seed weekly attempt failed: ${weeklyRowError.message}`);
 
+    // A new immutable take has an active reservation before Storage creates it.
+    const foreignTakeId = randomUUID();
+    const foreignReservation = await admin.rpc('reserve_week_speaking_take', {
+      p_user_id: userBId, p_week_number: 1, p_take_id: foreignTakeId, p_kind: 'retry', p_extension: 'webm',
+      p_notes: [], p_phrases: [], p_source_take_id: null,
+    });
+    if (foreignReservation.error || !foreignReservation.data?.path) throw new Error(`Seed take reservation failed: ${foreignReservation.error?.message}`);
+    const foreignTakePath = foreignReservation.data.path;
+    const newUpload = await admin.storage.from('speaking-recordings').upload(foreignTakePath, audio, { contentType: 'audio/webm', upsert: false });
+    if (newUpload.error) throw new Error(`Seed new take failed: ${newUpload.error.message}`);
+    const savedTake = await admin.rpc('finish_week_speaking_upload', { p_user_id: userBId, p_take_id: foreignTakeId, p_success: true });
+    if (savedTake.error || savedTake.data !== true) throw new Error(`Could not finish new take: ${savedTake.error?.message}`);
+    const foreignTake = await clientA.from('week_speaking_takes').select('id').eq('id', foreignTakeId);
+    if (foreignTake.error || foreignTake.data?.length) throw new Error('Learner could read another learner’s new take');
+    const foreignTakeSigned = await clientA.storage.from('speaking-recordings').createSignedUrl(foreignTakePath, 60);
+    if (foreignTakeSigned.data?.signedUrl) throw new Error('Learner could sign another learner’s new take');
+    const anonymousTake = await anonClient.storage.from('speaking-recordings').createSignedUrl(foreignTakePath, 60);
+    if (anonymousTake.data?.signedUrl) throw new Error('Anonymous viewer could sign a new take');
+
     const { data: foreignWeeklyRows, error: foreignWeeklyReadError } = await clientA
       .from('week_speaking_attempts')
       .select('id,first_recording_path')
@@ -277,6 +296,64 @@ async function run() {
       throw new Error('RLS BREACH: anonymous viewer minted a signed URL for a weekly recording!');
     }
 
+    // A second learner owns these objects, so the staff test below is truly
+    // cross-user rather than accidentally passing through the owner policy.
+    const ownerAttemptId = randomUUID();
+    const ownerPath = weekSpeakingRecordingPath({ userId: userAId, weekNumber: 1, attemptId: ownerAttemptId, takeNumber: 1, mimeType: 'audio/webm' });
+    const ownerPrivatePath = `${userAId}/private-rls-recording.webm`;
+    for (const path of [ownerPath, ownerPrivatePath]) {
+      const upload = await admin.storage.from('speaking-recordings').upload(path, audio, { contentType: 'audio/webm', upsert: false });
+      if (upload.error) throw new Error(`Seed owner recording failed: ${upload.error.message}`);
+    }
+    const ownerAttempt = await admin.from('week_speaking_attempts').insert({
+      id: ownerAttemptId, user_id: userAId, week_number: 1, notes: [], first_recording_path: ownerPath, first_transcript: 'Owner fixture',
+    });
+    if (ownerAttempt.error) throw ownerAttempt.error;
+    const ownerTakeId = randomUUID();
+    const ownerReservation = await admin.rpc('reserve_week_speaking_take', {
+      p_user_id: userAId, p_week_number: 1, p_take_id: ownerTakeId, p_kind: 'retry', p_extension: 'webm',
+      p_notes: [], p_phrases: [], p_source_take_id: null,
+    });
+    if (ownerReservation.error || !ownerReservation.data?.path) throw new Error(`Seed owner take failed: ${ownerReservation.error?.message}`);
+    const ownerTakePath = ownerReservation.data.path;
+    const ownerTakeUpload = await admin.storage.from('speaking-recordings').upload(ownerTakePath, audio, { contentType: 'audio/webm', upsert: false });
+    if (ownerTakeUpload.error) throw ownerTakeUpload.error;
+    const ownerTakeSaved = await admin.rpc('finish_week_speaking_upload', { p_user_id: userAId, p_take_id: ownerTakeId, p_success: true });
+    if (ownerTakeSaved.error || ownerTakeSaved.data !== true) throw new Error(`Could not finish owner take: ${ownerTakeSaved.error?.message}`);
+    const ownTakeSigned = await clientA.storage.from('speaking-recordings').createSignedUrl(ownerTakePath, 60);
+    if (!ownTakeSigned.data?.signedUrl) throw new Error('Owner could not sign their own new take');
+
+    // Exercise the real Storage service, not just the metadata trigger. Upsert
+    // must not replace saved bytes and a move must not detach the saved key.
+    const overwritten = await admin.storage.from('speaking-recordings').upload(
+      ownerTakePath, new Blob(['replacement fixture'], { type: 'audio/webm' }), { contentType: 'audio/webm', upsert: true },
+    );
+    if (!overwritten.error) throw new Error('A saved weekly object could be overwritten');
+    const movedPath = `${userAId}/moved-weekly-fixture.webm`;
+    const moved = await admin.storage.from('speaking-recordings').move(ownerTakePath, movedPath);
+    if (!moved.error) throw new Error('A saved weekly object could be moved out of its ledger');
+    const retained = await admin.storage.from('speaking-recordings').download(ownerTakePath);
+    if (retained.error || !retained.data || await retained.data.text() !== await audio.text()) {
+      throw new Error('A rejected overwrite or move changed the saved weekly recording');
+    }
+    const movedObject = await admin.storage.from('speaking-recordings').download(movedPath);
+    if (!movedObject.error) throw new Error('Rejected move left an accessible copy outside the ledger');
+    const expiredTakeId = randomUUID();
+    const expiredReservation = await admin.rpc('reserve_week_speaking_take', {
+      p_user_id: userAId, p_week_number: 2, p_take_id: expiredTakeId, p_kind: 'first', p_extension: 'webm',
+      p_notes: [], p_phrases: [], p_source_take_id: null,
+    });
+    if (expiredReservation.error || !expiredReservation.data?.path) throw new Error(`Seed expired upload failed: ${expiredReservation.error?.message}`);
+    const expire = await admin.from('week_speaking_flows').update({ active_since: new Date(Date.now() - 31 * 60_000).toISOString() })
+      .eq('user_id', userAId).eq('week_number', 2);
+    if (expire.error) throw expire.error;
+    const expiredUpload = await admin.storage.from('speaking-recordings').upload(expiredReservation.data.path, audio, { contentType: 'audio/webm', upsert: false });
+    if (!expiredUpload.error) throw new Error('Storage accepted an expired weekly upload');
+    const expiredObject = await admin.storage.from('speaking-recordings').download(expiredReservation.data.path);
+    if (!expiredObject.error) throw new Error('Expired weekly upload was accessible');
+    const closedExpired = await admin.rpc('finish_week_speaking_upload', { p_user_id: userAId, p_take_id: expiredTakeId, p_success: false });
+    if (closedExpired.error || closedExpired.data !== true) throw new Error(`Could not close expired fixture: ${closedExpired.error?.message}`);
+
     // 4. Answer tables: anon and learners see no rows; staff see the locked tables.
     const { error: roleErr } = await admin
       .from('profiles')
@@ -293,15 +370,19 @@ async function run() {
     const { data: staffWeeklyRows, error: staffWeeklyReadError } = await clientB
       .from('week_speaking_attempts')
       .select('id,first_recording_path')
-      .eq('id', attemptId);
+      .eq('id', ownerAttemptId);
     if (staffWeeklyReadError) throw new Error(`STAFF WEEKLY READ FAILED: ${staffWeeklyReadError.message}`);
-    if ((staffWeeklyRows ?? []).length !== 1) throw new Error('STAFF READ FAILED: teacher could not see weekly speaking attempt');
-    const staffWeeklySigned = await clientB.storage
-      .from('speaking-recordings')
-      .createSignedUrl(recordingPath, 60);
-    if (!staffWeeklySigned.data?.signedUrl) {
-      throw new Error(`STAFF READ FAILED: teacher could not sign weekly recording: ${staffWeeklySigned.error?.message}`);
+    if ((staffWeeklyRows ?? []).length !== 1) throw new Error('STAFF READ FAILED: teacher could not see another learner’s weekly attempt');
+    const staffTakeRows = await clientB.from('week_speaking_takes').select('id').eq('id', ownerTakeId);
+    if (staffTakeRows.error || staffTakeRows.data?.length !== 1) throw new Error('Teacher could not see another learner’s new take');
+    for (const path of [ownerPath, ownerTakePath]) {
+      const staffWeeklySigned = await clientB.storage.from('speaking-recordings').createSignedUrl(path, 60);
+      if (!staffWeeklySigned.data?.signedUrl) {
+        throw new Error(`STAFF READ FAILED: teacher could not sign weekly recording: ${staffWeeklySigned.error?.message}`);
+      }
     }
+    const staffPrivate = await clientB.storage.from('speaking-recordings').createSignedUrl(ownerPrivatePath, 60);
+    if (staffPrivate.data?.signedUrl) throw new Error('Teacher could sign a non-weekly recording');
     const { error: staffWeeklyWriteError } = await clientB.storage
       .from('speaking-recordings')
       .upload(`${userAId}/week-speaking/1/${randomUUID()}/take-1.webm`, audio, { contentType: 'audio/webm' });

@@ -33,3 +33,5 @@ end $$;
 -- Weekly recording privacy, staff RLS and Delete-my-data coverage. This is a
 -- separate file so the general deletion fixture stays readable.
 \ir week-speaking-recordings.sql
+\ir week-speaking-flow.sql
+\ir week-speaking-privacy.sql

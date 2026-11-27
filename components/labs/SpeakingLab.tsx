@@ -1,9 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LessonLabContext } from './LessonLabContext';
+import SpeakingFeedbackDetails from '@/components/b1b2/SpeakingFeedbackDetails';
+import type { ShortSpeakingFeedback } from '@/lib/b1b2/speaking-feedback.mjs';
 
-interface SpeakingFeedback {
+interface SpeakingFeedback extends ShortSpeakingFeedback {
   transcript?: string;
   improvedResponse?: string;
   feedback?: string;
@@ -26,6 +28,7 @@ interface SpeakingLabProps {
   keyLanguage?: string[];
   lessonContext?: LessonLabContext;
   unlockedModel?: string | null;
+  grammarWeek?: number;
 }
 
 export default function SpeakingLab({
@@ -34,18 +37,37 @@ export default function SpeakingLab({
   keyLanguage = [],
   lessonContext,
   unlockedModel = null,
+  grammarWeek,
 }: SpeakingLabProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [feedback, setFeedback] = useState<SpeakingFeedback | null>(null);
   const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(true);
+  const startingRef = useRef(false);
   const chunksRef = useRef<Blob[]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number | null>(null);
-  const startedAt = useRef(0);
   const languages = lessonContext?.targetVocabulary ?? keyLanguage;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+      const audio = audioContextRef.current;
+      if (audio && audio.state !== 'closed') void audio.close();
+      audioContextRef.current = null;
+    };
+  }, []);
 
   function drawVisualizer(analyser: AnalyserNode) {
     const canvas = canvasRef.current;
@@ -80,6 +102,7 @@ export default function SpeakingLab({
       const form = new FormData();
       form.set('audio', blob, 'lesson-recording.webm');
       if (lessonContext?.weekNumber) form.set('weekNumber', String(lessonContext.weekNumber));
+      if (grammarWeek) form.set('grammarWeek', String(grammarWeek));
       form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
       const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
@@ -103,14 +126,19 @@ export default function SpeakingLab({
   }
 
   async function startRecording() {
+    if (startingRef.current || mediaRecorderRef.current?.state === 'recording') return;
     setError(null);
     setFeedback(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Audio recording is not supported in this browser. Try a current desktop or mobile browser.');
       return;
     }
+    startingRef.current = true;
+    setIsStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
+      streamRef.current = stream;
       const audio = new AudioContext();
       audioContextRef.current = audio;
       const analyser = audio.createAnalyser();
@@ -123,25 +151,35 @@ export default function SpeakingLab({
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
-      startedAt.current = Date.now();
       recorder.ondataavailable = (event) => {
         if (event.data.size) chunksRef.current.push(event.data);
       };
       recorder.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
+        if (streamRef.current === stream) streamRef.current = null;
+        if (mediaRecorderRef.current === recorder) mediaRecorderRef.current = null;
         stopVisualizer();
+        // Navigating away must stop the microphone, not submit a partial take.
+        if (!mountedRef.current) return;
         await evaluateAudio(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
       };
       recorder.start();
       setIsRecording(true);
     } catch {
-      setError('Microphone access denied or unavailable. Check your browser permissions.');
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      mediaRecorderRef.current = null;
+      if (mountedRef.current) setError('Microphone access denied or unavailable. Check your browser permissions.');
       stopVisualizer();
+    } finally {
+      startingRef.current = false;
+      if (mountedRef.current) setIsStarting(false);
     }
   }
 
   function stopRecording() {
     if (mediaRecorderRef.current?.state === 'recording') {
+      setIsAnalyzing(true);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
@@ -194,10 +232,10 @@ export default function SpeakingLab({
           <button
             type="button"
             onClick={startRecording}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || isStarting}
             className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
           >
-            {isAnalyzing ? 'Transcribing & analysing…' : 'Start recording'}
+            {isStarting ? 'Starting microphone…' : isAnalyzing ? 'Transcribing & analysing…' : 'Start recording'}
           </button>
         ) : (
           <button
@@ -231,57 +269,10 @@ export default function SpeakingLab({
       {(feedback?.modelAnswer || unlockedModel) && <section className="rounded-xl border border-emerald-200 p-4"><h3 className="font-semibold">Model answer</h3><p className="mt-2 whitespace-pre-line text-sm">{feedback?.modelAnswer || unlockedModel}</p></section>}
 
       {feedback && (
-        <div role="status" className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">
-          {feedback.weekRecorded === true && <p className="font-semibold text-emerald-800">This counts for Week {lessonContext?.weekNumber}.</p>}
-          {feedback.weekRecorded === false && <p role="alert" className="font-semibold text-rose-700">We could not count this for Week {lessonContext?.weekNumber}. Please try again.</p>}
-          {typeof feedback.passed === 'boolean' && (
-            <p className={feedback.passed ? 'font-bold text-emerald-700' : 'font-bold text-amber-700'}>
-              {feedback.passed ? "Well done! You can now do this week's goal." : 'Review and try again'}
-              {feedback.mastery !== undefined ? ` · ${feedback.mastery}% mastery` : ''}
-            </p>
-          )}
-          {typeof feedback.score === 'number' && typeof feedback.passed !== 'boolean' && (
-            <p className="font-semibold text-emerald-700">
-              Spoken content &amp; grammar score · {feedback.score}%
-            </p>
-          )}
-          {feedback.transcript && (
-            <div>
-              <span className="text-xs font-bold uppercase text-stone-500">Transcript</span>
-              <p className="mt-1 italic text-stone-800">{feedback.transcript}</p>
-            </div>
-          )}
-          {feedback.improvedResponse && (
-            <div>
-              <span className="text-xs font-bold uppercase text-emerald-800">A better way to say it</span>
-              <p className="mt-1 rounded-lg border border-stone-200 bg-white p-3 text-stone-800">
-                {feedback.improvedResponse}
-              </p>
-            </div>
-          )}
-          {feedback.feedback && <p className="text-stone-700">{feedback.feedback}</p>}
-          {feedback.transcriptionNote && (
-            <p className="rounded-lg bg-white p-2.5 text-xs text-stone-600 ring-1 ring-stone-200">
-              {feedback.transcriptionNote}
-            </p>
-          )}
-          {feedback.tips?.map((tip, index) => (
-            <p key={index} className="text-stone-700">
-              • {tip}
-            </p>
-          ))}
-          {feedback.pragmaticsFeedback?.map((item, index) => (
-            <p key={`g${index}`} className="text-stone-700">
-              • {item}
-            </p>
-          ))}
-          {feedback.reviewDeck?.length ? (
-            <ul className="list-disc pl-5 text-stone-700">
-              {feedback.reviewDeck.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
+        <div className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
+          {lessonContext?.weekNumber && feedback.weekRecorded === true && <p role="status" className="font-semibold text-emerald-800">This counts for Week {lessonContext.weekNumber}.</p>}
+          {lessonContext?.weekNumber && feedback.weekRecorded === false && <p role="alert" className="font-semibold text-rose-700">We could not count this for Week {lessonContext.weekNumber}. Please try again.</p>}
+          <SpeakingFeedbackDetails feedback={feedback} />
         </div>
       )}
     </div>

@@ -120,9 +120,9 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         body: speakingSupport ? <WeekSpeakingSupport
           week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
           planNotes={speakingSupport.planNotes} usefulPhrases={speakingSupport.usefulPhrases}
-          retryGoal={speakingSupport.retryGoal} attemptId={speakingSupport.attemptId} initialNotes={speakingSupport.notes}
-          firstTranscript={speakingSupport.firstTranscript} firstFeedback={speakingSupport.firstFeedback}
-          secondTranscript={speakingSupport.secondTranscript} secondFeedback={speakingSupport.secondFeedback}
+          retryGoal={speakingSupport.retryGoal} initialNotes={speakingSupport.notes} available={speakingSupport.available} weekRecorded={speakingSupport.weekRecorded}
+          first={speakingSupport.first} tries={speakingSupport.tries} firstVersions={speakingSupport.firstVersions}
+          retryCount={speakingSupport.retryCount} checksUsed={speakingSupport.checksUsed} pending={speakingSupport.pending}
           recordings={speakingSupport.recordings} model={speakingSupport.model}
         /> : <div className="space-y-3"><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className={ACTION_BUTTON_CLASS}>Start speaking task</Link></div>,
       }];

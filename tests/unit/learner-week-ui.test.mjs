@@ -93,14 +93,20 @@ test('a task opened from /week/[n] shows the way back and keeps its week for cou
   assert.match(page, /This task counts for Week \{weekNumber\}\./);
   // A visitor who signs in from a weekly task returns to that same week.
   assert.match(page, /encodeURIComponent\(weekParam \? `\/labs\?week=\$\{weekNumber\}` : '\/labs'\)/);
-  // Keep the week context even if details are unavailable; the marking routes
-  // count only a submission that matches a published weekly task.
-  assert.match(page, /weekParam \? \{ \.\.\.freeContext, weekNumber \} : freeContext/);
-  // The recording and the writing both send the week to their marking route.
-  assert.match(read('components/labs/SpeakingLab.tsx'), /form\.set\('weekNumber', String\(lessonContext\.weekNumber\)\)/);
+  // Writing keeps its weekly context. Supported speaking weeks link to the
+  // durable flow, while any other published week keeps the original lab task.
+  assert.match(page, /weekParam \? \{ \.\.\.freeWritingContext, weekNumber \} : freeWritingContext/);
+  assert.match(page, /dedicatedSpeaking = Boolean\(selectedWeek && speakingSupportConfig\(weekNumber\)\)/);
+  assert.match(page, /\/week\/\$\{weekNumber\}#speaking-practice/);
+  assert.match(page, /This lab is free practice/);
+  assert.match(page, /speakingContext = selectedWeek && !dedicatedSpeaking[\s\S]*?prompt: selectedWeek\.speakingPrompt, weekNumber/);
+  assert.match(page, /unlockedSpeaking = dedicatedSpeaking && viewer\.signedIn \? await loadWeekSpeakingSupport\(weekNumber\)/);
+  assert.match(page, /<SpeakingLab unlockedModel=\{dedicatedSpeaking \? unlockedSpeaking\?\.model\?\.text : unlockedModels\?\.speaking\} lessonContext=\{speakingContext\}/);
+  assert.match(read('components/labs/SpeakingLab.tsx'), /form\.set\('grammarWeek', String\(grammarWeek\)\)/);
+  assert.match(read('components/labs/SpeakingLab.tsx'), /feedback\.weekRecorded === true[\s\S]*?This counts for Week/);
+  assert.match(read('components/labs/SpeakingLab.tsx'), /feedback\.weekRecorded === false[\s\S]*?We could not count this/);
   assert.match(read('components/labs/WritingLab.tsx'), /weekNumber: lessonContext\?\.weekNumber/);
-  // And the routes record it against the week's progression.
-  assert.match(read('src/app/api/speaking/evaluate/route.ts'), /recordWeekSubmission\(guard\.userId, weekNumber, 'speaking'\)/);
+  assert.match(read('src/app/api/speaking/evaluate/route.ts'), /Record this weekly task on the Week/);
   assert.match(read('src/app/api/writing/correct/route.ts'), /recordWeekSubmission\(guard\.userId, body\.weekNumber, 'writing'\)/);
 });
 

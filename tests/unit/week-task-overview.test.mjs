@@ -107,17 +107,23 @@ test('the main action is one shared button style in every task', () => {
   assert.doesNotMatch(weekInput, /rounded-xl bg-indigo-700/);
   const speaking = read('components/b1b2/WeekSpeakingSupport.tsx');
   assert.doesNotMatch(speaking, /bg-emerald-700/);
-  // Stopping a recording is a live control, not the task's main action.
-  assert.match(speaking, /Stop recording/);
-  assert.match(speaking, /bg-rose-600/);
+  // Stopping a recording is a live control, not the task's main action. With
+  // the durable takes flow the recorder moved into RecordButton, so the live
+  // Stop control is asserted on the component that owns it.
+  const recorder = read('components/b1b2/SpeakingFeedbackDetails.tsx');
+  assert.match(recorder, /Stop recording/);
+  assert.match(recorder, /bg-rose-600/);
 });
 
 test('learner text is at least 14px; 12px is only for labels', () => {
   // `text-xs` is 12px. The only labels that keep it are the speaking
-  // transcript markers ("Week N · speaking", "Transcript", "A better way to
-  // say it"); every readable line is text-sm or larger.
+  // transcript markers (e.g. "Week N · speaking"); every readable line is
+  // text-sm or larger. How many markers exist follows the speaking flow's
+  // shape (three in the first version, one in the durable-takes version);
+  // what stays true is that 12px is labels only, and labels stay few.
   const speaking = read('components/b1b2/WeekSpeakingSupport.tsx');
-  assert.equal((speaking.match(/text-xs/g) ?? []).length, 3);
+  const smallMarks = speaking.match(/text-xs/g) ?? [];
+  assert.ok(smallMarks.length >= 1 && smallMarks.length <= 3, `12px labels stay few: ${smallMarks.length}`);
   for (const line of speaking.split('\n')) {
     if (line.includes('text-xs')) {
       assert.match(line, /uppercase/, `12px is for labels only: ${line.trim()}`);
@@ -161,10 +167,10 @@ test('feedback colours: green for correct, amber for "not quite", red only for r
       }
     }
   }
-  // The speaking count failure ("We could not count this…") is a "not quite":
-  // amber, not the red error colour.
+  // The speaking count failure ("Your first recording is saved, but it has
+  // not been counted…") is a "not quite": amber, not the red error colour.
   const speaking = read('components/b1b2/WeekSpeakingSupport.tsx');
-  assert.match(speaking, /text-amber-800">We could not count this/);
+  assert.match(speaking, /text-amber-800">Your first recording is saved, but it has not been counted/);
   // Red/rose stays on real errors and the live Stop recording control only.
   for (const line of speaking.split('\n')) {
     if (/rose-/.test(line)) {

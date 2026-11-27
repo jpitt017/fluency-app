@@ -44,6 +44,9 @@ jobs:
       # Private weekly recording keys, 60-second server links, learner/teacher
       # playback views, deletion replay and the 0062 print-only rollout helper.
       - run: node --test tests/unit/week-speaking-recordings.test.mjs
+      # Short speaking feedback, fixed sound rules, saved-check quotas and
+      # privacy-safe deletion. Provider and Storage calls are faked here.
+      - run: node --test tests/unit/speaking-feedback.test.mjs tests/unit/speaking-recorder.test.mjs tests/unit/week-speaking-server.test.mjs tests/unit/week-speaking-delete.test.mjs tests/unit/week-speaking-projection.test.mjs tests/unit/week-speaking-rollout.test.mjs tests/unit/database-load-boundaries.test.mjs
       # The actual speaking/writing route and recording helper: weekly work
       # counts only when saved, while feedback survives a progress-save error.
       - run: node --test tests/unit/week-output-counting.test.mjs
@@ -243,7 +246,10 @@ jobs:
           E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
           E2E_STUB_LLM: 'true'
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
           E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           GROQ_API_KEY: ''
 
@@ -325,6 +331,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - uses: supabase/setup-cli@v3
         with:
           version: 3.2.0
@@ -370,6 +381,11 @@ jobs:
           for file in supabase-b1-b2/migrations/*.sql; do
             started=${SECONDS}
             echo "replaying ${file}"
+            if [[ "$file" == */0080_week_speaking_feedback.sql ]]; then
+              # Exercise the print-only atomic rollout using this local DB's
+              # own before-state; the integration test always rolls back.
+              TEST_DATABASE_URL="$db" node tests/database/week-speaking-rollout.mjs
+            fi
             timeout 300 psql "$db" -v ON_ERROR_STOP=1 -q -f "$file" || {
               echo "::error::${file} failed or took longer than 300s"
               exit 1
@@ -380,6 +396,7 @@ jobs:
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/verify-replay-schema.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/week-sentence-practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
+          TEST_DATABASE_URL="$db" node tests/database/week-speaking-concurrency.mjs
 
           # Idempotency, without a second replay: applying the later additive
           # migrations again on a database that already has them must change

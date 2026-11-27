@@ -202,12 +202,17 @@ ${STRETCH_MARKING_RULE}
 CRITICAL TRANSCRIPTION RULE:
 - You are reading an automatic Whisper speech-to-text transcript, NOT listening to raw audio. Whisper automatically fixes mispronounced words into normal spelling.
 - Therefore, DO NOT guess or score pronunciation, accent, or phoneme accuracy from the transcript.
-- Score ONLY what is reliably observable in the transcript: task_achievement, grammar_accuracy, lexical_range, and coherence (each 0 to 5, allowing .5 increments).
+- Score ONLY what is reliably observable in the transcript: task_achievement, grammar_accuracy, lexical_range, and coherence (each 0 to 5, allowing .5 increments). Never infer or penalise speaking speed or pauses from the transcript.
+- Do not give pronunciation tips or claim that any word was spoken incorrectly. Sound practice is selected by separate fixed rules.
 - Write all explanations and feedback in clear, encouraging CEFR B1 British English (using British spelling such as "practise", "organised", "centre").
 - If there are no grammatical or lexical errors, return "corrections": [] and "errorPatterns": [].
+- Give exactly one optional sentence-structure upgrade. Its original MUST be an entire sentence copied exactly from the transcript. Preserve the idea, make ONE natural B2 structure and explain it in one short line. Use the week's preferred structure when it fits; otherwise use although, which, so that or because of. The structure field must be exactly one of: although, which, so that, because of, present perfect, time or if clause, modal, passive, conditional, future perfect, past modal.
+- For cuePoints, only include a supplied cue-card label when the transcript addresses it; quote the learner's exact words as evidence. Never invent a quotation. Return [] if no labels are supplied.
 
 Return strictly valid JSON with no markdown fences:
 {
+  "structure": {"original": "exact full sentence from transcript", "upgraded": "one improved sentence", "explanation": "one short B1 line", "structure": "one of the allowed structure names"},
+  "cuePoints": [{"label": "supplied cue-card label", "quote": "exact words from transcript"}],
   "improvedResponse": "string (natural B2-ready spoken version preserving the speaker's ideas)",
   "feedback": "string (2-3 encouraging sentences in B1 British English)",
   "strengths": ["string (1-3 concrete strengths in grammar, vocabulary, or organisation)"],
@@ -338,12 +343,18 @@ export function validateWritingFeedback(rawJson: unknown, fallbackText: string):
   return WritingFeedbackSchema.parse(candidate);
 }
 
+// A transcript cannot tell us how a word sounded. Filter accidental acoustic
+// diagnoses even if a provider ignores the speaking prompt.
+function containsAcousticDiagnosis(value: string): boolean {
+  return /\b(?:(?:mis)?pron(?:ounc|unci)\w*|accents?|phoneme\w*|(?:sound|sounds|sounded)\s+(?:wrong|incorrect|unclear))\b/i.test(value);
+}
+
 export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: string): SpeakingFeedback {
   const obj = (rawJson && typeof rawJson === 'object' ? rawJson : {}) as Record<string, unknown>;
   const rawRubric = (obj.rubric && typeof obj.rubric === 'object' ? obj.rubric : {}) as Record<string, unknown>;
 
   const rubric = {
-    task_achievement: clampFive(rawRubric.task_achievement ?? rawRubric.fluency, 3.8),
+    task_achievement: clampFive(rawRubric.task_achievement, 3.8),
     lexical_range: clampFive(rawRubric.lexical_range, 3.6),
     grammar_accuracy: clampFive(rawRubric.grammar_accuracy, 3.6),
     coherence: clampFive(rawRubric.coherence, 3.8),
@@ -351,14 +362,17 @@ export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: s
 
   const avgFive =
     (rubric.task_achievement + rubric.lexical_range + rubric.grammar_accuracy + rubric.coherence) / 4;
+  // Never trust an extra overall score that could include imagined audio
+  // qualities. Derive it only from the four transcript-observable criteria.
   const computedScore = Math.round((avgFive / 5) * 100);
-  const rawScore = typeof obj.score === 'number' && Number.isFinite(obj.score) ? Math.round(obj.score) : computedScore;
 
-  const corrections = normalizeCorrectionArray(obj.corrections);
+  const corrections = normalizeCorrectionArray(obj.corrections).filter((item) =>
+    !containsAcousticDiagnosis([item.original, item.corrected_sentence, item.explanation, item.rule, item.other_label].filter(Boolean).join(' ')),
+  );
   const patternSet = new Set<ErrorCategory>();
   if (Array.isArray(obj.errorPatterns)) {
     for (const p of obj.errorPatterns) {
-      patternSet.add(coerceErrorCategory(p));
+      if (typeof p === 'string' && !containsAcousticDiagnosis(p)) patternSet.add(coerceErrorCategory(p));
     }
   }
   for (const c of corrections) {
@@ -366,29 +380,29 @@ export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: s
   }
 
   const improvements = Array.isArray(obj.improvements)
-    ? obj.improvements.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim()).slice(0, 4)
+    ? obj.improvements.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
     : [];
 
   const candidate = {
     improvedResponse:
-      typeof obj.improvedResponse === 'string' && obj.improvedResponse.trim()
+      typeof obj.improvedResponse === 'string' && obj.improvedResponse.trim() && !containsAcousticDiagnosis(obj.improvedResponse)
         ? obj.improvedResponse.trim()
         : fallbackTranscript,
     feedback:
-      typeof obj.feedback === 'string' && obj.feedback.trim()
+      typeof obj.feedback === 'string' && obj.feedback.trim() && !containsAcousticDiagnosis(obj.feedback)
         ? obj.feedback.trim()
         : 'Clear ideas! Keep linking your sentences with natural B2 connectors.',
     strengths: Array.isArray(obj.strengths)
-      ? obj.strengths.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim()).slice(0, 4)
+      ? obj.strengths.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
       : [],
     improvements,
     corrections,
     errorPatterns: Array.from(patternSet).slice(0, 8),
     tips: Array.isArray(obj.tips)
-      ? obj.tips.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim()).slice(0, 4)
+      ? obj.tips.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
       : improvements,
     rubric,
-    score: Math.max(0, Math.min(100, rawScore)),
+    score: Math.max(0, Math.min(100, computedScore)),
   };
 
   return SpeakingFeedbackSchema.parse(candidate);
