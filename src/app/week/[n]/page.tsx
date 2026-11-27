@@ -8,6 +8,7 @@ import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
 import WeekInputTask from '@/components/b1b2/WeekInputTask';
 import WeekSpeakingSupport from '@/components/b1b2/WeekSpeakingSupport';
+import WeekTaskLayout, { type WeekTaskEntry } from '@/components/b1b2/WeekTaskLayout';
 import { getViewer } from '@/lib/b1b2/data';
 import { notFound } from 'next/navigation';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
@@ -19,6 +20,8 @@ import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
 import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import { loadWeekOutputSubmissions } from '@/lib/curriculum/week-models';
+import { WEEK_TASKS, ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +30,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const { n } = await params;
   if (!/^(?:[1-9]|[12][0-9]|3[0-2])$/.test(n)) notFound();
   const number = Number(n);
-  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice] = await Promise.all([
+  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice, submissions] = await Promise.all([
     loadLearnerWeek(number),
     loadSyllabusContent(),
     getViewer(),
@@ -37,6 +40,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     loadWeekPracticeProgress(number),
     loadWeekSpeakingSupport(number),
     loadWeekSentencePractice(number),
+    loadWeekOutputSubmissions(number),
   ]);
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
@@ -57,34 +61,86 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     : <p className="whitespace-pre-line leading-7">{details.reading.text}</p>;
   const listeningQuestions = <div id="listening-questions"><WeekInputTask week={number} skill="listening" questions={details.listening.questions} available={Boolean(trialAudio || details.listening.audioUrl)} signedIn={viewer.signedIn} /></div>;
   const listeningAfterQuestions = <ListeningAfterQuestions week={number} listening={details.listeningSupport} />;
+
+  // One task is open at a time, walked in the order the finish buttons already
+  // use: grammar → vocabulary → reading → listening → speaking → writing. The
+  // ✓ marks come from the completion records and the saved attempts the loaders
+  // already read; the task order and anchors live in `week-tasks.mjs`.
+  const tasks: WeekTaskEntry[] = WEEK_TASKS.flatMap((task) => {
+    if (task.key === 'grammar' && grammar) {
+      return [{
+        ...task,
+        heading: 'Grammar practice',
+        regionLabel: 'Grammar practice',
+        done: Boolean(practice.grammar?.summary),
+        body: <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} sentencePractice={sentencePractice} hasVocabulary={Boolean(cards && vocabulary)} />,
+      }];
+    }
+    if (task.key === 'vocabulary' && cards && vocabulary) {
+      return [{
+        ...task,
+        heading: `Vocabulary: ${vocabulary.title}`,
+        regionLabel: 'Vocabulary practice',
+        done: Boolean(practice.vocabulary?.summary),
+        body: <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} sentencePractice={sentencePractice} />,
+      }];
+    }
+    if (task.key === 'reading') {
+      return [{
+        ...task,
+        heading: `Reading: ${details.reading.title}`,
+        regionLabel: 'Reading practice',
+        done: details.readingSupport.questionsAnswered,
+        body: <ReadingPracticeLayout
+          before={<ReadingBeforeQuestions support={details.readingSupport.support} />}
+          text={readingText}
+          questions={<div id="reading-questions"><WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} /></div>}
+          after={<ReadingAfterQuestions week={number} reading={details.readingSupport} />}
+        />,
+      }];
+    }
+    if (task.key === 'listening') {
+      return [{
+        ...task,
+        heading: `Listening: ${details.listening.title}`,
+        regionLabel: 'Listening practice',
+        done: details.listeningSupport.transcriptUnlocked,
+        body: <>
+          <ListeningBeforePlayer support={details.listeningSupport.support} />
+          {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio}>{listeningQuestions}{listeningAfterQuestions}</ListeningTrialPlayer></> : <>{details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}{listeningQuestions}{listeningAfterQuestions}</>}
+        </>,
+      }];
+    }
+    if (task.key === 'speaking') {
+      return [{
+        ...task,
+        heading: 'Speaking',
+        regionLabel: 'Speaking practice',
+        done: speakingSupport ? speakingSupport.recordings.length > 0 : submissions.speaking,
+        body: speakingSupport ? <WeekSpeakingSupport
+          week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
+          planNotes={speakingSupport.planNotes} usefulPhrases={speakingSupport.usefulPhrases}
+          retryGoal={speakingSupport.retryGoal} initialNotes={speakingSupport.notes} available={speakingSupport.available} weekRecorded={speakingSupport.weekRecorded}
+          first={speakingSupport.first} tries={speakingSupport.tries} firstVersions={speakingSupport.firstVersions}
+          retryCount={speakingSupport.retryCount} checksUsed={speakingSupport.checksUsed} pending={speakingSupport.pending}
+          recordings={speakingSupport.recordings} model={speakingSupport.model}
+        /> : <div className="space-y-3"><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className={ACTION_BUTTON_CLASS}>Start speaking task</Link></div>,
+      }];
+    }
+    return [{
+      ...task,
+      heading: 'Writing',
+      regionLabel: 'Writing practice',
+      done: submissions.writing,
+      body: <div className="space-y-3"><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
+    }];
+  });
+
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
     <RefreshCurrentWeekOnVisit enabled={viewer.signedIn} />
     <FocusWeekSection week={number} />
     {!viewer.signedIn && <RememberWeek week={number} />}
     {header}
-    {grammar && <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} sentencePractice={sentencePractice} hasVocabulary={Boolean(cards && vocabulary)} />}
-    <section id="reading-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20">
-      <h2 tabIndex={-1} className="text-xl font-semibold">Reading: {details.reading.title}</h2>
-      <ReadingPracticeLayout
-        before={<ReadingBeforeQuestions support={details.readingSupport.support} />}
-        text={readingText}
-        questions={<div id="reading-questions"><WeekInputTask week={number} skill="reading" questions={details.reading.questions} available signedIn={viewer.signedIn} /></div>}
-        after={<ReadingAfterQuestions week={number} reading={details.readingSupport} />}
-      />
-    </section>
-    {cards && vocabulary && <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} sentencePractice={sentencePractice} />}
-    <section id="listening-practice" className="space-y-4 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Listening: {details.listening.title}</h2>
-      <ListeningBeforePlayer support={details.listeningSupport.support} />
-      {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio}>{listeningQuestions}{listeningAfterQuestions}</ListeningTrialPlayer></> : <>{details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}{listeningQuestions}{listeningAfterQuestions}</>}
-    </section>
-    {speakingSupport ? <WeekSpeakingSupport
-      week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
-      planNotes={speakingSupport.planNotes} usefulPhrases={speakingSupport.usefulPhrases}
-      retryGoal={speakingSupport.retryGoal} initialNotes={speakingSupport.notes} available={speakingSupport.available} weekRecorded={speakingSupport.weekRecorded}
-      first={speakingSupport.first} tries={speakingSupport.tries} firstVersions={speakingSupport.firstVersions}
-      retryCount={speakingSupport.retryCount} checksUsed={speakingSupport.checksUsed} pending={speakingSupport.pending}
-      recordings={speakingSupport.recordings} model={speakingSupport.model}
-    /> : <section id="speaking-practice" className="space-y-3 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Speaking</h2><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className="inline-block text-indigo-700 underline">Start speaking task</Link></section>}
-    <section id="writing-practice" className="space-y-3 rounded-xl border border-stone-200 p-5 target:scroll-mt-20"><h2 tabIndex={-1} className="text-xl font-semibold">Writing</h2><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className="inline-block text-indigo-700 underline">Start writing task</Link></section>
+    <WeekTaskLayout tasks={tasks} />
   </main>;
 }

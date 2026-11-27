@@ -158,6 +158,7 @@ test('the Finish panel warns about incomplete Review and later answers', () => {
       if (name === 'react/jsx-runtime') return jsxRuntime;
       if (name === 'next/link') return Link;
       if (name === '@/lib/curriculum/week-practice.mjs') return { practiceScoreBand };
+      if (name === '@/lib/curriculum/week-tasks.mjs') return { ACTION_BUTTON_CLASS: '' };
       throw new Error(`Unexpected dependency: ${name}`);
     },
   });
@@ -308,14 +309,17 @@ test('grammar points at vocabulary when there is one, and the sections have anch
   assert.deepEqual(nextTaskAfter('grammar', { hasVocabulary: false }).href, '#reading-practice');
 
   const page = read('src/app/week/[n]/page.tsx');
-  assert.match(page, /id="reading-practice"/);
   assert.match(page, /<GrammarPractice/);
   assert.match(page, /<VocabularyPractice/);
-  for (const file of ['components/b1b2/GrammarPractice.tsx', 'components/b1b2/VocabularyPractice.tsx']) {
-    // The anchor in nextTaskAfter must exist, or the button lands nowhere.
-    const component = read(file);
-    assert.match(component, /id="grammar-practice"|id="vocabulary-practice"/, `${file} has no anchor`);
+  // The anchors in nextTaskAfter must exist, or the button lands nowhere. The
+  // accordion renders each section with `id={task.anchor}`, so the anchors live
+  // in the shared task map and the layout has to use them.
+  const taskMap = read('lib/curriculum/week-tasks.mjs');
+  for (const anchor of ['grammar-practice', 'vocabulary-practice', 'reading-practice', 'listening-practice', 'speaking-practice', 'writing-practice']) {
+    assert.ok(taskMap.includes(`anchor: '${anchor}'`), `week-tasks.mjs has no ${anchor} anchor`);
   }
+  const layout = read('components/b1b2/WeekTaskLayout.tsx');
+  assert.match(layout, /id=\{task\.anchor\}/);
 });
 
 test('the components finish rather than disabling Next on the last step', () => {

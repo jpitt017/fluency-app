@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useMemo, useRef, useState, type RefObject } from 'react';
 import type { LearnerVocabularyCard } from '@/lib/curriculum/learner-vocabulary';
 import type { VocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
@@ -158,7 +159,7 @@ function PracticeQuestion({
         : <input id={question.id} value={answer} disabled={largeOptions && busy} onChange={e => { setAnswer(e.target.value); setResult(null); setSavedAt(false); }} maxLength={500} className={`w-full rounded-lg border border-stone-300 bg-white p-2 ${largeOptions ? 'min-h-12' : ''}`} />}
     </>}
     <div className="flex flex-wrap items-center gap-3">
-      <button type="button" disabled={!signedIn || !answer.trim() || busy || finishing} onClick={check} className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Checking…' : 'Check'}</button>
+      <button type="button" disabled={!signedIn || !answer.trim() || busy || finishing} onClick={check} className={ACTION_BUTTON_CLASS}>{busy ? 'Checking…' : 'Check'}</button>
       <SavedTick saved={savedAt} error={error || undefined} saving={busy} />
     </div>
     {result && <div role="status" className={result.correct ? 'text-emerald-800' : 'text-amber-900'}><strong>{result.correct ? 'Correct! ' : 'Not quite. '}</strong>{result.feedback}</div>}
@@ -237,7 +238,7 @@ function WordGroups({
             setPage((value) => Math.min(pages.length - 1, value + 1));
             onPageChanged();
           }}
-          className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          className={ACTION_BUTTON_CLASS}
         >
           Next words →
         </button>
@@ -337,8 +338,7 @@ export default function VocabularyPractice({
     focusNextTask(next.href.replace('#', ''));
   }
 
-  return <section ref={sectionRef} id="vocabulary-practice" className="space-y-4 rounded-xl border border-indigo-200 bg-white p-5 target:scroll-mt-20" aria-label="Vocabulary practice">
-    <h2 tabIndex={-1} className="text-xl font-semibold">Vocabulary: {exercises.title}</h2>
+  return <section ref={(node) => { sectionRef.current = node?.closest<HTMLElement>('section[id]') ?? node; }} className="space-y-4">
     <StepProgress current={step + 1} total={steps.length} label={steps[step]} headingRef={stepHeadingRef} />
     <p className="text-sm text-stone-600">{STEP_INSTRUCTIONS[step]} This practice does not affect week unlocking.</p>
     {finishError && <p role="alert" className="text-sm text-red-700">{finishError}</p>}
@@ -435,25 +435,25 @@ export default function VocabularyPractice({
       />
     </div>
     <div className="flex justify-between gap-2">
-      <button type="button" disabled={step === 0} onClick={() => { setStep(s => s - 1); focusStep(); }} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous step</button>
+      <button type="button" disabled={step === 0} onClick={() => { setStep(s => s - 1); focusStep(); }} className="rounded-lg border border-stone-300 px-4 py-2 text-sm disabled:opacity-40">Previous step</button>
       {lastStep ? (
         <div className="flex flex-col items-end gap-1">
           <button
             type="button"
             disabled={!signedIn || busy || checking || !canFinishRule(planned, results)}
             onClick={finish}
-            className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className={ACTION_BUTTON_CLASS}
           >
             {busy ? 'Saving…' : 'Finish vocabulary'}
           </button>
           {checking ? (
-            <span role="status" className="text-xs text-stone-600">Checking your answers. Please wait to finish.</span>
+            <span role="status" className="text-sm text-stone-600">Checking your answers. Please wait to finish.</span>
           ) : signedIn && !summary && finishHint(planned, results) && (
-            <span className="text-xs text-stone-600">{finishHint(planned, results)}</span>
+            <span className="text-sm text-stone-600">{finishHint(planned, results)}</span>
           )}
         </div>
       ) : (
-        <button type="button" onClick={() => { setStep(s => s + 1); focusStep(); }} className="rounded-lg bg-indigo-700 px-4 py-2 text-white">Next step</button>
+        <button type="button" onClick={() => { setStep(s => s + 1); focusStep(); }} className={ACTION_BUTTON_CLASS}>Next step</button>
       )}
     </div>
   </section>;

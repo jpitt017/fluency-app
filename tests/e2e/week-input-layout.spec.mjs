@@ -34,7 +34,7 @@ async function measure(page, className) {
 
 test('at 375 px: one question at a time, short option buttons, text panel over the question', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto('/week/1');
+  await page.goto('/week/1#reading-practice');
   const reading = page.locator('#reading-practice');
   const questions = reading.locator('#reading-questions');
   await questions.scrollIntoViewIfNeeded();
@@ -85,7 +85,7 @@ test('at 375 px: one question at a time, short option buttons, text panel over t
 
 test('at 1280 px: the text stays on the left with the questions on the right', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('/week/1');
+  await page.goto('/week/1#reading-practice');
   const reading = page.locator('#reading-practice');
   await reading.scrollIntoViewIfNeeded();
   const panel = reading.getByTestId('reading-text-panel');
@@ -122,7 +122,7 @@ test('375 px and 1280 px: the replay player and reading panel classes really swi
 });
 
 test('the real replay player keeps its controls when approved audio is present', async ({ page }) => {
-  await page.goto('/week/1');
+  await page.goto('/week/1#listening-practice');
   const full = page.getByTestId('listening-trial-player');
   test.skip((await full.count()) === 0, 'The isolated E2E project has no approved trial audio');
   for (const [width, height, expected] of [[375, 667, 'fixed'], [1280, 800, 'static']]) {
@@ -153,7 +153,10 @@ test('Check four words is one word at a time at 375 px and 1280 px', async ({ pa
     await answerReadingAndFinish(page);
     for (const [width, height] of [[375, 667], [1280, 800]]) {
       await page.setViewportSize({ width, height });
-      await page.goto('/week/1');
+      await page.goto('/week/1#reading-practice');
+      // A same-URL goto does not reload, and the <details> state would carry
+      // across widths: reload so each width starts from a fresh render.
+      await page.reload();
       const reading = page.locator('#reading-practice');
       const summary = reading.getByText('Go further (2–3 min)', { exact: true });
       // The phone's fixed "Show the text" button sits at the bottom; centre the

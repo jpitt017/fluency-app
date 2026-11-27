@@ -15,7 +15,7 @@ export default function SpeakingRecording({
 
   if (!recordingUrl || failed) {
     return (
-      <p className="rounded-lg border border-stone-200 bg-stone-50 p-2.5 text-xs text-stone-600">
+      <p className="rounded-lg border border-stone-200 bg-stone-50 p-2.5 text-sm text-stone-600">
         Recording unavailable – ask the learner to re-record
       </p>
     );

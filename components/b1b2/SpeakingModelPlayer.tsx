@@ -153,7 +153,7 @@ export default function SpeakingModelPlayer({ text, audioUrl }: { text: string; 
   return (
     <div className="space-y-2" data-testid="speaking-model-player">
       {useSpeech ? (
-        <p className="text-xs text-amber-800">Temporary computer voice. The position and duration are approximate.</p>
+        <p className="text-sm text-amber-800">Temporary computer voice. The position and duration are approximate.</p>
       ) : (
         <audio
           ref={audioRef}

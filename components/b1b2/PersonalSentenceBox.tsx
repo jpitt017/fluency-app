@@ -1,5 +1,6 @@
 'use client';
 
+import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { useRef, useState } from 'react';
 import type { SentencePractice, SentenceVersion } from '@/lib/curriculum/week-sentence-practice';
 import type { GrammarUseItFeedback } from '@/lib/b1b2/grammar-use-it-feedback';
@@ -191,12 +192,12 @@ export default function PersonalSentenceBox({
         {kind === 'grammar-use-it' ? ' Write 2–3 sentences about your own life.' : ' Write about your own life.'}
       </p>
       <button type="button" disabled={!signedIn || busy || !answer.trim()} onClick={check}
-        className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        className={ACTION_BUTTON_CLASS}>
         {busy ? 'Checking…' : 'Check'}
       </button>
     </>}
     {saved.first && !saved.second && !editing && <button type="button" onClick={improve}
-      className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white">
+      className={ACTION_BUTTON_CLASS}>
       {kind === 'grammar-use-it' ? 'Improve it' : 'Try again'}
     </button>}
     {saved.second && <p className="text-sm text-stone-600">You have checked this item twice.</p>}

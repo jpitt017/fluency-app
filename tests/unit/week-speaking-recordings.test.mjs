@@ -224,6 +224,18 @@ test('CI runs the new unit checks and applies migrations only to the isolated E2
   assert.doesNotMatch(ci, /migration repair --status reverted 0059/);
 });
 
+test('CI mirrors remote-only shared-project versions instead of failing db push', () => {
+  const ci = readFileSync('.github/workflows/ci.yml', 'utf8');
+  // when another open branch applied a version to the shared test project,
+  // the apply step must tolerate it with disposable workdir placeholders
+  // rather than failing the whole job before any test runs.
+  assert.match(ci, /select version from supabase_migrations\.schema_migrations/);
+  assert.match(ci, /_shared_project_history\.sql/);
+  // the 0059-specific shim and history repair stay gone (see test above).
+  assert.doesNotMatch(ci, /CI-only ledger shim/);
+  assert.doesNotMatch(ci, /migration repair/);
+});
+
 test('immutable new take keys project only owner-validated playback routes', () => {
   const takeId = '44444444-4444-4444-8444-444444444444';
   const path = `${USER_ID}/week-speaking/2/${ATTEMPT_ID}/recording-${takeId}.webm`;

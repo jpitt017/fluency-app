@@ -125,10 +125,17 @@ test('the page uses the shared, keyboard-operable gloss and gloss-check componen
   assert.match(component, /decoration-emerald-500/);
 
   const page = read('src/app/week/[n]/page.tsx');
-  const readingIndex = page.indexOf('<section id="reading-practice"');
-  const vocabularyIndex = page.indexOf('<VocabularyPractice');
-  assert.ok(readingIndex >= 0 && vocabularyIndex > readingIndex);
-  assert.match(page, /\{cards && vocabulary && <VocabularyPractice/);
+  // The one-task accordion walks the page in the order the finish buttons
+  // already used: grammar → vocabulary → reading → listening → speaking →
+  // writing, so vocabulary now precedes reading (vocabulary's finish button
+  // says "Next: Reading →").
+  const taskMap = read('lib/curriculum/week-tasks.mjs');
+  const vocabularyIndex = taskMap.indexOf("key: 'vocabulary'");
+  const readingIndex = taskMap.indexOf("key: 'reading'");
+  assert.ok(vocabularyIndex >= 0 && readingIndex > vocabularyIndex);
+  assert.match(page, /<VocabularyPractice/);
+  assert.match(page, /cards && vocabulary/);
+  assert.match(page, /<ReadingPracticeLayout/);
   assert.doesNotMatch(page, /Finish and save the reading questions first/);
   assert.match(component, /Answer the reading questions first to open the card-word meanings and gloss check/);
 });

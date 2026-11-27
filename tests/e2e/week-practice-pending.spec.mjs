@@ -1,3 +1,4 @@
+import { openWeekTask } from './helpers/week-tasks.mjs';
 import { test, expect } from './helpers/isolated-test.mjs';
 import { canUseReadingGateFixture, createReadingLearner, removeReadingLearner } from './helpers/reading-gate.mjs';
 
@@ -38,6 +39,7 @@ test('phone: counted grammar and gap checks finish after leaving their steps', a
     await expect(grammar.getByRole('radio', { name: 'moved', exact: true })).toBeChecked();
     await expect(grammar.getByRole('status').filter({ hasText: 'Correct!' })).toBeVisible();
 
+    await openWeekTask(page, 'vocabulary-practice');
     const vocabulary = page.getByRole('region', { name: 'Vocabulary practice', exact: true });
     for (let n = 0; n < 3; n += 1) await step(vocabulary, 'Next').click();
     await vocabulary.getByRole('radio', { name: 'took', exact: true }).check();
