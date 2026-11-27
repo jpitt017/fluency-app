@@ -7,6 +7,7 @@ import type { LessonLabContext } from '@/components/labs/LessonLabContext';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 import { getViewer } from '@/lib/b1b2/data';
 import { loadUnlockedModels } from '@/lib/curriculum/week-models';
+import { loadWeekSpeakingSupport, speakingSupportConfig } from '@/lib/curriculum/week-speaking-support';
 import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
@@ -25,6 +26,13 @@ export default async function LabsPage({ searchParams }: LabsProps) {
   const pronunciationWeek = await loadLearnerWeek(weekNumber);
   const selectedWeek = weekParam ? pronunciationWeek : null;
   const unlockedModels = selectedWeek ? await loadUnlockedModels(weekNumber) : null;
+  // Dedicated speaking weeks use the saved/capped flow; other published
+  // weeks keep the original lab task and its normal completion behaviour.
+  const dedicatedSpeaking = Boolean(selectedWeek && speakingSupportConfig(weekNumber));
+  // A historic completion alone does not prove a kept first recording exists.
+  // Conversely a saved legacy first take already unlocked the weekly model,
+  // even if the old completion write failed; preserve that access in the lab.
+  const unlockedSpeaking = dedicatedSpeaking && viewer.signedIn ? await loadWeekSpeakingSupport(weekNumber) : null;
   const grammarIdeas = selectedWeek && viewer.signedIn
     ? grammarWritingIdeas(await loadWeekSentencePractice(weekNumber), weekNumber)
     : [];
@@ -40,9 +48,11 @@ export default async function LabsPage({ searchParams }: LabsProps) {
     ...freeContext,
     prompt: 'Write an email, a review or a short essay.',
   };
-  // A task opened from /week/[n] keeps its week: the way back is on screen and
-  // the evaluated submission counts for that week (weekNumber rides along in
-  // the lesson context, and the marking routes record it).
+  const speakingContext = selectedWeek && !dedicatedSpeaking
+    ? { ...freeContext, prompt: selectedWeek.speakingPrompt, weekNumber }
+    : freeContext;
+  // Keep the way back on screen. Weeks with dedicated speaking support use
+  // their saved, capped flow; other published weeks still use the lab task.
   const backToWeek = weekParam ? (
     <Link
       href={`/week/${weekNumber}`}
@@ -121,11 +131,11 @@ export default async function LabsPage({ searchParams }: LabsProps) {
             <p className="text-xs text-stone-500">
               {selectedWeek?.speakingLength ? `Speak for ${selectedWeek.speakingLength}. ` : 'Speak for about 1 minute. '}The app writes down what you said and gives you feedback.
             </p>
-            {selectedWeek && (
-              <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>
-            )}
+            {selectedWeek && (dedicatedSpeaking
+              ? <p className="mt-1 text-xs font-semibold text-emerald-800">To complete the weekly speaking task, <Link href={`/week/${weekNumber}#speaking-practice`} className="underline">record it on the Week {weekNumber} page</Link>. This lab is free practice.</p>
+              : <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>)}
           </div>
-          <SpeakingLab unlockedModel={unlockedModels?.speaking} lessonContext={selectedWeek ? { ...freeContext, prompt: selectedWeek.speakingPrompt, weekNumber } : weekParam ? { ...freeContext, weekNumber } : freeContext} pronunciationFocus={pronunciationFocus} />
+          <SpeakingLab unlockedModel={dedicatedSpeaking ? unlockedSpeaking?.model?.text : unlockedModels?.speaking} lessonContext={speakingContext} grammarWeek={weekNumber} pronunciationFocus={pronunciationFocus} />
         </section>
       </div>
 

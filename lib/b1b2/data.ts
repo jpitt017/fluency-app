@@ -1,7 +1,7 @@
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
-import { weekSpeakingAttemptRecordings } from './week-speaking-recordings.mjs';
+import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from './week-speaking-recordings.mjs';
 import { orderQueue, planQueue } from './review-queue.mjs';
 import type {
   AiObservabilitySummary,
@@ -644,9 +644,23 @@ export async function loadTeacherRoster(): Promise<{
         list.push(...weekSpeakingAttemptRecordings(row));
         recordingsByUser.set(row.user_id, list);
       }
-      for (const list of recordingsByUser.values()) {
-        list.sort((a, b) => a.weekNumber - b.weekNumber || a.takeNumber - b.takeNumber);
-      }
+    }
+    const { data: takeRows, error: takeError } = await recordingClient
+      .from('week_speaking_takes')
+      .select('id,user_id,week_number,attempt_id,kind,sequence,recording_path,status,created_at')
+      .in('user_id', roster.map((learner) => learner.user_id))
+      .in('status', ['ready', 'checking', 'checked', 'abandoned'])
+      .order('created_at', { ascending: false }).limit(1500);
+    if (takeError) console.error('teacher weekly takes failed:', takeError.message);
+    else for (const row of takeRows ?? []) {
+      const link = weekSpeakingTakeRecording(row);
+      if (!link) continue;
+      const list = recordingsByUser.get(row.user_id) ?? [];
+      list.push(link);
+      recordingsByUser.set(row.user_id, list);
+    }
+    for (const list of recordingsByUser.values()) {
+      list.sort((a, b) => a.weekNumber - b.weekNumber || a.takeNumber - b.takeNumber);
     }
   }
 

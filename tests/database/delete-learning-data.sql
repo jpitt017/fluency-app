@@ -4,6 +4,8 @@ do $$
 declare
   u uuid := gen_random_uuid(); other_user uuid := gen_random_uuid(); c uuid; m uuid; l uuid; p uuid; sp uuid; wr uuid;
   d uuid; v uuid; vc uuid; cp uuid; b uuid; n bigint; t record; result jsonb;
+  week_take uuid := gen_random_uuid(); week_check uuid := gen_random_uuid();
+  deletion_lock uuid := gen_random_uuid(); week_path text;
 begin
   insert into auth.users(id, email, raw_user_meta_data, raw_app_meta_data, aud, role)
     values (u, 'deletion-isolated@example.test', '{}', '{}', 'authenticated', 'authenticated'),
@@ -47,6 +49,15 @@ begin
     execute 'insert into public.week_speaking_attempts(id,user_id,week_number,notes,first_recording_path,first_transcript,second_recording_path,second_transcript) values ($1,$2,1,''[]''::jsonb,$3,''first take'',$4,''second take'')'
       using gen_random_uuid(), u, u::text||'/week-speaking/1/first.wav', u::text||'/week-speaking/1/second.wav';
   end if;
+  -- Every new owner table needs a real row before the generic coverage loop.
+  -- This check failed after saving and is still part of the deletion ledger.
+  if to_regclass('public.week_speaking_takes') is not null then
+    week_path := public.reserve_week_speaking_take(u, 2::smallint, week_take, 'first', 'webm', '[]', '[]', null)->>'path';
+    perform public.finish_week_speaking_upload(u, week_take, true);
+    perform public.reserve_week_speaking_check(u, week_take, week_check);
+    perform public.finish_week_speaking_check(u, week_check, 'failed', null, null);
+    if not public.begin_week_speaking_deletion(u, deletion_lock) then raise exception 'Could not acquire deletion fixture lock'; end if;
+  end if;
   insert into public.issue_reports(user_id,type,message,page_url) values(u,'feedback','test','/week/1');
   insert into public.issue_report_attempts(user_id) values(u);
   if to_regclass('public.week_grammar_attempts') is not null then
@@ -86,7 +97,12 @@ begin
     if n < 1 then raise exception 'Missing test fixture for %',t.table_name; end if;
   end loop;
   perform set_config('request.jwt.claim.sub',u::text,true);
-  result := public.delete_my_learning_data();
+  if to_regclass('public.week_speaking_takes') is not null then
+    result := public.finish_week_speaking_deletion(u, deletion_lock);
+    if not (result->'audio_paths' ? week_path) then raise exception 'New weekly recording missing from deletion result %', result; end if;
+  else
+    result := public.delete_my_learning_data();
+  end if;
   if result->>'deleted' <> 'true' or not (result->'audio_paths' ? (u::text||'/recording.wav')) then raise exception 'Unexpected deletion result %',result; end if;
   if to_regclass('public.week_speaking_attempts') is not null and (
     not (result->'audio_paths' ? (u::text||'/week-speaking/1/first.wav'))

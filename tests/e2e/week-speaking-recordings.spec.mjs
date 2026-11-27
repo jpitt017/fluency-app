@@ -17,12 +17,16 @@ async function fixture({ withTeacher = false } = {}) {
   const teacher = withTeacher ? await createTestUser(admin, 'week-rec-teacher') : null;
   const ownerAttemptId = randomUUID();
   const otherAttemptId = randomUUID();
+  const ownerTakeId = randomUUID();
+  const otherTakeId = randomUUID();
   const ownerPath = weekSpeakingRecordingPath({
     userId: learner.id, weekNumber: 1, attemptId: ownerAttemptId, takeNumber: 1, mimeType: 'audio/webm',
   });
   const otherPath = weekSpeakingRecordingPath({
     userId: other.id, weekNumber: 1, attemptId: otherAttemptId, takeNumber: 1, mimeType: 'audio/webm',
   });
+  const ownerTakePath = `${learner.id}/week-speaking/1/${ownerAttemptId}/recording-${ownerTakeId}.webm`;
+  const otherTakePath = `${other.id}/week-speaking/1/${otherAttemptId}/recording-${otherTakeId}.webm`;
   const audio = new Blob(['weekly speaking playback fixture'], { type: 'audio/webm' });
 
   try {
@@ -56,7 +60,20 @@ async function fixture({ withTeacher = false } = {}) {
       },
     ]);
     if (saved.error) throw saved.error;
-    return { admin, learner, other, teacher, ownerAttemptId, otherAttemptId, ownerPath, otherPath };
+    // New keys must have an active database reservation before Storage can
+    // create them; this exercises the same guard as the real capture route.
+    for (const [user, takeId, path] of [[learner, ownerTakeId, ownerTakePath], [other, otherTakeId, otherTakePath]]) {
+      const reserved = await admin.rpc('reserve_week_speaking_take', {
+        p_user_id: user.id, p_week_number: 1, p_take_id: takeId, p_kind: 'retry', p_extension: 'webm',
+        p_notes: [], p_phrases: [], p_source_take_id: null,
+      });
+      if (reserved.error || reserved.data?.path !== path) throw reserved.error || new Error('Wrong reserved recording key');
+      const uploaded = await admin.storage.from('speaking-recordings').upload(path, audio, { contentType: 'audio/webm', upsert: false });
+      if (uploaded.error) throw uploaded.error;
+      const finished = await admin.rpc('finish_week_speaking_upload', { p_user_id: user.id, p_take_id: takeId, p_success: true });
+      if (finished.error || finished.data !== true) throw finished.error || new Error('Could not finish recording fixture');
+    }
+    return { admin, learner, other, teacher, ownerAttemptId, otherAttemptId, ownerPath, otherPath, ownerTakeId, otherTakeId, ownerTakePath, otherTakePath };
   } catch (error) {
     for (const user of [teacher, learner, other]) {
       if (user) await deleteTestUser(admin, user.id);
@@ -89,13 +106,20 @@ test('a learner gets a 60-second server link for their own recording, not anothe
 
     const foreign = await ownerPage.request.get(`/api/week/speaking/recording/${data.otherAttemptId}/1`, { maxRedirects: 0 });
     expect(foreign.status()).toBe(404);
+    const newPlayback = await ownerPage.request.get(`/api/week/speaking/take/${data.ownerTakeId}`, { maxRedirects: 0 });
+    expect(newPlayback.status()).toBe(302);
+    expect(newPlayback.headers()['cache-control']).toContain('no-store');
+    const newForeign = await ownerPage.request.get(`/api/week/speaking/take/${data.otherTakeId}`, { maxRedirects: 0 });
+    expect(newForeign.status()).toBe(404);
 
     const week = await ownerPage.goto('/week/1');
     expect(week?.status()).toBe(200);
-    await expect(ownerPage.locator('[data-testid^="week-speaking-recording-"]')).toHaveCount(1);
+    await expect(ownerPage.locator('[data-testid^="week-speaking-recording-"]')).toHaveCount(2);
     const html = await ownerPage.content();
     expect(html).not.toContain(data.ownerPath);
     expect(html).not.toContain(data.otherPath);
+    expect(html).not.toContain(data.ownerTakePath);
+    expect(html).not.toContain(data.otherTakePath);
     expect(html).not.toContain('token=');
   } finally {
     if (ownerPage) await ownerPage.close();
@@ -120,6 +144,9 @@ test('staff can play back another learner’s weekly recording from the teacher 
     const playback = await page.request.get(`/api/week/speaking/recording/${data.ownerAttemptId}/1`, { maxRedirects: 0 });
     expect(playback.status()).toBe(302);
     expect(playback.headers().location).toMatch(/token=/);
+    const newPlayback = await page.request.get(`/api/week/speaking/take/${data.ownerTakeId}`, { maxRedirects: 0 });
+    expect(newPlayback.status()).toBe(302);
+    expect(newPlayback.headers().location).toMatch(/token=/);
     const html = await page.content();
     expect(html).not.toContain(data.ownerPath);
     expect(html).not.toContain('token=');
