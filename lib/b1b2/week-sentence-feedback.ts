@@ -41,7 +41,7 @@ In your JSON, include "onTarget": true only when the sentence is correct and ful
 
 Answer in three parts, in your JSON:
   "good": one short sentence saying what works. Address the learner as "you".
-  "corrected": the learner's sentence with any mistakes fixed. If there are no mistakes, repeat their sentence exactly.
+  "corrected": the learner's sentence with any mistakes fixed. The corrected sentence must keep the learner's ideas. Don't add new information or phrases. If there are no mistakes, repeat their sentence exactly.
   "tip": one short sentence with a single concrete tip.
 
 Rules for the wording:

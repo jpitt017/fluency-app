@@ -77,8 +77,10 @@ async function addMistakesToReview({
       category: skill === 'grammar' ? 'tense' : 'collocation',
     });
     if (!card) {
-      console.error('[week-finish] Missing Review answer for a checked practice item:', item.id);
-      return false;
+      // Concept-check questions and other items that cannot build a full sentence
+      // do not become one-word Review cards; log and skip cleanly.
+      console.error('[week-finish] Skipped Review card (no full sentence):', item.id);
+      continue;
     }
     const { error } = await admin.from('error_review_cards').insert(card);
     if (error && error.code !== '23505') {

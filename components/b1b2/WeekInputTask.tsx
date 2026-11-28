@@ -7,7 +7,7 @@ import type { LearnerQuestion } from '@/lib/curriculum/learner-week';
 import PracticeItemPager from './PracticeItemPager';
 import { inputSummary, isShortOptionSet } from '@/lib/curriculum/week-input-ui.mjs';
 
-type Marked = { correct: boolean; reason: string | null; sourceLine?: string | null };
+type Marked = { correct: boolean; nearly?: boolean; reason: string | null; sourceLine?: string | null };
 
 function Question({
   week,
@@ -130,7 +130,7 @@ function Question({
       </button>
       {marked && (
         <div role="status" className={marked.correct ? 'mt-2 text-emerald-800' : 'mt-2 text-amber-900'}>
-          <strong>{marked.correct ? 'Correct. ' : 'Not quite. '}</strong>
+          <strong>{marked.correct ? 'Correct. ' : marked.nearly ? 'Almost! ' : 'Not quite. '}</strong>
           {marked.reason}
           {marked.sourceLine && <p className="mt-1 text-sm italic text-stone-600">“{marked.sourceLine}”</p>}
         </div>
