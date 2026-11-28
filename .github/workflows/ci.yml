@@ -56,11 +56,13 @@ jobs:
       - run: node --test tests/unit/week-practice-finish.test.mjs
       # Exercise the real finish route and reload against an in-memory database.
       - run: node --test tests/unit/week-practice-server.test.mjs
+      # Fully answered practices get an idempotent Review summary on the next visit.
+      - run: node --test tests/unit/week-practice-auto-finish.test.mjs
       # Browser position is scoped, validated, and safe when storage is blocked.
       - run: node --test tests/unit/grammar-practice-position.test.mjs
       # Grammar alternatives, sentence verdicts, and Review scheduling stay
       # server-side and are exercised with fake providers and an in-memory DB.
-      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-sentence-support.test.mjs tests/unit/week-sentence-practice.test.mjs tests/unit/week-sentence-rollout.test.mjs tests/unit/grammar-use-it-feedback.test.mjs tests/unit/week-vocab-review-server.test.mjs
+      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-sentence-support.test.mjs tests/unit/week-sentence-practice.test.mjs tests/unit/week-sentence-rollout.test.mjs tests/unit/grammar-use-it-feedback.test.mjs tests/unit/week-vocab-review-server.test.mjs tests/unit/review-marking-contract.test.mjs tests/unit/review-card-quality.test.mjs
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs
@@ -69,7 +71,7 @@ jobs:
       - run: node --test tests/unit/week-vocab-mark-server.test.mjs
       # A manually requested Review-card cleanup must require consent, the
       # correct owner and unchanged, unreviewed IDs, never a broad deletion.
-      - run: node --test tests/unit/approved-review-removal.test.mjs
+      - run: node --test tests/unit/approved-review-removal.test.mjs tests/unit/review-cards-cleanup-pr117.test.mjs
       # The explicit alias list from inflected gap answers to their cards, and
       # that every linked term resolves to an authored card (44 of 44).
       - run: node --test tests/unit/vocabulary-review-link.test.mjs
@@ -86,7 +88,7 @@ jobs:
       # tour, the shared main-action button, the text-size and feedback-colour
       # rules, and the listening picture slot.
       - run: node --test tests/unit/week-task-overview.test.mjs
-      # Shared six-task progress mapping, including saved-answer completion fallback and estimated minutes.
+      # Shared six-task progress mapping, including all-items completion without Finish and estimated minutes.
       - run: node --test tests/unit/week-progress-shape.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs

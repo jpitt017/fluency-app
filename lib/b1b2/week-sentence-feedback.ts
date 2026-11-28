@@ -42,7 +42,7 @@ In your JSON, include "onTarget": true only when the sentence is correct and ful
 
 Answer in three parts, in your JSON:
   "good": one short sentence saying what works. Address the learner as "you".
-  "corrected": the learner's sentence with any mistakes fixed (at most 20 words, B1–B2 words only, using only grammar from Weeks 1–4 or the current week — no inversion, cleft sentences, or advanced passives). Keep clear, correct sentences as they are: if there are no mistakes, repeat their sentence exactly.
+  "corrected": the learner's sentence with any mistakes fixed (at most 20 words, B1–B2 words only, using only grammar from Weeks 1–4 or the current week — no inversion, cleft sentences, or advanced passives). The corrected sentence must keep the learner's ideas. Don't add new information or phrases. Keep clear, correct sentences as they are: if there are no mistakes, repeat their sentence exactly.
   "tip": one short sentence with a single concrete tip.
 
 Rules for the wording:

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   if (currentWeek === null) return NextResponse.json({ error: 'Could not check your progress.' }, { status: 503 });
   if (weekNumber > currentWeek) return NextResponse.json({ error: 'This week is not open yet.' }, { status: 403 });
 
-  let marked: { correct: boolean; reason: string | null };
+  let marked: { correct: boolean; nearly?: boolean; reason: string | null };
   try {
     marked = markInputAnswer(item, body.answer);
   } catch {
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { correct: marked.correct, reason, sourceLine },
+    { correct: marked.correct, nearly: Boolean(marked.nearly), reason, sourceLine },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

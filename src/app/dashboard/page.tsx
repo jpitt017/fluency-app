@@ -7,6 +7,7 @@ import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVis
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekProgress } from '@/lib/curriculum/week-progress';
+import { ensureWeeklyPracticeSummary } from '@/lib/curriculum/week-practice-auto-finish';
 
 export const dynamic = 'force-dynamic';
 type DashboardProps = { searchParams: Promise<{ week?: string | string[] }> };
@@ -14,11 +15,14 @@ type DashboardProps = { searchParams: Promise<{ week?: string | string[] }> };
 export default async function DashboardPage({ searchParams }: DashboardProps) {
   const param = (await searchParams).week;
   const currentWeek = await currentLearnerWeek();
-  const [summary, data, syllabus, review] = await Promise.all([
-    loadHeaderSummary(), loadDashboard(), loadSyllabusContent(currentWeek), loadReviewQueue(),
+  const [summary, data, syllabus] = await Promise.all([
+    loadHeaderSummary(), loadDashboard(), loadSyllabusContent(currentWeek),
   ]);
   const weekNumber = !summary.signedIn && param ? learnerWeekFromParam(param) : currentWeek;
-  const weekProgress = await loadWeekProgress(data.userId, weekNumber);
+  if (data.userId) await ensureWeeklyPracticeSummary(weekNumber);
+  const [review, weekProgress] = await Promise.all([
+    loadReviewQueue(), loadWeekProgress(data.userId, weekNumber),
+  ]);
   const week = syllabus.weeks.find((item) => item.number === weekNumber);
   const staff = summary.role === 'teacher' || summary.role === 'admin';
   const obs = staff ? await loadObservabilitySummary(7) : null;

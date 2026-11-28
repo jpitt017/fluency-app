@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import details from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
-import { markLearnerGrammarAnswer } from '@/lib/curriculum/learner-grammar-marking.mjs';
+import { markLearnerGrammarAnswer, nearlyRightGrammarFeedback } from '@/lib/curriculum/learner-grammar-marking.mjs';
 import { learnerGrammarReason } from '@/lib/curriculum/learner-grammar-reasons.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { readStoredCurrentWeek } from '@/lib/curriculum/stored-current-week';
@@ -27,5 +27,12 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ error: 'Could not save your answer.' }, { status: 503 });
   const { error } = await admin.from('week_grammar_attempts').insert({ user_id: user.id, week_number: week.number, item_id: item.id, answer, correct });
   if (error) return NextResponse.json({ error: 'Could not save your answer. Please try again.' }, { status: 503 });
-  return NextResponse.json({ correct, reason: learnerGrammarReason(item) }, { headers: { 'Cache-Control': 'no-store' } });
+  const nearlyFeedback = correct ? null : nearlyRightGrammarFeedback(item, answer);
+  if (nearlyFeedback) {
+    return NextResponse.json(
+      { correct: false, nearly: true, reason: nearlyFeedback },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+  return NextResponse.json({ correct, nearly: false, reason: learnerGrammarReason(item) }, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -259,29 +259,28 @@ test('saved partial snapshots reload unchanged and old optional counts are cappe
   });
 });
 
-test('a wrong multi-blank answer gets a usable Review card, not a silently dropped key', () => {
+test('a wrong multi-blank answer gets a usable Review card with full corrected sentence and rule', () => {
   const item = details.weeks[0].grammar.practice.items.find((entry) => entry.id === 'W1-C5');
   const card = practiceErrorCard({ userId: 'learner', item, answer: 'Did ... live', category: 'tense' });
-  assert.equal(card.prompt_sentence, 'Did you ever live in another country?');
+  assert.equal(card.prompt_sentence, '___ you ever ___ in another country?');
   assert.equal(card.corrected_sentence, 'Have you ever lived in another country?');
-  assert.match(card.explanation, /Have \.\.\. lived/);
+  assert.equal(card.card_format, 'cloze');
+  assert.ok(card.explanation && !/^Write the sentence again/.test(card.explanation));
   const week4 = details.weeks[3].grammar.practice.items.find((entry) => entry.id === 'W4-G5');
   const arrayCard = practiceErrorCard({ userId: 'learner', item: week4, answer: ['is', 'make'], category: 'tense' });
-  assert.equal(arrayCard.prompt_sentence, 'Where is your car make?');
+  assert.equal(arrayCard.prompt_sentence, 'Where ___ your car ___ (make)?');
   assert.equal(arrayCard.corrected_sentence, 'Where was your car made?');
+  assert.equal(arrayCard.card_format, 'cloze');
 });
 
-test('meaning questions in all four weeks become answerable Review questions, not broken sentence fixes', () => {
+test('meaning questions with one-word answers do not create broken single-word Review cards', () => {
   let questions = 0;
   for (const week of details.weeks) {
     for (const item of week.grammar.practice.items.filter((entry) => entry.step === 'Meaning')) {
       questions += 1;
       const wrong = item.options.find((option) => option !== item.key);
       const card = practiceErrorCard({ userId: 'learner', item, answer: wrong, category: 'tense' });
-      assert.equal(card.prompt_sentence, `Answer this question: ${item.prompt}`);
-      assert.equal(card.corrected_sentence, item.key);
-      assert.notEqual(card.prompt_sentence, card.corrected_sentence);
-      assert.match(card.explanation, /The answer is/);
+      assert.equal(card, null, `${item.id} must not create a single-word Review card`);
     }
   }
   assert.equal(questions, 12);
@@ -290,14 +289,18 @@ test('meaning questions in all four weeks become answerable Review questions, no
   assert.match(reviewUi, /isQuestion \? 'Your answer' : 'Your corrected sentence'/);
 });
 
-test('verb and word-form mistakes can use a repair card without inventing a vocabulary alias', () => {
+test('verb and word-form mistakes create full-sentence Review cards with options preserved', () => {
   const item = vocabularyBank.weeks[0].chooseVerb[0];
   const card = practiceErrorCard({
-    userId: 'learner', item: { prompt: item.question, key: item.options[item.answer_index] },
-    answer: 'made', category: 'collocation',
+    userId: 'learner',
+    item: { prompt: item.question, key: item.options[item.answer_index], options: item.options, reason: item.reason },
+    answer: 'made',
+    category: 'collocation',
   });
-  assert.equal(card.prompt_sentence, 'I made a risk and applied for a job abroad.');
+  assert.equal(card.prompt_sentence, 'I ___ a risk and applied for a job abroad.');
   assert.equal(card.corrected_sentence, 'I took a risk and applied for a job abroad.');
+  assert.equal(card.card_format, 'cloze');
+  assert.equal(card.explanation, item.reason);
 });
 
 test('grammar points at vocabulary when there is one, and the sections have anchors', () => {

@@ -3,11 +3,24 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import {
+  buildFullSentence,
+  inputGapReviewCard,
+  isAnswerablePrompt,
+  isFullSentence,
+  practiceErrorCard,
+} from '../../lib/curriculum/week-practice-review.mjs';
+import { markLearnerGrammarAnswer } from '../../lib/curriculum/learner-grammar-marking.mjs';
+import { findCollocationSpan } from '../../lib/b1b2/collocation-highlight.mjs';
+import { answersEquivalent } from '../../lib/b1b2/contractions.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const content = join(here, '..', 'content', 'curriculum');
 const details = JSON.parse(readFileSync(join(content, 'weeks-01-04-details.json'), 'utf8'));
 const assessments = JSON.parse(readFileSync(join(content, 'assessments.json'), 'utf8'));
+const vocabularyBank = JSON.parse(readFileSync(join(content, 'vocabulary-exercises-weeks-01-04-v2.json'), 'utf8'));
+const vocabPractice = JSON.parse(readFileSync(join(content, 'vocab-review-practice-weeks-01-04.json'), 'utf8'));
+const inputReasons = JSON.parse(readFileSync(join(here, '..', '..', 'lib', 'curriculum', 'input-reasons.json'), 'utf8'));
 
 const errors = [];
 const check = (condition, message) => {
@@ -234,6 +247,159 @@ for (let week = 1; week <= 4; week += 1) {
 allItems.forEach((item) => {
   check(Boolean(item.prompt?.trim()) && Boolean(item.key?.trim()) && Boolean(item.reason?.trim()), `${item.id} needs prompt, key and reason`);
 });
+
+// Requirement 4d: every weekly practice Review card must be answerable with a
+// full corrected sentence and authored rule explanation (never fragments or single words).
+for (const week of details.weeks ?? []) {
+  const ruleExamples = week.grammar?.ruleExamples ?? {};
+  for (const item of week.grammar?.practice?.items ?? []) {
+    if (item.step === 'Use it') continue;
+    if (item.step === 'Meaning') {
+      const card = practiceErrorCard({ userId: 'validator', item, answer: 'wrong', category: 'tense' });
+      check(card === null, `${item.id} (Meaning) must not create a single-word Review card`);
+      continue;
+    }
+    check(Boolean(item.rule && Array.isArray(ruleExamples[item.rule]) && ruleExamples[item.rule].length >= 1),
+      `${item.id} needs a grammar rule tag with 1–2 ruleExamples`);
+    const card = practiceErrorCard({ userId: 'validator', item, answer: 'wrong', category: 'tense' });
+    check(card !== null, `${item.id} must build a valid Review card`);
+    if (card) {
+      check(isAnswerablePrompt(card.prompt_sentence, item.options), `${item.id} Review card prompt is not answerable: ${card.prompt_sentence}`);
+      check(isFullSentence(card.corrected_sentence), `${item.id} Review card corrected_sentence is not a full sentence: ${card.corrected_sentence}`);
+      check(Boolean(card.explanation?.trim()) && !/^Write the (?:sentence|answer) again/i.test(card.explanation),
+        `${item.id} Review card needs an authored rule explanation`);
+    }
+    // Requirement 6d: every declared accepted answer must mark as correct.
+    if (Array.isArray(item.key)) {
+      check(markLearnerGrammarAnswer(item, item.key), `${item.id} key failed markLearnerGrammarAnswer`);
+      for (const gapList of item.accepted ?? []) {
+        for (const variant of gapList ?? []) {
+          check(typeof variant === 'string' && Boolean(variant.trim()), `${item.id} has empty accepted gap variant`);
+        }
+      }
+    } else {
+      check(markLearnerGrammarAnswer(item, item.key), `${item.id} key failed markLearnerGrammarAnswer`);
+      for (const variant of item.accepted ?? []) {
+        check(Boolean(variant.trim()), `${item.id} has empty accepted variant`);
+        check(markLearnerGrammarAnswer(item, variant), `${item.id} accepted variant "${variant}" failed markLearnerGrammarAnswer`);
+      }
+    }
+  }
+
+  // Teacher-check Section E: a rule example must not equal any practice item's
+  // prompt or key (or accepted) sentence in the same week.
+  const weekItemSentences = [];
+  for (const item of week.grammar?.practice?.items ?? []) {
+    if (item.prompt?.trim()) {
+      weekItemSentences.push({ id: item.id, kind: 'prompt', text: item.prompt });
+    }
+    if (typeof item.prompt === 'string' && /_{2,}/.test(item.prompt)) {
+      const fullKey = buildFullSentence(item.prompt, item.key);
+      if (fullKey) weekItemSentences.push({ id: item.id, kind: 'key', text: fullKey });
+    } else if (typeof item.key === 'string' && item.key.trim()) {
+      weekItemSentences.push({ id: item.id, kind: 'key', text: item.key });
+    }
+    if (!Array.isArray(item.key)) {
+      for (const variant of item.accepted ?? []) {
+        if (typeof variant === 'string' && variant.trim()) {
+          const fullVariant = typeof item.prompt === 'string' && /_{2,}/.test(item.prompt)
+            ? buildFullSentence(item.prompt, variant)
+            : variant;
+          if (fullVariant) weekItemSentences.push({ id: item.id, kind: 'accepted', text: fullVariant });
+        }
+      }
+    }
+  }
+  for (const [ruleName, examples] of Object.entries(ruleExamples)) {
+    for (const example of examples ?? []) {
+      for (const sentence of weekItemSentences) {
+        check(
+          !answersEquivalent(example, sentence.text),
+          `week ${week.number} ruleExample for "${ruleName}" ("${example}") equals ${sentence.id} ${sentence.kind} ("${sentence.text}")`,
+        );
+      }
+    }
+  }
+
+  // Requirement 3: vocab entries need extraExample & highlightable collocation span.
+  for (const group of ['core', 'collocations', 'optional']) {
+    for (const entry of week.vocabulary?.[group] ?? []) {
+      check(Boolean(entry.extraExample?.trim()) && isFullSentence(entry.extraExample),
+        `week ${week.number} vocab "${entry.target}" needs a full-sentence extraExample`);
+      const target = entry.collocation ?? entry.target;
+      check(Boolean(findCollocationSpan(entry.example, target)),
+        `week ${week.number} vocab "${entry.target}" example does not highlight "${target}": ${entry.example}`);
+      check(Boolean(findCollocationSpan(entry.extraExample, target)),
+        `week ${week.number} vocab "${entry.target}" extraExample does not highlight "${target}": ${entry.extraExample}`);
+    }
+  }
+}
+
+for (const week of vocabularyBank.weeks ?? []) {
+  for (const item of [...(week.chooseVerb ?? []), ...(week.wordForms ?? [])]) {
+    const key = item.options?.[item.answer_index];
+    const card = practiceErrorCard({
+      userId: 'validator',
+      item: { prompt: item.question, key, options: item.options, reason: item.reason },
+      answer: 'wrong',
+      category: 'collocation',
+    });
+    check(card !== null, `${item.id} must build a valid Review card`);
+    if (card) {
+      check(isAnswerablePrompt(card.prompt_sentence, item.options), `${item.id} Review card prompt is not answerable`);
+      check(isFullSentence(card.corrected_sentence), `${item.id} Review card corrected_sentence is not a full sentence`);
+      check(Boolean(card.explanation?.trim()), `${item.id} Review card needs an explanation`);
+    }
+  }
+}
+
+// Requirement 3e: every Weeks 1–4 vocab entry has at least 2 deterministic extra practice items.
+const practiceCountByTerm = new Map();
+for (const item of vocabPractice.items ?? []) {
+  const key = item.term.trim().toLowerCase();
+  practiceCountByTerm.set(key, (practiceCountByTerm.get(key) ?? 0) + 1);
+  check(Boolean(item.prompt?.includes('___')), `${item.id} vocab practice item needs a gap`);
+  check(Boolean(item.key?.trim()) && Boolean(item.reason?.trim()), `${item.id} vocab practice item needs key and reason`);
+}
+for (const week of details.weeks ?? []) {
+  for (const group of ['core', 'collocations', 'optional']) {
+    for (const entry of week.vocabulary?.[group] ?? []) {
+      const count = practiceCountByTerm.get(entry.target.trim().toLowerCase()) ?? 0;
+      check(count >= 2, `week ${week.number} vocab "${entry.target}" needs at least 2 extra practice items (found ${count})`);
+    }
+  }
+}
+
+// Requirement 5d: every reading & listening gap item specifies its exact word count
+// and builds a valid full-sentence Review card.
+const inputReasonById = new Map((inputReasons.items ?? []).map((entry) => [entry.id, entry]));
+for (const mode of ['listening', 'reading']) {
+  for (const week of details[mode]?.weeks ?? []) {
+    const sourceText = mode === 'listening' ? week.script : week.text;
+    for (const question of week.questions ?? []) {
+      if (!/_{2,}/.test(question.question)) continue;
+      const expectedWords = question.key.trim().split(/\s+/).filter(Boolean).length;
+      const expectedLabel = `(${expectedWords} ${expectedWords === 1 ? 'word' : 'words'})`;
+      check(
+        question.question.includes(expectedLabel),
+        `${question.id} gap question must include word count "${expectedLabel}": ${question.question}`,
+      );
+      const reasonEntry = inputReasonById.get(question.id);
+      const card = inputGapReviewCard({
+        userId: 'validator',
+        question,
+        sourceText,
+        sourceLine: reasonEntry?.sourceLine ?? '',
+        reason: reasonEntry?.reason ?? '',
+      });
+      check(card !== null, `${question.id} must build a valid full-sentence Review card`);
+      if (card) {
+        check(card.prompt_sentence.includes(expectedLabel), `${question.id} Review card prompt must include "${expectedLabel}"`);
+        check(isFullSentence(card.corrected_sentence), `${question.id} Review card corrected_sentence must be a full sentence`);
+      }
+    }
+  }
+}
 
 if (errors.length) {
   console.error(`Detail validation failed (${errors.length} problems):`);

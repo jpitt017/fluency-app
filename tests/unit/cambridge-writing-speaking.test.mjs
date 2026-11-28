@@ -9,6 +9,7 @@ import * as levelGuard from '../../lib/b1b2/level-guard.mjs';
 import * as speakingFeedback from '../../lib/b1b2/speaking-feedback.mjs';
 import * as improvedTtsConfig from '../../lib/b1b2/improved-tts-config.mjs';
 import * as weekWritingSupport from '../../lib/curriculum/week-writing-support.mjs';
+import * as aiReviewCardFilter from '../../lib/b1b2/ai-review-card-filter.mjs';
 import * as diffModule from '../../lib/b1b2/diff.ts';
 import { B1_SPEECH_RATE, SPEAKER_VOICES, VOICE_SETTINGS } from '../../scripts/lib/course-audio/tts.mjs';
 import { BENCHMARK_SENTENCES, LIVE_GROQ_MODEL, runLiveGroqSuite } from '../../scripts/eval-prompts.mjs';
@@ -51,6 +52,7 @@ const promptGuard = transpileLoad('lib/b1b2/prompt-guard.ts', {});
 const feedbackSchema = transpileLoad('lib/b1b2/feedback-schema.ts', {
   zod: require('zod'),
   './diff': diffModule,
+  './ai-review-card-filter.mjs': aiReviewCardFilter,
   './prompt-guard': promptGuard,
   './level-guard.mjs': levelGuard,
   './speaking-feedback.mjs': speakingFeedback,

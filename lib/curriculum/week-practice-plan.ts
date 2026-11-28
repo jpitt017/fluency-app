@@ -29,6 +29,12 @@ export type PlannedItem = {
   counted: boolean;
   /** Server-only: the authored answer, for a Review card. */
   key?: string | string[];
+  /** Server-only: authored options so choice cards remain answerable. */
+  options?: string[];
+  /** Server-only: authored explanation for the Review card. */
+  reason?: string;
+  /** Server-only: authored step (e.g. Meaning, Choose, Complete, Fix). */
+  step?: string;
   /** Server-only: the vocabulary term this item practises. */
   term?: string | null;
   /** Server-only: the authored feedback for a fixed vocabulary item. */
@@ -52,18 +58,24 @@ export function grammarPlan(week: number): PracticePlan | null {
   const steps = grammar.steps.map((step, index) => ({
     index,
     title: step.title,
-    items: step.items.map((item) => ({
-      id: item.id,
-      prompt: item.prompt,
-      ...grammarItemFlags(item),
-      key: bank.find((entry) => entry.id === item.id)?.key,
-      // These two questions do not have the usual one-prompt/one-correction
-      // shape. Keep the original exercise and teacher bank unchanged, while
-      // giving newly created Review cards a clear, answerable task.
-      reviewKind: item.step === 'Meaning' ? 'question' as const : item.id === 'W3-L1' ? 'reorder' as const : 'sentence' as const,
-      reviewPrompt: item.id === 'W2-F2' ? 'I will visit my parents.' : undefined,
-      reviewContext: item.id === 'W2-F2' ? item.prompt : undefined,
-    })),
+    items: step.items.map((item) => {
+      const authored = bank.find((entry) => entry.id === item.id);
+      return {
+        id: item.id,
+        prompt: item.prompt,
+        ...grammarItemFlags(item),
+        key: authored?.key,
+        options: Array.isArray(authored?.options) ? [...authored.options] : [],
+        reason: authored?.reason,
+        step: item.step,
+        // These two questions do not have the usual one-prompt/one-correction
+        // shape. Keep the original exercise and teacher bank unchanged, while
+        // giving newly created Review cards a clear, answerable task.
+        reviewKind: item.step === 'Meaning' ? 'question' as const : item.id === 'W3-L1' ? 'reorder' as const : 'sentence' as const,
+        reviewPrompt: item.id === 'W2-F2' ? 'I will visit my parents.' : undefined,
+        reviewContext: item.id === 'W2-F2' ? item.prompt : undefined,
+      };
+    }),
   }));
   return { steps, items: steps.flatMap((step) => step.items) };
 }
@@ -81,20 +93,27 @@ export function vocabularyPlan(week: number): PracticePlan | null {
   const choices = [...(bankWeek?.chooseVerb ?? []), ...(bankWeek?.wordForms ?? [])];
   const feedbackFor = (id: string) =>
     [...choices, ...(bankWeek?.text.items ?? [])].find((entry) => entry.id === id)?.reason;
+  const choiceFor = (id: string) => choices.find((entry) => entry.id === id);
   const choiceKey = (id: string) => {
-    const choice = choices.find((entry) => entry.id === id);
+    const choice = choiceFor(id);
     return choice?.options[choice.answer_index];
   };
-  const item = (id: string, prompt: string, index: number): PlannedItem => ({
-    id,
-    prompt,
-    ...vocabularyItemFlags(index),
-    term: termFor(id),
-    // Some verb/word-form questions do not correspond to a vocabulary card.
-    // Give a wrong answer its own sentence-repair card instead of guessing a term.
-    key: choiceKey(id),
-    feedback: feedbackFor(id),
-  });
+  const item = (id: string, prompt: string, index: number): PlannedItem => {
+    const choice = choiceFor(id);
+    const reason = feedbackFor(id);
+    return {
+      id,
+      prompt,
+      ...vocabularyItemFlags(index),
+      term: termFor(id),
+      // Some verb/word-form questions do not correspond to a vocabulary card.
+      // Give a wrong answer its own sentence-repair card instead of guessing a term.
+      key: choiceKey(id),
+      options: choice ? [...choice.options] : [],
+      reason,
+      feedback: reason,
+    };
+  };
 
   const definitions: { title: string; items: Omit<PlannedItem, 'optional' | 'counted'>[] }[] = [
     { title: 'Words', items: [] },

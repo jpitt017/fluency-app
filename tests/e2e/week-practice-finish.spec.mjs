@@ -156,7 +156,7 @@ test('signed out, reading card meanings stay gated while vocabulary remains avai
 test.describe('with a signed-in learner', () => {
   test.skip(!url || !key, 'Live test needs the service key');
 
-  test('finish grammar, see the summary, reload, and find the answers and summary again', async ({ page }) => {
+  test('finish grammar automatically on the next visit, keep Finish, and reload the summary and answers', async ({ page }) => {
     test.setTimeout(240_000);
     const admin = createClient(url, key, { auth: { persistSession: false } });
     const user = await createTestUser(admin, 'week-finish');
@@ -164,8 +164,22 @@ test.describe('with a signed-in learner', () => {
       await signIn(page, user);
       await answerGrammar(page);
 
+      const beforeFinish = await admin.from('week_skill_completions').select('skill')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'grammar');
+      if (beforeFinish.error) throw beforeFinish.error;
+      expect(beforeFinish.data).toEqual([], 'saving every required answer must not depend on the Finish summary action');
       await page.goto('/week/1');
       const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
+        'You answered 22 of 22. 21 were right. Great work! You know this grammar well.',
+      );
+      const automatic = await admin.from('week_skill_completions').select('answered,correct,total,review_count')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'grammar').single();
+      if (automatic.error) throw automatic.error;
+      expect(automatic.data).toEqual({ answered: 22, correct: 21, total: 22, review_count: 1 });
+      const automaticCards = await admin.from('error_review_cards').select('prompt_sentence').eq('user_id', user.id);
+      if (automaticCards.error) throw automaticCards.error;
+      expect(automaticCards.data?.length).toBe(1, 'opening the week creates the mistake card without Finish');
 
       // Every required question is answered, so the section can be finished.
       // Walk to the last step; the button is the end of the section, not a
@@ -176,6 +190,9 @@ test.describe('with a signed-in learner', () => {
       }
       const finish = grammar.getByRole('button', { name: 'Finish grammar' });
       await expect(finish).toBeEnabled();
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
+        'You answered 22 of 22. 21 were right. Great work! You know this grammar well.',
+      );
       await finishFromUi(page, finish);
 
       // One short summary in B1 English, with the real counts: 21 of 22 right,
@@ -285,6 +302,18 @@ test.describe('with a signed-in learner', () => {
 
       await answerVocabulary(page);
 
+      const beforeFinish = await admin.from('week_skill_completions').select('skill')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'vocabulary');
+      if (beforeFinish.error) throw beforeFinish.error;
+      expect(beforeFinish.data).toEqual([], 'saving every required answer must not depend on the Finish summary action');
+      await page.goto('/dashboard');
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Vocabulary.*16 items answered/ })).toContainText('✓');
+      const automatic = await admin.from('week_skill_completions').select('answered,correct,total')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'vocabulary').single();
+      if (automatic.error) throw automatic.error;
+      expect(automatic.data).toEqual({ answered: 16, correct: 16, total: 16 });
+
       // The page opens at step 7, because every required question is answered
       // and step 7 -- the optional writing step -- is the only gap left. That is
       // the whole point of restoring progress: the learner lands where they
@@ -294,6 +323,9 @@ test.describe('with a signed-in learner', () => {
       await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       const finish = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
       await expect(finish).toBeEnabled();
+      await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveText(
+        'You answered 16 of 16. 16 were right. Great work! You know these words well.',
+      );
       await finishFromUi(page, finish);
 
       const summary = vocabulary.getByRole('status').filter({ hasText: 'You answered' });
@@ -355,8 +387,8 @@ test.describe('with a signed-in learner', () => {
     try {
       await signIn(page, user);
       const grammarAnswers = [
-        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
-        ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
+        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'Yes', true],
+        ['W1-C1', 'have moved', false], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
         ['W1-C5', 'Did ... live', true],
       ];
       for (const [id, answer, correct] of grammarAnswers) {
@@ -395,7 +427,7 @@ test.describe('with a signed-in learner', () => {
       expect((await page.evaluate(() => window.practiceScrolls)).filter((call) => call.id === 'grammar-practice').at(-1)?.behavior).toBe('instant');
       const cards = await admin.from('error_review_cards').select('category, corrected_sentence').eq('user_id', user.id);
       if (cards.error) throw cards.error;
-      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'Yes' }]);
+      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'I moved to Bristol three years ago.' }]);
 
       // The same Finish action scrolls smoothly when motion is not reduced.
       await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -472,13 +504,13 @@ test.describe('with a signed-in learner', () => {
       const calls = await page.evaluate(() => window.practiceScrolls);
       expect(calls.filter((call) => call.id === 'reading-practice').at(-1)?.behavior).toBe('instant');
 
-      // Meaning checks must reach Review as questions, not as sentence fixes.
+      // Choice mistakes reach Review with clear options and full corrected sentences.
       await page.goto('/review');
-      await expect(page.getByText('Answer this question without hints:')).toBeVisible();
-      await expect(page.getByText(/Does the speaker still live in Bristol/)).toBeVisible();
-      await page.getByLabel('Your answer', { exact: true }).fill('Yes');
+      await expect(page.getByText('Choose the missing word(s):')).toBeVisible();
+      await expect(page.getByText(/I ___ to Bristol three years ago\./)).toBeVisible();
+      await page.getByRole('button', { name: 'moved', exact: true }).click();
       await postFromUi(page, page.getByRole('button', { name: 'Check my answer' }), '/api/review/check-rewrite');
-      await expect(page.getByText(/Well done! You answered without help\./)).toBeVisible();
+      await expect(page.getByText(/Well done! You fixed it without help\./)).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
     }

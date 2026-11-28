@@ -8,6 +8,7 @@ import { previewFsrsIntervals, type ReviewGrade } from '@/lib/b1b2/fsrs';
 import { canUpgradeToEasy, gradeForTypedAnswer, type planQueue } from '@/lib/b1b2/review-queue.mjs';
 import { REVIEW_QUESTION_PREFIX } from '@/lib/b1b2/review-card-format.mjs';
 import type { ReviewQueueCard } from '@/lib/b1b2/types';
+import ReviewExtraPractice, { HighlightedCollocation } from './ReviewExtraPractice';
 
 const SELF_GRADES: { grade: ReviewGrade; label: string }[] = [
   { grade: 'again', label: 'Again' },
@@ -20,6 +21,7 @@ type Plan = ReturnType<typeof planQueue>;
 
 interface CheckRewriteResponse {
   fixed: boolean;
+  nearly?: boolean;
   sameAsOriginal?: boolean;
   blockedByRecentReveal?: boolean;
   mastered: boolean;
@@ -240,8 +242,38 @@ export default function ErrorReviewStudio({
 
   const isVocab = card.type === 'vocab';
   const isQuestion = card.type === 'error' && card.prompt_sentence.startsWith(REVIEW_QUESTION_PREFIX);
+  const errorMeta = card.type === 'error' ? card.reviewMeta : undefined;
+  const vocabMeta = card.type === 'vocab' ? card.vocabMeta : undefined;
+  const hasChoices = Boolean(errorMeta && errorMeta.options.length >= 2);
+  const isGapCard = Boolean(errorMeta?.kind === 'gap' || (card.type === 'error' && /_{2,}/.test(card.prompt_sentence)));
   const fallbackDiff =
     card.type === 'error' ? computeWordDiff(card.prompt_sentence, card.corrected_sentence) : [];
+
+  const checkedTarget = checkResult ? checkResult.correctedSentence : '';
+  const displayTargetSentence =
+    card.type === 'error' ? (checkedTarget || card.corrected_sentence) : '';
+  const displayExplanation =
+    card.type === 'error' ? (errorMeta?.rule?.reason || checkResult?.explanation || card.explanation) : '';
+  const ruleExamples = errorMeta?.rule?.examples ?? [];
+
+  const diffTokens =
+    checkResult && !checkResult.fixed
+      ? checkResult.diffToTarget
+      : checkResult
+        ? checkResult.diffFromOriginal
+        : fallbackDiff;
+  const diffLabel =
+    checkResult && !checkResult.fixed
+      ? 'The changes (your answer → correct answer)'
+      : `The changes (original → ${checkResult ? 'your answer' : 'correct answer'})`;
+
+  const errorPromptHeading = isQuestion
+    ? 'Answer this question without hints:'
+    : hasChoices
+      ? 'Choose the missing word(s):'
+      : isGapCard
+        ? 'Complete the sentence without hints:'
+        : 'Fix this sentence without hints:';
 
   return (
     <section className="rounded-2xl border border-indigo-200 bg-white p-6 shadow-2xs">
@@ -253,7 +285,7 @@ export default function ErrorReviewStudio({
           </span>
           {card.type === 'error' && card.card_format && (
             <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-stone-600">
-              {isQuestion ? 'Question' : card.card_format === 'cloze' ? 'Context repair' : 'Sentence fix'}
+              {isQuestion ? 'Question' : hasChoices ? 'Choose the right form' : card.card_format === 'cloze' ? 'Complete the sentence' : 'Sentence fix'}
             </span>
           )}
           <span className="text-xs text-stone-500">
@@ -267,7 +299,14 @@ export default function ErrorReviewStudio({
         {isVocab ? (
           <>
             <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">Do you remember this word?</p>
-            <p className="text-base font-medium text-stone-900">{card.term}</p>
+            <p className="text-base font-semibold text-stone-900">
+              {vocabMeta?.collocation || card.term}
+            </p>
+            {card.example && (
+              <p className="text-sm italic text-stone-700">
+                <HighlightedCollocation sentence={card.example} target={vocabMeta?.collocation || card.term} />
+              </p>
+            )}
             {!revealed && (
               <p className="text-xs text-stone-600">
                 Say or write what it means, then check yourself.
@@ -277,7 +316,7 @@ export default function ErrorReviewStudio({
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">
-              {isQuestion ? 'Answer this question without hints:' : 'Fix this sentence without hints:'}
+              {errorPromptHeading}
             </p>
             <p className="text-base font-medium text-stone-900">
               &ldquo;{isQuestion ? card.prompt_sentence.slice(REVIEW_QUESTION_PREFIX.length) : card.prompt_sentence}&rdquo;
@@ -292,30 +331,69 @@ export default function ErrorReviewStudio({
 
         {!revealed ? (
           card.hasTypedAnswer ? (
-            <div className="flex flex-wrap gap-2 pt-1">
-              <input
-                type="text"
-                value={attempt}
-                aria-label={isQuestion ? 'Your answer' : 'Your corrected sentence'}
-                onChange={(e) => setAttempt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    void checkAndReveal();
+            hasChoices && errorMeta ? (
+              <div className="space-y-3 pt-1">
+                <div role="radiogroup" aria-label="Choose the missing word or phrase" className="flex flex-wrap gap-2">
+                  {errorMeta.options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={attempt === option}
+                      disabled={checking}
+                      onClick={() => setAttempt(option)}
+                      className={`min-h-12 rounded-xl border-2 px-4 py-2 text-sm font-semibold transition ${
+                        attempt === option
+                          ? 'border-indigo-700 bg-indigo-700 text-white'
+                          : 'border-stone-300 bg-white text-stone-900 hover:border-indigo-400'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={checking}
+                    onClick={() => void checkAndReveal()}
+                    className="min-h-11 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
+                  >
+                    {checking ? 'Checking…' : attempt.trim() ? 'Check my answer' : 'Reveal answer'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 pt-1">
+                <input
+                  type="text"
+                  value={attempt}
+                  aria-label={isQuestion ? 'Your answer' : 'Your corrected sentence'}
+                  onChange={(e) => setAttempt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      void checkAndReveal();
+                    }
+                  }}
+                  placeholder={
+                    isQuestion
+                      ? 'Type your answer…'
+                      : isGapCard
+                        ? 'Type the missing word(s) or full sentence…'
+                        : 'Type your corrected version…'
                   }
-                }}
-                placeholder={isQuestion ? 'Type your answer…' : 'Type your corrected version…'}
-                className="flex-1 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-900 focus:border-indigo-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                disabled={checking}
-                onClick={() => void checkAndReveal()}
-                className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
-              >
-                {checking ? 'Checking…' : attempt.trim() ? 'Check my answer' : 'Reveal answer'}
-              </button>
-            </div>
+                  className="flex-1 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-900 focus:border-indigo-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  disabled={checking}
+                  onClick={() => void checkAndReveal()}
+                  className="rounded-xl bg-indigo-700 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
+                >
+                  {checking ? 'Checking…' : attempt.trim() ? 'Check my answer' : 'Reveal answer'}
+                </button>
+              </div>
+            )
           ) : (
             <button
               type="button"
@@ -328,16 +406,46 @@ export default function ErrorReviewStudio({
         ) : (
           <div className="space-y-3 pt-1">
             {isVocab && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Meaning</p>
-                <p className="mt-0.5 font-semibold text-emerald-950">{card.definition}</p>
-                <p className="mt-1 text-xs italic text-stone-700">{card.example}</p>
-                {card.translation_es && (
-                  <p lang="es" className="mt-1 text-xs text-stone-600">
-                    {card.translation_es}
-                  </p>
+              <>
+                <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Meaning</p>
+                    <p className="mt-0.5 font-semibold text-emerald-950">
+                      {vocabMeta?.meaning || card.definition}
+                    </p>
+                  </div>
+                  {card.example && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-stone-500">Example</p>
+                      <p className="mt-0.5 text-xs italic text-stone-800">
+                        <HighlightedCollocation sentence={card.example} target={vocabMeta?.collocation || card.term} />
+                      </p>
+                    </div>
+                  )}
+                  {vocabMeta?.extraExample && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-stone-500">Another example</p>
+                      <p className="mt-0.5 text-xs italic text-stone-800">
+                        <HighlightedCollocation sentence={vocabMeta.extraExample} target={vocabMeta.collocation || card.term} />
+                      </p>
+                    </div>
+                  )}
+                  {card.translation_es && (
+                    <p lang="es" className="text-xs text-stone-700">
+                      <span className="font-semibold text-stone-600">In Spanish: </span>
+                      {card.translation_es}
+                    </p>
+                  )}
+                </div>
+
+                {vocabMeta && vocabMeta.practiceItems.length > 0 && (
+                  <ReviewExtraPractice
+                    key={card.id}
+                    label="Practise this"
+                    items={vocabMeta.practiceItems}
+                  />
                 )}
-              </div>
+              </>
             )}
 
             {card.type === 'error' && checkResult?.fixed && checkResult.mastered && (
@@ -372,13 +480,13 @@ export default function ErrorReviewStudio({
                     {checkResult?.reason ? ` — ${checkResult.reason}` : ' — compare your answer below.'}
                   </p>
                 )}
-                {!isQuestion && (
+                {!isQuestion && diffTokens.length > 0 && (
                   <div className="rounded-lg border border-stone-200 bg-white p-3 text-xs">
                     <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-stone-500">
-                      The changes (original → {checkResult ? 'your answer' : 'correct answer'})
+                      {diffLabel}
                     </p>
                     <div className="flex flex-wrap gap-1 leading-6">
-                      {(checkResult ? checkResult.diffFromOriginal : fallbackDiff).map((tok, i) => (
+                      {diffTokens.map((tok, i) => (
                         <span
                           key={i}
                           className={
@@ -395,11 +503,57 @@ export default function ErrorReviewStudio({
                     </div>
                   </div>
                 )}
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Correct answer</p>
-                  <p className="mt-0.5 font-semibold text-emerald-950">{card.corrected_sentence}</p>
-                  <p className="mt-1 text-xs text-stone-700">{card.explanation}</p>
+                <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Correct answer</p>
+                    <p className="mt-0.5 font-semibold text-emerald-950">
+                      {errorMeta?.collocation ? (
+                        <HighlightedCollocation sentence={displayTargetSentence} target={errorMeta.collocation} />
+                      ) : (
+                        displayTargetSentence
+                      )}
+                    </p>
+                  </div>
+                  {displayExplanation && (
+                    <p className="text-xs text-stone-800">{displayExplanation}</p>
+                  )}
+                  {ruleExamples.length > 0 && (
+                    <div className="border-t border-emerald-200/70 pt-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Examples</p>
+                      <ul className="mt-1 space-y-1 text-xs text-stone-700">
+                        {ruleExamples.slice(0, 2).map((example) => (
+                          <li key={example} className="italic">• {example}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {errorMeta?.meaning && (
+                    <p className="text-xs text-stone-700">
+                      <span className="font-semibold text-stone-800">Meaning: </span>
+                      {errorMeta.meaning}
+                    </p>
+                  )}
+                  {errorMeta?.extraExample && (
+                    <p className="text-xs italic text-stone-700">
+                      <span className="font-semibold not-italic text-stone-800">Another example: </span>
+                      <HighlightedCollocation sentence={errorMeta.extraExample} target={errorMeta.collocation} />
+                    </p>
+                  )}
+                  {errorMeta?.es && (
+                    <p lang="es" className="text-xs text-stone-700">
+                      <span className="font-semibold text-stone-600">In Spanish: </span>
+                      {errorMeta.es}
+                    </p>
+                  )}
                 </div>
+
+                {errorMeta && errorMeta.practiceItems.length > 0 && (
+                  <ReviewExtraPractice
+                    key={card.id}
+                    label={errorMeta.collocation ? 'Practise this' : 'Practise this rule'}
+                    items={errorMeta.practiceItems}
+                  />
+                )}
               </>
             )}
 

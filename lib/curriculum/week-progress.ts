@@ -24,7 +24,6 @@ export async function loadWeekProgress(userId: string | null, week: number): Pro
     if (auth?.user?.id !== userId) return EMPTY_PROGRESS;
 
     const [
-      completionResult,
       grammarResult,
       vocabularyResult,
       inputCompletionResult,
@@ -34,7 +33,6 @@ export async function loadWeekProgress(userId: string | null, week: number): Pro
       speakingAttemptResult,
       writingResult,
     ] = await Promise.all([
-      client.from('week_skill_completions').select('skill,answered').eq('user_id', userId).eq('week_number', week),
       client.from('week_grammar_attempts').select('item_id').eq('user_id', userId).eq('week_number', week),
       client.from('week_vocabulary_attempts').select('item_id').eq('user_id', userId).eq('week_number', week),
       client.from('week_input_submissions').select('skill').eq('user_id', userId).eq('week_number', week),
@@ -65,7 +63,6 @@ export async function loadWeekProgress(userId: string | null, week: number): Pro
       + legacySpeaking.reduce((count, row) => count + Number(Boolean(row.first_recording_path)) + Number(Boolean(row.second_recording_path)), 0);
 
     return makeWeekProgress({
-      completions: completionResult.data ?? [],
       grammarItemIds: (grammarResult.data ?? []).map((row) => row.item_id),
       vocabularyItemIds: (vocabularyResult.data ?? []).map((row) => row.item_id),
       grammarQuestionIds: grammarQuestions.map((item) => item.id),

@@ -1,0 +1,193 @@
+{
+  "projectRef": "ebzmkhrssgnzmixfsuso",
+  "prNumber": 117,
+  "mergeCommit": "32ad8912db6cfad62beff2d3f78e9e91e4186dcb",
+  "approvedByOwnerOn": "2026-11-28",
+  "expectedCountsBefore": {
+    "total": 55,
+    "active": 55,
+    "suspended": 0,
+    "syntheticTestCards": 8
+  },
+  "repair": [
+    {
+      "id": "84f84204-4894-4906-8ee5-1aa35d1d8c0a",
+      "updatedAt": "2026-11-28 14:07:30.659077+00",
+      "expectedPrompt": "Meeting with Ana, Thursday 3 p.m., booked. (present continuous)",
+      "expectedCorrected": "I will meet Ana on Thursday at 3pm.",
+      "newCorrected": "I'm meeting Ana on Thursday at 3 p.m.",
+      "newExplanation": "A fixed arrangement."
+    }
+  ],
+  "suspend": [
+    {
+      "id": "3624ad1a-b0f2-4300-b75c-2fc38c0bdd90",
+      "updatedAt": "2026-11-27 09:42:17.82373+00",
+      "reason": "Meaning single-word card"
+    },
+    {
+      "id": "5d1a83fc-3b4c-4eff-87c9-e05ecc95ff19",
+      "updatedAt": "2026-11-23 09:28:51.138945+00",
+      "reason": "Duplicate + multi-point AI card"
+    },
+    {
+      "id": "7786d763-10e5-471a-b592-96fa8aae08a3",
+      "updatedAt": "2026-11-23 09:28:51.277738+00",
+      "reason": "Duplicate + multi-point AI card"
+    },
+    {
+      "id": "f727ddb5-8e2b-4b0f-b970-8d536f3e9bc4",
+      "updatedAt": "2026-11-23 09:28:51.406355+00",
+      "reason": "Duplicate + multi-point AI card"
+    },
+    {
+      "id": "2d8846f8-22a8-46e0-9a49-72224d6d6eb2",
+      "updatedAt": "2026-11-27 09:24:04.054139+00",
+      "reason": "Duplicate Use-it card (4f3f114f kept)"
+    },
+    {
+      "id": "b697053d-5423-4c98-97a3-3aca8119847d",
+      "updatedAt": "2026-11-23 09:28:51.005239+00",
+      "reason": "Multi-point AI card"
+    },
+    {
+      "id": "06cca863-2101-4c1f-8b99-886658f340a9",
+      "updatedAt": "2026-11-27 09:26:57.230133+00",
+      "reason": "Multi-point Use-it rewrite"
+    },
+    {
+      "id": "701cd247-96ef-4192-a87f-1a1ec4bc6d1c",
+      "updatedAt": "2026-11-27 09:44:27.625546+00",
+      "reason": "Long sentence + multi-point AI rewrite"
+    },
+    {
+      "id": "7f79cdcd-24e6-4668-afec-1697fbd19a62",
+      "updatedAt": "2026-11-26 17:50:51.207546+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "8df208b7-7ce6-426b-9f0e-f646d5a4b5e2",
+      "updatedAt": "2026-11-26 17:50:51.357373+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "97d707a9-9dcd-40c7-88df-c308efda0004",
+      "updatedAt": "2026-11-27 08:07:30.512014+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "60af9878-cf86-4b5d-a745-0cb82f86cb42",
+      "updatedAt": "2026-11-27 08:07:30.688043+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "c66bd0f8-92d1-4c59-960c-890f9d1596c9",
+      "updatedAt": "2026-11-27 08:07:31.032746+00",
+      "reason": "Multi-point AI rewrite / invented idea"
+    },
+    {
+      "id": "a0df7c7b-bdc1-409f-8692-1119a0880ad1",
+      "updatedAt": "2026-11-27 15:13:34.583681+00",
+      "reason": "Long sentence + multi-point AI rewrite"
+    },
+    {
+      "id": "dff92224-6982-4eab-8845-e4ae2567f476",
+      "updatedAt": "2026-11-27 15:58:27.847848+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "93237190-18f3-40aa-836f-0531af258893",
+      "updatedAt": "2026-11-27 15:58:28.021175+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "765e1a9d-fd0f-4049-9633-420613a5f247",
+      "updatedAt": "2026-11-27 15:58:28.390476+00",
+      "reason": "Long sentence + multi-point AI rewrite"
+    },
+    {
+      "id": "61e85d33-91c5-40a2-a4c8-d908ea6c5832",
+      "updatedAt": "2026-11-27 16:03:32.999544+00",
+      "reason": "Long sentence + multi-point AI rewrite"
+    },
+    {
+      "id": "c96d2960-3289-4236-9cae-6d55f5eb6a72",
+      "updatedAt": "2026-11-27 16:03:33.454228+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "d580c533-4983-46e7-8bfb-82746024fb62",
+      "updatedAt": "2026-11-27 18:05:48.424932+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "5f66855e-e4d8-4af6-b78f-fc02ee011070",
+      "updatedAt": "2026-11-27 18:05:48.8108+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "6bcf2679-64a5-484d-8319-377f30d81ac8",
+      "updatedAt": "2026-11-27 18:05:48.989302+00",
+      "reason": "Multi-point AI rewrite"
+    },
+    {
+      "id": "628f7030-707e-4a63-a637-8b882ff1a844",
+      "updatedAt": "2026-11-27 18:05:49.149083+00",
+      "reason": "Long sentence + multi-point AI rewrite"
+    },
+    {
+      "id": "e1e63e28-8457-4695-af7a-387133c2ff4c",
+      "updatedAt": "2026-11-27 09:45:50.680021+00",
+      "reason": "Fragment rewrite (approved by owner)"
+    }
+  ],
+  "deleteTestCards": [
+    {
+      "id": "096e6c52-f40a-4fcf-acfd-784a89d6faa4",
+      "updatedAt": "2026-11-24 14:13:51.875585+00"
+    },
+    {
+      "id": "c62f8fad-6e65-45d1-abdc-b5a9ff671b16",
+      "updatedAt": "2026-11-24 14:16:23.327483+00"
+    },
+    {
+      "id": "db80a24c-fe6e-4523-b4ae-c50f5269fb03",
+      "updatedAt": "2026-11-24 14:18:53.70438+00"
+    },
+    {
+      "id": "8ba57855-8386-47f4-9c27-5667f2dd74f9",
+      "updatedAt": "2026-11-24 14:21:24.836984+00"
+    },
+    {
+      "id": "7e96fca2-0e9e-478a-b919-4cbc2b0ae8dd",
+      "updatedAt": "2026-11-24 14:41:51.110126+00"
+    },
+    {
+      "id": "8770b162-29b7-45d7-9947-0e614a5f3d6f",
+      "updatedAt": "2026-11-24 14:44:23.339013+00"
+    },
+    {
+      "id": "c866ac09-f95a-4f3e-a39f-ab381278aa21",
+      "updatedAt": "2026-11-24 14:46:53.20011+00"
+    },
+    {
+      "id": "880331c2-6fe8-41d1-aab7-884eb6ef535a",
+      "updatedAt": "2026-11-24 14:49:23.609328+00"
+    }
+  ],
+  "expectedUntouchedGapIds": [
+    "c491f133-7fa5-42d9-9901-c2ba44cedcef",
+    "8d8c0727-4b54-41c4-a4c1-bf37a2bc584b",
+    "7790e7e8-d250-46ab-8e4a-62cf322f6fc0",
+    "63799e6a-acca-4d27-9bee-c4ffc02ffcfc",
+    "c63e48ea-9822-4a17-a923-dec83cea8f9e",
+    "bb1c29a2-3b82-4c3e-b877-54e95e22cb00",
+    "847c0408-bac6-47ef-bd52-60927251532f",
+    "33cce41a-093c-4422-aeba-a64ac2ecef96",
+    "5ae08406-22f0-4a5b-844b-48e8d7d485bd",
+    "eb867625-46b9-4581-8d6c-64dc196fa2e7",
+    "2b79fa99-4553-4ce2-8485-2c27ea351350",
+    "e44dec6b-4949-495e-937f-7e1c40ecefab",
+    "09c803c7-c491-4142-b7bf-7ed3de44a44d"
+  ]
+}
