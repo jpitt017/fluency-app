@@ -89,8 +89,21 @@ export function assertE2ESupabaseTarget(env = process.env) {
   } catch {
     throw new Error('E2E_SUPABASE_DB_URL must be a valid Postgres URL');
   }
-  const databaseTarget = `${decodeURIComponent(parsedDatabaseUrl.username)} ${parsedDatabaseUrl.hostname}`;
-  if (!databaseTarget.includes(projectRef) || databaseUrl.includes(LIVE_PROJECT_REF)) {
+  // The E2E workflow resets public and migration history. A substring match is
+  // not enough: a live/foreign host could be paired with the E2E ref in the
+  // username, or a libpq query parameter could override a verified host/user.
+  // Accept only Supabase's direct project host or its shared session pooler
+  // with this exact project as tenant. Unknown shapes fail closed.
+  const username = decodeURIComponent(parsedDatabaseUrl.username);
+  const hostname = parsedDatabaseUrl.hostname.toLowerCase();
+  const direct = hostname === `db.${projectRef}.supabase.co` && username === 'postgres';
+  const pooler = /^aws-\d+-[a-z0-9-]+\.pooler\.supabase\.com$/.test(hostname)
+    && username === `postgres.${projectRef}`;
+  const allowedQuery = [...parsedDatabaseUrl.searchParams.entries()]
+    .every(([name, value]) => name === 'sslmode' && ['require', 'verify-ca', 'verify-full'].includes(value));
+  if (!['postgres:', 'postgresql:'].includes(parsedDatabaseUrl.protocol) || !(direct || pooler)
+      || !['', '5432'].includes(parsedDatabaseUrl.port) || parsedDatabaseUrl.pathname !== '/postgres'
+      || parsedDatabaseUrl.hash || !allowedQuery || databaseUrl.includes(LIVE_PROJECT_REF)) {
     throw new Error(`Refusing E2E migration access: database URL must target project ${projectRef}`);
   }
 

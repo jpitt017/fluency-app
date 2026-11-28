@@ -8,6 +8,7 @@ import SpeakingModelPlayer from './SpeakingModelPlayer';
 import SpeakingFeedbackDetails, { RecordButton } from './SpeakingFeedbackDetails';
 import WeekSpeakingRecordings, { type WeekSpeakingRecordingLink } from './WeekSpeakingRecordings';
 import { phrasesUsed, splitHighlightedText } from '@/lib/curriculum/speaking-support.mjs';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 import type { ModelPart, WeekTake } from '@/lib/curriculum/week-speaking-support';
 
 type Model = { text: string; audioUrl: string | null; parts: ModelPart[] };
@@ -59,15 +60,15 @@ export default function WeekSpeakingSupport(props: Props) {
   const checksRemaining = Math.max(0, 5 - props.checksUsed);
   const blocked = busy || props.pending || !signedIn || !props.available;
 
-  async function check(takeId: string) {
+  async function check(takeId: string, generation = browserDeletionGeneration()) {
     const response = await fetch('/api/week/speaking/check', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ takeId }),
+      method: 'POST', headers: { 'content-type': 'application/json', [DELETION_EPOCH_HEADER]: generation }, body: JSON.stringify({ takeId }),
     });
     const data = await response.json() as { error?: string; transcript?: string; used?: boolean };
     if (!response.ok) throw new Error(data.error || 'We could not check your recording.');
     return data;
   }
-  async function save(blob: Blob, kind: 'first' | 'retry' | 'structure', sourceTakeId?: string): Promise<PracticeResult | null> {
+  async function save(blob: Blob, kind: 'first' | 'retry' | 'structure', sourceTakeId: string | undefined, generation: string): Promise<PracticeResult | null> {
     setBusy(true); setError('');
     try {
       const form = new FormData();
@@ -77,11 +78,11 @@ export default function WeekSpeakingSupport(props: Props) {
       form.set('notes', JSON.stringify(kind === 'first' ? planNotes.map((label) => ({ label, note: notes[label] ?? '' })) : []));
       form.set('phrases', JSON.stringify(kind === 'retry' ? selected.filter(Boolean) : []));
       if (sourceTakeId) form.set('sourceTakeId', sourceTakeId);
-      const response = await fetch('/api/week/speaking/capture', { method: 'POST', body: form });
+      const response = await fetch('/api/week/speaking/capture', { method: 'POST', headers: { [DELETION_EPOCH_HEADER]: generation }, body: form });
       const data = await response.json() as { takeId?: string; error?: string };
       if (!response.ok || !data.takeId) throw new Error(data.error || 'We could not save your recording.');
       if (kind !== 'first') {
-        const checked = await check(data.takeId);
+        const checked = await check(data.takeId, generation);
         if (kind === 'structure' && checked.transcript && typeof checked.used === 'boolean') return { transcript: checked.transcript, used: checked.used };
       }
       return null;
@@ -110,8 +111,8 @@ export default function WeekSpeakingSupport(props: Props) {
       key={take.id ?? `legacy-${take.sequence}`} feedback={take.feedback} practice={take.practice}
       practiceAllowed={canPractise(take)}
       practiceUnavailableMessage={!take.id ? 'Extra sentence practice is not available for an older recording.' : checksRemaining === 0 ? 'No weekly checks remain for this extra practice.' : 'Wait until the current recording or check has finished.'}
-      onPractice={take.id ? async (blob) => {
-        const result = await save(blob, 'structure', take.id ?? undefined);
+      onPractice={take.id ? async (blob, generation) => {
+        const result = await save(blob, 'structure', take.id ?? undefined, generation);
         if (!result) throw new Error('We could not check this sentence.');
         return result;
       } : undefined}
@@ -146,7 +147,7 @@ export default function WeekSpeakingSupport(props: Props) {
       {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
       {!model && <div className="flex flex-wrap gap-2">
         <RecordButton label={first ? `Record again (${Math.max(0, 3 - props.firstVersions)} left)` : 'Start recording'}
-          disabled={blocked || props.firstVersions >= 3 || !checksRemaining} onRecorded={(blob) => void save(blob, 'first')} />
+          disabled={blocked || props.firstVersions >= 3 || !checksRemaining} onRecorded={(blob, generation) => void save(blob, 'first', undefined, generation)} />
         {first?.id && ['ready', 'checking'].includes(first.status) && <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(first.id!)} className={ACTION_BUTTON_CLASS}>{busy ? 'Checking…' : 'Keep and check this recording'}</button>}
       </div>}
       {!model && first && <p className="text-sm">First recording version {props.firstVersions} of 3 is ready to keep.</p>}
@@ -191,10 +192,10 @@ export default function WeekSpeakingSupport(props: Props) {
         <button type="button" disabled={blocked || !checksRemaining} onClick={() => void checkMain(lastTry.id!)} className={ACTION_BUTTON_CLASS}>Check your saved try</button>
         {lastTry.canMoveOn && props.retryCount < 3 && checksRemaining > 0 && <>
           <p className="text-sm">The check failed. You can check this recording again, or record the next try. The unchecked recording stays saved.</p>
-          <RecordButton label={`Record try ${props.retryCount + 1}`} disabled={blocked} onRecorded={(blob) => void save(blob, 'retry')} />
+          <RecordButton label={`Record try ${props.retryCount + 1}`} disabled={blocked} onRecorded={(blob, generation) => void save(blob, 'retry', undefined, generation)} />
         </>}
         {!checksRemaining && <p className="text-sm">You have used all five checks for this task.</p>}
-      </div> : props.retryCount < 3 && checksRemaining > 0 ? <RecordButton label={`Record try ${props.retryCount + 1}`} disabled={blocked} onRecorded={(blob) => void save(blob, 'retry')} />
+      </div> : props.retryCount < 3 && checksRemaining > 0 ? <RecordButton label={`Record try ${props.retryCount + 1}`} disabled={blocked} onRecorded={(blob, generation) => void save(blob, 'retry', undefined, generation)} />
         : <p className="text-sm">{checksRemaining === 0 ? 'You have used all five checks for this task.' : 'You have recorded all three tries.'}</p>}
       {tries.map((take, index) => <article key={take.id ?? `legacy-${index}`} className="space-y-3 rounded-lg bg-white p-4">
         <h4 className="font-semibold">Try {take.sequence}</h4>

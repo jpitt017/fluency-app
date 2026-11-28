@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 import { countWords, fetchWithTimeout, writingHint, writingWordCounter } from '@/lib/b1b2/text-utils.mjs';
 import type { PlacementQuestionRow, PlacementTextRow } from '@/lib/b1b2/types';
 
@@ -115,6 +116,9 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   }
 
   async function finishPlacement(skipWriting = false) {
+    // Placement may wait for scoring and writing feedback before saving. Pin
+    // the epoch now, rather than adopting a newer one after a deletion.
+    const deletionEpoch = browserDeletionGeneration();
     setLoading(true);
     let evaluatedScore: number | null = null;
     let feedbackText = '';
@@ -149,7 +153,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
       try {
         const res = await fetchWithTimeout('/api/writing/correct', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', [DELETION_EPOCH_HEADER]: deletionEpoch },
           body: JSON.stringify({
             text: sample,
             // The same simple prompt the learner reads on screen — the only
@@ -196,8 +200,9 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 completed_at: new Date().toISOString(),
               },
             })
-            .eq('id', user.id);
-          const { error: progressError } = await supabase.rpc('refresh_current_week');
+            .eq('id', user.id)
+            .setHeader(DELETION_EPOCH_HEADER, deletionEpoch);
+          const { error: progressError } = await supabase.rpc('refresh_current_week').setHeader(DELETION_EPOCH_HEADER, deletionEpoch);
           if (progressError) console.error('Failed to update current week:', progressError.message);
           router.refresh();
         }

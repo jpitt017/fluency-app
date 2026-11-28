@@ -5,7 +5,7 @@ import { clearUserStorage } from '../../lib/b1b2/delete-user-storage.mjs';
 function fakeStorage(initial) {
   const objects = new Set(initial);
   const client = {
-    async list(prefix, { limit }) {
+    async list(prefix, { limit, offset = 0 }) {
       const names = new Map();
       for (const path of objects) {
         if (!path.startsWith(`${prefix}/`)) continue;
@@ -13,7 +13,7 @@ function fakeStorage(initial) {
         const [name, ...parts] = rest.split('/');
         names.set(name, { name, id: parts.length ? null : name });
       }
-      return { data: [...names.values()].slice(0, limit), error: null };
+      return { data: [...names.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(offset, offset + limit), error: null };
     },
     async remove(paths) { for (const path of paths) objects.delete(path); return { data: paths.map(name => ({ name })), error: null }; },
   };
@@ -25,6 +25,14 @@ test('removes nested and paginated user files without touching other users', asy
   const fake = fakeStorage([...paths, 'user/sub/one.wav', 'someone/recording.wav']);
   assert.equal(await clearUserStorage(fake.storage, 'speaking-recordings', 'user'), 121);
   assert.deepEqual([...fake.objects], ['someone/recording.wav']);
+});
+
+test('checks the claim after listing and before deleting a snapshot', async () => {
+  const fake = fakeStorage(['user/old.wav', 'user/sub/old.webm']);
+  await assert.rejects(clearUserStorage(fake.storage, 'speaking-recordings', 'user', {
+    beforeDelete: async () => { throw new Error('expired'); },
+  }), /expired/);
+  assert.deepEqual([...fake.objects], ['user/old.wav', 'user/sub/old.webm']);
 });
 
 test('fails closed on storage listing or deletion errors', async () => {

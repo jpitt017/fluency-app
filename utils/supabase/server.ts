@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { DELETION_EPOCH_HEADER, DELETION_OWNER_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 
 /**
  * Supabase client for server components and route handlers.
@@ -22,7 +23,13 @@ export async function createServerSupabase() {
   const iframeCookiePatch: Partial<CookieOptions> =
     isHttps && isIframe ? { sameSite: 'none', secure: true, partitioned: true } : {};
 
+  const deletionOwner = headerStore.get(DELETION_OWNER_HEADER);
+  const deletionEpoch = headerStore.get(DELETION_EPOCH_HEADER);
   return createServerClient(url, key, {
+    global: { headers: {
+      ...(deletionOwner ? { [DELETION_OWNER_HEADER]: deletionOwner } : {}),
+      ...(deletionEpoch ? { [DELETION_EPOCH_HEADER]: deletionEpoch } : {}),
+    } },
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -7,6 +7,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
 import * as textUtils from '../../lib/b1b2/text-utils.mjs';
+import * as deletionEpoch from '../../lib/b1b2/deletion-epoch.mjs';
 
 const { countWords, writingHint, writingTaskStatus, writingWordCounter } = textUtils;
 
@@ -68,6 +69,7 @@ test('every placement question renders its skill without rendering its area', ()
       if (name === 'next/navigation') return { useRouter: () => ({ refresh() {}, push() {} }) };
       if (name === '@/utils/supabase/client') return { createClient: () => { throw new Error('Not needed during server rendering'); } };
       if (name === '@/lib/b1b2/text-utils.mjs') return textUtils;
+      if (name === '@/lib/b1b2/deletion-epoch.mjs') return deletionEpoch;
       throw new Error(`Unexpected dependency: ${name}`);
     },
   });

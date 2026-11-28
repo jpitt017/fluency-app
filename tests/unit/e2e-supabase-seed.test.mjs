@@ -44,6 +44,12 @@ function fakeAdmin({ hasProfile = true, hasTask = false, pages } = {}) {
     },
     from(table) {
       return {
+        delete() {
+          return { eq: async (column, value) => {
+            calls.push(['delete', table, column, value]);
+            return { error: null };
+          } };
+        },
         select() {
           return {
             eq() {
@@ -105,6 +111,9 @@ test('cleanup deletes only this run attempt user, never another account', async 
   const cleaned = [];
   await cleanupE2ESupabase({ admin, env: env(), cleanupUser: async (_admin, id, options) => cleaned.push([id, options]) });
   assert.deepEqual(cleaned, [['current-run-user', { strict: true }]]);
+  assert.deepEqual(admin.calls.filter(([name]) => name === 'delete'), [
+    ['delete', 'week_speaking_deletion_locks', 'user_id', 'current-run-user'],
+  ]);
 });
 
 test('tagged test users require the pinned E2E client and carry a run-scoped address and metadata', async () => {
@@ -138,6 +147,27 @@ test('cleanup enumerates pages and selects only fixtures with both this run addr
   await cleanupE2ESupabase({ admin, env: env(), cleanupUser: async (_admin, id, options) => cleaned.push([id, options]) });
   assert.deepEqual(admin.calls.filter(([name]) => name === 'listUsers'), [['listUsers', 1], ['listUsers', 2]]);
   assert.deepEqual(cleaned, [['seed', { strict: true }], ['fixture', { strict: true }]]);
+  assert.deepEqual(admin.calls.filter(([name]) => name === 'delete'), [
+    ['delete', 'week_speaking_deletion_locks', 'user_id', 'seed'],
+    ['delete', 'week_speaking_deletion_locks', 'user_id', 'fixture'],
+  ]);
+});
+
+test('an unexpected barrier cleanup failure leaves the fixture discoverable', async () => {
+  const admin = fakeAdmin();
+  admin.from = () => ({ delete: () => ({ eq: async () => ({ error: { code: 'XX001', message: 'database unavailable' } }) }) });
+  let cleaned = false;
+  await assert.rejects(cleanupE2ESupabase({ admin, env: env(), cleanupUser: async () => { cleaned = true; } }), /database unavailable/);
+  assert.equal(cleaned, false);
+  assert.equal(admin.calls.some(([name]) => name === 'deleteUser'), false);
+});
+
+test('cleanup tolerates a deletion-lock table missing after an incomplete schema rebuild', async () => {
+  const admin = fakeAdmin();
+  admin.from = () => ({ delete: () => ({ eq: async () => ({ error: { code: 'PGRST205', message: 'table missing' } }) }) });
+  const cleaned = [];
+  await cleanupE2ESupabase({ admin, env: env(), cleanupUser: async (_admin, id) => cleaned.push(id) });
+  assert.deepEqual(cleaned, ['current-run-user']);
 });
 
 test('strict fixture cleanup retains auth if private Storage cleanup fails', async () => {

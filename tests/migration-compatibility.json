@@ -1,0 +1,19 @@
+{
+  "0081_retryable_learning_data_deletion.sql": {
+    "old_app_new_schema": [
+      "tests/unit/week-speaking-delete.test.mjs",
+      "tests/unit/teacher-deletion-generation.test.mjs"
+    ],
+    "new_app_old_schema": [
+      "tests/unit/week-speaking-delete.test.mjs",
+      "tests/unit/issue-deletion-generation.test.mjs",
+      "tests/unit/recording-key.test.mjs",
+      "tests/unit/week-speaking-server.test.mjs",
+      "tests/unit/deletion-epoch.test.mjs",
+      "tests/unit/deletion-cors.test.mjs",
+      "tests/unit/eval-cache-deletion.test.mjs",
+      "tests/unit/teacher-deletion-generation.test.mjs"
+    ],
+    "overlap_notes": "The owner accepted legacy key-reuse/new-work-loss risk only during overlap, conditional on fresh new-app keys, fence and sweep before pilot, and evidence old clients cannot upload. Both schema versions issue disjoint, database-sequenced UUIDv8 keys for new-app recordings; 0080 consumes its existing AI-log identity via a temporary ownerless row. Verify its definition and grants before deployment and protect both sequences across recovery. See docs/rollouts/retryable-data-deletion-0081.md."
+  }
+}

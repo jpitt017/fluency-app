@@ -47,18 +47,19 @@ test('only the public example GET bypasses the no-Supabase API fail-closed rule'
   const compiled = ts.transpileModule(proxy, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   runInNewContext(compiled, {
-    exports, process: { env: {} }, console: { error() {} },
+    exports, Headers, process: { env: {} }, console: { error() {} },
     require(name) {
       if (name === 'next/server') return { NextResponse: {
         next: () => ({ status: 200 }),
         json: (body, init) => ({ body, status: init.status }),
       } };
       if (name === '@supabase/ssr') return { createServerClient: () => { throw new Error('No client expected'); } };
+      if (name === '@/lib/b1b2/deletion-epoch.mjs') return { DELETION_EPOCH_HEADER: 'x-fluency-data-generation', DELETION_OWNER_HEADER: 'x-fluency-data-owner' };
       throw new Error(name);
     },
   });
   const request = (pathname, method = 'GET') => ({
-    method, nextUrl: { pathname, searchParams: new URLSearchParams() },
+    method, headers: new Headers(), nextUrl: { pathname, searchParams: new URLSearchParams() },
   });
   assert.equal((await exports.proxy(request('/api/week/sentence/example'))).status, 200);
   assert.equal((await exports.proxy(request('/api/week/sentence/example', 'POST'))).status, 503);

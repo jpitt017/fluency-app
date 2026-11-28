@@ -163,13 +163,15 @@ test('migration 0062 keeps the bucket private and adds only read-only staff poli
 });
 
 test('Delete my data and fresh-replay coverage include both weekly takes', () => {
-  const route = readFileSync('src/app/api/account/delete-data/route.ts', 'utf8');
+  const deletion = readFileSync('supabase-b1-b2/migrations/0060_week_speaking_support.sql', 'utf8');
+  const worker = readFileSync('lib/b1b2/retryable-data-deletion.mjs', 'utf8');
   const replay = readFileSync('tests/database/week-speaking-recordings.sql', 'utf8');
   const verify = readFileSync('tests/database/verify-replay-schema.sql', 'utf8');
   const replayAll = readFileSync('tests/database/delete-learning-data.sql', 'utf8');
-  assert.match(route, /week_speaking_attempts/);
-  assert.match(route, /first_recording_path/);
-  assert.match(route, /second_recording_path/);
+  assert.match(deletion, /week_speaking_attempts/);
+  assert.match(deletion, /first_recording_path/);
+  assert.match(deletion, /second_recording_path/);
+  assert.match(worker, /list_retryable_deletion_files/);
   assert.match(replay, /result->'audio_paths' \? path1/);
   assert.match(replay, /result->'audio_paths' \? path2/);
   assert.match(replay, /another learner''s recording/);

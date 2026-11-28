@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { speakPhrase } from '@/lib/b1b2/speech';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 import { structureUsed, type ShortSpeakingFeedback, type StructurePoint } from '@/lib/b1b2/speaking-feedback.mjs';
 
 type PracticeResult = { transcript: string; used: boolean };
 type PracticeState = { id: string; status: string; transcript: string | null; used: boolean | null } | null;
 
 /** One browser recording. Nothing leaves the device until onRecorded is called. */
-export function RecordButton({ label, disabled, onRecorded }: { label: string; disabled?: boolean; onRecorded: (blob: Blob) => void }) {
+export function RecordButton({ label, disabled, onRecorded }: { label: string; disabled?: boolean; onRecorded: (blob: Blob, generation: string) => void }) {
   const [recording, setRecording] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +32,9 @@ export function RecordButton({ label, disabled, onRecorded }: { label: string; d
     // A second click while the permission dialog is open must not start a
     // second microphone. A late permission grant after unmount is closed too.
     if (startingRef.current || recorder.current?.state === 'recording') return;
+    // Keep the recording's starting epoch even if another tab deletes data
+    // while the microphone permission dialog or recording is open.
+    const deletionEpoch = browserDeletionGeneration();
     setError('');
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Audio recording is not supported in this browser.');
@@ -54,7 +58,7 @@ export function RecordButton({ label, disabled, onRecorded }: { label: string; d
         if (!mounted.current) return;
         setRecording(false);
         const blob = new Blob(chunks, { type: next.mimeType || 'audio/webm' });
-        if (blob.size) recorded.current(blob);
+        if (blob.size) recorded.current(blob, deletionEpoch);
         else setError('No recording was made. Please try again.');
       };
       next.start();
@@ -91,10 +95,10 @@ function SoundPractice({ word, label, tip }: { word: string; label: string; tip:
   </li>;
 }
 
-async function transcribePractice(blob: Blob, point: StructurePoint): Promise<PracticeResult> {
+async function transcribePractice(blob: Blob, point: StructurePoint, generation: string): Promise<PracticeResult> {
   const form = new FormData();
   form.set('audio', blob, 'sentence.webm');
-  const response = await fetch('/api/speaking/transcribe', { method: 'POST', body: form });
+  const response = await fetch('/api/speaking/transcribe', { method: 'POST', headers: { [DELETION_EPOCH_HEADER]: generation }, body: form });
   const data = await response.json() as { transcript?: string; error?: string };
   if (!response.ok || !data.transcript) throw new Error(data.error || 'We could not check this sentence.');
   return { transcript: data.transcript, used: structureUsed(data.transcript, point.structure) };
@@ -106,7 +110,7 @@ export default function SpeakingFeedbackDetails({
 }: {
   feedback: ShortSpeakingFeedback;
   practice?: PracticeState;
-  onPractice?: (blob: Blob) => Promise<PracticeResult>;
+  onPractice?: (blob: Blob, generation: string) => Promise<PracticeResult>;
   onRecheckPractice?: (takeId: string) => Promise<PracticeResult>;
   practiceAllowed?: boolean;
   practiceUnavailableMessage?: string;
@@ -119,12 +123,12 @@ export default function SpeakingFeedbackDetails({
   const savedResult = practice?.status === 'checked' && practice.transcript && typeof practice.used === 'boolean'
     ? { transcript: practice.transcript, used: practice.used } : null;
   const result = localResult ?? savedResult;
-  async function run(blob: Blob) {
+  async function run(blob: Blob, generation: string) {
     if (!point) return;
     setAttempted(true);
     setBusy(true);
     setError('');
-    try { setLocalResult(await (onPractice ? onPractice(blob) : transcribePractice(blob, point))); }
+    try { setLocalResult(await (onPractice ? onPractice(blob, generation) : transcribePractice(blob, point, generation))); }
     catch (cause) {
       // A failed capture must not permanently disable the button. If the
       // weekly audio was saved, refresh instead exposes its recheck button.
@@ -155,7 +159,7 @@ export default function SpeakingFeedbackDetails({
       <p><span className="font-medium">You said:</span> {point.original}</p>
       <p><span className="font-medium">Try:</span> {point.upgraded}</p>
       <p>{point.explanation}</p>
-      {!result && !practice && <RecordButton label={busy ? 'Checking…' : 'Say it again'} disabled={busy || attempted || !practiceAllowed} onRecorded={(blob) => void run(blob)} />}
+      {!result && !practice && <RecordButton label={busy ? 'Checking…' : 'Say it again'} disabled={busy || attempted || !practiceAllowed} onRecorded={(blob, generation) => void run(blob, generation)} />}
       {!practiceAllowed && !result && <p className="text-xs text-stone-600">{practiceUnavailableMessage}</p>}
       {practice && ['ready', 'checking'].includes(practice.status) && onRecheckPractice && <button type="button" disabled={busy || !practiceAllowed} onClick={() => void recheck()} className="min-h-11 rounded-lg border border-indigo-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{busy ? 'Checking…' : 'Check this saved sentence again'}</button>}
       {result && <p role="status" className="rounded-lg bg-white p-2">{result.used ? `We found ${point.structure} in your transcript.` : `We could not find ${point.structure} in your transcript.`} This checks the pattern, not all your grammar or pronunciation.</p>}

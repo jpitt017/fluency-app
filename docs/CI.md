@@ -8,14 +8,33 @@ state is healthy when nobody has pushed; the one job it no longer runs is
 
 ## Required checks
 
-Three checks are required to merge. All three are offline, deterministic and
-need no external API:
+The required checks include both offline tests and integration tests against the
+pinned, isolated E2E Supabase project; they never use the live service-role key.
 
 | Check | What it proves |
 | --- | --- |
-| `build-and-offline-evals` | lint, syllabus/details validators, `eval:prompts --offline` (60 cases + 2 rewrite-injection checks), the unit suites (including `week-practice-finish`: what counts towards finishing grammar and vocabulary, and that the score comes from saved rows), the live schema check, and a production build |
-| `playwright-e2e` | the placement walk, the writing step, request timeouts and the service-worker install |
-| `rls-isolation` | row-level security between learners |
+| `build-and-offline-evals` | lint, syllabus/details validators, offline prompt evaluations, unit suites, migration compatibility evidence and a production build |
+| `playwright-e2e` | rebuilds the isolated schema, runs browser tests and the AI, alert, RLS and real-Storage isolation fixtures, then cleans up this run's test users |
+| `rls-isolation` | preserves the required check name and succeeds only after `playwright-e2e` has passed its RLS and Storage fixtures |
+
+The schema rebuild and all tests using it share one `e2e-isolated` job lock.
+Splitting RLS into a later independently locked job would allow another run to
+rebuild the database between the browser and isolation phases. The required
+`rls-isolation` gate runs even if its prerequisite fails, is skipped or is
+cancelled, and explicitly fails unless that job succeeded. This matters because
+GitHub can otherwise accept a skipped required check. An entirely cancelled
+workflow is still cancelled, not proof that any fixture passed. The critical
+deletion and weekly-recording browser cases run first; the remaining invocation
+excludes those files but runs the rest of the suite. While 0081 is still absent
+from main, CI first runs the new production build against hosted 0080, applies
+0081, and runs the archived pre-0081 production build against it. These two
+isolated browser tests use the real Supabase API and Storage, but the app servers
+run on the CI runner; they are not Vercel or production-deployment evidence.
+All phases hold the same lock and use run-tagged fixtures. Before the reset,
+the target guard requires the pinned project's exact direct host or Supabase
+session-pooler tenant and rejects connection-parameter overrides. An unfamiliar
+connection string fails closed and must be reviewed, not bypassed. The live
+schema check is a separate main/schedule/dispatch job, not a PR build check.
 
 `production-*` jobs only run on manual dispatch with their input ticked, and
 `live-prompt-evals` only runs on manual dispatch with its input ticked. They are

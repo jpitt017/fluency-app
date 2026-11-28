@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { assertE2ESupabaseApiTarget } from './assert-e2e-supabase-target.mjs';
 import { weekSpeakingRecordingPath } from '../lib/b1b2/week-speaking-recordings.mjs';
+import { sweepLateDeletionFiles } from '../lib/b1b2/sweep-late-deletion-files.mjs';
 import { createTestUser, deleteTestUser } from './lib/test-user.mjs';
 
 const { projectUrl: url, anonKey, serviceRoleKey } = assertE2ESupabaseApiTarget();
@@ -462,6 +463,67 @@ async function run() {
       if (hasForbidden(data ?? [])) {
         throw new Error(`ANSWER LEAK: ${view} contains a key, accepted answer, model or answer_index!`);
       }
+    }
+
+    // A real, owner-scoped Storage/API test in the isolated project only:
+    // legacy metadata may arrive after a completed deletion during rollout.
+    // The daily worker removes both late files and leaves a new-generation
+    // file untouched. The scoped test must never sweep another fixture owner.
+    const lateUser = await createTestUser(admin, 'late-delete');
+    try {
+      const fence = await admin.from('data_deletion_safety_config').select('enforce_legacy_fence').eq('singleton', true).single();
+      if (fence.error || fence.data?.enforce_legacy_fence !== false) throw new Error('Isolated legacy fence is not in compatibility mode');
+      const token = randomUUID();
+      const begun = await admin.rpc('begin_week_speaking_deletion', { p_user_id: lateUser.id, p_lock_id: token });
+      if (begun.error || begun.data !== true) throw new Error('Could not begin isolated legacy deletion');
+      const finished = await admin.rpc('finish_week_speaking_deletion', { p_user_id: lateUser.id, p_lock_id: token });
+      if (finished.error || finished.data?.deleted !== true) throw new Error('Could not finish isolated legacy deletion');
+      const profile = await admin.from('profiles').select('data_deletion_generation').eq('id', lateUser.id).single();
+      if (profile.error || !profile.data?.data_deletion_generation) throw new Error('Missing isolated deletion marker');
+      const issueLate = `${lateUser.id}/late-screenshot.png`;
+      const speakingLate = `${lateUser.id}/late-audio.webm`;
+      const fresh = `${lateUser.id}/deletion-v1/${profile.data.data_deletion_generation}/fresh-screenshot.png`;
+      const takeId = randomUUID();
+      const reserved = await admin.rpc('reserve_week_speaking_take', { p_user_id: lateUser.id, p_week_number: 1, p_take_id: takeId,
+        p_kind: 'first', p_extension: 'webm', p_notes: [], p_phrases: [], p_source_take_id: null });
+      if (reserved.error || !reserved.data?.path) throw new Error('Could not reserve new-generation recording');
+      const newAudio = await admin.storage.from('speaking-recordings').upload(reserved.data.path, audio, {
+        contentType: 'audio/webm', upsert: false, metadata: { data_deletion_generation: profile.data.data_deletion_generation },
+      });
+      if (newAudio.error) throw new Error(`Could not upload new-generation recording: ${newAudio.error.message}`);
+      const closed = await admin.rpc('finish_week_speaking_upload', { p_user_id: lateUser.id, p_take_id: takeId, p_success: true });
+      if (closed.error || closed.data !== true) throw new Error('Could not finish new-generation recording');
+      // Prove Storage metadata protects genuinely new work even if its test
+      // ledger row disappears; the synthetic account is removed in finally.
+      const removedLedger = await admin.from('week_speaking_takes').delete().eq('id', takeId);
+      if (removedLedger.error) throw new Error('Could not set up unreferenced new recording');
+      for (const [bucket, key, bytes, contentType] of [
+        ['issue-attachments', issueLate, new Uint8Array([137,80,78,71,13,10,26,10]), 'image/png'],
+        ['speaking-recordings', speakingLate, audio, 'audio/webm'],
+        ['issue-attachments', fresh, new Uint8Array([137,80,78,71,13,10,26,10]), 'image/png'],
+      ]) {
+        const uploaded = await admin.storage.from(bucket).upload(key, bytes, { contentType, upsert: false });
+        if (uploaded.error) throw new Error(`Could not upload isolated safety-net fixture: ${uploaded.error.message}`);
+      }
+      const swept = await sweepLateDeletionFiles(admin, { userId: lateUser.id });
+      if (swept.removed !== 2 || swept.hasMore) throw new Error(`Unexpected isolated late-file count: ${swept.removed}`);
+      for (const [bucket, key] of [['issue-attachments', issueLate], ['speaking-recordings', speakingLate]]) {
+        if (!(await admin.storage.from(bucket).download(key)).error) throw new Error('A late file survived the isolated sweep');
+      }
+      if ((await admin.storage.from('issue-attachments').download(fresh)).error) throw new Error('The isolated sweep removed new work');
+      if ((await admin.storage.from('speaking-recordings').download(reserved.data.path)).error) throw new Error('The isolated sweep removed a new unreferenced recording');
+      if ((await admin.storage.from('issue-attachments').download(issueFile)).error) throw new Error('The isolated sweep touched another learner');
+      // A file arriving after a successful run must be found by the next run,
+      // not just by the immediate post-deletion scan.
+      const later = `${lateUser.id}/even-later-screenshot.png`;
+      const laterUpload = await admin.storage.from('issue-attachments').upload(later, new Uint8Array([137,80,78,71,13,10,26,10]), { contentType: 'image/png', upsert: false });
+      if (laterUpload.error) throw new Error(`Could not upload later isolated fixture: ${laterUpload.error.message}`);
+      const laterSweep = await sweepLateDeletionFiles(admin, { userId: lateUser.id });
+      if (laterSweep.removed !== 1 || laterSweep.hasMore) throw new Error(`Unexpected later-file count: ${laterSweep.removed}`);
+      if (!(await admin.storage.from('issue-attachments').download(later)).error) throw new Error('A later upload survived the next isolated sweep');
+      if ((await admin.storage.from('issue-attachments').download(fresh)).error) throw new Error('The next isolated sweep removed new work');
+    } finally {
+      await deleteTestUser(admin, lateUser.id);
     }
 
     // 6. Schema drift check: verify delete_my_learning_data() covers every user_id table

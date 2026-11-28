@@ -1,4 +1,5 @@
 import { createBrowserClient, type CookieOptionsWithName } from '@supabase/ssr';
+import { browserDeletionFetch } from '@/lib/b1b2/deletion-epoch.mjs';
 
 function isEmbeddedHttpsIframe(): boolean {
   if (typeof window === 'undefined' || window.location.protocol !== 'https:') return false;
@@ -39,5 +40,6 @@ export function createClient() {
 
   return createBrowserClient(supabaseUrl, supabaseKey, {
     cookieOptions: getBrowserCookieOptions(),
+    global: { fetch: browserDeletionFetch(fetch, supabaseUrl) },
   });
 }

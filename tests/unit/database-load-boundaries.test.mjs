@@ -4,21 +4,18 @@ import test from 'node:test';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-test('account deletion removes exact database-recorded paths instead of searching Storage buckets', () => {
+test('account deletion bounds metadata listing to the signed-in owner and fences Storage before row deletion', () => {
   const route = read('src/app/api/account/delete-data/route.ts');
-  assert.match(route, /from\(table\)\.select\(columns, \{ count: 'exact' \}\)\.eq\('user_id', user!\.id\)/);
-  assert.match(route, /\.order\('id', \{ ascending: true \}\)\.range\(rows\.length, rows\.length \+ 499\)/);
-  assert.match(route, /readOwned\('issue_reports', 'audio_path,screenshot_path'\)/);
-  assert.match(route, /readOwned\('speaking_attempts', 'audio_path'\)/);
-  assert.match(route, /readOwned\('week_speaking_attempts', 'first_recording_path,second_recording_path'\)/);
-  assert.match(route, /readOwned\('week_speaking_takes', 'recording_path'\)/);
-  assert.match(route, /removeFiles\('issue-attachments', issuePaths\)/);
-  assert.match(route, /removeFiles\(RECORDING_BUCKET, recordingPaths\)/);
-  assert.match(route, /\.remove\(paths\.slice\(start, start \+ 100\)\)/);
-  assert.ok(route.indexOf("rpc('begin_week_speaking_deletion'") < route.indexOf("readOwned('week_speaking_takes'"));
-  assert.ok(route.indexOf('removeFiles(RECORDING_BUCKET, recordingPaths)') < route.indexOf("rpc('finish_week_speaking_deletion'"));
-  assert.match(route, /path\.startsWith\(ownedPrefix\)/);
-  assert.doesNotMatch(route, /\.list\(/);
+  const worker = read('lib/b1b2/retryable-data-deletion.mjs');
+  const migration = read('supabase-b1-b2/migrations/0081_retryable_learning_data_deletion.sql');
+  assert.match(route, /beginOrResumeDeletion\(admin, user\.id\)/);
+  assert.match(route, /finishDeletion\(admin, user\.id, jobId\)/);
+  assert.match(worker, /list_retryable_deletion_files/);
+  assert.match(worker, /validOwnedPath\(item\.path, userId\)/);
+  assert.ok(worker.indexOf('await clearJobFiles(') < worker.indexOf("rpc('finish_retryable_data_deletion'"));
+  assert.match(migration, /lower\(split_part\(name, '\/', 1\)\) = p_user_id::text/);
+  assert.match(migration, /order by bucket_id collate "C", name collate "C" limit 100/);
+  assert.match(migration, /Some stored files are still present/);
   const deletionFunction = read('supabase-b1-b2/migrations/0024_reconcile_live_schema.sql');
   assert.match(deletionFunction, /public\.speaking_attempts/);
   const weekDeletionFunction = read('supabase-b1-b2/migrations/0060_week_speaking_support.sql');

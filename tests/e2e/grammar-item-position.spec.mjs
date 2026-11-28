@@ -252,14 +252,124 @@ test('successful data deletion clears only this learner’s browser positions', 
 
     // Intercept the delete route: this checks the browser cleanup without
     // deleting any real data other than the disposable test account in finally.
-    await page.route('**/api/account/delete-data', (route) => route.fulfill({ status: 200, json: { deleted: true, removedAudioFiles: 0 } }));
+    await page.route('**/api/account/delete-data', (route) => {
+      const body = route.request().postDataJSON();
+      return route.fulfill({ status: 200, json: body.phase === 'begin'
+        ? { pending: true, receipt: 'fixture-receipt' }
+        : { deleted: true, removedAudioFiles: 0 } });
+    });
     await page.goto('/privacy');
     await page.getByRole('button', { name: 'Delete my learning data & recordings' }).click();
     await page.getByPlaceholder('DELETE').fill('DELETE');
     await page.getByRole('button', { name: 'Confirm erasure' }).click();
-    await expect(page.getByText('All learning data and 0 audio recordings deleted.')).toBeVisible();
+    await expect(page.getByText('Your learning data and recordings have been deleted.')).toBeVisible();
     expect(await page.evaluate((key) => localStorage.getItem(key), own)).toBeNull();
     expect(await page.evaluate((key) => localStorage.getItem(key), other)).toBe('keep');
+  } finally {
+    await removeReadingLearner(admin, user);
+  }
+});
+
+test('blocked browser storage stops deletion before files are removed and can recover', async ({ page }) => {
+  test.skip(!canUseReadingGateFixture, 'Needs a signed-in learner');
+  test.setTimeout(180_000);
+  const { admin, user } = await createReadingLearner(page, 'data-deletion-storage-blocked');
+  const phases = [];
+  try {
+    await page.route('**/api/account/delete-data', (route) => {
+      const body = route.request().postDataJSON();
+      phases.push(body.phase);
+      return route.fulfill({ status: 200, json: body.phase === 'begin'
+        ? { pending: true, receipt: 'same-pending-fixture' }
+        : { deleted: true } });
+    });
+    await page.goto('/privacy');
+    await page.evaluate(() => {
+      const original = Storage.prototype.setItem;
+      window.__restoreFixtureStorage = () => { Storage.prototype.setItem = original; };
+      Storage.prototype.setItem = function (key, value) {
+        if (String(key).startsWith('learning-data-deletion:')) throw new Error('Synthetic blocked storage');
+        return original.call(this, key, value);
+      };
+    });
+    await page.getByRole('button', { name: 'Delete my learning data & recordings' }).click();
+    await page.getByPlaceholder('DELETE').fill('DELETE');
+    await page.getByRole('button', { name: 'Confirm erasure' }).click();
+    await expect(page.getByText('Deletion could not finish. Some files may already be gone. Please try again.')).toBeVisible();
+    expect(phases).toEqual(['begin']);
+    await page.evaluate(() => window.__restoreFixtureStorage());
+    await page.getByRole('button', { name: 'Confirm erasure' }).click();
+    await expect(page.getByText('Your learning data and recordings have been deleted.')).toBeVisible();
+    expect(phases).toEqual(['begin', 'begin', 'finish']);
+  } finally {
+    await removeReadingLearner(admin, user);
+  }
+});
+
+test('deletion retry keeps its receipt across reload and never starts a second job', async ({ page }) => {
+  test.skip(!canUseReadingGateFixture, 'Needs a signed-in learner');
+  test.setTimeout(180_000);
+  const { admin, user } = await createReadingLearner(page, 'data-deletion-retry');
+  const phases = [];
+  try {
+    await page.route('**/api/account/delete-data', (route) => {
+      const body = route.request().postDataJSON();
+      phases.push(body);
+      if (body.phase === 'begin') return route.fulfill({ status: 200, json: { pending: true, receipt: 'signed-fixture-receipt' } });
+      if (phases.filter((part) => part.phase === 'finish').length === 1) {
+        return route.fulfill({ status: 503, json: { error: 'Some files may already be removed. Your deletion is pending; please retry.' } });
+      }
+      return route.fulfill({ status: 200, json: { deleted: true, alreadyCompleted: true } });
+    });
+    const confirm = async () => {
+      await page.getByRole('button', { name: 'Delete my learning data & recordings' }).click();
+      await page.getByPlaceholder('DELETE').fill('DELETE');
+      await page.getByRole('button', { name: 'Confirm erasure' }).click();
+    };
+    await page.goto('/privacy');
+    await confirm();
+    await expect(page.getByText('Some files may already be removed. Your deletion is pending; please retry.')).toBeVisible();
+    const key = `learning-data-deletion:${user.id}`;
+    expect(await page.evaluate((item) => localStorage.getItem(item), key)).toBe('signed-fixture-receipt');
+    await page.reload();
+    await confirm();
+    await expect(page.getByText('Your earlier deletion is complete. Data created afterwards was not deleted; start a new request if you want to erase it.')).toBeVisible();
+    expect(phases.filter((part) => part.phase === 'begin')).toHaveLength(1);
+    expect(phases.filter((part) => part.phase === 'finish').map((part) => part.receipt)).toEqual(['signed-fixture-receipt', 'signed-fixture-receipt']);
+    expect(await page.evaluate((item) => localStorage.getItem(item), key)).toBeNull();
+  } finally {
+    await removeReadingLearner(admin, user);
+  }
+});
+
+test('a stale deletion receipt requires a new explicit confirmation', async ({ page }) => {
+  test.skip(!canUseReadingGateFixture, 'Needs a signed-in learner');
+  test.setTimeout(180_000);
+  const { admin, user } = await createReadingLearner(page, 'data-deletion-stale');
+  const phases = [];
+  try {
+    await page.route('**/api/account/delete-data', (route) => {
+      const body = route.request().postDataJSON();
+      phases.push(body.phase);
+      if (body.receipt === 'old-fixture-receipt') {
+        return route.fulfill({ status: 409, json: { code: 'stale_receipt', error: 'Saved request no longer matches.' } });
+      }
+      return route.fulfill({ status: 200, json: body.phase === 'begin'
+        ? { pending: true, receipt: 'new-fixture-receipt' }
+        : { deleted: true } });
+    });
+    await page.goto('/privacy');
+    const key = `learning-data-deletion:${user.id}`;
+    await page.evaluate((item) => localStorage.setItem(item, 'old-fixture-receipt'), key);
+    await page.getByRole('button', { name: 'Delete my learning data & recordings' }).click();
+    await page.getByPlaceholder('DELETE').fill('DELETE');
+    await page.getByRole('button', { name: 'Confirm erasure' }).click();
+    await expect(page.getByText('This saved request could not be verified. Confirm again to start or resume deletion of your current data.')).toBeVisible();
+    expect(phases).toEqual(['finish']);
+    expect(await page.evaluate((item) => localStorage.getItem(item), key)).toBeNull();
+    await page.getByRole('button', { name: 'Confirm erasure' }).click();
+    await expect(page.getByText('Your learning data and recordings have been deleted.')).toBeVisible();
+    expect(phases).toEqual(['finish', 'begin', 'finish']);
   } finally {
     await removeReadingLearner(admin, user);
   }

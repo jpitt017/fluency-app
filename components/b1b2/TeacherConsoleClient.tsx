@@ -23,7 +23,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
     try {
       const response = await fetch('/api/teacher/pilot', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, enabled }),
+        body: JSON.stringify({ userId, enabled, deletionGeneration: selected?.deletion_generation ?? null }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'Could not update pilot access.');

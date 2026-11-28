@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 import type { WeekMediation } from '@/lib/curriculum/syllabus';
 
 interface MediationFeedback {
@@ -32,7 +33,7 @@ export default function MediationTask({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  async function requestFeedback(submission: string, submissionMode: 'voice' | 'text') {
+  async function requestFeedback(submission: string, submissionMode: 'voice' | 'text', generation = browserDeletionGeneration()) {
     setLoading(true);
     setError(null);
     setFeedback(null);
@@ -40,7 +41,7 @@ export default function MediationTask({
     try {
       const response = await fetch('/api/mediation/feedback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [DELETION_EPOCH_HEADER]: generation },
         body: JSON.stringify({
           text: submission,
           prompt: task.prompt,
@@ -93,6 +94,7 @@ export default function MediationTask({
   }
 
   async function startRecording() {
+    const generation = browserDeletionGeneration();
     setError(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Recording is not supported in this browser. Use the text option instead.');
@@ -117,7 +119,7 @@ export default function MediationTask({
         form.set('targetPhrase', `${task.scale}, ${task.level}`);
         try {
           // Transcription-only: 2 units, no speaking rubric or pronunciation score.
-          const transcription = await fetch('/api/speaking/transcribe', { method: 'POST', body: form });
+          const transcription = await fetch('/api/speaking/transcribe', { method: 'POST', headers: { [DELETION_EPOCH_HEADER]: generation }, body: form });
           const data = (await transcription.json().catch(() => null)) as { transcript?: string; error?: string } | null;
           if (!transcription.ok || !data) {
             console.error('[mediation] recording check failed:', data?.error ?? transcription.status);
@@ -129,7 +131,7 @@ export default function MediationTask({
             return;
           }
           setText(data.transcript);
-          await requestFeedback(data.transcript, 'voice');
+          await requestFeedback(data.transcript, 'voice', generation);
         } catch (caught) {
           console.error('[mediation] recording check failed:', caught);
           setError('Something went wrong. Please try again, or message your teacher.');

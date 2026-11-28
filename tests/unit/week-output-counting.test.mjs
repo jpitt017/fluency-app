@@ -106,6 +106,7 @@ function setup({ noAdmin = false, failWrite = false, throwWrite = false, failRef
     'groq-sdk': FakeGroq,
     '@/utils/supabase/server': server,
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
+    '@/lib/b1b2/deletion-generation.mjs': { requireUploadEpochForFencedRequest: async () => {} },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
     '@/lib/curriculum/week-speaking-support': { speakingSupportLabels: (week) => week === 1 ? supportLabels : null, speakingSupportConfig: (week) => week >= 1 && week <= 4 ? {} : null },
     '@/lib/b1b2/week-speaking-recordings.mjs': {

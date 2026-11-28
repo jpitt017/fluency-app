@@ -19,11 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Check rolling migration compatibility evidence
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-migration-compatibility.mjs "${{ github.event.pull_request.base.sha }}"
+      - run: node --test tests/unit/migration-compatibility-contract.test.mjs tests/unit/deletion-cors.test.mjs tests/unit/retryable-deletion-rollout.test.mjs
       - run: npm run validate:syllabus
       - run: npm run validate:details
       - run: npm run lint
@@ -46,7 +52,7 @@ jobs:
       - run: node --test tests/unit/week-speaking-recordings.test.mjs
       # Short speaking feedback, fixed sound rules, saved-check quotas and
       # privacy-safe deletion. Provider and Storage calls are faked here.
-      - run: node --test tests/unit/speaking-feedback.test.mjs tests/unit/speaking-recorder.test.mjs tests/unit/week-speaking-server.test.mjs tests/unit/week-speaking-delete.test.mjs tests/unit/week-speaking-projection.test.mjs tests/unit/week-speaking-rollout.test.mjs tests/unit/database-load-boundaries.test.mjs
+      - run: node --test tests/unit/speaking-feedback.test.mjs tests/unit/speaking-recorder.test.mjs tests/unit/week-speaking-server.test.mjs tests/unit/week-speaking-delete.test.mjs tests/unit/week-speaking-projection.test.mjs tests/unit/week-speaking-rollout.test.mjs tests/unit/database-load-boundaries.test.mjs tests/unit/delete-user-storage.test.mjs tests/unit/deletion-safety-sweep.test.mjs tests/unit/issue-deletion-generation.test.mjs tests/unit/recording-key.test.mjs tests/unit/deletion-epoch.test.mjs tests/unit/eval-cache-deletion.test.mjs tests/unit/teacher-deletion-generation.test.mjs
       # The actual speaking/writing route and recording helper: weekly work
       # counts only when saved, while feedback survives a progress-save error.
       - run: node --test tests/unit/week-output-counting.test.mjs
@@ -107,7 +113,7 @@ jobs:
       # git rev-parse --short origin/main instead of judging by eye.
       - run: node --test tests/unit/deploy-version.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
-      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/placement-request-filter.test.mjs
+      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/e2e-ai-mock.test.mjs tests/unit/placement-request-filter.test.mjs
       - run: node --test tests/unit/listening-gloss-save.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -174,6 +180,10 @@ jobs:
           E2E_USER_EMAIL: e2e-${{ github.run_id }}-${{ github.run_attempt }}@example.invalid
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: node scripts/assert-e2e-supabase-target.mjs
+      - name: Check isolated Supabase browser CORS for deletion generations
+        env:
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+        run: node scripts/check-e2e-deletion-cors.mjs
       - name: Apply repository migrations to the isolated E2E project
         id: apply_e2e_migrations
         shell: bash
@@ -220,6 +230,16 @@ jobs:
           git archive origin/main supabase-b1-b2/migrations | tar -x -C "$workdir/from-main"
           cp "$workdir/from-main/supabase-b1-b2/migrations/"*.sql "$workdir/supabase/migrations/"
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
+          # While 0081 is still a proposed expansion, first run the new app on
+          # 0080, then apply 0081 and run the archived old app. Once 0081 is on
+          # main, normal CI rebuilds the complete current schema in one pass.
+          migration='supabase-b1-b2/migrations/0081_retryable_learning_data_deletion.sql'
+          if [ -f "$migration" ] && ! git cat-file -e "origin/main:$migration" 2>/dev/null; then
+            rm "$workdir/supabase/migrations/0081_retryable_learning_data_deletion.sql"
+            echo 'staged_0081=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'staged_0081=false' >> "$GITHUB_OUTPUT"
+          fi
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
@@ -245,6 +265,85 @@ jobs:
           test -n "$E2E_SUPABASE_URL"
           test -n "$E2E_SUPABASE_ANON_KEY"
           npm run build
+      - name: Initialize browser network audit
+        id: init_e2e_audit
+        env:
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
+        run: |
+          mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
+          : > "$E2E_NETWORK_AUDIT_FILE"
+          : > "$E2E_AI_MOCK_AUDIT_FILE"
+          : > "$E2E_AI_LOG_TIMING_FILE"
+      - name: Test new app against 0080 on isolated Supabase
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_ROLLOUT_PAIR: new-app-old-schema
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-rollout.config.mjs --reporter=line,github
+      - name: Expand isolated E2E schema with 0081
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test "$E2E_SUPABASE_PROJECT_REF" = frkciyjvjlnqpaifkwtz
+          workdir="$RUNNER_TEMP/e2e-supabase"
+          cp supabase-b1-b2/migrations/0081_retryable_learning_data_deletion.sql "$workdir/supabase/migrations/"
+          supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
+      - name: Build the pre-0081 app for the isolated rollout test
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          old="$RUNNER_TEMP/fluency-pre-0081"
+          mkdir -p "$old"
+          git archive 9888873324ee0ab55f5d194f6b703a590f982d30 | tar -x -C "$old"
+          # The archived app is outside the workspace; Turbopack refuses a
+          # node_modules symlink that escapes its inferred root. Install the
+          # exact archived lockfile instead of borrowing the newer app's tree.
+          exec > >(tee "$RUNNER_TEMP/pre-0081-build.log") 2>&1
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 25 "$RUNNER_TEMP/pre-0081-build.log"); }
+          trap report_failure ERR
+          npm --prefix "$old" ci
+          npm --prefix "$old" run build
+      - name: Test pre-0081 app against expanded isolated Supabase
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_ROLLOUT_PAIR: old-app-new-schema
+          E2E_OLD_APP_DIR: ${{ runner.temp }}/fluency-pre-0081
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-rollout.config.mjs --reporter=line,github
       # Every user these tests sign in as is created with
       # auth.admin.createUser({ email_confirm: true }); the guard earlier in this
       # job fails the build if a test ever goes back to an email-sending flow.
@@ -254,11 +353,20 @@ jobs:
         # the writing step on a phone viewport, the writing-step word counter and
         # hint, both request timeouts, and the service-worker install.
         run: |
-          mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
-          : > "$E2E_NETWORK_AUDIT_FILE"
-          npm run test:e2e -- --reporter=line,github
+          # Exercise the actual logging routes against a synthetic AI response.
+          # The fake key is scoped to this invocation; the preload and loopback
+          # URL ensure it cannot send a request to a paid provider.
+          GROQ_API_KEY=e2e-mock-only npm run test:e2e -- tests/e2e/ai-request-logging.spec.mjs --reporter=line,github
+          node scripts/report-e2e-ai-audit.mjs --require-mock
+          # Run deletion and recording cases early, then every remaining test.
+          npm run test:e2e -- 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs' --reporter=line,github
+          npm run test:e2e -- --grep-invert 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs|ai-request-logging\.spec\.mjs' --reporter=line,github
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_RUN_ID: ${{ github.run_id }}
@@ -273,11 +381,78 @@ jobs:
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           GROQ_API_KEY: ''
 
+      - name: Report AI logging E2E stage timings
+        if: always() && steps.init_e2e_audit.outcome == 'success' && steps.run_e2e.outcome != 'skipped'
+        env:
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
+        run: node scripts/report-e2e-ai-timings.mjs
+
+      # This isolated contract temporarily enables the fence, tests the real
+      # browser/server and Storage against both deletion states, then resets it.
+      # It runs alone under the same project lock, never alongside other tests.
+      - name: Verify post-overlap upload fence on isolated E2E project
+        env:
+          E2E_OLD_APP_DIR: ${{ steps.apply_e2e_migrations.outputs.staged_0081 == 'true' && format('{0}/fluency-pre-0081', runner.temp) || '' }}
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-deletion-fence.config.mjs --reporter=line,github
+
+      # Keep schema rebuild, browser tests and RLS/Storage tests in the same
+      # e2e-isolated job lock. A second job would release the lock between the
+      # browser and RLS phases and another run could rebuild a different schema.
+      # Tag every synthetic user so the same-run final cleanup also finds a
+      # fixture if an integration process exits before its own finally block.
+      - name: Verify AI limits and pilot access on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: node scripts/test-ai-limits.mjs
+      - name: Verify issue alert grouping on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: node scripts/test-issue-alert-grouping.mjs
+      - name: Verify Postgres RLS isolation and deletion coverage on isolated E2E project
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: node scripts/test-rls.mjs
+
       - name: Verify no browser requests reached the live Supabase project
-        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success' && steps.run_e2e.outcome != 'skipped'
+        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.init_e2e_audit.outcome == 'success'
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
-        run: node scripts/report-e2e-network-audit.mjs
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+        run: |
+          node scripts/report-e2e-network-audit.mjs
+          node scripts/report-e2e-ai-audit.mjs
 
       - name: Delete this run's isolated E2E learner
         if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success'
@@ -406,6 +581,12 @@ jobs:
               # own before-state; the integration test always rolls back.
               TEST_DATABASE_URL="$db" node tests/database/week-speaking-rollout.mjs
             fi
+            if [[ "$file" == */0081_retryable_learning_data_deletion.sql ]]; then
+              # Start on 0080 with real ownerless feedback, apply the expansion
+              # in a rolled-back transaction, and exercise old/new cache RPCs.
+              TEST_DATABASE_URL="$db" node tests/database/cache-deletion-rollout.mjs
+              TEST_DATABASE_URL="$db" node tests/database/retryable-deployment-orders.mjs
+            fi
             timeout 300 psql "$db" -v ON_ERROR_STOP=1 -q -f "$file" || {
               echo "::error::${file} failed or took longer than 300s"
               exit 1
@@ -417,6 +598,7 @@ jobs:
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/week-sentence-practice.sql
           psql "$db" -v ON_ERROR_STOP=1 -f tests/database/delete-learning-data.sql
           TEST_DATABASE_URL="$db" node tests/database/week-speaking-concurrency.mjs
+          TEST_DATABASE_URL="$db" node tests/database/retryable-data-deletion-concurrency.mjs
 
           # Idempotency, without a second replay: applying the later additive
           # migrations again on a database that already has them must change
@@ -442,37 +624,21 @@ jobs:
         if: always()
         run: supabase stop --no-backup
 
+  # Preserve the required check name. Its tests run inside playwright-e2e's
+  # uninterrupted lock above. Run even if the prerequisite failed, was
+  # skipped, or was cancelled: GitHub can treat a skipped required check as
+  # successful, so only an explicit success may satisfy branch protection.
   rls-isolation:
+    if: always()
     needs: playwright-e2e
     runs-on: ubuntu-latest
-    concurrency:
-      group: e2e-isolated
-      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Verify AI limits and pilot access on isolated E2E project
+      - name: Require the isolated E2E and RLS/Storage job to succeed
         env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-ai-limits.mjs
-      - name: Verify issue alert grouping on isolated E2E project
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-issue-alert-grouping.mjs
-      - name: Verify Postgres RLS isolation and deletion coverage on isolated E2E project
-        env:
-          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
-          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
-          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
-          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/test-rls.mjs
+          E2E_RESULT: ${{ needs.playwright-e2e.result }}
+        run: |
+          if [ "$E2E_RESULT" != success ]; then
+            echo "::error::Isolated E2E/RLS job concluded $E2E_RESULT, not success."
+            exit 1
+          fi
+          echo 'RLS and Storage checks passed in the isolated E2E job.'

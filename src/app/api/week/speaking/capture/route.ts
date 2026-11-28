@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
+import { hasExplicitUploadGeneration, readDeletionGeneration } from '@/lib/b1b2/deletion-generation.mjs';
+import { freshRecordingKeyId } from '@/lib/b1b2/recording-key.mjs';
 import { validSupportNotes } from '@/lib/curriculum/speaking-support.mjs';
 import { speakingSupportConfig } from '@/lib/curriculum/week-speaking-support';
 import { parseWeekSpeakingTakePath } from '@/lib/b1b2/week-speaking-recordings.mjs';
@@ -14,6 +16,7 @@ export async function POST(req: NextRequest) {
   let reservation: { takeId: string; path: string } | null = null;
   let userId = '';
   let uploadAttempted = false;
+  let uploadConflicted = false;
   let finalisationStarted = false;
   const supabase = await createServerSupabase();
   const admin = createAdminSupabase();
@@ -22,6 +25,10 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: 'Sign in to save your recording.' }, { status: 401, headers: NO_STORE });
     userId = user.id;
+    // Mark new recordings so the daily safety net can distinguish even an
+    // unreferenced new file from an old upload that arrived after deletion.
+    // On 0080 this is null and the existing Storage path/behavior is retained.
+    const generation = await readDeletionGeneration(admin, user.id, req.headers);
     const form = await req.formData();
     const audio = form.get('audio') as File | null;
     const week = Number(form.get('weekNumber'));
@@ -48,7 +55,7 @@ export async function POST(req: NextRequest) {
       || (kind !== 'retry' && parsedPhrases.length > 0)) {
       return NextResponse.json({ error: 'Please check your notes and selected phrases.' }, { status: 400, headers: NO_STORE });
     }
-    const takeId = crypto.randomUUID();
+    const takeId = await freshRecordingKeyId(admin, generation);
     const { data, error: reserveError } = await admin.rpc('reserve_week_speaking_take', {
       p_user_id: user.id, p_week_number: week, p_take_id: takeId, p_kind: kind,
       p_extension: extension, p_notes: notes, p_phrases: parsedPhrases,
@@ -64,8 +71,18 @@ export async function POST(req: NextRequest) {
     }
     const contentType = extension === 'm4a' ? 'audio/mp4' : `audio/${extension}`;
     uploadAttempted = true;
-    const uploaded = await admin.storage.from('speaking-recordings').upload(data.path, audio, { contentType, upsert: false });
+    const uploaded = await admin.storage.from('speaking-recordings').upload(data.path, audio, {
+      contentType, upsert: false, ...(generation ? { metadata: {
+        data_deletion_generation: generation,
+        data_deletion_client: hasExplicitUploadGeneration(req.headers, user.id) ? 'v1' : 'legacy',
+      } } : {}),
+    });
     if (uploaded.error) {
+      // A duplicate means the key belonged to an existing object. Never let
+      // failure cleanup remove somebody's saved bytes, even if a UUID or an
+      // external legacy writer collided with this non-overwriting upload.
+      uploadConflicted = uploaded.error.status === 409 || uploaded.error.statusCode === '409'
+        || ('code' in uploaded.error && ['Duplicate', 'ResourceAlreadyExists', 'KeyAlreadyExists'].includes(String(uploaded.error.code)));
       console.error('[week-speaking] upload failed:', uploaded.error);
       return NextResponse.json({ error: 'We could not save this recording. Please try again.' }, { status: 503, headers: NO_STORE });
     }
@@ -101,7 +118,7 @@ export async function POST(req: NextRequest) {
         const closed = await admin.rpc('finish_week_speaking_upload', { p_user_id: userId, p_take_id: reservation.takeId, p_success: false });
         if (closed.error || closed.data !== true) console.error('[week-speaking] upload reservation could not be closed:', closed.error);
         const parsed = parseWeekSpeakingTakePath(reservation.path);
-        if (closed.data === true && !closed.error && uploadAttempted && parsed?.userId === userId && parsed.takeId === reservation.takeId) {
+        if (closed.data === true && !closed.error && uploadAttempted && !uploadConflicted && parsed?.userId === userId && parsed.takeId === reservation.takeId) {
           const cleanup = await admin.storage.from('speaking-recordings').remove([reservation.path]);
           if (cleanup.error) console.error('[week-speaking] failed-upload cleanup failed:', cleanup.error);
         }

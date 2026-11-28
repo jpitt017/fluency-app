@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { LessonLabContext } from './LessonLabContext';
 import SpeakingFeedbackDetails from '@/components/b1b2/SpeakingFeedbackDetails';
 import type { ShortSpeakingFeedback } from '@/lib/b1b2/speaking-feedback.mjs';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 
 interface SpeakingFeedback extends ShortSpeakingFeedback {
   transcript?: string;
@@ -95,7 +96,7 @@ export default function SpeakingLab({
     audioContextRef.current = null;
   }
 
-  async function evaluateAudio(blob: Blob) {
+  async function evaluateAudio(blob: Blob, generation: string) {
     setIsAnalyzing(true);
     setError(null);
     try {
@@ -105,7 +106,7 @@ export default function SpeakingLab({
       if (grammarWeek) form.set('grammarWeek', String(grammarWeek));
       form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
-      const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
+      const response = await fetch('/api/speaking/evaluate', { method: 'POST', headers: { [DELETION_EPOCH_HEADER]: generation }, body: form });
       const data = (await response.json().catch(() => null)) as (SpeakingFeedback & { error?: string }) | null;
       if (!response.ok || !data) {
         // The server's own message is already written for a B1 learner (daily
@@ -127,6 +128,7 @@ export default function SpeakingLab({
 
   async function startRecording() {
     if (startingRef.current || mediaRecorderRef.current?.state === 'recording') return;
+    const deletionEpoch = browserDeletionGeneration();
     setError(null);
     setFeedback(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -161,7 +163,7 @@ export default function SpeakingLab({
         stopVisualizer();
         // Navigating away must stop the microphone, not submit a partial take.
         if (!mountedRef.current) return;
-        await evaluateAudio(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
+        await evaluateAudio(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }), deletionEpoch);
       };
       recorder.start();
       setIsRecording(true);

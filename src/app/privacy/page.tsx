@@ -49,7 +49,7 @@ export default async function PrivacyPage() {
                 <strong>Automated 12-month purge:</strong> Each day, we delete study recordings, AI request logs and usage events older than 12 months. Issue reports and their attachments stay until you delete your learning data.
               </li>
               <li>
-                <strong>90-day cache TTL:</strong> Anonymized AI evaluation cache entries expire automatically after 90 days.
+                <strong>AI feedback cache:</strong> Cached feedback can reflect your submissions. It is deleted with your learning data and is scheduled for removal after 90 days without use.
               </li>
               <li>
                 <strong>Security controls:</strong> All traffic uses HTTPS/TLS in transit, private storage buckets, and Postgres Row-Level Security (RLS) at rest.
@@ -60,7 +60,7 @@ export default async function PrivacyPage() {
           <div className="rounded-xl border border-stone-200 bg-stone-50 p-5">
             <h2 className="text-base font-semibold text-stone-900">5. Your EU / GDPR Rights &amp; Data Deletion</h2>
             <p className="mt-1.5 text-xs leading-5 text-stone-600">
-              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
+              Confirming <strong>Delete my learning data &amp; recordings</strong> below starts erasing your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice recordings in Supabase Storage. If deletion is interrupted, some files may already be gone. Please retry on this device until you see the confirmation; saving new work is paused while deletion is pending. We retain a small deletion security marker with your login account to prevent late uploads from restoring deleted files; it is removed when the account closes. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
             </p>
             <div className="mt-4">
               <DeleteDataButton userId={user?.id ?? null} />

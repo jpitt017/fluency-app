@@ -36,6 +36,7 @@ async function fakeMicrophone(page) {
 
 /** Keep real capture, storage, RLS and SQL; stub only the paid provider check. */
 async function fakeChecks(page, admin, userId, responses = []) {
+  const diagnostics = [];
   await page.route('**/api/week/speaking/check', async (route) => {
     const { takeId } = route.request().postDataJSON();
     const next = responses.shift();
@@ -44,7 +45,10 @@ async function fakeChecks(page, admin, userId, responses = []) {
     if (take.error) throw take.error;
     const checkId = randomUUID();
     const reserved = await admin.rpc('reserve_week_speaking_check', { p_user_id: userId, p_take_id: takeId, p_check_id: checkId });
-    if (reserved.error) return route.fulfill({ status: 409, json: { error: 'No checks remain.' } });
+    if (reserved.error) {
+      diagnostics.push({ step: 'reserve-check', code: reserved.error.code, message: reserved.error.message });
+      return route.fulfill({ status: 409, json: { error: 'No checks remain.' } });
+    }
     if (next === 'failed') {
       const failed = await admin.rpc('finish_week_speaking_check', {
         p_user_id: userId, p_check_id: checkId, p_status: 'failed', p_transcript: null, p_feedback: null,
@@ -71,6 +75,7 @@ async function fakeChecks(page, admin, userId, responses = []) {
     if (finished.error || !finished.data) throw finished.error || new Error('Could not finish the fake check');
     await route.fulfill({ status: 200, json: { ...feedback, takeId, weekRecorded: take.data.kind === 'first' ? true : null } });
   });
+  return diagnostics;
 }
 
 async function record(page, buttonName) {
@@ -87,7 +92,11 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
   try {
     await fakeMicrophone(page);
     await signInExistingLearner(page, learner);
-    await fakeChecks(page, admin, learner.id);
+    const checkDiagnostics = await fakeChecks(page, admin, learner.id);
+    const captureStatuses = [];
+    page.on('response', (response) => {
+      if (response.url().endsWith('/api/week/speaking/capture')) captureStatuses.push(response.status());
+    });
     await page.goto('/week/1');
     await openWeekTask(page, 'speaking-practice');
     await expect(page.getByRole('heading', { name: '3. Listen to the model' })).toHaveCount(0);
@@ -130,7 +139,14 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
 
     for (const index of [1, 2, 3]) {
       await record(page, `Record try ${index}`);
-      await expect(page.getByRole('heading', { name: `Try ${index}`, exact: true })).toBeVisible();
+      try {
+        await expect(page.getByRole('heading', { name: `Try ${index}`, exact: true })).toBeVisible();
+      } catch (error) {
+        const takes = await admin.from('week_speaking_takes').select('kind,sequence,status').eq('user_id', learner.id);
+        const flows = await admin.from('week_speaking_flows').select('retry_count,checks_used,active_upload_id,active_check_id').eq('user_id', learner.id);
+        const alerts = await page.getByRole('alert').allTextContents();
+        throw new Error(`Try ${index} unavailable; takes=${JSON.stringify(takes.data)}, flows=${JSON.stringify(flows.data)}, alerts=${JSON.stringify(alerts)}, captureStatuses=${JSON.stringify(captureStatuses)}, checkErrors=${JSON.stringify(checkDiagnostics)}`, { cause: error });
+      }
       const comparison = page.getByLabel(`Compare try ${index} with the previous recording`);
       const previousPhrase = index === 1 ? 'none found' : "Since then, I've";
       const previousSeconds = index === 1 ? 33 : 30 + index - 1;

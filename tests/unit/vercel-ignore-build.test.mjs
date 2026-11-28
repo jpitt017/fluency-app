@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const script = resolve(here, '../../scripts/vercel-ignore-build.sh');
 const vercelJson = JSON.parse(readFileSync(resolve(here, '../../vercel.json'), 'utf8'));
+const vercelIgnore = readFileSync(resolve(here, '../../.vercelignore'), 'utf8').split(/\r?\n/);
 
 function git(cwd, ...args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -59,8 +60,15 @@ function makeRepo() {
 
 test('the script is wired into vercel.json and stays executable', () => {
   assert.equal(vercelJson.ignoreCommand, 'sh scripts/vercel-ignore-build.sh');
-  // The cron config must survive: vercel.json is now doing two jobs.
-  assert.deepEqual(vercelJson.crons, [{ path: '/api/cron/retention', schedule: '0 4 * * *' }]);
+  // Retention and the separately activated deletion safety net both survive.
+  assert.deepEqual(vercelJson.crons, [
+    { path: '/api/cron/retention', schedule: '0 4 * * *' },
+    { path: '/api/cron/deletion-safety', schedule: '0 5 * * *' },
+  ]);
+});
+
+test('local scratch and recovery material is never uploaded to Vercel', () => {
+  assert.ok(vercelIgnore.some((line) => /^\/?\.arena-work\/?$/.test(line.trim())));
 });
 
 test('docs-only pushes skip the deployment', () => {

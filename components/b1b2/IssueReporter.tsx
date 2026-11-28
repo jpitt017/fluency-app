@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { browserDeletionGeneration, DELETION_EPOCH_HEADER } from '@/lib/b1b2/deletion-epoch.mjs';
 
 type Recorder = { stream: MediaStream; context: AudioContext; processor: ScriptProcessorNode; source: MediaStreamAudioSourceNode; chunks: Float32Array[]; samples: number; timer: ReturnType<typeof setTimeout> };
 
@@ -26,6 +27,7 @@ function wavFile(chunks: Float32Array[], samples: number, rate: number): Blob {
 export default function IssueReporter({ signedIn, isStaff = false }: { signedIn: boolean; isStaff?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const recorder = useRef<Recorder | null>(null);
+  const reportEpoch = useRef('missing');
   const [type, setType] = useState('broken');
   const [mode, setMode] = useState<'text' | 'voice'>('text');
   const [text, setText] = useState('');
@@ -82,7 +84,7 @@ export default function IssueReporter({ signedIn, isStaff = false }: { signedIn:
       form.set('browser', navigator.userAgent);
       form.set('device', navigator.platform || 'unknown');
       form.set('screen', `${window.screen.width} × ${window.screen.height}`);
-      const res = await fetch('/api/issues', { method: 'POST', body: form });
+      const res = await fetch('/api/issues', { method: 'POST', headers: { [DELETION_EPOCH_HEADER]: reportEpoch.current }, body: form });
       const result = await res.json().catch(() => null) as { error?: string } | null;
       if (!res.ok || !result) {
         console.error('[issues] report failed:', result?.error ?? res.status);
@@ -103,7 +105,7 @@ export default function IssueReporter({ signedIn, isStaff = false }: { signedIn:
         footer instead of floating. From `sm` up it is a compact pill that stays clear
         of page actions, which reserve the bottom-right corner with `pb-24`. */}
     <div className="mx-auto flex w-full max-w-6xl justify-end px-4 pb-2 sm:pointer-events-none sm:fixed sm:inset-x-0 sm:bottom-4 sm:z-40 sm:px-6 sm:pb-0">
-      <button type="button" onClick={() => { setSent(false); setError(''); dialog.current?.showModal(); }} className="pointer-events-auto rounded-full bg-indigo-700 px-4 py-2.5 text-xs font-semibold leading-5 text-white shadow-lg hover:bg-indigo-800">Problem? Tell us</button>
+      <button type="button" onClick={() => { reportEpoch.current = browserDeletionGeneration(); setSent(false); setError(''); dialog.current?.showModal(); }} className="pointer-events-auto rounded-full bg-indigo-700 px-4 py-2.5 text-xs font-semibold leading-5 text-white shadow-lg hover:bg-indigo-800">Problem? Tell us</button>
     </div>
     <dialog ref={dialog} onCancel={event => { if (busy) event.preventDefault(); else finishRecording(false); }} className="m-auto max-h-[90vh] w-[min(32rem,calc(100%-2rem))] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl backdrop:bg-black/50">
       <div className="flex justify-between gap-4"><h2 className="text-xl font-bold">Tell us about a problem</h2><button type="button" onClick={close} aria-label="Close" disabled={busy}>✕</button></div>

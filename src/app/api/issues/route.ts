@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomUUID } from 'node:crypto';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
+import { hasExplicitUploadGeneration, readDeletionGeneration } from '@/lib/b1b2/deletion-generation.mjs';
+import { freshRecordingKeyId } from '@/lib/b1b2/recording-key.mjs';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { transcribeAudio } from '@/lib/b1b2/transcription';
 import { logAiRequest } from '@/lib/b1b2/observability';
@@ -33,6 +34,13 @@ export async function POST(request: NextRequest) {
   if (!client || !user) return NextResponse.json({ error: 'Please sign in first.' }, { status: 401 });
   const admin = createAdminSupabase();
   if (!admin) return NextResponse.json({ error: 'Reports are not available right now.' }, { status: 503 });
+  // Capture the upload generation before receiving/transcribing attachments.
+  // 0081 rotates it when data deletion finishes, so an earlier request cannot
+  // commit a late file or report after that point. On the 0080 schema the
+  // legacy path remains available during the explicitly accepted overlap.
+  let generation: string | null;
+  try { generation = await readDeletionGeneration(admin, user.id, request.headers); }
+  catch { return NextResponse.json({ error: 'Reports are not available right now.' }, { status: 503 }); }
   const form = await request.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: 'Please check your report.' }, { status: 400 });
   const type = clip(form.get('type'), 20);
@@ -46,6 +54,11 @@ export async function POST(request: NextRequest) {
   const limit = await client.rpc('reserve_issue_report');
   if (limit.error) return NextResponse.json({ error: 'Could not send your report. Please try again.' }, { status: 503 });
   if (!limit.data) return NextResponse.json({ error: 'Please wait before sending another report.' }, { status: 429 });
+  // Allocate before transcription or an attachment upload. 0081's
+  // non-cycling sequence survives deletion and never reuses a report key.
+  let id: string;
+  try { id = await freshRecordingKeyId(admin, generation); }
+  catch { return NextResponse.json({ error: 'Could not send. Please try again.' }, { status: 503 }); }
   let message = messageText;
   if (mode === 'voice' && audio instanceof File) {
     const start = Date.now();
@@ -71,11 +84,13 @@ export async function POST(request: NextRequest) {
     const candidates = [{ text: writing.data?.body, date: writing.data?.created_at }, { text: speaking.data?.transcript, date: speaking.data?.created_at }].filter(x => x.text && x.date).sort((a, b) => String(b.date).localeCompare(String(a.date)));
     lastAnswer = candidates[0]?.text?.slice(0, 10000) ?? null;
   }
-  const id = randomUUID();
   const paths: string[] = [];
   async function upload(file: File, suffix: string) {
-    const path = `${user!.id}/${id}-${suffix}`;
-    const { error } = await admin!.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+    const path = generation ? `${user!.id}/deletion-v1/${generation}/${id}-${suffix}` : `${user!.id}/${id}-${suffix}`;
+    const { error } = await admin!.storage.from(BUCKET).upload(path, file, {
+      contentType: file.type, upsert: false,
+      ...(generation ? { metadata: { data_deletion_client: hasExplicitUploadGeneration(request.headers, user!.id) ? 'v1' : 'legacy' } } : {}),
+    });
     if (error) throw error;
     paths.push(path);
     return path;
@@ -83,7 +98,7 @@ export async function POST(request: NextRequest) {
   try {
     const audioPath = mode === 'voice' && audio instanceof File ? await upload(audio, 'audio.wav') : null;
     const imagePath = image instanceof File ? await upload(image, 'screenshot') : null;
-    const { error } = await admin.from('issue_reports').insert({ id, user_id: user.id, type, message, page_url: pageUrl, browser: clip(form.get('browser'), 512), device: clip(form.get('device'), 100), screen_size: clip(form.get('screen'), 40), current_week: await currentLearnerWeek(), app_version: (process.env.VERCEL_GIT_COMMIT_SHA || process.env.APP_VERSION || 'unknown').slice(0, 80), last_answer: lastAnswer, audio_path: audioPath, screenshot_path: imagePath });
+    const { error } = await admin.from('issue_reports').insert({ id, user_id: user.id, type, message, page_url: pageUrl, browser: clip(form.get('browser'), 512), device: clip(form.get('device'), 100), screen_size: clip(form.get('screen'), 40), current_week: await currentLearnerWeek(), app_version: (process.env.VERCEL_GIT_COMMIT_SHA || process.env.APP_VERSION || 'unknown').slice(0, 80), last_answer: lastAnswer, audio_path: audioPath, screenshot_path: imagePath, ...(generation ? { data_deletion_generation: generation } : {}) });
     if (error) throw error;
   } catch (error) {
     if (paths.length) await admin.storage.from(BUCKET).remove(paths);
