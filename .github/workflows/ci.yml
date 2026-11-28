@@ -226,6 +226,16 @@ jobs:
           git archive origin/main supabase-b1-b2/migrations | tar -x -C "$workdir/from-main"
           cp "$workdir/from-main/supabase-b1-b2/migrations/"*.sql "$workdir/supabase/migrations/"
           cp supabase-b1-b2/migrations/*.sql "$workdir/supabase/migrations/"
+          # While 0081 is still a proposed expansion, first run the new app on
+          # 0080, then apply 0081 and run the archived old app. Once 0081 is on
+          # main, normal CI rebuilds the complete current schema in one pass.
+          migration='supabase-b1-b2/migrations/0081_retryable_learning_data_deletion.sql'
+          if [ -f "$migration" ] && ! git cat-file -e "origin/main:$migration" 2>/dev/null; then
+            rm "$workdir/supabase/migrations/0081_retryable_learning_data_deletion.sql"
+            echo 'staged_0081=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'staged_0081=false' >> "$GITHUB_OUTPUT"
+          fi
           supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
       - name: Seed isolated E2E learner and minimal fixture
         env:
@@ -251,6 +261,73 @@ jobs:
           test -n "$E2E_SUPABASE_URL"
           test -n "$E2E_SUPABASE_ANON_KEY"
           npm run build
+      - name: Initialize browser network audit
+        id: init_e2e_audit
+        env:
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+        run: |
+          mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
+          : > "$E2E_NETWORK_AUDIT_FILE"
+      - name: Test new app against 0080 on isolated Supabase
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_ROLLOUT_PAIR: new-app-old-schema
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-rollout.config.mjs --reporter=line,github
+      - name: Expand isolated E2E schema with 0081
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_DB_URL: ${{ secrets.E2E_SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test "$E2E_SUPABASE_PROJECT_REF" = frkciyjvjlnqpaifkwtz
+          workdir="$RUNNER_TEMP/e2e-supabase"
+          cp supabase-b1-b2/migrations/0081_retryable_learning_data_deletion.sql "$workdir/supabase/migrations/"
+          supabase --workdir "$workdir" db push --db-url "$E2E_SUPABASE_DB_URL" --include-all --yes
+      - name: Build the pre-0081 app for the isolated rollout test
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          old="$RUNNER_TEMP/fluency-pre-0081"
+          mkdir -p "$old"
+          git archive 9888873324ee0ab55f5d194f6b703a590f982d30 | tar -x -C "$old"
+          # Reuse only an identical lockfile/dependency set. If it changes,
+          # fail and update this step to install the archived dependencies.
+          cmp "$old/package.json" "$GITHUB_WORKSPACE/package.json"
+          cmp "$old/package-lock.json" "$GITHUB_WORKSPACE/package-lock.json"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$old/node_modules"
+          npm --prefix "$old" run build
+      - name: Test pre-0081 app against expanded isolated Supabase
+        if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
+        env:
+          E2E_ROLLOUT_PAIR: old-app-new-schema
+          E2E_OLD_APP_DIR: ${{ runner.temp }}/fluency-pre-0081
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-rollout.config.mjs --reporter=line,github
       # Every user these tests sign in as is created with
       # auth.admin.createUser({ email_confirm: true }); the guard earlier in this
       # job fails the build if a test ever goes back to an email-sending flow.
@@ -260,8 +337,6 @@ jobs:
         # the writing step on a phone viewport, the writing-step word counter and
         # hint, both request timeouts, and the service-worker install.
         run: |
-          mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
-          : > "$E2E_NETWORK_AUDIT_FILE"
           # Run the deletion and recording integration cases first so failures
           # reach annotations early. The second invocation excludes exactly
           # those files and still runs every other browser test under this lock.
@@ -320,7 +395,7 @@ jobs:
         run: node scripts/test-rls.mjs
 
       - name: Verify no browser requests reached the live Supabase project
-        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success' && steps.run_e2e.outcome != 'skipped'
+        if: always() && steps.verify_e2e_target.outcome == 'success' && steps.init_e2e_audit.outcome == 'success'
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
         run: node scripts/report-e2e-network-audit.mjs

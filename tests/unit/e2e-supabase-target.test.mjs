@@ -186,7 +186,23 @@ test('RLS and real Storage tests run under the same lock as the rebuilt E2E sche
   const rebuild = e2e.indexOf('Apply repository migrations to the isolated E2E project');
   const browser = e2e.indexOf('Run Playwright E2E tests');
   const cleanup = e2e.indexOf('Delete this run\'s isolated E2E learner');
-  assert.ok(rebuild >= 0 && browser > rebuild && cleanup > browser);
+  const newOnOld = e2e.indexOf('Test new app against 0080 on isolated Supabase');
+  const expansion = e2e.indexOf('Expand isolated E2E schema with 0081');
+  const oldOnNew = e2e.indexOf('Test pre-0081 app against expanded isolated Supabase');
+  assert.ok(rebuild >= 0 && newOnOld > rebuild && expansion > newOnOld && oldOnNew > expansion && browser > oldOnNew && cleanup > browser);
+  assert.match(e2e, /! git cat-file -e "origin\/main:\$migration"/);
+  assert.match(e2e, /git archive 9888873324ee0ab55f5d194f6b703a590f982d30/);
+  assert.match(e2e, /E2E_ROLLOUT_PAIR: new-app-old-schema/);
+  assert.match(e2e, /E2E_ROLLOUT_PAIR: old-app-new-schema/);
+  assert.match(e2e, /if: always\(\) && steps\.verify_e2e_target\.outcome == 'success' && steps\.init_e2e_audit\.outcome == 'success'/);
+  for (const position of [newOnOld, oldOnNew]) {
+    const end = e2e.indexOf('\n      - name:', position);
+    const step = e2e.slice(position, end);
+    assert.match(step, /if: steps\.apply_e2e_migrations\.outputs\.staged_0081 == 'true'/);
+    assert.match(step, /E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz/);
+    assert.match(step, /E2E_TAG_TEST_USERS: 'true'/);
+    assert.match(step, /E2E_NETWORK_AUDIT_FILE:/);
+  }
   for (const script of ['test-ai-limits.mjs', 'test-issue-alert-grouping.mjs', 'test-rls.mjs']) {
     const position = e2e.indexOf(`run: node scripts/${script}`);
     assert.ok(position > browser && position < cleanup, `${script} must run before cleanup without releasing the lock`);

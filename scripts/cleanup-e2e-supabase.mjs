@@ -25,6 +25,14 @@ export async function cleanupE2ESupabase({ admin, env = process.env, cleanupUser
   for (const user of candidates) {
     try {
       if (typeof user.id !== 'string' || !user.id) throw new Error('A matching fixture has no user ID');
+      // A killed browser can leave a durable deletion barrier. Release it only
+      // for a positively identified, run-scoped fixture on the pinned isolated
+      // project, before removing that fixture's rows and private files. Normal
+      // learner deletion must never bypass this barrier.
+      const unlocked = await admin.from('week_speaking_deletion_locks').delete().eq('user_id', user.id);
+      if (unlocked.error && !['42P01', 'PGRST205'].includes(unlocked.error.code)) {
+        throw new Error(`Could not clear this fixture's deletion barrier: ${unlocked.error.message}`);
+      }
       // Includes private Storage before deleting auth, and fails closed if any
       // bucket or row could not be cleaned so the user stays discoverable.
       await cleanupUser(admin, user.id, { strict: true });

@@ -25,7 +25,12 @@ cancelled, and explicitly fails unless that job succeeded. This matters because
 GitHub can otherwise accept a skipped required check. An entirely cancelled
 workflow is still cancelled, not proof that any fixture passed. The critical
 deletion and weekly-recording browser cases run first; the remaining invocation
-excludes those files but runs the rest of the suite. Before the reset,
+excludes those files but runs the rest of the suite. While 0081 is still absent
+from main, CI first runs the new production build against hosted 0080, applies
+0081, and runs the archived pre-0081 production build against it. These two
+isolated browser tests use the real Supabase API and Storage, but the app servers
+run on the CI runner; they are not Vercel or production-deployment evidence.
+All phases hold the same lock and use run-tagged fixtures. Before the reset,
 the target guard requires the pinned project's exact direct host or Supabase
 session-pooler tenant and rejects connection-parameter overrides. An unfamiliar
 connection string fails closed and must be reviewed, not bypassed. The live

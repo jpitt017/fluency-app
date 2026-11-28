@@ -93,10 +93,12 @@ keys, and the expanded schema requires a fresh reservation for tagged recordings
 following deletion. The existing `speaking-recordings` owner policy also allows
 legacy/direct clients to write arbitrary untagged keys while the fence is off.
 If such a client reuses an old key for genuinely new bytes, an already-snapshotted
-worker or sweep can remove those bytes. This is another form of the accepted
-legacy overlap risk; retire all such writers before enabling the fence and sweep.
-Do not introduce a new key-reusing writer without a reviewed version-aware
-removal scheme. The old 0080 schema cannot enforce this protection.
+worker or sweep can remove those bytes, even before the sweep is enabled. The
+owner accepted a temporary overlap, but has not separately accepted this specific
+new-work loss risk. Review it explicitly before approving production rollout;
+retire all such writers before enabling the fence and sweep. Do not introduce a
+new key-reusing writer without a reviewed version-aware removal scheme. The old
+0080 schema cannot enforce this protection.
 
 The sweep cannot retroactively identify a deletion that completed entirely on
 0080 before its completion marker existed. Plan a schema-first rollout of 0081
@@ -171,8 +173,12 @@ recording keys, and reject learner or stale staff writes. The CI-wired isolated
 Supabase RLS fixture uploads synthetic late files, runs the same worker, and
 checks that new and other-user files survive. A separate isolated browser
 fixture interrupts the real two-phase deletion after the job begins, then
-resumes it and checks that an old receipt cannot erase later work. Neither is
-a live production deletion. CI keeps both fixtures in the same isolated-project
-lock as the schema rebuild, so another branch cannot replace the schema between
-phases. Hosted Storage, hosted CORS, and the new GitHub CI run still need to
-pass before rollout; synthetic Storage and browser fixtures do not prove them.
+resumes it and checks that an old receipt cannot erase later work. While 0081 is
+not on main, a staged hosted-Supabase test also runs the new production build
+against 0080, then the archived pre-0081 production build against 0081. It uses
+real Auth and Storage and tests deletion, cache cleanup and owner isolation in
+both orders. The app servers run on the CI runner, not Vercel; this is not a
+production deployment or production deletion. CI keeps these fixtures in the
+same isolated-project lock as the schema rebuild, so another branch cannot
+replace the schema between phases. Hosted Storage, CORS and the new GitHub CI
+run still need to pass before rollout; adding a fixture is not evidence it ran.
