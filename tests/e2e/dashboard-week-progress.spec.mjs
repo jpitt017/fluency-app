@@ -4,6 +4,16 @@ import { readFileSync } from 'node:fs';
 import { createTestUser, deleteTestUser } from '../../scripts/lib/test-user.mjs';
 
 const details = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json', import.meta.url)));
+const vocabularyBank = JSON.parse(readFileSync(new URL('../../supabase-b1-b2/content/curriculum/vocabulary-exercises-weeks-01-04-v2.json', import.meta.url)));
+const weekOneVocabulary = vocabularyBank.weeks.find((entry) => entry.week === 1);
+const grammarItems = details.weeks[0].grammar.practice.items;
+const vocabularyItems = [
+  ...weekOneVocabulary.match.items,
+  ...weekOneVocabulary.text.items,
+  ...weekOneVocabulary.chooseVerb,
+  ...weekOneVocabulary.wordForms,
+  ...weekOneVocabulary.typeTheWord.items,
+];
 
 const url = process.env.E2E_SUPABASE_URL;
 const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
@@ -17,10 +27,12 @@ test('the dashboard reload reflects completion records for all six weekly tasks'
     // Seed the exact server-side records each completed task leaves behind;
     // the page must derive its display from those rows after a fresh request.
     const writes = await Promise.all([
-      admin.from('week_skill_completions').insert([
-        { user_id: user.id, week_number: 1, skill: 'grammar', answered: 1, correct: 1, total: 1 },
-        { user_id: user.id, week_number: 1, skill: 'vocabulary', answered: 1, correct: 1, total: 1 },
-      ]),
+      admin.from('week_grammar_attempts').insert(grammarItems.map((item) => ({
+        user_id: user.id, week_number: 1, item_id: item.id, answer: 'saved', correct: true,
+      }))),
+      admin.from('week_vocabulary_attempts').insert(vocabularyItems.map((item) => ({
+        user_id: user.id, week_number: 1, item_id: item.id, answer: 'saved', correct: true,
+      }))),
       admin.from('week_input_submissions').insert([
         { user_id: user.id, week_number: 1, skill: 'reading' },
         { user_id: user.id, week_number: 1, skill: 'listening' },
