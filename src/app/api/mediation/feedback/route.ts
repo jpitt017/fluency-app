@@ -35,6 +35,7 @@ Do not mark mediation as required for unlocking; it is recommended practice only
 Write every note in clear, simple British English.
 
 Return at most three concrete language corrections from the learner's own words. Use only these categories: ${DB_ERROR_CATEGORIES.join(', ')}.
+The corrected sentence must keep the learner's ideas. Don't add new information or phrases.
 Also return a confidence between 0 and 1 in your own assessment. Low confidence means the response is ambiguous or hard to assess.
 
 ${UNTRUSTED_DATA_SYSTEM_RULE}

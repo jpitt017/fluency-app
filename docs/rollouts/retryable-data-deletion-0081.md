@@ -177,11 +177,31 @@ risk; do not claim the sweep covers it. Do not backfill all accounts as deleted.
      > .arena-work/rollout-0081-recovery/rollout.sql
    ```
 
-   Review the prepared SQL and its checksum against the approved commit. This
-   step connects nowhere. Its single `DO` statement checks function drift,
-   preexisting 0081 objects/history and the old-schema allocator grants,
-   applies the exact file, and records numeric history together. CI exercises
-   its late-failure rollback on disposable SQL.
+   The helper refuses a migration whose SHA-256 is not the pinned, reviewed
+   0081 digest. The generated `DO` also checks that digest against the embedded
+   migration text before executing it. The reviewed production wrapper is
+   `docs/rollouts/retryable-data-deletion-0081-apply.sql`; it contains the four
+   captured function **digests**, not the private function snapshot. Its full
+   file SHA-256 is
+   `27841dc084ee957a02118beaab0921c8780622eaa5055270d18e1ee1617b9f5d`.
+   Compare it byte-for-byte with fresh output after rechecking live state and
+   the function snapshots; regenerate and review if those inputs have changed.
+
+   Review the prepared SQL and its full-file checksum against the approved
+   commit. This step connects nowhere. Its single `DO` statement checks
+   function drift, preexisting 0081 objects/history, the old-schema allocator
+   grants and the embedded payload checksum; it applies the exact migration and
+   records numeric history together. CI tests modified payloads, an unmodified
+   apply and late-failure rollback on disposable SQL.
+
+   The in-statement checksum covers **only the embedded migration text**. It
+   cannot protect edits to the outer wrapper, the check itself or its expected
+   digest. The full-file SHA verifies a downloaded file, not automatically the
+   text ultimately submitted by an SQL editor. Load the complete verified file
+   unchanged; do not transcribe it or rely on the internal check as proof that
+   the entire submission is unchanged. If its exact submission cannot be
+   verified, stop and review the transport before applying.
+
    **Never** execute it as a production probe, even inside `BEGIN`/`ROLLBACK`.
    After CI/review and separate approval, execute that reviewed statement once
    according to `docs/CONTENT_PIPELINE.md`. If the response is ambiguous, do not

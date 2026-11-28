@@ -25,7 +25,7 @@ import { focusNextTask, usePracticeNavigation } from './usePracticeNavigation';
 import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import { usePendingChecks } from './usePendingChecks';
 
-type Marked = { correct: boolean; reason: string | null };
+type Marked = { correct: boolean; nearly?: boolean; reason: string | null };
 
 const NO_ANSWERS: Record<string, SavedAnswer> = {};
 
@@ -220,7 +220,7 @@ function Item({
       </div>
       {marked && (
         <div role="status" className={marked.correct ? 'text-emerald-800' : 'text-amber-900'}>
-          <strong>{marked.correct ? 'Correct! ' : 'Not quite. '}</strong>
+          <strong>{marked.correct ? 'Correct! ' : marked.nearly ? '' : 'Not quite. '}</strong>
           {marked.reason}
         </div>
       )}

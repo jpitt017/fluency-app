@@ -1,0 +1,1227 @@
+{
+  "version": "v1",
+  "status": "draft, pending teacher review",
+  "note": "Extra deterministic practice items for Review vocabulary and collocation cards (Weeks 1–4). Used only for instant, no-AI extra practice; never alters review schedules.",
+  "items": [
+    {
+      "id": "VR-W1-adapt-1",
+      "week": 1,
+      "term": "adapt",
+      "prompt": "It took him a few weeks to ___ to the new office.",
+      "options": ["adapt", "adopt", "arrange"],
+      "key": "adapt",
+      "accepted": [],
+      "reason": "We say adapt to a new situation."
+    },
+    {
+      "id": "VR-W1-adapt-2",
+      "week": 1,
+      "term": "adapt",
+      "prompt": "She ___ (adapt) quickly when she moved to Berlin.",
+      "options": [],
+      "key": "adapted",
+      "accepted": [],
+      "reason": "Past simple of adapt is adapted."
+    },
+    {
+      "id": "VR-W1-turning-point-1",
+      "week": 1,
+      "term": "turning point",
+      "prompt": "Starting that course was a ___ in my career.",
+      "options": ["turning point", "deadline", "routine"],
+      "key": "turning point",
+      "accepted": [],
+      "reason": "A turning point is a time when something important changes."
+    },
+    {
+      "id": "VR-W1-turning-point-2",
+      "week": 1,
+      "term": "turning point",
+      "prompt": "Meeting my business partner was a real ___ (2 words) in my life.",
+      "options": [],
+      "key": "turning point",
+      "accepted": [],
+      "reason": "We say a turning point in someone's life."
+    },
+    {
+      "id": "VR-W1-challenge-1",
+      "week": 1,
+      "term": "challenge",
+      "prompt": "We ___ several challenges in our first year abroad.",
+      "options": ["faced", "did", "made"],
+      "key": "faced",
+      "accepted": [],
+      "reason": "We say face a challenge."
+    },
+    {
+      "id": "VR-W1-challenge-2",
+      "week": 1,
+      "term": "challenge",
+      "prompt": "Learning a language as an adult is a rewarding ___.",
+      "options": ["challenge", "custom", "ambition"],
+      "key": "challenge",
+      "accepted": [],
+      "reason": "A challenge is something new and difficult that needs effort."
+    },
+    {
+      "id": "VR-W1-get-used-to-1",
+      "week": 1,
+      "term": "get used to",
+      "prompt": "I soon got used to ___ up early for work.",
+      "options": ["waking", "wake", "woke"],
+      "key": "waking",
+      "accepted": [],
+      "reason": "After get used to, use the -ing form (not the infinitive)."
+    },
+    {
+      "id": "VR-W1-get-used-to-2",
+      "week": 1,
+      "term": "get used to",
+      "prompt": "It took me a month to ___ (get used to / drive) on the left.",
+      "options": [],
+      "key": "get used to driving",
+      "accepted": [],
+      "reason": "Use get used to + -ing for a new habit becoming normal."
+    },
+    {
+      "id": "VR-W1-look-back-on-1",
+      "week": 1,
+      "term": "look back on",
+      "prompt": "When I ___ my university years, I smile.",
+      "options": ["look back on", "look forward to", "get on with"],
+      "key": "look back on",
+      "accepted": [],
+      "reason": "Look back on means think about something in the past."
+    },
+    {
+      "id": "VR-W1-look-back-on-2",
+      "week": 1,
+      "term": "look back on",
+      "prompt": "We often look back ___ our first trip together.",
+      "options": ["on", "for", "at"],
+      "key": "on",
+      "accepted": [],
+      "reason": "The multi-word verb is look back on."
+    },
+    {
+      "id": "VR-W1-regret-1",
+      "week": 1,
+      "term": "regret",
+      "prompt": "I've never regretted ___ my old job.",
+      "options": ["leaving", "to leave", "of leaving"],
+      "key": "leaving",
+      "accepted": [],
+      "reason": "Use regret + -ing for something you did in the past."
+    },
+    {
+      "id": "VR-W1-regret-2",
+      "week": 1,
+      "term": "regret",
+      "prompt": "She ___ (regret) not learning French at school.",
+      "options": [],
+      "key": "regrets",
+      "accepted": ["regretted"],
+      "reason": "Regret takes -ing directly without of."
+    },
+    {
+      "id": "VR-W1-gradually-1",
+      "week": 1,
+      "term": "gradually",
+      "prompt": "The city ___ began to feel like home.",
+      "options": ["gradually", "politely", "traditionally"],
+      "key": "gradually",
+      "accepted": [],
+      "reason": "Gradually means slowly, a little at a time."
+    },
+    {
+      "id": "VR-W1-gradually-2",
+      "week": 1,
+      "term": "gradually",
+      "prompt": "Her confidence ___ (gradual) grew over the year.",
+      "options": [],
+      "key": "gradually",
+      "accepted": [],
+      "reason": "Before the verb grew, use the adverb gradually."
+    },
+    {
+      "id": "VR-W1-memorable-1",
+      "week": 1,
+      "term": "memorable",
+      "prompt": "Visiting Granada was a truly ___ trip.",
+      "options": ["memorable", "unfamiliar", "awkward"],
+      "key": "memorable",
+      "accepted": [],
+      "reason": "Memorable means easy to remember because it was special."
+    },
+    {
+      "id": "VR-W1-memorable-2",
+      "week": 1,
+      "term": "memorable",
+      "prompt": "It was the most ___ (memory) evening of the holiday.",
+      "options": [],
+      "key": "memorable",
+      "accepted": [],
+      "reason": "Before the noun evening, use the adjective memorable."
+    },
+    {
+      "id": "VR-W1-make-a-big-decision-1",
+      "week": 1,
+      "term": "make a big decision",
+      "prompt": "She ___ a big decision to change career.",
+      "options": ["made", "took", "did"],
+      "key": "made",
+      "accepted": [],
+      "reason": "We say make a decision, not take a decision."
+    },
+    {
+      "id": "VR-W1-make-a-big-decision-2",
+      "week": 1,
+      "term": "make a big decision",
+      "prompt": "Before you ___ (make) a big decision, talk to someone you trust.",
+      "options": [],
+      "key": "make",
+      "accepted": [],
+      "reason": "We say make a big decision."
+    },
+    {
+      "id": "VR-W1-take-a-risk-1",
+      "week": 1,
+      "term": "take a risk",
+      "prompt": "Opening a small bookshop means ___ a risk.",
+      "options": ["taking", "making", "running"],
+      "key": "taking",
+      "accepted": [],
+      "reason": "We say take a risk, not run or make a risk."
+    },
+    {
+      "id": "VR-W1-take-a-risk-2",
+      "week": 1,
+      "term": "take a risk",
+      "prompt": "Are you willing to ___ (take) a risk and move abroad?",
+      "options": [],
+      "key": "take",
+      "accepted": [],
+      "reason": "We say take a risk."
+    },
+    {
+      "id": "VR-W1-make-a-change-1",
+      "week": 1,
+      "term": "make a change",
+      "prompt": "It's never too late to ___ a change in your routine.",
+      "options": ["make", "do", "take"],
+      "key": "make",
+      "accepted": [],
+      "reason": "We say make a change, not do a change."
+    },
+    {
+      "id": "VR-W1-make-a-change-2",
+      "week": 1,
+      "term": "make a change",
+      "prompt": "They ___ (make) a few changes to the menu last week.",
+      "options": [],
+      "key": "made",
+      "accepted": [],
+      "reason": "Past simple of make is made: make a change."
+    },
+    {
+      "id": "VR-W1-keep-in-touch-1",
+      "week": 1,
+      "term": "keep in touch",
+      "prompt": "I still ___ in touch with my college friends.",
+      "options": ["keep", "hold", "maintain"],
+      "key": "keep",
+      "accepted": [],
+      "reason": "We say keep in touch."
+    },
+    {
+      "id": "VR-W1-keep-in-touch-2",
+      "week": 1,
+      "term": "keep in touch",
+      "prompt": "We've ___ (keep) in touch since we left university.",
+      "options": [],
+      "key": "kept",
+      "accepted": [],
+      "reason": "Past participle of keep is kept: keep in touch."
+    },
+    {
+      "id": "VR-W1-make-progress-1",
+      "week": 1,
+      "term": "make progress",
+      "prompt": "You're ___ great progress with your English.",
+      "options": ["making", "doing", "having"],
+      "key": "making",
+      "accepted": [],
+      "reason": "We say make progress, not do progress."
+    },
+    {
+      "id": "VR-W1-make-progress-2",
+      "week": 1,
+      "term": "make progress",
+      "prompt": "He ___ (make) real progress after practising every day.",
+      "options": [],
+      "key": "made",
+      "accepted": ["has made", "'s made"],
+      "reason": "We say make progress."
+    },
+    {
+      "id": "VR-W1-take-up-1",
+      "week": 1,
+      "term": "take up",
+      "prompt": "She ___ painting after she retired.",
+      "options": ["took up", "put off", "set off"],
+      "key": "took up",
+      "accepted": [],
+      "reason": "Take up means start a new hobby or activity."
+    },
+    {
+      "id": "VR-W1-take-up-2",
+      "week": 1,
+      "term": "take up",
+      "prompt": "I want to ___ (take up) swimming this autumn.",
+      "options": [],
+      "key": "take up",
+      "accepted": [],
+      "reason": "Use take up for starting a new activity."
+    },
+    {
+      "id": "VR-W2-ambition-1",
+      "week": 2,
+      "term": "ambition",
+      "prompt": "His main ___ is to open a small bakery.",
+      "options": ["ambition", "deadline", "custom"],
+      "key": "ambition",
+      "accepted": [],
+      "reason": "An ambition is something you really want to do in life."
+    },
+    {
+      "id": "VR-W2-ambition-2",
+      "week": 2,
+      "term": "ambition",
+      "prompt": "She has always had the ___ (ambitious) to run a marathon.",
+      "options": [],
+      "key": "ambition",
+      "accepted": [],
+      "reason": "After the, use the noun ambition."
+    },
+    {
+      "id": "VR-W2-goal-1",
+      "week": 2,
+      "term": "goal",
+      "prompt": "Our ___ is to finish the house before winter.",
+      "options": ["goal", "routine", "tradition"],
+      "key": "goal",
+      "accepted": [],
+      "reason": "A goal is something you want to do and plan for."
+    },
+    {
+      "id": "VR-W2-goal-2",
+      "week": 2,
+      "term": "goal",
+      "prompt": "Write down one realistic ___ (1 word) for this month.",
+      "options": [],
+      "key": "goal",
+      "accepted": [],
+      "reason": "We say a realistic goal."
+    },
+    {
+      "id": "VR-W2-achieve-1",
+      "week": 2,
+      "term": "achieve",
+      "prompt": "If you practise every day, you'll ___ your goal.",
+      "options": ["achieve", "arrive", "arrange"],
+      "key": "achieve",
+      "accepted": [],
+      "reason": "We say achieve a goal."
+    },
+    {
+      "id": "VR-W2-achieve-2",
+      "week": 2,
+      "term": "achieve",
+      "prompt": "She worked hard and ___ (achieve) top marks in the exam.",
+      "options": [],
+      "key": "achieved",
+      "accepted": [],
+      "reason": "Past simple of achieve is achieved."
+    },
+    {
+      "id": "VR-W2-intend-1",
+      "week": 2,
+      "term": "intend",
+      "prompt": "We ___ to move closer to the coast next year.",
+      "options": ["intend", "try", "catch"],
+      "key": "intend",
+      "accepted": [],
+      "reason": "Intend means plan to do something (unlike Spanish intentar = try)."
+    },
+    {
+      "id": "VR-W2-intend-2",
+      "week": 2,
+      "term": "intend",
+      "prompt": "I ___ (intend) to finish this book before Sunday.",
+      "options": [],
+      "key": "intend",
+      "accepted": [],
+      "reason": "Use intend to + verb for a plan."
+    },
+    {
+      "id": "VR-W2-career-1",
+      "week": 2,
+      "term": "career",
+      "prompt": "She built a successful ___ in nursing.",
+      "options": ["career", "degree", "course"],
+      "key": "career",
+      "accepted": [],
+      "reason": "Career is your working life; a university course is a degree."
+    },
+    {
+      "id": "VR-W2-career-2",
+      "week": 2,
+      "term": "career",
+      "prompt": "He decided to change ___ (1 word) and become a teacher.",
+      "options": [],
+      "key": "career",
+      "accepted": ["careers"],
+      "reason": "We say change career."
+    },
+    {
+      "id": "VR-W2-deadline-1",
+      "week": 2,
+      "term": "deadline",
+      "prompt": "The ___ for sending the form is Friday at 5 p.m.",
+      "options": ["deadline", "destination", "routine"],
+      "key": "deadline",
+      "accepted": [],
+      "reason": "A deadline is the last day or time you can do something."
+    },
+    {
+      "id": "VR-W2-deadline-2",
+      "week": 2,
+      "term": "deadline",
+      "prompt": "We have a tight ___ (1 word), so let's start today.",
+      "options": [],
+      "key": "deadline",
+      "accepted": [],
+      "reason": "We say a tight deadline."
+    },
+    {
+      "id": "VR-W2-apply-1",
+      "week": 2,
+      "term": "apply",
+      "prompt": "He's going to apply ___ a job at the library.",
+      "options": ["for", "to", "at"],
+      "key": "for",
+      "accepted": [],
+      "reason": "We say apply for a job or course."
+    },
+    {
+      "id": "VR-W2-apply-2",
+      "week": 2,
+      "term": "apply",
+      "prompt": "Over forty people ___ (apply) for the position last week.",
+      "options": [],
+      "key": "applied",
+      "accepted": [],
+      "reason": "Past simple of apply is applied: apply for a position."
+    },
+    {
+      "id": "VR-W2-look-forward-to-1",
+      "week": 2,
+      "term": "look forward to",
+      "prompt": "I'm really looking forward to ___ you on Saturday.",
+      "options": ["seeing", "see", "saw"],
+      "key": "seeing",
+      "accepted": [],
+      "reason": "After look forward to, use the -ing form."
+    },
+    {
+      "id": "VR-W2-look-forward-to-2",
+      "week": 2,
+      "term": "look forward to",
+      "prompt": "She's looking forward ___ (to / start) her new course.",
+      "options": [],
+      "key": "to starting",
+      "accepted": [],
+      "reason": "Look forward to is followed by -ing."
+    },
+    {
+      "id": "VR-W2-determined-1",
+      "week": 2,
+      "term": "determined",
+      "prompt": "She's ___ to pass her driving test this year.",
+      "options": ["determined", "awkward", "unfamiliar"],
+      "key": "determined",
+      "accepted": [],
+      "reason": "Determined means very sure you will do something even if it's hard."
+    },
+    {
+      "id": "VR-W2-determined-2",
+      "week": 2,
+      "term": "determined",
+      "prompt": "He was ___ (determine) to finish the race.",
+      "options": [],
+      "key": "determined",
+      "accepted": [],
+      "reason": "Use the adjective determined + to + verb."
+    },
+    {
+      "id": "VR-W2-work-towards-1",
+      "week": 2,
+      "term": "work towards",
+      "prompt": "I'm working ___ a B2 certificate this year.",
+      "options": ["towards", "about", "after"],
+      "key": "towards",
+      "accepted": [],
+      "reason": "We say work towards a goal or qualification."
+    },
+    {
+      "id": "VR-W2-work-towards-2",
+      "week": 2,
+      "term": "work towards",
+      "prompt": "She's ___ (work towards) a degree in design.",
+      "options": [],
+      "key": "working towards",
+      "accepted": [],
+      "reason": "Use work towards for steady effort toward a goal."
+    },
+    {
+      "id": "VR-W2-take-the-first-step-1",
+      "week": 2,
+      "term": "take the first step",
+      "prompt": "Calling the college is ___ the first step.",
+      "options": ["taking", "giving", "doing"],
+      "key": "taking",
+      "accepted": [],
+      "reason": "We say take the first step, not give the first step."
+    },
+    {
+      "id": "VR-W2-take-the-first-step-2",
+      "week": 2,
+      "term": "take the first step",
+      "prompt": "I'll ___ (take) the first step and update my CV tonight.",
+      "options": [],
+      "key": "take",
+      "accepted": [],
+      "reason": "We say take the first step."
+    },
+    {
+      "id": "VR-W2-improve-your-skills-1",
+      "week": 2,
+      "term": "improve your skills",
+      "prompt": "This workshop will help you ___ your skills.",
+      "options": ["improve", "win", "make"],
+      "key": "improve",
+      "accepted": [],
+      "reason": "We say improve your skills."
+    },
+    {
+      "id": "VR-W2-improve-your-skills-2",
+      "week": 2,
+      "term": "improve your skills",
+      "prompt": "Practising aloud is a great way to ___ (improve) your speaking skills.",
+      "options": [],
+      "key": "improve",
+      "accepted": [],
+      "reason": "We say improve your skills."
+    },
+    {
+      "id": "VR-W2-put-off-1",
+      "week": 2,
+      "term": "put (something) off",
+      "prompt": "I keep ___ off calling the dentist.",
+      "options": ["putting", "taking", "making"],
+      "key": "putting",
+      "accepted": [],
+      "reason": "Put off means delay doing something."
+    },
+    {
+      "id": "VR-W2-put-off-2",
+      "week": 2,
+      "term": "put (something) off",
+      "prompt": "Don't put ___ off until tomorrow — do it now.",
+      "options": ["it", "to", "for"],
+      "key": "it",
+      "accepted": [],
+      "reason": "With a pronoun, put it between put and off: put it off."
+    },
+    {
+      "id": "VR-W2-set-a-goal-1",
+      "week": 2,
+      "term": "set a goal",
+      "prompt": "It helps to ___ a clear goal at the start of the month.",
+      "options": ["set", "put", "do"],
+      "key": "set",
+      "accepted": [],
+      "reason": "We say set a goal."
+    },
+    {
+      "id": "VR-W2-set-a-goal-2",
+      "week": 2,
+      "term": "set a goal",
+      "prompt": "I've ___ (set) myself a goal of walking every morning.",
+      "options": [],
+      "key": "set",
+      "accepted": [],
+      "reason": "Set has the same past participle: set yourself a goal."
+    },
+    {
+      "id": "VR-W2-meet-a-deadline-1",
+      "week": 2,
+      "term": "meet a deadline",
+      "prompt": "We worked late on Thursday to ___ the deadline.",
+      "options": ["meet", "arrive", "do"],
+      "key": "meet",
+      "accepted": [],
+      "reason": "We say meet a deadline, not complete a deadline."
+    },
+    {
+      "id": "VR-W2-meet-a-deadline-2",
+      "week": 2,
+      "term": "meet a deadline",
+      "prompt": "She always ___ (meet) her deadlines on time.",
+      "options": [],
+      "key": "meets",
+      "accepted": [],
+      "reason": "We say meet a deadline."
+    },
+    {
+      "id": "VR-W2-success-1",
+      "week": 2,
+      "term": "success",
+      "prompt": "The new café has been a huge ___.",
+      "options": ["success", "succeed", "successful"],
+      "key": "success",
+      "accepted": [],
+      "reason": "After a huge, we need the noun success."
+    },
+    {
+      "id": "VR-W2-success-2",
+      "week": 2,
+      "term": "success",
+      "prompt": "If you keep trying, you'll ___ (success) in the end.",
+      "options": [],
+      "key": "succeed",
+      "accepted": [],
+      "reason": "After you'll, we need the verb succeed."
+    },
+    {
+      "id": "VR-W3-get-on-with-1",
+      "week": 3,
+      "term": "get on with",
+      "prompt": "She ___ really well with her new flatmates.",
+      "options": ["gets on", "sets off", "puts off"],
+      "key": "gets on",
+      "accepted": ["gets along"],
+      "reason": "Get on with means have a friendly relationship with someone."
+    },
+    {
+      "id": "VR-W3-get-on-with-2",
+      "week": 3,
+      "term": "get on with",
+      "prompt": "Do you get on ___ your neighbours?",
+      "options": ["with", "to", "for"],
+      "key": "with",
+      "accepted": [],
+      "reason": "The full phrase is get on with someone."
+    },
+    {
+      "id": "VR-W3-catch-up-1",
+      "week": 3,
+      "term": "catch up (with)",
+      "prompt": "Let's meet for coffee on Friday and ___.",
+      "options": ["catch up", "put off", "take up"],
+      "key": "catch up",
+      "accepted": [],
+      "reason": "Catch up means meet and share your latest news."
+    },
+    {
+      "id": "VR-W3-catch-up-2",
+      "week": 3,
+      "term": "catch up (with)",
+      "prompt": "It was lovely to ___ (catch up) with Marta after the summer.",
+      "options": [],
+      "key": "catch up",
+      "accepted": [],
+      "reason": "We say catch up with someone."
+    },
+    {
+      "id": "VR-W3-arrange-1",
+      "week": 3,
+      "term": "arrange",
+      "prompt": "We should ___ a time to meet next week.",
+      "options": ["arrange", "repair", "fix"],
+      "key": "arrange",
+      "accepted": [],
+      "reason": "Arrange means plan or organise (Spanish arreglar a bike is fix)."
+    },
+    {
+      "id": "VR-W3-arrange-2",
+      "week": 3,
+      "term": "arrange",
+      "prompt": "I've ___ (arrange) to meet Ana outside the café.",
+      "options": [],
+      "key": "arranged",
+      "accepted": [],
+      "reason": "We say arrange to do something."
+    },
+    {
+      "id": "VR-W3-routine-1",
+      "week": 3,
+      "term": "routine",
+      "prompt": "Try to stick to a ___ during busy weeks.",
+      "options": ["routine", "deadline", "destination"],
+      "key": "routine",
+      "accepted": [],
+      "reason": "We say stick to a routine."
+    },
+    {
+      "id": "VR-W3-routine-2",
+      "week": 3,
+      "term": "routine",
+      "prompt": "A short walk is part of my daily ___ (1 word).",
+      "options": [],
+      "key": "routine",
+      "accepted": [],
+      "reason": "We say daily routine."
+    },
+    {
+      "id": "VR-W3-rely-on-1",
+      "week": 3,
+      "term": "rely on",
+      "prompt": "You can always rely ___ David to help.",
+      "options": ["on", "in", "at"],
+      "key": "on",
+      "accepted": [],
+      "reason": "We say rely on someone, not rely in."
+    },
+    {
+      "id": "VR-W3-rely-on-2",
+      "week": 3,
+      "term": "rely on",
+      "prompt": "She's very ___ (rely) — she never forgets a promise.",
+      "options": [],
+      "key": "reliable",
+      "accepted": [],
+      "reason": "Reliable is the adjective from rely on."
+    },
+    {
+      "id": "VR-W3-misunderstanding-1",
+      "week": 3,
+      "term": "misunderstanding",
+      "prompt": "Let's talk and clear up this ___.",
+      "options": ["misunderstanding", "ambition", "tradition"],
+      "key": "misunderstanding",
+      "accepted": [],
+      "reason": "We say clear up a misunderstanding."
+    },
+    {
+      "id": "VR-W3-misunderstanding-2",
+      "week": 3,
+      "term": "misunderstanding",
+      "prompt": "It was just a silly ___ (understand) about the time.",
+      "options": [],
+      "key": "misunderstanding",
+      "accepted": [],
+      "reason": "A misunderstanding is when someone gets the wrong idea."
+    },
+    {
+      "id": "VR-W3-invite-round-1",
+      "week": 3,
+      "term": "invite (someone) round",
+      "prompt": "Can I invite some friends ___ on Saturday?",
+      "options": ["round", "on", "off"],
+      "key": "round",
+      "accepted": ["over"],
+      "reason": "In British English we say invite someone round to your home."
+    },
+    {
+      "id": "VR-W3-invite-round-2",
+      "week": 3,
+      "term": "invite (someone) round",
+      "prompt": "They ___ (invite) us round for dinner last Friday.",
+      "options": [],
+      "key": "invited",
+      "accepted": [],
+      "reason": "We say invite someone round."
+    },
+    {
+      "id": "VR-W3-awkward-1",
+      "week": 3,
+      "term": "awkward (situation)",
+      "prompt": "There was an ___ silence when nobody spoke.",
+      "options": ["awkward", "welcoming", "memorable"],
+      "key": "awkward",
+      "accepted": [],
+      "reason": "Awkward describes an uncomfortable or embarrassing social moment."
+    },
+    {
+      "id": "VR-W3-awkward-2",
+      "week": 3,
+      "term": "awkward (situation)",
+      "prompt": "It was an ___ (1 word) situation, but we laughed about it later.",
+      "options": [],
+      "key": "awkward",
+      "accepted": [],
+      "reason": "We say an awkward situation."
+    },
+    {
+      "id": "VR-W3-politely-1",
+      "week": 3,
+      "term": "politely",
+      "prompt": "He ___ asked if we could turn the music down.",
+      "options": ["politely", "gradually", "traditionally"],
+      "key": "politely",
+      "accepted": [],
+      "reason": "Politely means in a respectful, kind way."
+    },
+    {
+      "id": "VR-W3-politely-2",
+      "week": 3,
+      "term": "politely",
+      "prompt": "You can always disagree ___ (polite).",
+      "options": [],
+      "key": "politely",
+      "accepted": [],
+      "reason": "After the verb disagree, use the adverb politely."
+    },
+    {
+      "id": "VR-W3-make-an-effort-1",
+      "week": 3,
+      "term": "make an effort",
+      "prompt": "She always ___ an effort to learn her neighbours' names.",
+      "options": ["makes", "does", "takes"],
+      "key": "makes",
+      "accepted": [],
+      "reason": "We say make an effort, not do an effort."
+    },
+    {
+      "id": "VR-W3-make-an-effort-2",
+      "week": 3,
+      "term": "make an effort",
+      "prompt": "We should ___ (make) an effort to keep the kitchen tidy.",
+      "options": [],
+      "key": "make",
+      "accepted": [],
+      "reason": "We say make an effort."
+    },
+    {
+      "id": "VR-W3-have-a-lot-in-common-1",
+      "week": 3,
+      "term": "have a lot in common",
+      "prompt": "We ___ a lot in common: we both love hiking.",
+      "options": ["have", "do", "make"],
+      "key": "have",
+      "accepted": [],
+      "reason": "We say have a lot in common."
+    },
+    {
+      "id": "VR-W3-have-a-lot-in-common-2",
+      "week": 3,
+      "term": "have a lot in common",
+      "prompt": "My flatmate and I have a lot in ___ (1 word).",
+      "options": [],
+      "key": "common",
+      "accepted": [],
+      "reason": "The expression is have a lot in common."
+    },
+    {
+      "id": "VR-W3-get-in-touch-1",
+      "week": 3,
+      "term": "get in touch",
+      "prompt": "Please ___ in touch if your train is late.",
+      "options": ["get", "put", "make"],
+      "key": "get",
+      "accepted": [],
+      "reason": "We say get in touch, not put in touch."
+    },
+    {
+      "id": "VR-W3-get-in-touch-2",
+      "week": 3,
+      "term": "get in touch",
+      "prompt": "I'll ___ (get) in touch with the landlord tomorrow.",
+      "options": [],
+      "key": "get",
+      "accepted": [],
+      "reason": "Get in touch means contact someone."
+    },
+    {
+      "id": "VR-W3-come-over-1",
+      "week": 3,
+      "term": "come over",
+      "prompt": "Why don't you ___ for dinner on Sunday?",
+      "options": ["come over", "set off", "put off"],
+      "key": "come over",
+      "accepted": [],
+      "reason": "Come over means visit someone at their home."
+    },
+    {
+      "id": "VR-W3-come-over-2",
+      "week": 3,
+      "term": "come over",
+      "prompt": "My sister ___ (come over) for coffee yesterday afternoon.",
+      "options": [],
+      "key": "came over",
+      "accepted": [],
+      "reason": "Past simple of come over is came over."
+    },
+    {
+      "id": "VR-W3-keep-a-promise-1",
+      "week": 3,
+      "term": "keep a promise",
+      "prompt": "He always ___ his promises.",
+      "options": ["keeps", "completes", "does"],
+      "key": "keeps",
+      "accepted": [],
+      "reason": "We say keep a promise, not complete a promise."
+    },
+    {
+      "id": "VR-W3-keep-a-promise-2",
+      "week": 3,
+      "term": "keep a promise",
+      "prompt": "It's important to ___ (keep) a promise to a friend.",
+      "options": [],
+      "key": "keep",
+      "accepted": [],
+      "reason": "We say keep a promise."
+    },
+    {
+      "id": "VR-W3-pop-round-1",
+      "week": 3,
+      "term": "pop round",
+      "prompt": "I'll ___ later to return your book.",
+      "options": ["pop round", "set off", "take up"],
+      "key": "pop round",
+      "accepted": [],
+      "reason": "Pop round is informal British English for a short visit."
+    },
+    {
+      "id": "VR-W3-pop-round-2",
+      "week": 3,
+      "term": "pop round",
+      "prompt": "Feel free to pop ___ (1 word) for a cup of tea.",
+      "options": [],
+      "key": "round",
+      "accepted": [],
+      "reason": "The phrasal verb is pop round."
+    },
+    {
+      "id": "VR-W3-friend-1",
+      "week": 3,
+      "term": "friend",
+      "prompt": "A good ___ lasts for many years.",
+      "options": ["friendship", "unfriendly", "friendly"],
+      "key": "friendship",
+      "accepted": [],
+      "reason": "After a good, we need the noun friendship."
+    },
+    {
+      "id": "VR-W3-friend-2",
+      "week": 3,
+      "term": "friend",
+      "prompt": "Nobody smiled at us; the receptionist seemed quite ___ (friend).",
+      "options": [],
+      "key": "unfriendly",
+      "accepted": [],
+      "reason": "Unfriendly is the negative adjective."
+    },
+    {
+      "id": "VR-W4-tradition-1",
+      "week": 4,
+      "term": "tradition",
+      "prompt": "Eating twelve grapes at midnight is a famous Spanish ___.",
+      "options": ["tradition", "destination", "connection"],
+      "key": "tradition",
+      "accepted": [],
+      "reason": "A tradition is something people have done for a long time."
+    },
+    {
+      "id": "VR-W4-tradition-2",
+      "week": 4,
+      "term": "tradition",
+      "prompt": "Visitors love trying ___ (tradition) dishes in the old town.",
+      "options": [],
+      "key": "traditional",
+      "accepted": [],
+      "reason": "Before the noun dishes, use the adjective traditional."
+    },
+    {
+      "id": "VR-W4-custom-1",
+      "week": 4,
+      "term": "custom",
+      "prompt": "Taking off your shoes indoors is a local ___.",
+      "options": ["custom", "customs", "career"],
+      "key": "custom",
+      "accepted": [],
+      "reason": "Custom (singular) means a local habit; customs (with -s) is at the airport."
+    },
+    {
+      "id": "VR-W4-custom-2",
+      "week": 4,
+      "term": "custom",
+      "prompt": "The guide explained an old ___ (1 word) from the region.",
+      "options": [],
+      "key": "custom",
+      "accepted": [],
+      "reason": "A custom is a usual way of doing things in a place."
+    },
+    {
+      "id": "VR-W4-destination-1",
+      "week": 4,
+      "term": "destination",
+      "prompt": "Bath is a popular ___ for a weekend away.",
+      "options": ["destination", "tradition", "routine"],
+      "key": "destination",
+      "accepted": [],
+      "reason": "A destination is a place people travel to."
+    },
+    {
+      "id": "VR-W4-destination-2",
+      "week": 4,
+      "term": "destination",
+      "prompt": "We finally reached our ___ (1 word) at midnight.",
+      "options": [],
+      "key": "destination",
+      "accepted": [],
+      "reason": "We say reach your destination."
+    },
+    {
+      "id": "VR-W4-set-off-1",
+      "week": 4,
+      "term": "set off",
+      "prompt": "We ___ early to avoid the traffic.",
+      "options": ["set off", "put off", "took up"],
+      "key": "set off",
+      "accepted": [],
+      "reason": "Set off means start a journey."
+    },
+    {
+      "id": "VR-W4-set-off-2",
+      "week": 4,
+      "term": "set off",
+      "prompt": "What time are you going to set ___ (1 word) tomorrow?",
+      "options": [],
+      "key": "off",
+      "accepted": [],
+      "reason": "The phrasal verb is set off."
+    },
+    {
+      "id": "VR-W4-get-around-1",
+      "week": 4,
+      "term": "get around",
+      "prompt": "It's easy to ___ the city by tram.",
+      "options": ["get around", "set off", "come over"],
+      "key": "get around",
+      "accepted": [],
+      "reason": "Get around means travel from place to place in a town or area."
+    },
+    {
+      "id": "VR-W4-get-around-2",
+      "week": 4,
+      "term": "get around",
+      "prompt": "We rented bikes to ___ (get around) the island.",
+      "options": [],
+      "key": "get around",
+      "accepted": [],
+      "reason": "We say get around a city or island."
+    },
+    {
+      "id": "VR-W4-unfamiliar-1",
+      "week": 4,
+      "term": "unfamiliar",
+      "prompt": "We were ___ with the bus ticket machine.",
+      "options": ["unfamiliar", "welcoming", "determined"],
+      "key": "unfamiliar",
+      "accepted": [],
+      "reason": "We say unfamiliar with something you don't know."
+    },
+    {
+      "id": "VR-W4-unfamiliar-2",
+      "week": 4,
+      "term": "unfamiliar",
+      "prompt": "She felt nervous in an ___ (familiar) part of town.",
+      "options": [],
+      "key": "unfamiliar",
+      "accepted": [],
+      "reason": "Unfamiliar means new and not known to you."
+    },
+    {
+      "id": "VR-W4-welcoming-1",
+      "week": 4,
+      "term": "welcoming",
+      "prompt": "The guesthouse had a warm, ___ atmosphere.",
+      "options": ["welcoming", "awkward", "unfamiliar"],
+      "key": "welcoming",
+      "accepted": [],
+      "reason": "Welcoming means friendly and making visitors feel at home."
+    },
+    {
+      "id": "VR-W4-welcoming-2",
+      "week": 4,
+      "term": "welcoming",
+      "prompt": "Everyone in the village was really ___ (welcome) to visitors.",
+      "options": [],
+      "key": "welcoming",
+      "accepted": [],
+      "reason": "Use the adjective welcoming."
+    },
+    {
+      "id": "VR-W4-local-1",
+      "week": 4,
+      "term": "local",
+      "prompt": "Ask a ___ baker for the freshest bread.",
+      "options": ["local", "awkward", "gradual"],
+      "key": "local",
+      "accepted": [],
+      "reason": "Local means from the nearby area."
+    },
+    {
+      "id": "VR-W4-local-2",
+      "week": 4,
+      "term": "local",
+      "prompt": "Fresh ___ (1 word) fruit is sold at the market every Sunday.",
+      "options": [],
+      "key": "local",
+      "accepted": [],
+      "reason": "We say local fruit or local food."
+    },
+    {
+      "id": "VR-W4-take-a-guided-tour-1",
+      "week": 4,
+      "term": "take a guided tour",
+      "prompt": "We ___ a guided tour of the Roman Baths.",
+      "options": ["took", "made", "did"],
+      "key": "took",
+      "accepted": [],
+      "reason": "We say take a guided tour, not make a guided tour."
+    },
+    {
+      "id": "VR-W4-take-a-guided-tour-2",
+      "week": 4,
+      "term": "take a guided tour",
+      "prompt": "I'd love to ___ (take) a guided tour of the castle.",
+      "options": [],
+      "key": "take",
+      "accepted": [],
+      "reason": "We say take a guided tour."
+    },
+    {
+      "id": "VR-W4-try-the-local-food-1",
+      "week": 4,
+      "term": "try the local food",
+      "prompt": "Don't leave without ___ the local food.",
+      "options": ["trying", "proving", "doing"],
+      "key": "trying",
+      "accepted": [],
+      "reason": "We say try the local food, not prove the local food."
+    },
+    {
+      "id": "VR-W4-try-the-local-food-2",
+      "week": 4,
+      "term": "try the local food",
+      "prompt": "We always ___ (try) the local food when we visit a new place.",
+      "options": [],
+      "key": "try",
+      "accepted": [],
+      "reason": "We say try the local food."
+    },
+    {
+      "id": "VR-W4-travel-light-1",
+      "week": 4,
+      "term": "travel light",
+      "prompt": "For a weekend trip, it's easier to ___ light.",
+      "options": ["travel", "walk", "bring"],
+      "key": "travel",
+      "accepted": [],
+      "reason": "Travel light means take very little luggage."
+    },
+    {
+      "id": "VR-W4-travel-light-2",
+      "week": 4,
+      "term": "travel light",
+      "prompt": "We only took small backpacks so we could travel ___ (1 word).",
+      "options": [],
+      "key": "light",
+      "accepted": [],
+      "reason": "The collocation is travel light."
+    },
+    {
+      "id": "VR-W4-stop-overnight-1",
+      "week": 4,
+      "term": "stop overnight",
+      "prompt": "We decided to ___ overnight in York.",
+      "options": ["stop", "keep", "put"],
+      "key": "stop",
+      "accepted": ["stay"],
+      "reason": "Stop overnight means stay one night during a journey."
+    },
+    {
+      "id": "VR-W4-stop-overnight-2",
+      "week": 4,
+      "term": "stop overnight",
+      "prompt": "They ___ (stop) overnight at a hotel near the ferry port.",
+      "options": [],
+      "key": "stopped",
+      "accepted": [],
+      "reason": "Past simple of stop is stopped: stop overnight."
+    },
+    {
+      "id": "VR-W4-miss-a-connection-1",
+      "week": 4,
+      "term": "miss a connection",
+      "prompt": "Because the train was delayed, we ___ our connection.",
+      "options": ["missed", "lost", "left"],
+      "key": "missed",
+      "accepted": [],
+      "reason": "We say miss a connection, not lose a connection."
+    },
+    {
+      "id": "VR-W4-miss-a-connection-2",
+      "week": 4,
+      "term": "miss a connection",
+      "prompt": "Hurry up or we'll ___ (miss) our connection in Madrid.",
+      "options": [],
+      "key": "miss",
+      "accepted": [],
+      "reason": "We say miss a connection."
+    },
+    {
+      "id": "VR-W4-break-your-journey-1",
+      "week": 4,
+      "term": "break your journey",
+      "prompt": "It's a long drive, so let's ___ our journey in Zaragoza.",
+      "options": ["break", "cut", "stop"],
+      "key": "break",
+      "accepted": [],
+      "reason": "Break your journey means stop partway through a long trip."
+    },
+    {
+      "id": "VR-W4-break-your-journey-2",
+      "week": 4,
+      "term": "break your journey",
+      "prompt": "We ___ (break) our journey with an overnight stay in York.",
+      "options": [],
+      "key": "broke",
+      "accepted": [],
+      "reason": "Past simple of break is broke: break your journey."
+    },
+    {
+      "id": "VR-W4-culture-1",
+      "week": 4,
+      "term": "culture",
+      "prompt": "The city is famous for its lively ___ events.",
+      "options": ["cultural", "culture", "culturally"],
+      "key": "cultural",
+      "accepted": [],
+      "reason": "Before the noun events, use the adjective cultural."
+    },
+    {
+      "id": "VR-W4-culture-2",
+      "week": 4,
+      "term": "culture",
+      "prompt": "Travelling helps you learn about another ___ (1 word).",
+      "options": [],
+      "key": "culture",
+      "accepted": [],
+      "reason": "After another, use the noun culture."
+    }
+  ]
+}

@@ -265,19 +265,39 @@ try {
   await client.query('revoke select,insert,delete on public.ai_request_logs from public,anon,authenticated,service_role');
   await assert.rejects(() => client.query(prepareRollout(migration, captured)), /compatibility grants are missing/);
   await client.query('rollback to savepoint atomic_rollout');
-  const failingMigration = `${migration}\ndo $late_test$ begin
-    if to_regclass('public.data_deletion_safety_config') is null
-      or exists (select 1 from public.ai_evaluation_cache where cache_key='atomic-0081-fixture') then
-      raise exception 'Synthetic rollout did not reach its final statement';
-    end if;
-    raise exception 'Synthetic late transport failure';
-  end $late_test$;`;
-  await assert.rejects(() => client.query(prepareRollout(failingMigration, captured)), /Synthetic late transport failure/);
+  const atomic = prepareRollout(migration, captured);
+  const comment = '-- Retryable learning-data deletion, additive to 0080.';
+  const firstLine = `${comment} The old RPCs and their`;
+  const cacheDelete = 'delete from public.ai_evaluation_cache where cache_owner_id is null;';
+  const corruptions = [
+    atomic.replace(comment, `${comment} edited`),
+    atomic.replace(cacheDelete, 'delete from public.ai_evaluation_cache where cache_owner_id is not null;'),
+    atomic.replace(`${firstLine}\n`, `${firstLine}\r\n`),
+  ];
+  for (const corrupted of corruptions) {
+    assert.ok(corrupted !== atomic, 'the test must actually change the embedded payload');
+    await assert.rejects(() => client.query(corrupted), /Migration file checksum differs from approved 0081/);
+    await client.query('rollback to savepoint atomic_rollout');
+    assert.equal((await client.query("select to_regclass('public.data_deletion_safety_config') as value")).rows[0].value, null);
+    assert.equal((await client.query("select count(*)::int as n from public.ai_evaluation_cache where cache_key='atomic-0081-fixture'")).rows[0].n, 1);
+    assert.equal((await client.query("select count(*)::int as n from supabase_migrations.schema_migrations where version='0081'")).rows[0].n, 0);
+  }
+
+  // Fail after the unmodified migration executes but before history is written.
+  // The pinned checksum must not be bypassed just to construct this fixture.
+  const historyInsert = '  insert into supabase_migrations.schema_migrations(version, name, statements)';
+  assert.equal(atomic.split(historyInsert).length, 2);
+  const failingTransport = atomic.replace(historyInsert, `  if to_regclass('public.data_deletion_safety_config') is null
+    or exists (select 1 from public.ai_evaluation_cache where cache_key='atomic-0081-fixture') then
+    raise exception 'Synthetic rollout did not reach its final statement';
+  end if;
+  raise exception 'Synthetic late transport failure';
+${historyInsert}`);
+  await assert.rejects(() => client.query(failingTransport), /Synthetic late transport failure/);
   await client.query('rollback to savepoint atomic_rollout');
   assert.equal((await client.query("select to_regclass('public.data_deletion_safety_config') as value")).rows[0].value, null);
   assert.equal((await client.query("select count(*)::int as n from public.ai_evaluation_cache where cache_key='atomic-0081-fixture'")).rows[0].n, 1);
   assert.equal((await client.query("select count(*)::int as n from supabase_migrations.schema_migrations where version='0081'")).rows[0].n, 0);
-  const atomic = prepareRollout(migration, captured);
   await client.query(atomic);
   const history = (await client.query("select name,statements from supabase_migrations.schema_migrations where version='0081'")).rows[0];
   assert.equal(history.name, 'retryable_learning_data_deletion');

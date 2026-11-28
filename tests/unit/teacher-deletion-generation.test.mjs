@@ -50,6 +50,12 @@ function rosterFixture(generationResult) {
     './feedback-schema': { ERROR_CATEGORY_LABELS: {} },
     './week-speaking-recordings.mjs': { weekSpeakingAttemptRecordings: () => [], weekSpeakingTakeRecording: () => null },
     './review-queue.mjs': { orderQueue() {}, planQueue() {} },
+    // The roster does not use review-card enrichment, but data.ts imports it.
+    // Fail if this unrelated dependency is ever called in this fixture.
+    '@/lib/curriculum/review-enrichment': {
+      enrichErrorReviewCard() { throw new Error('Unexpected review enrichment in teacher roster'); },
+      enrichVocabReviewCard() { throw new Error('Unexpected review enrichment in teacher roster'); },
+    },
   });
   return { loadTeacherRoster, events };
 }

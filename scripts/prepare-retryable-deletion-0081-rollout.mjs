@@ -12,6 +12,9 @@ import { pathToFileURL } from 'node:url';
 
 const inner = '$fluency_migration_0081$';
 const outer = '$fluency_rollout_0081$';
+// Pin the approved migration, not an arbitrary file supplied to this helper.
+// This also becomes the in-statement integrity check on the embedded payload.
+export const APPROVED_MIGRATION_SHA256 = 'e58e84dee0fd7b7375040f7626cfc53c319664cf8066fad27d66b84ad61c1cfe';
 export const REPLACED_FUNCTIONS = Object.freeze([
   'public.delete_my_learning_data()',
   'public.finish_week_speaking_deletion(uuid,uuid)',
@@ -23,6 +26,9 @@ export function prepareRollout(migration, captured) {
   if (typeof migration !== 'string' || !migration.trim() || migration.includes(inner)
       || migration.includes(outer) || migration.includes('\0')) {
     throw new Error('Invalid migration body or SQL delimiter');
+  }
+  if (createHash('sha256').update(migration, 'utf8').digest('hex') !== APPROVED_MIGRATION_SHA256) {
+    throw new Error('Migration file checksum differs from approved 0081');
   }
   const checks = REPLACED_FUNCTIONS.map((signature) => {
     const entry = captured?.functions?.[signature];
@@ -67,6 +73,9 @@ begin
     raise exception 'The 0080 recording-key compatibility grants are missing';
   end if;
 ${checks}
+  if encode(sha256(convert_to(migration_sql, 'UTF8')), 'hex') <> '${APPROVED_MIGRATION_SHA256}' then
+    raise exception 'Migration file checksum differs from approved 0081';
+  end if;
   execute migration_sql;
   insert into supabase_migrations.schema_migrations(version, name, statements)
     values ('0081', 'retryable_learning_data_deletion', array[migration_sql]);

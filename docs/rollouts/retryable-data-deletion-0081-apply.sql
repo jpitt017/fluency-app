@@ -663,6 +663,9 @@ begin
   if md5(pg_get_functiondef('public.set_ai_eval_cache(text,text,text,jsonb)'::regprocedure)) <> '4210a38ecebcec2aff9ddf3a27e72b90' then
     raise exception 'Captured function changed: public.set_ai_eval_cache(text,text,text,jsonb)';
   end if;
+  if encode(sha256(convert_to(migration_sql, 'UTF8')), 'hex') <> 'e58e84dee0fd7b7375040f7626cfc53c319664cf8066fad27d66b84ad61c1cfe' then
+    raise exception 'Migration file checksum differs from approved 0081';
+  end if;
   execute migration_sql;
   insert into supabase_migrations.schema_migrations(version, name, statements)
     values ('0081', 'retryable_learning_data_deletion', array[migration_sql]);
