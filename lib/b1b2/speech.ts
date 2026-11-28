@@ -118,3 +118,99 @@ export async function playAudioOrSpeak(
   await speakPhrase(fallbackText, lang, rate);
   return 'tts';
 }
+
+const improvedTtsBlobCache = new Map<string, string | 'web-speech'>();
+
+export function clearImprovedAnswerTtsCache() {
+  stopActiveAudio();
+  for (const val of improvedTtsBlobCache.values()) {
+    if (val !== 'web-speech' && typeof URL !== 'undefined') {
+      try {
+        URL.revokeObjectURL(val);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  improvedTtsBlobCache.clear();
+}
+
+/**
+ * Plays British English TTS for "Your answer, improved", cached per attempt/take
+ * and spending 0 AI units. Uses server-cached British MP3 when available and
+ * falls back to British Web Speech synthesis (`en-GB`).
+ */
+export async function playImprovedAnswerTts(params: {
+  cacheKey: string;
+  text: string;
+  kind?: 'attempt' | 'take';
+  id?: string | null;
+  rate?: number;
+  onEnd?: () => void;
+}): Promise<void> {
+  const { cacheKey, text, kind, id, rate = 0.92, onEnd } = params;
+  stopActiveAudio();
+  if (!text.trim() || typeof window === 'undefined') {
+    onEnd?.();
+    return;
+  }
+
+  let cached = improvedTtsBlobCache.get(cacheKey);
+  if (!cached && kind && id) {
+    try {
+      const res = await fetch(
+        `/api/speaking/improved-tts?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`,
+      );
+      if (res.status === 200) {
+        const blob = await res.blob();
+        if (blob.size > 0) {
+          cached = URL.createObjectURL(blob);
+          improvedTtsBlobCache.set(cacheKey, cached);
+        }
+      } else if (res.status === 204 || res.status === 401 || res.status === 404) {
+        cached = 'web-speech';
+        improvedTtsBlobCache.set(cacheKey, cached);
+      }
+    } catch {
+      cached = 'web-speech';
+      improvedTtsBlobCache.set(cacheKey, cached);
+    }
+  }
+
+  if (cached && cached !== 'web-speech') {
+    try {
+      const audio = new Audio(cached);
+      audio.playbackRate = rate;
+      audio.onended = () => {
+        if (activeAudioElement === audio) activeAudioElement = null;
+        onEnd?.();
+      };
+      audio.onerror = () => {
+        if (activeAudioElement === audio) activeAudioElement = null;
+        onEnd?.();
+      };
+      activeAudioElement = audio;
+      await audio.play();
+      return;
+    } catch {
+      activeAudioElement = null;
+    }
+  }
+
+  if (!('speechSynthesis' in window)) {
+    onEnd?.();
+    return;
+  }
+  const synth = window.speechSynthesis;
+  const voices = await loadEnglishVoices();
+  synth.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-GB';
+  utterance.rate = rate;
+  const voice = pickVoiceForLang(voices, 'en-GB', 0);
+  if (voice) utterance.voice = voice;
+  utterance.onend = () => onEnd?.();
+  utterance.onerror = () => onEnd?.();
+  synth.speak(utterance);
+}
+

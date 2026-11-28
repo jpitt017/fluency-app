@@ -3,15 +3,32 @@ export type StructurePoint = { original: string; upgraded: string; explanation: 
 export type Fluency = { wordCount: number; seconds: number | null; wordsPerMinute: number | null; pauses: number | null };
 export type SoundTip = { word: string; label: string; tip: string };
 export type CuePointEvidence = { label: string; quote: string };
+export type CueChecklistItem = { label: string; covered: boolean; quote?: string };
+export type ImprovedHighlight = { substring: string; label: string; explanation: string };
+export type UsedHighlightReport = { substring: string; label: string; used: boolean };
+export type SpeakingAreaDetail = { score: number; strength: string; improvement: string };
+export type SpeakingAreasPayload = {
+  grammar_and_vocabulary: SpeakingAreaDetail;
+  discourse_management: SpeakingAreaDetail;
+  pronunciation: SpeakingAreaDetail | null;
+  interactive_communication: SpeakingAreaDetail | null;
+};
 export type ShortSpeakingFeedback = {
   transcript?: string;
-  score?: number;
   feedback?: string;
   summary?: string;
+  improvedResponse?: string;
+  highlights?: ImprovedHighlight[];
+  usedHighlights?: UsedHighlightReport[];
+  showExampleFirst?: boolean;
+  examplePromptMessage?: string | null;
+  areas?: SpeakingAreasPayload | null;
+  teacherAreaMarks?: Partial<Record<'grammar_and_vocabulary' | 'discourse_management' | 'pronunciation' | 'interactive_communication', number>> | null;
   structure?: StructurePoint | null;
   fluency?: Fluency | null;
   soundTips?: SoundTip[];
   cuePoints?: CuePointEvidence[];
+  cueChecklist?: CueChecklistItem[];
 };
 export function structureUsed(text: string, structure: StructureKind | string): boolean;
 export function sentenceList(text: string): string[];
@@ -19,4 +36,8 @@ export function structurePoint(raw: unknown, transcript: string, weekNumber?: nu
 export function fluencyFromWhisper(transcript: string, result: unknown): Fluency;
 export function soundTips(transcript: string): SoundTip[];
 export function cuePointEvidence(raw: unknown, transcript: string, labels: string[]): CuePointEvidence[];
+export function cueChecklistFromEvidence(rawCuePoints: unknown, transcript: string, labels: string[]): CueChecklistItem[];
+export function validateImprovedHighlights(rawHighlights: unknown, improvedResponse: string, weekNumber?: number | null): ImprovedHighlight[];
+export function detectUsedHighlights(retryTranscript: string, highlights: Array<{ substring: string; label?: string }>): UsedHighlightReport[];
+export function isShortOrOffTopicTranscript(transcript: string, offTopic?: boolean): boolean;
 export function weekStructure(weekNumber?: number | null): StructureKind | null;

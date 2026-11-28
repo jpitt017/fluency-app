@@ -6,17 +6,13 @@ import SpeakingFeedbackDetails from '@/components/b1b2/SpeakingFeedbackDetails';
 import type { ShortSpeakingFeedback } from '@/lib/b1b2/speaking-feedback.mjs';
 
 interface SpeakingFeedback extends ShortSpeakingFeedback {
+  attemptId?: string | null;
   transcript?: string;
   improvedResponse?: string;
   feedback?: string;
   tips?: string[];
-  pragmaticsFeedback?: string[];
   transcriptionNote?: string;
-  score?: number;
   passed?: boolean;
-  mastery?: number;
-  rubric?: Record<string, unknown>;
-  reviewDeck?: string[];
   modelAnswer?: string | null;
   weekRecorded?: boolean | null;
 }
@@ -29,6 +25,8 @@ interface SpeakingLabProps {
   lessonContext?: LessonLabContext;
   unlockedModel?: string | null;
   grammarWeek?: number;
+  partType?: 'questions_about_you' | 'long_turn' | 'follow_up';
+  recordButtonLabel?: string;
 }
 
 export default function SpeakingLab({
@@ -38,6 +36,8 @@ export default function SpeakingLab({
   lessonContext,
   unlockedModel = null,
   grammarWeek,
+  partType,
+  recordButtonLabel = 'Start recording',
 }: SpeakingLabProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -81,7 +81,12 @@ export default function SpeakingLab({
       const width = canvas.width / data.length;
       data.forEach((value, index) => {
         context.fillStyle = '#059669';
-        context.fillRect(index * width, canvas.height - (value / 255) * canvas.height, Math.max(1, width - 1), (value / 255) * canvas.height);
+        context.fillRect(
+          index * width,
+          canvas.height - (value / 255) * canvas.height,
+          Math.max(1, width - 1),
+          (value / 255) * canvas.height,
+        );
       });
     };
     draw();
@@ -103,21 +108,24 @@ export default function SpeakingLab({
       form.set('audio', blob, 'lesson-recording.webm');
       if (lessonContext?.weekNumber) form.set('weekNumber', String(lessonContext.weekNumber));
       if (grammarWeek) form.set('grammarWeek', String(grammarWeek));
-      form.set('prompt', lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice');
+      if (partType) form.set('partType', partType);
+      form.set(
+        'prompt',
+        lessonContext?.prompt ?? speakingFocus ?? 'General B1 → B2 English speaking practice',
+      );
       form.set('targetPhrase', [...(lessonContext?.targetGrammar ?? []), ...languages].join(', '));
       const response = await fetch('/api/speaking/evaluate', { method: 'POST', body: form });
-      const data = (await response.json().catch(() => null)) as (SpeakingFeedback & { error?: string }) | null;
+      const data = (await response.json().catch(() => null)) as
+        | (SpeakingFeedback & { error?: string })
+        | null;
       if (!response.ok || !data) {
-        // The server's own message is already written for a B1 learner (daily
-        // limit, provider outage); anything else stays in the log.
         console.error('[speaking] evaluation failed:', data?.error ?? response.status);
         setError(data?.error || 'We could not check your work. Please try again.');
         return;
       }
       setFeedback(data);
-      lessonContext?.onComplete?.({ transcript: data.transcript, score: data.score });
+      lessonContext?.onComplete?.({ transcript: data.transcript, passed: data.passed });
     } catch (caught) {
-      // A network or parsing fault is technical: log it, show one B1 line.
       console.error('[speaking] evaluation failed:', caught);
       setError('We could not check your work. Please try again.');
     } finally {
@@ -130,14 +138,19 @@ export default function SpeakingLab({
     setError(null);
     setFeedback(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError('Audio recording is not supported in this browser. Try a current desktop or mobile browser.');
+      setError(
+        'Audio recording is not supported in this browser. Try a current desktop or mobile browser.',
+      );
       return;
     }
     startingRef.current = true;
     setIsStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!mountedRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       const audio = new AudioContext();
       audioContextRef.current = audio;
@@ -159,7 +172,6 @@ export default function SpeakingLab({
         if (streamRef.current === stream) streamRef.current = null;
         if (mediaRecorderRef.current === recorder) mediaRecorderRef.current = null;
         stopVisualizer();
-        // Navigating away must stop the microphone, not submit a partial take.
         if (!mountedRef.current) return;
         await evaluateAudio(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
       };
@@ -169,7 +181,9 @@ export default function SpeakingLab({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       mediaRecorderRef.current = null;
-      if (mountedRef.current) setError('Microphone access denied or unavailable. Check your browser permissions.');
+      if (mountedRef.current) {
+        setError('Microphone access denied or unavailable. Check your browser permissions.');
+      }
       stopVisualizer();
     } finally {
       startingRef.current = false;
@@ -184,6 +198,9 @@ export default function SpeakingLab({
       setIsRecording(false);
     }
   }
+
+  const exampleText = feedback?.modelAnswer || unlockedModel;
+  const showExampleFirst = Boolean(feedback?.showExampleFirst && exampleText);
 
   return (
     <div className="space-y-4">
@@ -204,7 +221,7 @@ export default function SpeakingLab({
             </p>
           )}
           <p className="text-[11px] text-emerald-900/80">
-            The AI reads what you said and checks your ideas, grammar and words. To practise pronunciation, use Pronunciation practice.
+            The AI reads what you said and checks your ideas, grammar and words. Pronunciation is marked by your teacher; to practise sounds, use Pronunciation practice.
           </p>
           {(lessonContext?.targetGrammar?.length ?? 0) > 0 && (
             <p className="text-xs text-stone-700">
@@ -214,7 +231,10 @@ export default function SpeakingLab({
           {languages.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {languages.map((item) => (
-                <span key={item} className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-xs text-emerald-900">
+                <span
+                  key={item}
+                  className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-xs text-emerald-900"
+                >
                   {item}
                 </span>
               ))}
@@ -224,7 +244,9 @@ export default function SpeakingLab({
       )}
 
       {lessonContext?.durationSeconds && (
-        <p className="text-xs text-stone-500">Suggested speaking time: {lessonContext.durationSeconds} seconds.</p>
+        <p className="text-xs text-stone-500">
+          Suggested speaking time: {lessonContext.durationSeconds} seconds.
+        </p>
       )}
 
       <div className="flex flex-wrap items-center gap-4">
@@ -235,7 +257,11 @@ export default function SpeakingLab({
             disabled={isAnalyzing || isStarting}
             className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
           >
-            {isStarting ? 'Starting microphone…' : isAnalyzing ? 'Transcribing & analysing…' : 'Start recording'}
+            {isStarting
+              ? 'Starting microphone…'
+              : isAnalyzing
+                ? 'Transcribing & analysing…'
+                : recordButtonLabel}
           </button>
         ) : (
           <button
@@ -266,14 +292,42 @@ export default function SpeakingLab({
         </p>
       )}
 
-      {(feedback?.modelAnswer || unlockedModel) && <section className="rounded-xl border border-emerald-200 p-4"><h3 className="font-semibold">Model answer</h3><p className="mt-2 whitespace-pre-line text-sm">{feedback?.modelAnswer || unlockedModel}</p></section>}
+      {exampleText && showExampleFirst && (
+        <section className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+          <h3 className="font-semibold">Another example</h3>
+          {feedback?.examplePromptMessage && (
+            <p className="text-xs font-semibold text-amber-900">{feedback.examplePromptMessage}</p>
+          )}
+          <p className="whitespace-pre-line text-sm">{exampleText}</p>
+        </section>
+      )}
 
       {feedback && (
         <div className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
-          {lessonContext?.weekNumber && feedback.weekRecorded === true && <p role="status" className="font-semibold text-emerald-800">This counts for Week {lessonContext.weekNumber}.</p>}
-          {lessonContext?.weekNumber && feedback.weekRecorded === false && <p role="alert" className="font-semibold text-rose-700">We could not count this for Week {lessonContext.weekNumber}. Please try again.</p>}
-          <SpeakingFeedbackDetails feedback={feedback} />
+          {lessonContext?.weekNumber && feedback.weekRecorded === true && (
+            <p role="status" className="font-semibold text-emerald-800">
+              This counts for Week {lessonContext.weekNumber}.
+            </p>
+          )}
+          {lessonContext?.weekNumber && feedback.weekRecorded === false && (
+            <p role="alert" className="font-semibold text-rose-700">
+              We could not count this for Week {lessonContext.weekNumber}. Please try again.
+            </p>
+          )}
+          <SpeakingFeedbackDetails
+            feedback={feedback}
+            showImprovedInline
+            ttsKind="attempt"
+            ttsId={feedback.attemptId ?? null}
+          />
         </div>
+      )}
+
+      {exampleText && !showExampleFirst && (
+        <details className="rounded-xl border border-emerald-200 p-4">
+          <summary className="cursor-pointer font-semibold">Another example</summary>
+          <p className="mt-2 whitespace-pre-line text-sm">{exampleText}</p>
+        </details>
       )}
     </div>
   );

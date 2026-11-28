@@ -7,7 +7,15 @@ import { projectSupport } from './listening-support.mjs';
 import { projectReadingSupport } from './reading-support.mjs';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { projectInputQuestions } from './input-marking.mjs';
-import { getCachedSafeInputItems, getCachedSafeWeekDetails, projectSafeInputQuestion, projectSafeWeekDetails } from './syllabus-cache';
+import {
+  getCachedSafeInputItems,
+  getCachedSafeWeekDetails,
+  projectSafeInputQuestion,
+  projectSafeWeekDetails,
+  type SafeSpeakingParts,
+  type SafeWritingCallForArticles,
+  type SafeWritingInputEmail,
+} from './syllabus-cache';
 
 export type LearnerQuestion = { id: string; question: string; options: string[] };
 type Input = { title: string; text?: string; audioUrl?: string; questions: LearnerQuestion[] };
@@ -64,7 +72,22 @@ export type LearnerReading = {
   total: number;
   questionsAnswered: boolean;
 };
-export type LearnerWeek = { canDo: string; title: string; speakingPrompt: string; speakingLength: string | null; cueCard: string; shadowingChunks: { text: string; note: string; audioUrl: string | null }[]; writingPrompt: string; reading: Input; listening: Input; readingSupport: LearnerReading; listeningSupport: LearnerListening };
+export type LearnerWeek = {
+  canDo: string;
+  title: string;
+  speakingPrompt: string;
+  speakingLength: string | null;
+  cueCard: string;
+  speakingParts: SafeSpeakingParts | null;
+  shadowingChunks: { text: string; note: string; audioUrl: string | null }[];
+  writingPrompt: string;
+  writingInputEmail: SafeWritingInputEmail | null;
+  writingCallForArticles: SafeWritingCallForArticles | null;
+  reading: Input;
+  listening: Input;
+  readingSupport: LearnerReading;
+  listeningSupport: LearnerListening;
+};
 
 /** Explicit allowlist: never serialize answer keys, models or listening transcripts. */
 export async function loadLearnerWeek(number: number): Promise<LearnerWeek | null> {
@@ -115,13 +138,19 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
             ...bundledWeek.speaking,
             ...(detail.speaking?.prompt ? { prompt: detail.speaking.prompt } : {}),
             ...(detail.speaking?.cueCard ? { cueCard: detail.speaking.cueCard } : {}),
+            ...(detail.speaking?.parts ? { parts: detail.speaking.parts } : {}),
             ...(detail.speaking?.record ? {
               flow: { ...bundledWeek.speaking.flow, record: detail.speaking.record },
             } : {}),
             ...(detail.speaking?.shadowingChunks ? { shadowingChunks: detail.speaking.shadowingChunks } : {}),
           },
-          ...(detail.writing?.prompt ? {
-            writing: { ...bundledWeek.writing, prompt: detail.writing.prompt },
+          ...(detail.writing ? {
+            writing: {
+              ...bundledWeek.writing,
+              ...(detail.writing.prompt ? { prompt: detail.writing.prompt } : {}),
+              ...(detail.writing.inputEmail ? { inputEmail: detail.writing.inputEmail } : {}),
+              ...(detail.writing.callForArticles ? { callForArticles: detail.writing.callForArticles } : {}),
+            },
           } : {}),
         } as typeof bundledWeek;
       }
@@ -141,11 +170,21 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
   const readingSupport = await loadReadingSupport(number, readingQuestions, reading.text);
   const listeningSupport = await loadListeningSupport(number, listeningQuestions, listening.script);
 
+  const rawWeekWriting = week.writing as typeof bundledWeek.writing & {
+    inputEmail?: SafeWritingInputEmail;
+    callForArticles?: SafeWritingCallForArticles;
+  };
+  const rawWeekSpeaking = week.speaking as typeof bundledWeek.speaking & {
+    parts?: SafeSpeakingParts;
+  };
   return {
     title: week.title, canDo: week.canDo,
     shadowingChunks: (week.speaking.shadowingChunks ?? []).map((chunk: { chunk: string; listenFor: string; audioUrl?: string }) => ({ text: chunk.chunk, note: chunk.listenFor, audioUrl: chunk.audioUrl ?? null })),
     speakingPrompt: week.speaking.prompt, speakingLength: week.speaking.flow.record.match(/\b\d+[–-]\d+\s*s\b/)?.[0].replace(/\s*s$/, ' seconds') ?? null, cueCard: week.speaking.cueCard,
+    speakingParts: rawWeekSpeaking.parts ?? null,
     writingPrompt: week.writing.prompt,
+    writingInputEmail: rawWeekWriting.inputEmail ?? null,
+    writingCallForArticles: rawWeekWriting.callForArticles ?? null,
     reading: { title: reading.title, text: reading.text, questions: readingQuestions },
     listening: { title: listening.title, audioUrl: (listening as { audioUrl?: string }).audioUrl, questions: listeningQuestions },
     readingSupport,

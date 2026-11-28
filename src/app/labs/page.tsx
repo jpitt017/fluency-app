@@ -121,7 +121,13 @@ export default async function LabsPage({ searchParams }: LabsProps) {
               <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>
             )}
           </div>
-          <WritingLab unlockedModel={unlockedModels?.writing} grammarIdeas={grammarIdeas} lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext} />
+          <WritingLab
+            unlockedModel={unlockedModels?.writing}
+            grammarIdeas={grammarIdeas}
+            inputEmail={selectedWeek?.writingInputEmail ?? null}
+            callForArticles={selectedWeek?.writingCallForArticles ?? null}
+            lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext}
+          />
         </section>
 
         <section id="speaking" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
@@ -173,7 +179,9 @@ export default async function LabsPage({ searchParams }: LabsProps) {
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
         <ConversationalSpeakingLab
           sessionTitle="B1 → B2 role-play practice"
-          keyLanguage={['on balance', 'to be honest', 'nevertheless', 'turning point']}
+          weekNumber={weekNumber}
+          discussAndDecide={pronunciationWeek?.speakingParts?.discussAndDecide ?? null}
+          keyLanguage={['on balance', 'to be honest', 'apart from that', 'since then']}
         />
       </section>
     </main>

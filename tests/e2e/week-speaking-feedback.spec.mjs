@@ -54,15 +54,27 @@ async function fakeChecks(page, admin, userId, responses = []) {
     }
     const isPractice = take.data.kind === 'structure';
     const transcript = isPractice ? 'Although I was nervous, I moved.'
-      : take.data.kind === 'first' ? 'When I moved to a new city, I did not know anyone.'
+      : take.data.kind === 'first' ? 'Before last year I worked in a small shop, and when I moved to a new city, I did not know anyone at all.'
         : take.data.sequence === 1 ? "Since then, I've made some friends."
-          : take.data.sequence === 2 ? "Since then, I've made friends and I look back on my first week."
+          : take.data.sequence === 2 ? "Since then, I've made friends and When I look back on my first week I smile."
             : "Since then, I've made friends, and I am happier now.";
     const feedback = isPractice ? { transcript, structure: 'although', used: true } : {
-      transcript, score: 80,
+      transcript,
+      improvedResponse: "Before last year, I worked in a small shop. When I look back on moving to a new city, it was hard at first. Since then, I've met friendly neighbours.",
+      highlights: [
+        { substring: "Since then, I've", label: 'Present perfect', explanation: 'Connects the past change to now.' },
+        { substring: 'When I look back on', label: 'Looking back', explanation: 'Introduces your reflection clearly.' },
+      ],
+      showExampleFirst: false,
+      areas: {
+        grammar_and_vocabulary: { score: 4, strength: 'Clear past simple verbs.', improvement: 'Add present perfect for results now.' },
+        discourse_management: { score: 4, strength: 'Your story follows a clear order.', improvement: 'Use although to join contrasting points.' },
+        pronunciation: null,
+        interactive_communication: null,
+      },
       structure: { original: transcript, upgraded: 'Although I was nervous, I moved to a new city.', explanation: 'Use although to show a contrast.', structure: 'although' },
       cuePoints: [{ label: take.data.kind === 'first' ? 'The change' : 'Now', quote: take.data.kind === 'first' ? 'moved to a new city' : "I've made" }],
-      fluency: { wordCount: 10, seconds: 30 + take.data.sequence, wordsPerMinute: 20, pauses: 1 },
+      fluency: { wordCount: 24, seconds: 30 + take.data.sequence, wordsPerMinute: 48, pauses: 1 },
       soundTips: [{ word: 'moved', label: 'Past ending /d/', tip: 'Here -ed sounds like /d/.' }],
     };
     const finished = await admin.rpc('finish_week_speaking_check', {
@@ -90,7 +102,7 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
     await fakeChecks(page, admin, learner.id);
     await page.goto('/week/1');
     await openWeekTask(page, 'speaking-practice');
-    await expect(page.getByRole('heading', { name: '3. Listen to the model' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: '3. Your answer, improved' })).toHaveCount(0);
     await expect(page.getByText("Since then, I've", { exact: true })).toHaveCount(0);
 
     await record(page, 'Start recording');
@@ -109,8 +121,8 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByText('Your kept first recording counts for Week 1.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Build a better sentence' })).toHaveCount(1);
-    await expect(page.getByLabel('Fluency information').getByText(/20 words a minute/)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Listen to the model', exact: true })).toBeVisible();
+    await expect(page.getByLabel('Fluency information').getByText(/48 words a minute/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: '3. Your answer, improved' })).toBeVisible();
     const flow = await admin.from('week_speaking_flows').select('*').eq('user_id', learner.id).eq('week_number', 1).single();
     const firstTakes = await admin.from('week_speaking_takes').select('*').eq('user_id', learner.id).eq('kind', 'first').order('sequence');
     expect(firstTakes.data).toHaveLength(3);
@@ -120,23 +132,26 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
 
     await record(page, 'Say it again');
     await expect(page.getByText('We found although in your transcript. This checks the pattern, not all your grammar or pronunciation.')).toBeVisible();
+    await page.locator('summary').filter({ hasText: 'Another example' }).click();
+    await expect(page.getByRole('button', { name: 'Listen to the model', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Listen to the model', exact: true }).click();
     await page.getByRole('button', { name: 'Show the script' }).click();
     await expect(page.getByText('The change — Introduces the change.')).toBeVisible();
-    await page.getByLabel('Phrase 1 (optional)').selectOption("Since then, I've");
-    await page.getByLabel('Phrase 2 (optional)').selectOption('When I look back on');
-    await expect(page.getByLabel('Your phrase card')).toContainText("Since then, I've");
-    await expect(page.getByLabel('Your phrase card')).toContainText('When I look back on');
+    await page.getByLabel('Structure 1 (optional)').selectOption("Since then, I've");
+    await page.getByLabel('Structure 2 (optional)').selectOption('When I look back on');
+    await expect(page.getByLabel('Take with you card')).toContainText("Since then, I've");
+    await expect(page.getByLabel('Take with you card')).toContainText('When I look back on');
 
     for (const index of [1, 2, 3]) {
       await record(page, `Record try ${index}`);
       await expect(page.getByRole('heading', { name: `Try ${index}`, exact: true })).toBeVisible();
       const comparison = page.getByLabel(`Compare try ${index} with the previous recording`);
-      const previousPhrase = index === 1 ? 'none found' : "Since then, I've";
+      const previousPhrase = index === 1 ? 'none found' : index === 2 ? "Since then, I've" : "Since then, I've · When I look back on";
+      const nextPhrase = index === 2 ? "Since then, I've · When I look back on" : "Since then, I've";
       const previousSeconds = index === 1 ? 33 : 30 + index - 1;
       const previousPoint = index === 1 ? 'The change' : 'Now';
       await expect(comparison.locator('p').filter({ hasText: 'Phrases found:' }))
-        .toHaveText(`Phrases found: ${previousPhrase} → Since then, I've`);
+        .toHaveText(`Phrases found: ${previousPhrase} → ${nextPhrase}`);
       await expect(comparison.locator('p').filter({ hasText: 'Time:' }))
         .toHaveText(`Time: ${previousSeconds} seconds → ${30 + index} seconds`);
       await expect(comparison.locator('p').filter({ hasText: 'Cue-card points found:' }))

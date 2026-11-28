@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { publicSpeakingSupport } from '../../lib/curriculum/speaking-support.mjs';
 import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from '../../lib/b1b2/week-speaking-recordings.mjs';
-import { soundTips, structurePoint } from '../../lib/b1b2/speaking-feedback.mjs';
+import * as speakingFeedback from '../../lib/b1b2/speaking-feedback.mjs';
 
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json'));
 const details = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
@@ -40,7 +40,7 @@ function load(rows, { cap = Infinity, flowError = false } = {}) {
     '@/utils/supabase/server': { createServerSupabase: async () => client },
     './speaking-support.mjs': { publicSpeakingSupport },
     '@/lib/b1b2/week-speaking-recordings.mjs': { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording },
-    '@/lib/b1b2/speaking-feedback.mjs': { soundTips, structurePoint },
+    '@/lib/b1b2/speaking-feedback.mjs': speakingFeedback,
   };
   const compiled = ts.transpileModule(readFileSync('lib/curriculum/week-speaking-support.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },

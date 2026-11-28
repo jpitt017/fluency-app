@@ -6,8 +6,9 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
 import { parseWeekSpeakingTakePath } from '../../lib/b1b2/week-speaking-recordings.mjs';
-import { fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
+import { cueChecklistFromEvidence, detectUsedHighlights, fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
 
+const details = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json')).weeks[0];
 const USER = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -89,6 +90,7 @@ function fixture(options = {}) {
   const modules = {
     'next/server': { NextResponse: { json: (body, init = {}) => ({ body, status: init.status ?? 200, headers: init.headers ?? {} }) } },
     'groq-sdk': FakeGroq,
+    '../../../../../supabase-b1-b2/content/curriculum/weeks-01-04-details.json': details,
     '@/utils/supabase/server': { createServerSupabase: async () => auth },
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
@@ -100,9 +102,33 @@ function fixture(options = {}) {
     } },
     '@/lib/b1b2/speaking-evaluation': { evaluateSpeakingTranscript: async (params) => {
       events.push(['evaluate', params.weekNumber, params.cueLabels]);
-      return { validated: { score: 75, feedback: 'Good ideas.' }, structure: { original: 'I moved to a new city, which was exciting.', upgraded: 'Although I was nervous, I moved.', explanation: 'Use although for a contrast.', structure: 'although' }, cuePoints: [{ label: 'The change', quote: 'I moved' }], cacheHit: false, promptTokens: 1, completionTokens: 2 };
+      return {
+        validated: {
+          feedback: 'Good ideas.',
+          improvedResponse: 'I moved to a new city, which was exciting.',
+          highlights: [{ text: "Since then, I've", label: 'Present perfect', explanation: 'Links past to now.' }],
+          showExampleFirst: false,
+          examplePromptMessage: null,
+          areas: {
+            grammar_and_vocabulary: { mark: 4, strength: 'Clear past verbs.', improvement: 'Add a time linker.' },
+            discourse_management: { mark: 4, strength: 'Clear order.', improvement: 'Connect ideas.' },
+            pronunciation: null,
+            interactive_communication: null,
+          },
+          corrections: [],
+          tips: [],
+          errorPatterns: [],
+          strengths: ['Clear past verbs.'],
+          improvements: ['Add a time linker.'],
+        },
+        structure: { original: 'I moved to a new city, which was exciting.', upgraded: 'Although I was nervous, I moved.', explanation: 'Use although for a contrast.', structure: 'although' },
+        cuePoints: [{ label: 'The change', quote: 'I moved' }],
+        cacheHit: false,
+        promptTokens: 1,
+        completionTokens: 2,
+      };
     } },
-    '@/lib/b1b2/speaking-feedback.mjs': { fluencyFromWhisper, soundTips, structureUsed },
+    '@/lib/b1b2/speaking-feedback.mjs': { cueChecklistFromEvidence, detectUsedHighlights, fluencyFromWhisper, soundTips, structureUsed },
     '@/lib/b1b2/prompt-guard': { sanitizeLearnerText: (value, max) => ({ text: String(value ?? '').trim().slice(0, max) }) },
     '@/lib/b1b2/provider-failure-response': { providerFailureResponse: async () => ({ status: 503, errorMessage: 'redacted', response: { status: 503, body: { error: 'Please try again.' } } }) },
     '@/lib/b1b2/observability': { logAiRequest: async () => {} },

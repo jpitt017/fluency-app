@@ -8,6 +8,7 @@ import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
 import WeekInputTask from '@/components/b1b2/WeekInputTask';
 import WeekSpeakingSupport from '@/components/b1b2/WeekSpeakingSupport';
+import WritingTaskInputs from '@/components/b1b2/WritingTaskInputs';
 import WeekTaskLayout, { type WeekTaskEntry } from '@/components/b1b2/WeekTaskLayout';
 import { getViewer } from '@/lib/b1b2/data';
 import { notFound } from 'next/navigation';
@@ -143,7 +144,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
           retryGoal={speakingSupport.retryGoal} initialNotes={speakingSupport.notes} available={speakingSupport.available} weekRecorded={speakingSupport.weekRecorded}
           first={speakingSupport.first} tries={speakingSupport.tries} firstVersions={speakingSupport.firstVersions}
           retryCount={speakingSupport.retryCount} checksUsed={speakingSupport.checksUsed} pending={speakingSupport.pending}
-          recordings={speakingSupport.recordings} model={speakingSupport.model}
+          recordings={speakingSupport.recordings} model={speakingSupport.model} speakingParts={details.speakingParts}
         /> : <div className="space-y-3"><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className={ACTION_BUTTON_CLASS}>Start speaking task</Link></div>,
       }];
     }
@@ -156,7 +157,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       itemsAnswered: weekProgress.writing.itemsAnswered,
 
       progressMinutes: weekProgress.writing.minutes,
-      body: <div className="space-y-3"><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
+      body: <div className="space-y-3"><p>{details.writingPrompt}</p><WritingTaskInputs inputEmail={details.writingInputEmail} callForArticles={details.writingCallForArticles} /><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
     }];
   });
 

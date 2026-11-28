@@ -32,6 +32,13 @@ interface SpeakingChatBody {
   messages?: ChatMessage[];
   scenario?: string;
   targetPhrase?: string;
+  weekNumber?: number;
+  discussAndDecide?: {
+    topic?: string;
+    prompt?: string;
+    options?: string[];
+    decisionTask?: string;
+  };
   context?: {
     sessionTitle?: string;
     keyLanguage?: string[];
@@ -74,9 +81,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json().catch(() => ({}))) as SpeakingChatBody;
-    const rawMessages = Array.isArray(body.messages) ? body.messages.slice(-12) : [];
+    const rawMessages = Array.isArray(body.messages) ? body.messages.slice(-14) : [];
+    const discuss = body.discussAndDecide;
+    const discussOptions = Array.isArray(discuss?.options)
+      ? discuss.options
+          .map((item) => sanitizeLearnerText(item, 80).text)
+          .filter(Boolean)
+          .slice(0, 6)
+      : [];
+    const discussDecision = discuss?.decisionTask
+      ? sanitizeLearnerText(discuss.decisionTask, 180).text
+      : '';
     const scenario = sanitizeLearnerText(
-      body.scenario || body.context?.sessionTitle || 'A natural workplace or everyday B1 → B2 conversation',
+      discuss?.topic ||
+        discuss?.prompt ||
+        body.scenario ||
+        body.context?.sessionTitle ||
+        'A natural workplace or everyday B1 → B2 conversation',
       300,
     ).text;
     const targetPhrase = sanitizeLearnerText(
@@ -102,24 +123,41 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    const week = await currentLearnerWeek();
-    const systemPrompt = `You are a supportive English conversation coach helping a CEFR B1 → B2 learner practise fluent spoken English.
+    const requestedWeek =
+      typeof body.weekNumber === 'number' &&
+      Number.isInteger(body.weekNumber) &&
+      body.weekNumber >= 1 &&
+      body.weekNumber <= 32
+        ? body.weekNumber
+        : null;
+    const week = requestedWeek ?? (await currentLearnerWeek());
+
+    const discussBlock =
+      discussOptions.length > 0
+        ? `\nDiscuss-and-decide task:
+- Situation: ${scenario}
+- Five options to discuss: ${discussOptions.join(' · ')}
+- Decision goal: ${discussDecision || 'Agree together on the best choice.'}
+- Act as an equal B1 speaking partner (not an examiner). React directly to the option(s) the learner mentions, weigh another option from the five, and after 2–3 exchanges invite them to agree together on the final choice(s).`
+        : '';
+
+    const systemPrompt = `You are a supportive British English speaking partner helping a CEFR B1 → B2 learner practise natural spoken interaction.
 Learner week: ${week}
 ${languageRules(week)}
 Scenario: ${scenario}
-${targetPhrase ? `Target language to encourage naturally: "${targetPhrase}"` : ''}
+${targetPhrase ? `Target language to encourage naturally: "${targetPhrase}"` : ''}${discussBlock}
 
 ${UNTRUSTED_DATA_SYSTEM_RULE}
 
 Guidelines:
-- Keep responses concise (2–4 sentences) so the dialogue feels natural and spoken.
-- Match the learner’s week and language level. Do not force target phrases above that level.
-- Gently model accurate grammar in your reply without breaking the role-play flow, and end with an open question to keep the learner speaking.`;
+- Keep responses concise (2–3 short sentences, <= 20 words per sentence, B1–B2 words only) so the dialogue feels natural and spoken.
+- Match the learner's week and language level. Do not force target phrases above that level.
+- Gently model accurate grammar in your reply without breaking the conversation flow, and end with an open question or invitation so the learner keeps speaking.`;
 
     const completion = await groq.chat.completions.create({
       model: MODEL_ID,
       messages: [{ role: 'system', content: systemPrompt }, ...sanitizedMessages],
-      temperature: 0.7,
+      temperature: 0.65,
       max_completion_tokens: 1024,
       reasoning_effort: 'low',
       include_reasoning: false,
@@ -132,8 +170,6 @@ Guidelines:
 
     return NextResponse.json({ reply }, { headers: guard.headers });
   } catch (err: unknown) {
-    // Chat history is held by the browser and this route stores nothing, so the
-    // conversation survives on screen while the reply fails.
     const failure = await providerFailureResponse({
       admin: supabase,
       endpoint: ENDPOINT,

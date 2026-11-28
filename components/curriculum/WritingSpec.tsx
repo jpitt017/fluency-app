@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Eye, EyeOff, PenLine, Sparkles } from 'lucide-react';
+import WritingTaskInputs from '@/components/b1b2/WritingTaskInputs';
 import type { WritingDetail, WritingSpec as WritingSpecDoc } from '@/lib/curriculum/details';
 
 export default function WritingSpec({ writing, spec }: { writing: WritingDetail; spec: WritingSpecDoc }) {
@@ -33,6 +34,8 @@ export default function WritingSpec({ writing, spec }: { writing: WritingDetail;
         <p className="mt-1"><strong className="font-semibold text-stone-800">Linkers:</strong> {writing.linkers.join(', ')}</p>
         <p className="mt-1"><strong className="font-semibold text-stone-800">Paired reading:</strong> {writing.pairedReading}</p>
       </div>
+
+      <WritingTaskInputs inputEmail={writing.inputEmail} callForArticles={writing.callForArticles} />
 
       <details className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs">
         <summary className="cursor-pointer font-semibold text-stone-800">Five-step writing flow and learner support</summary>

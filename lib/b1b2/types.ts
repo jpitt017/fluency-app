@@ -677,4 +677,13 @@ export interface TeacherRosterLearner {
     label: string;
     href: string;
   }[];
+  weekly_takes?: {
+    id: string;
+    week_number: number;
+    kind: string;
+    sequence: number;
+    transcript: string | null;
+    feedback: Record<string, unknown> | null;
+    created_at: string;
+  }[];
 }

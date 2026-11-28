@@ -656,7 +656,29 @@
           "naturalRecastExample": "learner \"I have moved here last year.\" Partner: \"Oh, you moved here last year? I didn't know!\""
         },
         "delayedRecall": "Tell me about a new routine that felt strange at first. What helped it feel normal?",
-        "b2Stretch": "explain why the change mattered and how you feel about it now, without the cue card."
+        "b2Stretch": "explain why the change mattered and how you feel about it now, without the cue card.",
+        "parts": {
+          "questionsAboutYou": [
+            "Where do you live now, and how long have you lived there?",
+            "What do you usually do at weekends?"
+          ],
+          "discussAndDecide": {
+            "topic": "Helping someone new settle into a town",
+            "options": [
+              "join a local club",
+              "chat to neighbours",
+              "explore on foot",
+              "learn local phrases",
+              "find a regular café"
+            ],
+            "decisionTask": "Pick the best two.",
+            "openingLine": "Someone new has just moved to our town. Let's discuss these five ideas and pick the best two. Which one would you try first?"
+          },
+          "followUpQuestions": [
+            "Do you think big changes are easier when you're younger?",
+            "Why do some people enjoy change more than others?"
+          ]
+        }
       },
       "writing": {
         "status": "pilot draft — pending second-teacher review",
@@ -713,10 +735,19 @@
         "pairedReading": "\"A year in Manchester\" (blog post)"
       },
       "conversation": {
-        "scenario": "Catching up with an old friend.",
-        "openingLine": "It's been ages! What's changed since I last saw you?",
-        "learnerMoves": "Describe one change, what was hard and how life is now; answer one follow-up.",
-        "targetLanguage": "Narrative tenses, present perfect vs past simple, used to / would; face a challenge, get used to, since then"
+        "scenario": "Helping someone new settle into a town: join a local club · chat to neighbours · explore on foot · learn local phrases · find a regular café — Pick the best two.",
+        "openingLine": "Someone new has just moved to our town. Let's discuss these five ideas and pick the best two. Which one would you try first?",
+        "learnerMoves": "Compare the options (join a local club, chat to neighbours, explore on foot, learn local phrases, find a regular café), respond to your partner's view, and pick the best two.",
+        "targetLanguage": "Narrative tenses, present perfect vs past simple, used to / would; face a challenge, get used to, since then",
+        "options": [
+          "join a local club",
+          "chat to neighbours",
+          "explore on foot",
+          "learn local phrases",
+          "find a regular café"
+        ],
+        "decisionTask": "Pick the best two.",
+        "topic": "Helping someone new settle into a town"
       },
       "vocabulary": {
         "core": [
@@ -1389,7 +1420,29 @@
           "naturalRecastExample": "learner \"When I will finish, I start looking for work.\" Partner: \"Ah, so when you finish, you'll start looking for work?\""
         },
         "delayedRecall": "You've decided to learn a new skill. What have you arranged, what will you do afterwards, and what will you do if it doesn't work out?",
-        "b2Stretch": "explain why the goal matters and weigh two alternatives, without the cue card."
+        "b2Stretch": "explain why the goal matters and weigh two alternatives, without the cue card.",
+        "parts": {
+          "questionsAboutYou": [
+            "What are you doing this evening?",
+            "Do you prefer planning ahead or deciding on the day?"
+          ],
+          "discussAndDecide": {
+            "topic": "Planning a class day trip",
+            "options": [
+              "beach",
+              "museum",
+              "mountain walk",
+              "food market",
+              "historic town"
+            ],
+            "decisionTask": "Agree on one.",
+            "openingLine": "We're planning a day trip for our class. Let's talk about these five places and agree on one. Where do you think we should go?"
+          },
+          "followUpQuestions": [
+            "Is it better to travel with a plan or without one?",
+            "How has technology changed the way people make plans?"
+          ]
+        }
       },
       "writing": {
         "status": "pilot draft — pending second-teacher review",
@@ -1445,10 +1498,19 @@
         "pairedReading": "\"Ask Sam\" (advice column)"
       },
       "conversation": {
-        "scenario": "A colleague asks about plans.",
-        "openingLine": "So, any plans for the next few months?",
-        "learnerMoves": "Give a goal, an arrangement and a next step; say what they'll do if it doesn't work out.",
-        "targetLanguage": "Future forms, first and second conditionals; goal, intend to, career, look forward to"
+        "scenario": "Planning a class day trip: beach · museum · mountain walk · food market · historic town — Agree on one.",
+        "openingLine": "We're planning a day trip for our class. Let's talk about these five places and agree on one. Where do you think we should go?",
+        "learnerMoves": "Compare the options (beach, museum, mountain walk, food market, historic town), respond to your partner's view, and agree on one.",
+        "targetLanguage": "Future forms, first and second conditionals; goal, intend to, career, look forward to",
+        "options": [
+          "beach",
+          "museum",
+          "mountain walk",
+          "food market",
+          "historic town"
+        ],
+        "decisionTask": "Agree on one.",
+        "topic": "Planning a class day trip"
       },
       "vocabulary": {
         "core": [
@@ -2109,7 +2171,29 @@
           "naturalRecastExample": "learner \"You must to clean the kitchen.\" Partner: \"Right, so I must clean the kitchen after cooking. No problem.\""
         },
         "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional.",
-        "b2Stretch": "add a likely problem (noise, guests or bills) and suggest a compromise, without the cue card."
+        "b2Stretch": "add a likely problem (noise, guests or bills) and suggest a compromise, without the cue card.",
+        "parts": {
+          "questionsAboutYou": [
+            "What jobs do you do at home?",
+            "Did you have many rules at school?"
+          ],
+          "discussAndDecide": {
+            "topic": "Making a shared flat work well",
+            "options": [
+              "cleaning rota",
+              "quiet hours",
+              "shared food budget",
+              "guest rules",
+              "group chat"
+            ],
+            "decisionTask": "Agree on the two most important.",
+            "openingLine": "We want our shared flat to work well. Let's discuss these five ideas and agree on the two most important. Which one matters most to you?"
+          },
+          "followUpQuestions": [
+            "When are strict rules helpful, and when do they get in the way?",
+            "Should workplaces have dress codes today?"
+          ]
+        }
       },
       "writing": {
         "status": "pilot draft — pending second-teacher review",
@@ -2164,13 +2248,33 @@
         "reviseAndRetryFocus": "Check that each rule uses the right modal for its meaning (required, forbidden, optional), and add a linker where two ideas contrast.",
         "modelAnswer": "Hi Tom,\n\nWelcome to the flat! We’re really pleased you’re moving in on Saturday. Here are a few things you should know.\n\nWe have to take the bins out on Thursday evenings, and we take turns, so check the rota on the kitchen door. You mustn’t leave food in the living room, because we’ve had problems with mice! On the other hand, you don’t have to join us for dinner. We all have different routines, and most of us cook for ourselves.\n\nMy advice? You should get to know our neighbour, Mrs Hill. In fact, she’s lived here for forty years and knows everything about the area. Apart from that, just relax and make yourself at home. We all get on with each other really well.\n\nSee you on Saturday!\nElena",
         "delayedRecall": "Tell a new colleague one thing they need to do, one thing they mustn't do and one thing that's optional.",
-        "pairedReading": "\"Welcome to 14 Park Road!\" (email)"
+        "pairedReading": "\"Welcome to 14 Park Road!\" (email)",
+        "inputEmail": {
+          "from": "Alex",
+          "body": "Hi! I'm moving in on Saturday and can't wait to meet everyone. How do things work in the flat? Are there any house rules I should know about, or jobs we share? Also, what should I bring for the kitchen?",
+          "signOff": "— Alex",
+          "notes": [
+            "Explain a shared job",
+            "Tell Alex one rule",
+            "Say what's optional",
+            "Give some advice"
+          ]
+        }
       },
       "conversation": {
-        "scenario": "A new flatmate's first evening.",
-        "openingLine": "Hi! Is there anything I need to know about the kitchen?",
-        "learnerMoves": "Explain a rule, answer a permission request ('Could I use the washing machine tonight?'), ask one question, suggest an arrangement.",
-        "targetLanguage": "Obligation, ability and permission modals, question forms, linkers; get on with, arrange, routine, politely"
+        "scenario": "Making a shared flat work well: cleaning rota · quiet hours · shared food budget · guest rules · group chat — Agree on the two most important.",
+        "openingLine": "We want our shared flat to work well. Let's discuss these five ideas and agree on the two most important. Which one matters most to you?",
+        "learnerMoves": "Compare the options (cleaning rota, quiet hours, shared food budget, guest rules, group chat), respond to your partner's view, and agree on the two most important.",
+        "targetLanguage": "Obligation, ability and permission modals, question forms, linkers; get on with, arrange, routine, politely",
+        "options": [
+          "cleaning rota",
+          "quiet hours",
+          "shared food budget",
+          "guest rules",
+          "group chat"
+        ],
+        "decisionTask": "Agree on the two most important.",
+        "topic": "Making a shared flat work well"
       },
       "vocabulary": {
         "core": [
@@ -2855,7 +2959,29 @@
           "naturalRecastExample": "learner \"It was build in the 1800s.\" Partner: \"Oh, it was built in the 1800s? I'd love to see it.\""
         },
         "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place.",
-        "b2Stretch": "add extra information with a non-defining clause (\"The market hall, which was built in 1890, ...\"), without the cue card."
+        "b2Stretch": "add extra information with a non-defining clause (\"The market hall, which was built in 1890, ...\"), without the cue card.",
+        "parts": {
+          "questionsAboutYou": [
+            "Tell me about a place near your home that you like.",
+            "What kind of places do you enjoy visiting on holiday?"
+          ],
+          "discussAndDecide": {
+            "topic": "Choosing a trip for visiting friends",
+            "options": [
+              "city museum",
+              "coastal walk",
+              "street market",
+              "countryside village",
+              "old castle"
+            ],
+            "decisionTask": "Decide on the best day out.",
+            "openingLine": "Some friends are visiting us this weekend. Let's talk through these five ideas and decide on the best day out. Which place sounds best to you?"
+          },
+          "followUpQuestions": [
+            "Why do some places become too popular with tourists?",
+            "Is it better to visit a place once or go back many times?"
+          ]
+        }
       },
       "writing": {
         "status": "pilot draft — pending second-teacher review",
@@ -2909,13 +3035,26 @@
         "reviseAndRetryFocus": "Turn one fact about the place into the passive, and check each comparison uses -er / -est or more / most correctly.",
         "modelAnswer": "Last summer I spent a weekend in Edinburgh, and I’d definitely recommend it.\n\nTo begin with, we visited Edinburgh Castle, which sits on top of an old volcano. The oldest part was built in the twelfth century. Almost every day, a gun is fired from the castle at one o’clock, a tradition which started in 1861.\n\nIn the afternoon, we walked down the Royal Mile, a busy street where you can find lots of small local shops and cafés. Then we climbed Arthur’s Seat. It was harder than I expected, but the view was the best of the whole trip.\n\nAll in all, Edinburgh is a great destination for a short break. If you go, set off early, because the castle gets very busy by lunchtime.",
         "delayedRecall": "Introduce a venue in your neighbourhood. Say what normally takes place there, give one fact about its past and compare it with another place.",
-        "pairedReading": "\"48 hours in Bath\" (travel guide); model set in Edinburgh to avoid repeating Bath"
+        "pairedReading": "\"48 hours in Bath\" (travel guide); model set in Edinburgh to avoid repeating Bath",
+        "callForArticles": {
+          "heading": "Articles wanted — A place worth visiting",
+          "body": "Tell our readers about a town, park, or area you know well. What makes it special, what can visitors do there, and who would enjoy it most? We'll publish the best articles next month."
+        }
       },
       "conversation": {
-        "scenario": "A weekend visitor asks for tips.",
-        "openingLine": "I'm here for the weekend. What should I see?",
-        "learnerMoves": "Recommend a place, give one fact about its past, compare it with another place, mention a custom.",
-        "targetLanguage": "Passive, defining relative clauses, comparatives and superlatives; local, custom, destination, tradition, set off"
+        "scenario": "Choosing a trip for visiting friends: city museum · coastal walk · street market · countryside village · old castle — Decide on the best day out.",
+        "openingLine": "Some friends are visiting us this weekend. Let's talk through these five ideas and decide on the best day out. Which place sounds best to you?",
+        "learnerMoves": "Compare the options (city museum, coastal walk, street market, countryside village, old castle), respond to your partner's view, and decide on the best day out.",
+        "targetLanguage": "Passive, defining relative clauses, comparatives and superlatives; local, custom, destination, tradition, set off",
+        "options": [
+          "city museum",
+          "coastal walk",
+          "street market",
+          "countryside village",
+          "old castle"
+        ],
+        "decisionTask": "Decide on the best day out.",
+        "topic": "Choosing a trip for visiting friends"
       },
       "vocabulary": {
         "core": [

@@ -569,6 +569,7 @@ export async function loadTeacherRoster(): Promise<{
 
   const roster = (Array.isArray(data) ? data : []) as TeacherRosterLearner[];
   const recordingsByUser = new Map<string, ReturnType<typeof weekSpeakingAttemptRecordings>>();
+  const weeklyTakesByUser = new Map<string, NonNullable<TeacherRosterLearner['weekly_takes']>>();
   // The roster RPC is already staff-gated. Use the service-role client for the
   // weekly rows when available so teacher playback works before 0062 is applied
   // to a project; otherwise the authenticated client's staff RLS policy applies.
@@ -592,17 +593,33 @@ export async function loadTeacherRoster(): Promise<{
     }
     const { data: takeRows, error: takeError } = await recordingClient
       .from('week_speaking_takes')
-      .select('id,user_id,week_number,attempt_id,kind,sequence,recording_path,status,created_at')
+      .select('id,user_id,week_number,attempt_id,kind,sequence,recording_path,status,transcript,feedback,created_at')
       .in('user_id', roster.map((learner) => learner.user_id))
       .in('status', ['ready', 'checking', 'checked', 'abandoned'])
       .order('created_at', { ascending: false }).limit(1500);
     if (takeError) console.error('teacher weekly takes failed:', takeError.message);
     else for (const row of takeRows ?? []) {
       const link = weekSpeakingTakeRecording(row);
-      if (!link) continue;
-      const list = recordingsByUser.get(row.user_id) ?? [];
-      list.push(link);
-      recordingsByUser.set(row.user_id, list);
+      if (link) {
+        const list = recordingsByUser.get(row.user_id) ?? [];
+        list.push(link);
+        recordingsByUser.set(row.user_id, list);
+      }
+      if (row.status === 'checked' && (row.kind === 'first' || row.kind === 'retry')) {
+        const takesList = weeklyTakesByUser.get(row.user_id) ?? [];
+        if (takesList.length < 10) {
+          takesList.push({
+            id: String(row.id),
+            week_number: Number(row.week_number),
+            kind: String(row.kind),
+            sequence: Number(row.sequence),
+            transcript: row.transcript ? String(row.transcript) : null,
+            feedback: (row.feedback as Record<string, unknown> | null) ?? null,
+            created_at: String(row.created_at),
+          });
+          weeklyTakesByUser.set(row.user_id, takesList);
+        }
+      }
     }
     for (const list of recordingsByUser.values()) {
       list.sort((a, b) => a.weekNumber - b.weekNumber || a.takeNumber - b.takeNumber);
@@ -614,6 +631,7 @@ export async function loadTeacherRoster(): Promise<{
     pilot: pilotRes.error ? null : (pilotRes.data ?? []).some((row) => row.user_id === learner.user_id),
     mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
     weekly_recordings: recordingsByUser.get(learner.user_id) ?? [],
+    weekly_takes: weeklyTakesByUser.get(learner.user_id) ?? [],
   }));
 
   return { signedIn: true, authorized: true, learners };

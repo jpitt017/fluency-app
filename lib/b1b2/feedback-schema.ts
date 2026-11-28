@@ -2,6 +2,20 @@ import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeSentenceForCompare } from './diff';
 import { UNTRUSTED_DATA_SYSTEM_RULE } from './prompt-guard';
+import {
+  LEVEL_RULES_PROMPT_BLOCK,
+  MAX_B1B2_SENTENCE_WORDS,
+  MAX_CORRECTIONS_PER_TEXT,
+  countPlainWords,
+  preserveClearLearnerSentences,
+  simplifyToB1B2,
+  splitSentences,
+} from './level-guard.mjs';
+import {
+  isShortOrOffTopicTranscript,
+  validateImprovedHighlights,
+  type ImprovedHighlight,
+} from './speaking-feedback.mjs';
 
 export const ERROR_CATEGORIES = [
   'article',
@@ -72,6 +86,138 @@ const CATEGORY_ALIASES: Record<string, ErrorCategory> = {
   other: 'other',
 };
 
+export const WRITING_AREA_KEYS = [
+  'content',
+  'communicative_achievement',
+  'organisation',
+  'language',
+] as const;
+export type WritingAreaKey = (typeof WRITING_AREA_KEYS)[number];
+
+export const SPEAKING_AREA_KEYS = [
+  'grammar_and_vocabulary',
+  'discourse_management',
+  'pronunciation',
+  'interactive_communication',
+] as const;
+export type SpeakingAreaKey = (typeof SPEAKING_AREA_KEYS)[number];
+
+export const WRITING_AREA_SPECS: Record<
+  WritingAreaKey,
+  { label: string; question: string; band5: string; band3: string; band1: string }
+> = {
+  content: {
+    label: 'Content',
+    question: 'Did you answer every part of the task?',
+    band5: 'All parts answered clearly with relevant detail. Fits the reader.',
+    band3: 'Most parts answered; one part is thin or missing.',
+    band1: 'Important parts missing or off-topic.',
+  },
+  communicative_achievement: {
+    label: 'Communicative achievement',
+    question: 'Does it sound right for your reader?',
+    band5: "Right tone and format (email, article, story). Holds the reader's interest.",
+    band3: 'Mostly the right tone; format works.',
+    band1: 'Wrong tone or format; hard to read as that text type.',
+  },
+  organisation: {
+    label: 'Organisation',
+    question: 'Is it easy to follow?',
+    band5: 'Clear paragraphs and smooth linking.',
+    band3: 'Grouped ideas and simple linkers, with a few jumps.',
+    band1: 'Little order; few or misused linkers.',
+  },
+  language: {
+    label: 'Language',
+    question: 'Are your grammar and words clear?',
+    band5: "Good B1+ range; tries the week's grammar; errors don't confuse.",
+    band3: 'Everyday words and simple grammar; some errors, meaning clear.',
+    band1: 'Frequent basic errors sometimes hide the meaning.',
+  },
+};
+
+export const SPEAKING_AREA_SPECS: Record<
+  SpeakingAreaKey,
+  {
+    label: string;
+    question: string;
+    markedBy: 'AI' | 'Teacher only' | 'AI in Discuss and decide only';
+    band5: string;
+    band3: string;
+    band1: string;
+  }
+> = {
+  grammar_and_vocabulary: {
+    label: 'Grammar and vocabulary',
+    question: 'Did you use clear grammar and the right words?',
+    markedBy: 'AI',
+    band5: "Good everyday vocabulary; tries the week's grammar; errors don't block meaning.",
+    band3: 'Simple grammar and vocabulary; errors are noticeable, main point is clear.',
+    band1: 'Very limited words or frequent errors make the message hard to follow.',
+  },
+  discourse_management: {
+    label: 'Discourse management',
+    question: 'Did you speak for long enough and link your ideas?',
+    markedBy: 'AI',
+    band5: 'Full answer for the task length, relevant, connected with simple linkers.',
+    band3: 'Answers the prompt but briefly, or repeats a couple of linkers.',
+    band1: 'Very short turns or unconnected fragments.',
+  },
+  pronunciation: {
+    label: 'Pronunciation',
+    question: 'Could people understand you easily?',
+    markedBy: 'Teacher only',
+    band5: 'Easy to understand throughout; clear stress and endings.',
+    band3: 'Mostly clear, with occasional effort needed on stress or sounds.',
+    band1: 'Often hard to understand.',
+  },
+  interactive_communication: {
+    label: 'Interactive communication',
+    question: 'Did you answer your partner and keep the talk going?',
+    markedBy: 'AI in Discuss and decide only',
+    band5: "Responds to the partner's point, asks back or invites their view, helps reach a choice.",
+    band3: "Answers what's asked and takes turns, rarely builds on the partner's idea.",
+    band1: 'One-word replies or talks past the partner.',
+  },
+};
+
+export const OVER_WORD_LIMIT_TIP = 'Try to keep to 120–150 words.';
+export const SHORT_OR_OFF_TOPIC_MESSAGE = 'Try again using this example to help you.';
+
+const WEEK_PRIORITY_CATEGORIES: Record<number, ErrorCategory[]> = {
+  1: ['tense', 'connector', 'collocation'],
+  2: ['tense', 'connector', 'modal_verb'],
+  3: ['modal_verb', 'word_order', 'connector'],
+  4: ['tense', 'article', 'word_choice', 'connector'],
+};
+
+export const WEEK_SPEAKING_TARGET_STRUCTURES: Record<number, string[]> = {
+  1: [
+    'past simple for finished past events',
+    'present perfect with since then, for, or already',
+    'used to for past habits or states',
+    'get used to + -ing and linkers like although or eventually',
+  ],
+  2: [
+    'going to or intend to for plans and intentions',
+    'present continuous for fixed arrangements',
+    'first conditional or future time clauses with when, if, or as soon as',
+    'look forward to + -ing',
+  ],
+  3: [
+    'have to / must for rules and shared jobs',
+    "don't have to for things that are optional",
+    "mustn't / aren't allowed to for things that are not allowed",
+    'should for friendly advice, plus linkers like on the other hand or apart from that',
+  ],
+  4: [
+    'present and past simple passive (is held, was built)',
+    'relative clauses with which or where',
+    'comparatives and superlatives (quieter than, one of the friendliest)',
+    'linkers like to begin with and all in all',
+  ],
+};
+
 export function coerceErrorCategory(value: unknown): ErrorCategory {
   if (typeof value !== 'string') return 'other';
   const key = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -85,11 +231,39 @@ export function coerceSeverity(value: unknown): ErrorSeverity {
   return 'moderate';
 }
 
-function clampFive(val: unknown, fallback = 3.6): number {
+export function clampAreaBand(val: unknown, fallback = 3): number {
   const num = Number(val);
   if (!Number.isFinite(num)) return fallback;
-  return Number(Math.max(0, Math.min(5, num)).toFixed(1));
+  return Math.max(0, Math.min(5, Math.round(num)));
 }
+
+function oneB1Sentence(
+  raw: unknown,
+  fallback: string,
+  options: { weekNumber?: number | null; stripPronunciation?: boolean } = {},
+): string {
+  const text = typeof raw === 'string' ? raw.trim().replace(/\s+/g, ' ') : '';
+  if (!text) return fallback;
+  if (options.stripPronunciation && /\b(?:(?:mis)?pron(?:ounc|unci)\w*|accents?|phoneme\w*|intonation)\b/i.test(text)) {
+    return fallback;
+  }
+  const first = splitSentences(text)[0] ?? text;
+  const simplified = simplifyToB1B2(first, {
+    weekNumber: options.weekNumber,
+    maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+  });
+  const single = splitSentences(simplified)[0] ?? simplified;
+  if (!single) return fallback;
+  return /[.!?]$/.test(single) ? single : `${single}.`;
+}
+
+export const AreaFeedbackSchema = z.object({
+  score: z.number().int().min(0).max(5),
+  strength: z.string().trim().min(1).max(260),
+  improvement: z.string().trim().min(1).max(260),
+});
+
+export type AreaFeedback = z.infer<typeof AreaFeedbackSchema>;
 
 export const CorrectionItemSchema = z.object({
   original: z.string().trim().min(1).max(300),
@@ -107,334 +281,641 @@ export const WritingFeedbackSchema = z.object({
   corrected: z.string().trim().min(1),
   feedback: z.string().trim().min(1),
   notes: z.array(z.string().trim().min(1)).max(8),
-  corrections: z.array(CorrectionItemSchema).max(10),
+  corrections: z.array(CorrectionItemSchema).max(MAX_CORRECTIONS_PER_TEXT),
   errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(8),
-  rubric: z.object({
-    task_response: z.number().min(0).max(5),
-    organisation: z.number().min(0).max(5),
-    grammar_accuracy: z.number().min(0).max(5),
-    lexical_range: z.number().min(0).max(5),
-    style: z.number().min(0).max(5),
+  areas: z.object({
+    content: AreaFeedbackSchema,
+    communicative_achievement: AreaFeedbackSchema,
+    organisation: AreaFeedbackSchema,
+    language: AreaFeedbackSchema,
   }),
-  score: z.number().int().min(0).max(100),
+  wordCount: z.number().int().min(0),
+  contentCappedUnder100: z.boolean(),
+  wordCountTip: z.string().nullable(),
 });
 
 export type WritingFeedback = z.infer<typeof WritingFeedbackSchema>;
 
+export const ImprovedHighlightSchema = z.object({
+  substring: z.string().trim().min(1).max(160),
+  label: z.string().trim().min(1).max(70),
+  explanation: z.string().trim().min(1).max(180),
+});
+
 export const SpeakingFeedbackSchema = z.object({
   improvedResponse: z.string().trim().min(1),
+  highlights: z.array(ImprovedHighlightSchema).max(4),
+  showExampleFirst: z.boolean(),
+  examplePromptMessage: z.string().nullable(),
+  offTopic: z.boolean(),
   feedback: z.string().trim().min(1),
   strengths: z.array(z.string().trim().min(1)).max(4),
   improvements: z.array(z.string().trim().min(1)).max(4),
-  corrections: z.array(CorrectionItemSchema).max(10),
+  corrections: z.array(CorrectionItemSchema).max(MAX_CORRECTIONS_PER_TEXT),
   errorPatterns: z.array(z.enum(ERROR_CATEGORIES)).max(8),
   tips: z.array(z.string().trim().min(1)).max(4),
-  rubric: z.object({
-    task_achievement: z.number().min(0).max(5),
-    lexical_range: z.number().min(0).max(5),
-    grammar_accuracy: z.number().min(0).max(5),
-    coherence: z.number().min(0).max(5),
+  areas: z.object({
+    grammar_and_vocabulary: AreaFeedbackSchema,
+    discourse_management: AreaFeedbackSchema,
+    pronunciation: z.null(),
+    interactive_communication: AreaFeedbackSchema.nullable(),
   }),
-  score: z.number().int().min(0).max(100),
 });
 
 export type SpeakingFeedback = z.infer<typeof SpeakingFeedbackSchema>;
+
+export interface WritingWeekGoals {
+  weekNumber?: number | null;
+  readerAndPurpose?: string;
+  requiredPoints?: string[];
+  linkers?: string[];
+  grammar?: string;
+  featuredWords?: string[];
+  inputContext?: string;
+}
+
+export interface SpeakingPromptOptions {
+  weekNumber?: number | null;
+  includeInteractive?: boolean;
+  partLabel?: string;
+  optionsList?: string[];
+  decisionTask?: string;
+}
 
 const CATEGORY_LIST_PROMPT = ERROR_CATEGORIES.map((c) => `"${c}"`).join(' | ');
 
 const STRETCH_MARKING_RULE = `- Weeks 12, 25 and 26 include B2+ stretch structures taught for recognition only: inversion and cleft sentences, fronting and emphatic structures, and ellipsis and substitution. Do NOT flag these structures as errors, even when the learner attempts them imperfectly; treat them as optional stretch, not mistakes.
 `;
 
-export function buildWritingSystemPrompt(variety: 'British' | 'American' | 'International' = 'British'): string {
-  return `You are a CEFR B1 → B2 English writing examiner.
-Evaluate the learner's writing on the 5-criterion B1 → B2 rubric (0 to 5, allowing .5 increments).
+export function buildWritingSystemPrompt(
+  variety: 'British' | 'American' | 'International' = 'British',
+  weekGoals?: WritingWeekGoals,
+): string {
+  const weekChecksBlock = weekGoals
+    ? [
+        '\nWEEK GOALS (use these as checks inside Content, Communicative achievement, Organisation, and Language — NEVER as separate marks):',
+        weekGoals.inputContext ? `- Task input shown to the learner:\n${weekGoals.inputContext}` : '',
+        weekGoals.requiredPoints?.length
+          ? `- Required points (feed into Content): ${weekGoals.requiredPoints.join('; ')}`
+          : '',
+        weekGoals.readerAndPurpose
+          ? `- Reader and tone (feed into Communicative achievement): ${weekGoals.readerAndPurpose}`
+          : '',
+        weekGoals.linkers?.length
+          ? `- Target linkers (feed into Organisation): ${weekGoals.linkers.join(', ')}`
+          : '',
+        weekGoals.grammar
+          ? `- Week's target grammar (feed into Language & put mistakes here first in corrections): ${weekGoals.grammar}`
+          : '',
+        weekGoals.featuredWords?.length
+          ? `- Week's featured words (feed into Language): ${weekGoals.featuredWords.join(', ')}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : '';
+
+  return `You are a helpful English writing teacher preparing learners for B1 Preliminary and B2 First formats.
+Mark the learner's writing on FOUR areas (0 to 5 whole numbers only; NO overall score):
+1. "content" — "${WRITING_AREA_SPECS.content.question}"
+   - 5: ${WRITING_AREA_SPECS.content.band5}
+   - 3: ${WRITING_AREA_SPECS.content.band3}
+   - 1: ${WRITING_AREA_SPECS.content.band1}
+2. "communicative_achievement" — "${WRITING_AREA_SPECS.communicative_achievement.question}"
+   - 5: ${WRITING_AREA_SPECS.communicative_achievement.band5}
+   - 3: ${WRITING_AREA_SPECS.communicative_achievement.band3}
+   - 1: ${WRITING_AREA_SPECS.communicative_achievement.band1}
+3. "organisation" — "${WRITING_AREA_SPECS.organisation.question}"
+   - 5: ${WRITING_AREA_SPECS.organisation.band5}
+   - 3: ${WRITING_AREA_SPECS.organisation.band3}
+   - 1: ${WRITING_AREA_SPECS.organisation.band1}
+4. "language" — "${WRITING_AREA_SPECS.language.question}"
+   - 5: ${WRITING_AREA_SPECS.language.band5}
+   - 3: ${WRITING_AREA_SPECS.language.band3}
+   - 1: ${WRITING_AREA_SPECS.language.band1}
+${weekChecksBlock}
 
 ${UNTRUSTED_DATA_SYSTEM_RULE}
 
-FEEDBACK & TAXONOMY RULES:
-${STRETCH_MARKING_RULE}- Write every "explanation" and "feedback" in clear, simple CEFR B1 English so an intermediate learner understands immediately.
-- Use British English spelling throughout explanations and feedback (e.g. "colour", "practise" as a verb, "organised", "centre", "programme", "analyse").
-- Preferred English variety for the learner's rewritten text: ${variety} English.
-- If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Do NOT invent mistakes in clean sentences.
+${LEVEL_RULES_PROMPT_BLOCK}
+
+FEEDBACK & CORRECTION RULES:
+${STRETCH_MARKING_RULE}- Write every "strength", "improvement", "explanation", and "feedback" in plain B1 English (one short sentence each for "strength" and "improvement").
+- Never claim to be official or endorsed by Cambridge, and avoid technical linguistic jargon.
+- Use British English spelling in feedback ("colour", "practise" as a verb, "organised", "centre", "programme").
+- Preferred English variety for "corrected": ${variety} English.
+- Word count rules: target is 120–150 words. Under 100 words caps "content" at 3. Over 180 words includes the tip "${OVER_WORD_LIMIT_TIP}".
+- If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Keep clear, correct sentences exactly as they are.
+- Return AT MOST 3 items in "corrections", putting mistakes with this week's grammar first.
 - Every item in "corrections" MUST include:
   - "original": the full clause or sentence containing the error (not an isolated 1-word fragment)
-  - "corrected_sentence": the natural, accurate B2-ready corrected clause or sentence
-  - "error_category": strictly one of ${CATEGORY_LIST_PROMPT}
-  - "other_label": ONLY when error_category is "other", provide a short descriptive label (e.g. "relative pronoun omission")
-  - "explanation": concise B1-level British English explanation of why the fix is needed
-  - "severity": strictly one of "minor" | "moderate" | "major"
-  - "rule": short pattern name (e.g. "Subject-verb agreement with collective nouns")
+  - "corrected_sentence": the clean B1–B2 rewrite of that clause/sentence (at most 20 words, B1–B2 words only, different from "original")
+  - "error_category": ONE of ${CATEGORY_LIST_PROMPT}
+  - "other_label": ONLY when error_category is "other"
+  - "explanation": 1 plain B1 sentence explaining WHY and HOW to fix it
+  - "severity": "minor" | "moderate" | "major"
 
-Return strictly valid JSON with no markdown fences matching this schema:
+Return ONLY valid JSON with this exact structure (no overall score):
 {
-  "corrected": "string (natural, polished B2-ready rewrite preserving the learner's intended meaning)",
-  "feedback": "string (2-3 encouraging sentences in B1 British English)",
-  "notes": ["string (up to 6 concise B1 British English study tips)"],
+  "areas": {
+    "content": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
+    "communicative_achievement": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
+    "organisation": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
+    "language": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." }
+  },
+  "feedback": "1–2 encouraging plain B1 sentences.",
+  "corrected": "The learner's text with errors fixed, keeping clear sentences as they are, B1–B2 words only, max 20 words per sentence.",
+  "notes": ["1–3 short practical B1 tips"],
   "corrections": [
     {
-      "original": "string",
-      "corrected_sentence": "string",
-      "error_category": ${CATEGORY_LIST_PROMPT},
-      "other_label": "string (optional, only if error_category is other)",
-      "explanation": "string (B1 British English)",
-      "severity": "minor" | "moderate" | "major",
-      "rule": "string"
+      "original": "Exact flawed clause or sentence from the learner's text",
+      "corrected_sentence": "Natural B1–B2 corrected version (<= 20 words)",
+      "error_category": "tense",
+      "explanation": "Plain B1 explanation of why and how to fix it.",
+      "severity": "moderate"
     }
   ],
-  "errorPatterns": [${CATEGORY_LIST_PROMPT}],
-  "rubric": {
-    "task_response": 4.0,
-    "organisation": 3.8,
-    "grammar_accuracy": 3.5,
-    "lexical_range": 3.7,
-    "style": 3.8
-  },
-  "score": 78
+  "errorPatterns": ["tense"]
 }`;
 }
 
-export function buildSpeakingSystemPrompt(): string {
-  return `You are a CEFR B1 → B2 English speaking examiner.
+export function buildSpeakingSystemPrompt(
+  prompt: string,
+  variety: 'British' | 'American' | 'International' = 'British',
+  options: SpeakingPromptOptions = {},
+): string {
+  const wk = options.weekNumber && WEEK_SPEAKING_TARGET_STRUCTURES[options.weekNumber]
+    ? options.weekNumber
+    : null;
+  const weekStructures = wk
+    ? WEEK_SPEAKING_TARGET_STRUCTURES[wk]
+    : [
+        'past simple and present perfect',
+        'future plans with going to or first conditional',
+        "modals like have to, don't have to, and should",
+        'relative clauses with which or where, and simple linkers',
+      ];
+  const interactiveBlock = options.includeInteractive
+    ? `3. "interactive_communication" — "${SPEAKING_AREA_SPECS.interactive_communication.question}" (0 to 5 whole number)
+   - 5: ${SPEAKING_AREA_SPECS.interactive_communication.band5}
+   - 3: ${SPEAKING_AREA_SPECS.interactive_communication.band3}
+   - 1: ${SPEAKING_AREA_SPECS.interactive_communication.band1}
+${options.optionsList?.length ? `- Discuss-and-decide options: ${options.optionsList.join(' · ')} (${options.decisionTask ?? 'agree on the best choice'})` : ''}`
+    : '- Set "interactive_communication": null (only marked in Discuss and decide).';
+
+  const interactiveJsonExample = options.includeInteractive
+    ? '{ "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." }'
+    : 'null';
+
+  return `You are a helpful English speaking teacher preparing learners for B1 Preliminary and B2 First formats.
+Prompt given to the learner: "${prompt}"${options.partLabel ? ` (${options.partLabel})` : ''}
 
 ${UNTRUSTED_DATA_SYSTEM_RULE}
 
+CRITICAL SPEAKING TRANSCRIPT RULES:
+- You ONLY receive a speech-to-text transcript (from Whisper), NOT raw audio.
+- DO NOT guess or score pronunciation, word stress, intonation, or accent. Pronunciation is marked by a teacher only — NEVER mention pronunciation in any field.
+- Never infer or penalise speaking speed or pauses from punctuation or transcript length.
+- Ignore whisper transcription artefacts (missing punctuation, minor capitalisation, filler "uh/um"). Focus on spoken grammar, vocabulary, linking, and task content.
 ${STRETCH_MARKING_RULE}
-CRITICAL TRANSCRIPTION RULE:
-- You are reading an automatic Whisper speech-to-text transcript, NOT listening to raw audio. Whisper automatically fixes mispronounced words into normal spelling.
-- Therefore, DO NOT guess or score pronunciation, accent, or phoneme accuracy from the transcript.
-- Score ONLY what is reliably observable in the transcript: task_achievement, grammar_accuracy, lexical_range, and coherence (each 0 to 5, allowing .5 increments). Never infer or penalise speaking speed or pauses from the transcript.
-- Do not give pronunciation tips or claim that any word was spoken incorrectly. Sound practice is selected by separate fixed rules.
-- Write all explanations and feedback in clear, encouraging CEFR B1 British English (using British spelling such as "practise", "organised", "centre").
-- If there are no grammatical or lexical errors, return "corrections": [] and "errorPatterns": [].
-- Give exactly one optional sentence-structure upgrade. Its original MUST be an entire sentence copied exactly from the transcript. Preserve the idea, make ONE natural B2 structure and explain it in one short line. Use the week's preferred structure when it fits; otherwise use although, which, so that or because of. The structure field must be exactly one of: although, which, so that, because of, present perfect, time or if clause, modal, passive, conditional, future perfect, past modal.
-- For cuePoints, only include a supplied cue-card label when the transcript addresses it; quote the learner's exact words as evidence. Never invent a quotation. Return [] if no labels are supplied.
+${LEVEL_RULES_PROMPT_BLOCK}
 
-Return strictly valid JSON with no markdown fences:
+AREAS TO MARK (0 to 5 whole numbers; NO overall score, NO pronunciation mark):
+1. "grammar_and_vocabulary" — "${SPEAKING_AREA_SPECS.grammar_and_vocabulary.question}"
+   - 5: ${SPEAKING_AREA_SPECS.grammar_and_vocabulary.band5}
+   - 3: ${SPEAKING_AREA_SPECS.grammar_and_vocabulary.band3}
+   - 1: ${SPEAKING_AREA_SPECS.grammar_and_vocabulary.band1}
+2. "discourse_management" — "${SPEAKING_AREA_SPECS.discourse_management.question}"
+   - 5: ${SPEAKING_AREA_SPECS.discourse_management.band5}
+   - 3: ${SPEAKING_AREA_SPECS.discourse_management.band3}
+   - 1: ${SPEAKING_AREA_SPECS.discourse_management.band1}
+${interactiveBlock}
+- Write every "strength" and "improvement" as ONE plain B1 sentence in British English.
+
+"YOUR ANSWER, IMPROVED" ("improvedResponse" & "highlights"):
+- Rewrite the learner's own spoken answer into "improvedResponse":
+  - Keep ONLY their ideas; do NOT add new facts, places, people, or details they did not mention.
+  - Fix errors and keep clear sentences as they are.
+  - Keep roughly the same length (within about 20% of their word count when they spoke 20+ words).
+  - Use ${variety} English, B1–B2 words only, and sentences of at most 20 words.
+  - Naturally use 2–4 of these target structures where they fit the learner's ideas:
+${weekStructures.map((s) => `    * ${s}`).join('\n')}
+- Return those 2–4 used target structures in "highlights":
+  - "substring": an EXACT verbatim substring copied character-for-character from "improvedResponse"
+  - "label": short B1 label (2–5 words, e.g. "Present perfect with since")
+  - "explanation": one-line plain B1 explanation (1 short sentence)
+- Set "offTopic": true ONLY if the learner's transcript has nothing to do with the prompt.
+
+CORRECTIONS:
+- Return AT MOST 3 items in "corrections", putting mistakes with this week's grammar first.
+- Each correction needs "original", "corrected_sentence" (<= 20 words, B1–B2 words only), "error_category" (${CATEGORY_LIST_PROMPT}), "explanation" (1 plain B1 sentence), and "severity".
+
+Return ONLY valid JSON with this exact structure (no overall score, no pronunciation field):
 {
-  "structure": {"original": "exact full sentence from transcript", "upgraded": "one improved sentence", "explanation": "one short B1 line", "structure": "one of the allowed structure names"},
-  "cuePoints": [{"label": "supplied cue-card label", "quote": "exact words from transcript"}],
-  "improvedResponse": "string (natural B2-ready spoken version preserving the speaker's ideas)",
-  "feedback": "string (2-3 encouraging sentences in B1 British English)",
-  "strengths": ["string (1-3 concrete strengths in grammar, vocabulary, or organisation)"],
-  "improvements": ["string (1-3 specific phrasing or grammar upgrades)"],
-  "corrections": [
+  "areas": {
+    "grammar_and_vocabulary": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
+    "discourse_management": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
+    "interactive_communication": ${interactiveJsonExample}
+  },
+  "offTopic": false,
+  "feedback": "1–2 encouraging plain B1 sentences.",
+  "improvedResponse": "The learner's own ideas with errors fixed, within ~20% length, B1–B2 words only, <= 20 words per sentence.",
+  "highlights": [
     {
-      "original": "string (full phrase or sentence)",
-      "corrected_sentence": "string",
-      "error_category": ${CATEGORY_LIST_PROMPT},
-      "other_label": "string (optional, only if error_category is other)",
-      "explanation": "string (B1 British English)",
-      "severity": "minor" | "moderate" | "major",
-      "rule": "string"
+      "substring": "exact substring from improvedResponse",
+      "label": "Short structure label",
+      "explanation": "One-line plain B1 explanation."
     }
   ],
-  "errorPatterns": [${CATEGORY_LIST_PROMPT}],
-  "tips": ["string"],
-  "rubric": {
-    "task_achievement": 3.8,
-    "lexical_range": 3.7,
-    "grammar_accuracy": 3.6,
-    "coherence": 4.0
-  },
-  "score": 76
+  "strengths": ["1–2 short strengths"],
+  "improvements": ["1–2 short improvements"],
+  "tips": ["1–2 practical tips"],
+  "corrections": [
+    {
+      "original": "Exact flawed spoken clause or sentence",
+      "corrected_sentence": "Natural spoken B1–B2 version (<= 20 words)",
+      "error_category": "tense",
+      "explanation": "Plain B1 explanation.",
+      "severity": "moderate"
+    }
+  ],
+  "errorPatterns": ["tense"]
 }`;
 }
 
-function normalizeCorrectionArray(raw: unknown): CorrectionItem[] {
-  if (!Array.isArray(raw)) return [];
-  const items: CorrectionItem[] = [];
-  for (const entry of raw.slice(0, 10)) {
-    if (!entry || typeof entry !== 'object') continue;
-    const obj = entry as Record<string, unknown>;
-    const original = typeof obj.original === 'string' ? obj.original.trim() : '';
-    const correctedSentence =
-      typeof obj.corrected_sentence === 'string'
-        ? obj.corrected_sentence.trim()
-        : typeof obj.alternative === 'string'
-          ? obj.alternative.trim()
-          : typeof obj.suggestion === 'string'
-            ? obj.suggestion.trim()
-            : '';
-    const explanation =
-      typeof obj.explanation === 'string'
-        ? obj.explanation.trim()
-        : typeof obj.reason === 'string'
-          ? obj.reason.trim()
-          : '';
-    if (!original || !correctedSentence || !explanation) continue;
+function sanitizeCorrections(
+  rawList: unknown,
+  options: {
+    learnerText?: string;
+    weekNumber?: number | null;
+    stripPronunciation?: boolean;
+  } = {},
+): CorrectionItem[] {
+  if (!Array.isArray(rawList)) return [];
+  const valid: CorrectionItem[] = [];
+  const priority = new Set(
+    options.weekNumber ? WEEK_PRIORITY_CATEGORIES[options.weekNumber] ?? [] : [],
+  );
 
-    // Ignore no-op "corrections" where original === corrected
-    if (normalizeSentenceForCompare(original) === normalizeSentenceForCompare(correctedSentence)) {
+  for (const item of rawList) {
+    if (!item || typeof item !== 'object') continue;
+    const rec = item as Record<string, unknown>;
+    const original = String(rec.original ?? '').trim();
+    const rawCorrected = String(rec.corrected_sentence ?? rec.alternative ?? rec.corrected ?? '').trim();
+    const rawExplanation = String(rec.explanation ?? rec.reason ?? '').trim();
+
+    if (!original || !rawCorrected || !rawExplanation) continue;
+    if (
+      options.stripPronunciation &&
+      /\b(?:(?:mis)?pron(?:ounc|unci)\w*|accents?|phoneme\w*|intonation)\b/i.test(rawExplanation)
+    ) {
       continue;
     }
 
-    const category = coerceErrorCategory(obj.error_category ?? obj.category ?? obj.rule);
-    const otherLabel =
-      category === 'other' && typeof obj.other_label === 'string' && obj.other_label.trim()
-        ? obj.other_label.trim().slice(0, 80)
+    const corrected_sentence = simplifyToB1B2(rawCorrected, {
+      weekNumber: options.weekNumber,
+      learnerText: options.learnerText,
+      maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+    });
+    const explanation = oneB1Sentence(rawExplanation, 'Use this clearer B1 form here.', {
+      weekNumber: options.weekNumber,
+      stripPronunciation: options.stripPronunciation,
+    });
+
+    if (!corrected_sentence) continue;
+    if (normalizeSentenceForCompare(original) === normalizeSentenceForCompare(corrected_sentence)) {
+      continue;
+    }
+
+    const error_category = coerceErrorCategory(rec.error_category ?? rec.category ?? rec.type);
+    const severity = coerceSeverity(rec.severity);
+    const other_label =
+      error_category === 'other' && typeof rec.other_label === 'string' && rec.other_label.trim()
+        ? rec.other_label.trim().slice(0, 80)
         : undefined;
+    const rule =
+      typeof rec.rule === 'string' && rec.rule.trim() ? rec.rule.trim().slice(0, 120) : undefined;
 
-    const candidate = {
+    valid.push({
       original: original.slice(0, 300),
-      corrected_sentence: correctedSentence.slice(0, 400),
-      error_category: category,
-      other_label: otherLabel,
+      corrected_sentence: corrected_sentence.slice(0, 400),
+      error_category,
+      ...(other_label ? { other_label } : {}),
       explanation: explanation.slice(0, 500),
-      severity: coerceSeverity(obj.severity),
-      rule: typeof obj.rule === 'string' && obj.rule.trim() ? obj.rule.trim().slice(0, 120) : undefined,
+      severity,
+      ...(rule ? { rule } : {}),
+    });
+  }
+
+  // Week's target grammar mistakes first, preserving relative order otherwise, capped at 3
+  const prioritized = [
+    ...valid.filter((item) => priority.has(item.error_category)),
+    ...valid.filter((item) => !priority.has(item.error_category)),
+  ];
+  return prioritized.slice(0, MAX_CORRECTIONS_PER_TEXT);
+}
+
+export function validateWritingFeedback(
+  raw: unknown,
+  originalText: string,
+  options: { weekNumber?: number | null; skipUnder100Cap?: boolean } = {},
+): WritingFeedback {
+  const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const rawAreas = obj.areas && typeof obj.areas === 'object' ? (obj.areas as Record<string, unknown>) : {};
+  const legacyRubric = obj.rubric && typeof obj.rubric === 'object' ? (obj.rubric as Record<string, unknown>) : {};
+
+  const wordCount = countPlainWords(originalText);
+  const contentCappedUnder100 = !options.skipUnder100Cap && wordCount > 0 && wordCount < 100;
+  const wordCountTip = wordCount > 180 ? OVER_WORD_LIMIT_TIP : null;
+
+  function parseArea(
+    key: WritingAreaKey,
+    legacyKey: string,
+    defaultStrength: string,
+    defaultImprovement: string,
+  ): AreaFeedback {
+    const areaObj =
+      rawAreas[key] && typeof rawAreas[key] === 'object'
+        ? (rawAreas[key] as Record<string, unknown>)
+        : {};
+    let score = clampAreaBand(areaObj.score ?? areaObj.mark ?? legacyRubric[legacyKey], 3);
+    if (key === 'content' && contentCappedUnder100 && score > 3) {
+      score = 3;
+    }
+    const improvementFallback =
+      key === 'content' && contentCappedUnder100
+        ? 'Add more detail so you reach 120–150 words and cover every part.'
+        : defaultImprovement;
+    return {
+      score,
+      strength: oneB1Sentence(areaObj.strength, defaultStrength, { weekNumber: options.weekNumber }),
+      improvement: oneB1Sentence(areaObj.improvement, improvementFallback, {
+        weekNumber: options.weekNumber,
+      }),
     };
-
-    const parsed = CorrectionItemSchema.safeParse(candidate);
-    if (parsed.success) {
-      items.push(parsed.data);
-    }
   }
-  return items;
-}
 
-export function validateWritingFeedback(rawJson: unknown, fallbackText: string): WritingFeedback {
-  const obj = (rawJson && typeof rawJson === 'object' ? rawJson : {}) as Record<string, unknown>;
-  const rawRubric = (obj.rubric && typeof obj.rubric === 'object' ? obj.rubric : {}) as Record<string, unknown>;
-
-  const rubric = {
-    task_response: clampFive(rawRubric.task_response, 3.8),
-    organisation: clampFive(rawRubric.organisation, 3.7),
-    grammar_accuracy: clampFive(rawRubric.grammar_accuracy, 3.5),
-    lexical_range: clampFive(rawRubric.lexical_range, 3.6),
-    style: clampFive(rawRubric.style, 3.7),
+  const areas = {
+    content: parseArea(
+      'content',
+      'task_response',
+      'You answered the main topic clearly.',
+      'Develop every part of the task with a clear detail.',
+    ),
+    communicative_achievement: parseArea(
+      'communicative_achievement',
+      'style',
+      'Your tone fits the reader well.',
+      'Keep a friendly, natural style from start to finish.',
+    ),
+    organisation: parseArea(
+      'organisation',
+      'organisation',
+      'Your ideas follow a sensible order.',
+      'Use clear paragraphs and simple linking words between points.',
+    ),
+    language: parseArea(
+      'language',
+      'grammar_accuracy',
+      'Your meaning is clear to the reader.',
+      'Check verb forms and articles in your longer sentences.',
+    ),
   };
 
-  const avgFive =
-    (rubric.task_response +
-      rubric.organisation +
-      rubric.grammar_accuracy +
-      rubric.lexical_range +
-      rubric.style) /
-    5;
-  const computedScore = Math.round((avgFive / 5) * 100);
-  const rawScore = typeof obj.score === 'number' && Number.isFinite(obj.score) ? Math.round(obj.score) : computedScore;
+  const corrections = sanitizeCorrections(obj.corrections, {
+    learnerText: originalText,
+    weekNumber: options.weekNumber,
+  });
+  const derivedPatterns = Array.from(new Set(corrections.map((c) => c.error_category)));
+  const rawPatterns = Array.isArray(obj.errorPatterns)
+    ? obj.errorPatterns
+        .map(coerceErrorCategory)
+        .filter((c, idx, arr) => arr.indexOf(c) === idx)
+        .slice(0, 8)
+    : [];
+  const errorPatterns = corrections.length > 0 ? derivedPatterns : rawPatterns;
 
-  const corrections = normalizeCorrectionArray(obj.corrections);
-  const patternSet = new Set<ErrorCategory>();
-  if (Array.isArray(obj.errorPatterns)) {
-    for (const p of obj.errorPatterns) {
-      patternSet.add(coerceErrorCategory(p));
-    }
-  }
-  for (const c of corrections) {
-    patternSet.add(c.error_category);
-  }
+  const rawNotes = Array.isArray(obj.notes)
+    ? obj.notes
+        .map((n) =>
+          simplifyToB1B2(String(n).trim(), {
+            weekNumber: options.weekNumber,
+            maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+          }),
+        )
+        .filter(Boolean)
+        .slice(0, 7)
+    : [];
+  const notes = wordCountTip
+    ? [wordCountTip, ...rawNotes.filter((n) => n !== wordCountTip)].slice(0, 8)
+    : rawNotes;
 
-  const candidate = {
-    corrected: typeof obj.corrected === 'string' && obj.corrected.trim() ? obj.corrected.trim() : fallbackText,
-    feedback:
-      typeof obj.feedback === 'string' && obj.feedback.trim()
-        ? obj.feedback.trim()
-        : 'Good effort. Practise reviewing the highlighted grammar and vocabulary notes above.',
-    notes: Array.isArray(obj.notes)
-      ? obj.notes.filter((n): n is string => typeof n === 'string' && n.trim().length > 0).map((n) => n.trim()).slice(0, 8)
-      : [],
+  const rawCorrected =
+    typeof obj.corrected === 'string' && obj.corrected.trim()
+      ? obj.corrected.trim()
+      : originalText.trim() || 'No text submitted.';
+  const simplifiedCorrected = simplifyToB1B2(rawCorrected, {
+    weekNumber: options.weekNumber,
+    learnerText: originalText,
+    maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+  });
+  const corrected =
+    preserveClearLearnerSentences(originalText, simplifiedCorrected, corrections, {
+      weekNumber: options.weekNumber,
+    }) ||
+    originalText.trim() ||
+    'No text submitted.';
+
+  const rawFeedback =
+    typeof obj.feedback === 'string' && obj.feedback.trim()
+      ? simplifyToB1B2(obj.feedback.trim(), {
+          weekNumber: options.weekNumber,
+          maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+        })
+      : 'Good effort on this task. Read the four area notes below to plan your next draft.';
+
+  return WritingFeedbackSchema.parse({
+    corrected,
+    feedback: rawFeedback || 'Good effort on this task.',
+    notes,
     corrections,
-    errorPatterns: Array.from(patternSet).slice(0, 8),
-    rubric,
-    score: Math.max(0, Math.min(100, rawScore)),
-  };
-
-  return WritingFeedbackSchema.parse(candidate);
+    errorPatterns,
+    areas,
+    wordCount,
+    contentCappedUnder100,
+    wordCountTip,
+  });
 }
 
-// A transcript cannot tell us how a word sounded. Filter accidental acoustic
-// diagnoses even if a provider ignores the speaking prompt.
-function containsAcousticDiagnosis(value: string): boolean {
-  return /\b(?:(?:mis)?pron(?:ounc|unci)\w*|accents?|phoneme\w*|(?:sound|sounds|sounded)\s+(?:wrong|incorrect|unclear))\b/i.test(value);
+function clampLengthNearTranscript(improved: string, transcript: string): string {
+  const transcriptWords = countPlainWords(transcript);
+  if (transcriptWords < 20) return improved;
+  const maxAllowedWords = Math.max(transcriptWords + 10, Math.ceil(transcriptWords * 1.25));
+  if (countPlainWords(improved) <= maxAllowedWords) return improved;
+
+  const sentences = splitSentences(improved);
+  if (sentences.length <= 1) return improved;
+  const minAllowedWords = Math.max(15, Math.floor(transcriptWords * 0.8));
+  const kept: string[] = [];
+  let running = 0;
+  for (const s of sentences) {
+    const wc = countPlainWords(s);
+    if (running >= minAllowedWords && running + wc > maxAllowedWords) break;
+    kept.push(s);
+    running += wc;
+  }
+  return kept.join(' ').trim() || improved;
 }
 
-export function validateSpeakingFeedback(rawJson: unknown, fallbackTranscript: string): SpeakingFeedback {
-  const obj = (rawJson && typeof rawJson === 'object' ? rawJson : {}) as Record<string, unknown>;
-  const rawRubric = (obj.rubric && typeof obj.rubric === 'object' ? obj.rubric : {}) as Record<string, unknown>;
+export function validateSpeakingFeedback(
+  raw: unknown,
+  originalTranscript: string,
+  options: { weekNumber?: number | null; includeInteractive?: boolean } = {},
+): SpeakingFeedback {
+  const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const rawAreas = obj.areas && typeof obj.areas === 'object' ? (obj.areas as Record<string, unknown>) : {};
+  const legacyRubric = obj.rubric && typeof obj.rubric === 'object' ? (obj.rubric as Record<string, unknown>) : {};
 
-  const rubric = {
-    task_achievement: clampFive(rawRubric.task_achievement, 3.8),
-    lexical_range: clampFive(rawRubric.lexical_range, 3.6),
-    grammar_accuracy: clampFive(rawRubric.grammar_accuracy, 3.6),
-    coherence: clampFive(rawRubric.coherence, 3.8),
+  const pronunciationClaim = /\b(?:(?:mis)?pron(?:ounc|unci)\w*|accents?|phoneme\w*|intonation)\b/i;
+  const cleanList = (items: unknown, limit = 4) =>
+    Array.isArray(items)
+      ? items
+          .map((item) =>
+            simplifyToB1B2(String(item).trim(), {
+              weekNumber: options.weekNumber,
+              maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+            }),
+          )
+          .filter((item) => Boolean(item) && !pronunciationClaim.test(item))
+          .slice(0, limit)
+      : [];
+
+  function parseSpeakingArea(
+    key: 'grammar_and_vocabulary' | 'discourse_management' | 'interactive_communication',
+    legacyFallbackScore: unknown,
+    defaultStrength: string,
+    defaultImprovement: string,
+  ): AreaFeedback {
+    const areaObj =
+      rawAreas[key] && typeof rawAreas[key] === 'object'
+        ? (rawAreas[key] as Record<string, unknown>)
+        : {};
+    return {
+      score: clampAreaBand(areaObj.score ?? areaObj.mark ?? legacyFallbackScore, 3),
+      strength: oneB1Sentence(areaObj.strength, defaultStrength, {
+        weekNumber: options.weekNumber,
+        stripPronunciation: true,
+      }),
+      improvement: oneB1Sentence(areaObj.improvement, defaultImprovement, {
+        weekNumber: options.weekNumber,
+        stripPronunciation: true,
+      }),
+    };
+  }
+
+  const legacyGv =
+    Number.isFinite(Number(legacyRubric.grammar_accuracy)) &&
+    Number.isFinite(Number(legacyRubric.lexical_range))
+      ? (Number(legacyRubric.grammar_accuracy) + Number(legacyRubric.lexical_range)) / 2
+      : legacyRubric.grammar_accuracy ?? legacyRubric.lexical_range;
+  const legacyDm =
+    Number.isFinite(Number(legacyRubric.coherence)) &&
+    Number.isFinite(Number(legacyRubric.task_achievement))
+      ? (Number(legacyRubric.coherence) + Number(legacyRubric.task_achievement)) / 2
+      : legacyRubric.coherence ?? legacyRubric.task_achievement;
+
+  const areas = {
+    grammar_and_vocabulary: parseSpeakingArea(
+      'grammar_and_vocabulary',
+      legacyGv,
+      'You used clear everyday words to share your ideas.',
+      "Try adding one of this week's target grammar forms next time.",
+    ),
+    discourse_management: parseSpeakingArea(
+      'discourse_management',
+      legacyDm,
+      'You stayed on the topic and connected your main points.',
+      'Add a simple linking phrase like although or since then to join ideas.',
+    ),
+    // Pronunciation is NEVER marked by the AI (teacher only).
+    pronunciation: null,
+    // Interactive communication is marked by AI ONLY in "Discuss and decide".
+    interactive_communication: options.includeInteractive
+      ? parseSpeakingArea(
+          'interactive_communication',
+          undefined,
+          "You answered your partner's points and helped move the talk forward.",
+          'Invite your partner to share their view before choosing together.',
+        )
+      : null,
   };
 
-  const avgFive =
-    (rubric.task_achievement + rubric.lexical_range + rubric.grammar_accuracy + rubric.coherence) / 4;
-  // Never trust an extra overall score that could include imagined audio
-  // qualities. Derive it only from the four transcript-observable criteria.
-  const computedScore = Math.round((avgFive / 5) * 100);
-
-  const corrections = normalizeCorrectionArray(obj.corrections).filter((item) =>
-    !containsAcousticDiagnosis([item.original, item.corrected_sentence, item.explanation, item.rule, item.other_label].filter(Boolean).join(' ')),
-  );
-  const patternSet = new Set<ErrorCategory>();
-  if (Array.isArray(obj.errorPatterns)) {
-    for (const p of obj.errorPatterns) {
-      if (typeof p === 'string' && !containsAcousticDiagnosis(p)) patternSet.add(coerceErrorCategory(p));
-    }
-  }
-  for (const c of corrections) {
-    patternSet.add(c.error_category);
-  }
-
-  const improvements = Array.isArray(obj.improvements)
-    ? obj.improvements.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
+  const corrections = sanitizeCorrections(obj.corrections, {
+    learnerText: originalTranscript,
+    weekNumber: options.weekNumber,
+    stripPronunciation: true,
+  });
+  const derivedPatterns = Array.from(new Set(corrections.map((c) => c.error_category)));
+  const rawPatterns = Array.isArray(obj.errorPatterns)
+    ? obj.errorPatterns
+        .filter((item) => !pronunciationClaim.test(String(item)))
+        .map(coerceErrorCategory)
+        .filter((c, idx, arr) => arr.indexOf(c) === idx)
+        .slice(0, 8)
     : [];
 
-  const candidate = {
-    improvedResponse:
-      typeof obj.improvedResponse === 'string' && obj.improvedResponse.trim() && !containsAcousticDiagnosis(obj.improvedResponse)
-        ? obj.improvedResponse.trim()
-        : fallbackTranscript,
-    feedback:
-      typeof obj.feedback === 'string' && obj.feedback.trim() && !containsAcousticDiagnosis(obj.feedback)
-        ? obj.feedback.trim()
-        : 'Clear ideas! Keep linking your sentences with natural B2 connectors.',
-    strengths: Array.isArray(obj.strengths)
-      ? obj.strengths.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
-      : [],
-    improvements,
+  const cleanedFeedback =
+    typeof obj.feedback === 'string'
+      ? splitSentences(obj.feedback)
+          .filter((sentence) => !pronunciationClaim.test(sentence))
+          .join(' ')
+          .trim()
+      : '';
+  const feedback = cleanedFeedback
+    ? simplifyToB1B2(cleanedFeedback, {
+        weekNumber: options.weekNumber,
+        maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+      })
+    : 'You communicated your main message clearly. Read your improved answer below and try the highlighted structures.';
+
+  const rawImproved =
+    typeof obj.improvedResponse === 'string' && obj.improvedResponse.trim()
+      ? obj.improvedResponse.trim()
+      : originalTranscript.trim() || 'No speech detected.';
+  const simplifiedImproved = simplifyToB1B2(rawImproved, {
+    weekNumber: options.weekNumber,
+    learnerText: originalTranscript,
+    maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+  });
+  const improvedResponse =
+    clampLengthNearTranscript(simplifiedImproved, originalTranscript) ||
+    originalTranscript.trim() ||
+    'No speech detected.';
+
+  const highlights: ImprovedHighlight[] = validateImprovedHighlights(
+    obj.highlights,
+    improvedResponse,
+    options.weekNumber ?? null,
+  );
+  const offTopic = Boolean(obj.offTopic);
+  const showExampleFirst = isShortOrOffTopicTranscript(originalTranscript, offTopic);
+  const examplePromptMessage = showExampleFirst ? SHORT_OR_OFF_TOPIC_MESSAGE : null;
+
+  return SpeakingFeedbackSchema.parse({
+    improvedResponse,
+    highlights,
+    showExampleFirst,
+    examplePromptMessage,
+    offTopic,
+    feedback: feedback || 'You communicated your main message clearly.',
+    strengths: cleanList(obj.strengths),
+    improvements: cleanList(obj.improvements),
     corrections,
-    errorPatterns: Array.from(patternSet).slice(0, 8),
-    tips: Array.isArray(obj.tips)
-      ? obj.tips.filter((s): s is string => typeof s === 'string' && s.trim().length > 0 && !containsAcousticDiagnosis(s)).map((s) => s.trim()).slice(0, 4)
-      : improvements,
-    rubric,
-    score: Math.max(0, Math.min(100, computedScore)),
-  };
-
-  return SpeakingFeedbackSchema.parse(candidate);
+    errorPatterns: corrections.length > 0 ? derivedPatterns : rawPatterns,
+    tips: cleanList(obj.tips),
+    areas,
+  });
 }
-
-function tokenJaccardSimilarity(a: string, b: string): number {
-  const setA = new Set(normalizeSentenceForCompare(a).split(' ').filter(Boolean));
-  const setB = new Set(normalizeSentenceForCompare(b).split(' ').filter(Boolean));
-  if (!setA.size || !setB.size) return 0;
-  let intersection = 0;
-  for (const w of setA) {
-    if (setB.has(w)) intersection++;
-  }
-  return intersection / (setA.size + setB.size - intersection);
-}
-
-function findContainingSentence(fullText: string | undefined, fragment: string): string | null {
-  if (!fullText) return null;
-  const sentences = fullText
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const needle = normalizeSentenceForCompare(fragment);
-  for (const s of sentences) {
-    if (normalizeSentenceForCompare(s).includes(needle)) {
-      return s.slice(0, 300);
-    }
-  }
-  return null;
-}
-
-const DAILY_NEW_ERROR_CARD_CAP = 5;
 
 const SEVERITY_PRIORITY: Record<ErrorSeverity, number> = {
   major: 3,
@@ -442,11 +923,45 @@ const SEVERITY_PRIORITY: Record<ErrorSeverity, number> = {
   minor: 1,
 };
 
+const DAILY_NEW_ERROR_CARD_CAP = 5;
+
+function tokenJaccardSimilarity(a: string, b: string): number {
+  const tokA = new Set(normalizeSentenceForCompare(a).split(' ').filter(Boolean));
+  const tokB = new Set(normalizeSentenceForCompare(b).split(' ').filter(Boolean));
+  if (tokA.size === 0 && tokB.size === 0) return 1;
+  let inter = 0;
+  for (const t of tokA) {
+    if (tokB.has(t)) inter++;
+  }
+  const union = tokA.size + tokB.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+function findContainingSentence(sourceText: string | undefined, snippet: string): string | null {
+  if (!sourceText || !snippet) return null;
+  const sentences = sourceText
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 12 && s.length <= 260);
+  const normSnippet = normalizeSentenceForCompare(snippet);
+  if (!normSnippet) return null;
+  for (const s of sentences) {
+    if (normalizeSentenceForCompare(s).includes(normSnippet)) {
+      return s;
+    }
+  }
+  return null;
+}
+
+/**
+ * Persist normalized learner errors and create quality-checked, deduplicated,
+ * daily-capped spaced-repetition review cards (`error_review_cards`).
+ */
 export async function persistLearnerErrors(
   supabase: SupabaseClient,
   params: {
     userId: string;
-    sourceType: 'writing' | 'speaking' | 'checkpoint_writing' | 'checkpoint_speaking' | 'mediation';
+    sourceType: 'writing' | 'speaking' | 'practice' | 'mediation';
     sourceId?: string | null;
     lessonId?: string | null;
     sourceText?: string;
@@ -532,10 +1047,14 @@ export async function persistLearnerErrors(
     // Skip vague single-word cards that have no sentence context
     if (promptSentence.split(/\s+/).length < 3) continue;
 
-    const correctedSentence =
+    const rawCardCorrected =
       contextSentence && row.original.split(/\s+/).length < 3
         ? contextSentence.replace(row.original, row.corrected)
         : row.corrected;
+    const correctedSentence = simplifyToB1B2(rawCardCorrected, {
+      learnerText: params.sourceText,
+      maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
+    });
 
     const normKey = normalizeSentenceForCompare(promptSentence);
     if (!normKey) continue;

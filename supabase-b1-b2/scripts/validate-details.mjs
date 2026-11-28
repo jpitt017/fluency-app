@@ -175,16 +175,45 @@ for (const phrase of ['30 minutes', 'pasting disabled', 'One submission']) {
 for (const set of [assessments.writingDescriptors, assessments.speakingDescriptors]) {
   check(set?.criteria?.length === 4, 'descriptor sets need four criteria');
   set?.criteria?.forEach((criterion) => {
-    for (const band of ['gettingThere', 'onTarget', 'beyondTarget']) {
+    check(Boolean(criterion.question?.trim()), `${criterion.key} needs a learner question`);
+    for (const band of ['band5', 'band3', 'band1']) {
       check(Boolean(criterion[band]?.trim()), `${criterion.key} needs a ${band} descriptor`);
     }
   });
 }
 check(
-  assessments.speakingDescriptors?.criteria?.some((criterion) => criterion.key === 'coherence'),
-  'speaking descriptors need the coherence criterion',
+  JSON.stringify((assessments.writingDescriptors?.criteria ?? []).map((c) => c.key)) ===
+    JSON.stringify(['content', 'communicative_achievement', 'organisation', 'language']),
+  'writing descriptors must use the four Cambridge-style area keys',
+);
+check(
+  JSON.stringify((assessments.speakingDescriptors?.criteria ?? []).map((c) => c.key)) ===
+    JSON.stringify(['grammar_and_vocabulary', 'discourse_management', 'pronunciation', 'interactive_communication']),
+  'speaking descriptors must use the four Cambridge-style area keys',
+);
+check(
+  assessments.speakingDescriptors?.criteria?.find((c) => c.key === 'pronunciation')?.markedBy === 'Teacher only',
+  'speaking pronunciation must be marked by Teacher only',
 );
 check(assessments.writingDescriptors?.wordRanges?.length === 5, 'writing descriptors need five word-range rows');
+
+for (const week of details.weeks ?? []) {
+  const parts = week.speaking?.parts;
+  check(parts?.questionsAboutYou?.length === 2, `week ${week.number} speaking needs two Questions about you`);
+  check(parts?.discussAndDecide?.options?.length === 5, `week ${week.number} speaking Discuss and decide needs five options`);
+  check(Boolean(parts?.discussAndDecide?.decisionTask?.trim()), `week ${week.number} speaking Discuss and decide needs a decisionTask`);
+  check(parts?.followUpQuestions?.length === 2, `week ${week.number} speaking needs two Follow-up questions`);
+}
+const week3Writing = details.weeks?.find((w) => w.number === 3)?.writing;
+check(
+  week3Writing?.inputEmail?.from === 'Alex' && week3Writing?.inputEmail?.notes?.length === 4,
+  'Week 3 writing needs Alex email and four notes',
+);
+const week4Writing = details.weeks?.find((w) => w.number === 4)?.writing;
+check(
+  Boolean(week4Writing?.callForArticles?.heading?.trim()) && Boolean(week4Writing?.callForArticles?.body?.trim()),
+  'Week 4 writing needs callForArticles heading and body',
+);
 
 const questionTotal = assessments.placement?.questionBlueprint?.reduce((sum, row) => sum + row.questions, 0) ?? 0;
 check(questionTotal === 24, 'placement blueprint must total 24 questions');

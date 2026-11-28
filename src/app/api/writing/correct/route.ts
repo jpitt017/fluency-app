@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import weeks01To04 from '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { buildEvalCacheKey, readEvalCache, writeEvalCache } from '@/lib/b1b2/eval-cache';
@@ -8,11 +9,12 @@ import {
   persistLearnerErrors,
   validateWritingFeedback,
   type WritingFeedback,
+  type WritingWeekGoals,
 } from '@/lib/b1b2/feedback-schema';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
-import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
+import { loadLearnerWeek, type LearnerWeek } from '@/lib/curriculum/learner-week';
 import { recordWeekSubmission } from '@/lib/curriculum/week-models';
 import { sanitizeLearnerText, wrapLearnerSubmission } from '@/lib/b1b2/prompt-guard';
 
@@ -26,6 +28,33 @@ function getGroqClient(): Groq {
     throw new Error('GROQ_API_KEY is not configured');
   }
   return new Groq({ apiKey });
+}
+
+function buildWeekWritingGoals(weekNumber: number | null, weekTask: LearnerWeek | null): WritingWeekGoals | undefined {
+  if (!weekNumber || !weekTask) return undefined;
+  const staticWeek = weeks01To04.weeks.find((w) => w.number === weekNumber);
+  const inputParts: string[] = [];
+  if (weekTask.writingInputEmail) {
+    inputParts.push(
+      `Email from ${weekTask.writingInputEmail.from}:\n"${weekTask.writingInputEmail.body}"\nYour four notes to cover: ${weekTask.writingInputEmail.notes.join(' | ')}`,
+    );
+  }
+  if (weekTask.writingCallForArticles) {
+    inputParts.push(
+      `${weekTask.writingCallForArticles.heading}:\n${weekTask.writingCallForArticles.body}`,
+    );
+  }
+  return {
+    weekNumber,
+    readerAndPurpose: staticWeek?.writing.readerAndPurpose,
+    requiredPoints: weekTask.writingInputEmail
+      ? weekTask.writingInputEmail.notes
+      : staticWeek?.writing.requiredPoints,
+    linkers: staticWeek?.writing.linkers,
+    grammar: staticWeek?.writing.grammar,
+    featuredWords: staticWeek?.writing.featuredWords,
+    inputContext: inputParts.length > 0 ? inputParts.join('\n\n') : undefined,
+  };
 }
 
 interface WritingCorrectBody {
@@ -62,8 +91,6 @@ export async function POST(req: NextRequest) {
     try {
       groq = getGroqClient();
     } catch {
-      // A missing key is a deployment fault, not something to explain to a
-      // learner, and the message names an env var they cannot change.
       statusCode = 503;
       const failure = await providerFailureResponse({
         admin: supabase,
@@ -109,10 +136,18 @@ export async function POST(req: NextRequest) {
     const revisedFrom = typeof body.revisedFrom === 'string' ? body.revisedFrom.trim() : '';
     const variety = body.variety ?? 'British';
 
+    const weekNumber = Number.isInteger(body.weekNumber) ? body.weekNumber! : null;
+    const weekTask = weekNumber ? await loadLearnerWeek(weekNumber) : null;
+    const weeklyTask = Boolean(
+      weekTask && prompt.startsWith(sanitizeLearnerText(weekTask.writingPrompt, 500).text),
+    );
+    const weekGoals = weeklyTask ? buildWeekWritingGoals(weekNumber, weekTask) : undefined;
+    const isPlacementSample = prompt.startsWith('Write 3–5 sentences (60–100 words)');
+
     const cacheKey = buildEvalCacheKey({
       endpoint: ENDPOINT,
       model: MODEL_ID,
-      prompt: `${prompt}|${targetKeywords.join(',')}`,
+      prompt: `writing-cambridge-v4|w:${weekNumber ?? ''}|${prompt}|${targetKeywords.join(',')}`,
       input: text,
       variety,
     });
@@ -121,7 +156,10 @@ export async function POST(req: NextRequest) {
     const cachedRaw = await readEvalCache<Record<string, unknown>>(supabase, cacheKey);
     if (cachedRaw) {
       try {
-        validated = validateWritingFeedback(cachedRaw, text);
+        validated = validateWritingFeedback(cachedRaw, text, {
+          weekNumber,
+          skipUnder100Cap: isPlacementSample,
+        });
         cacheHit = true;
       } catch {
         validated = null;
@@ -129,7 +167,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!validated) {
-      const systemPrompt = buildWritingSystemPrompt(variety);
+      const systemPrompt = buildWritingSystemPrompt(variety, weekGoals);
       const userPrompt = `Task Prompt: ${prompt}
 Target Vocabulary: ${targetKeywords.length > 0 ? targetKeywords.join(', ') : 'None specified'}
 
@@ -148,7 +186,10 @@ ${wrapLearnerSubmission(text)}`;
       promptTokens = completion.promptTokens;
       completionTokens = completion.completionTokens;
 
-      validated = validateWritingFeedback(completion.parsed, text);
+      validated = validateWritingFeedback(completion.parsed, text, {
+        weekNumber,
+        skipUnder100Cap: isPlacementSample,
+      });
 
       await writeEvalCache(supabase, {
         cacheKey,
@@ -170,7 +211,7 @@ ${wrapLearnerSubmission(text)}`;
       rule: c.rule,
     }));
 
-    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const wordCount = validated.wordCount;
     let submissionId: string | null = null;
     let newBadges: string[] = [];
 
@@ -185,19 +226,22 @@ ${wrapLearnerSubmission(text)}`;
             revised_from: revisedFrom || null,
             body: text,
             word_count: wordCount,
-            task_response: validated.rubric.task_response,
-            organisation: validated.rubric.organisation,
-            grammar_accuracy: validated.rubric.grammar_accuracy,
-            lexical_range: validated.rubric.lexical_range,
-            style: validated.rubric.style,
-            overall: validated.score,
+            task_response: validated.areas.content.score,
+            organisation: validated.areas.organisation.score,
+            grammar_accuracy: validated.areas.language.score,
+            lexical_range: validated.areas.language.score,
+            style: validated.areas.communicative_achievement.score,
+            overall: null,
             feedback: {
               summary: validated.feedback,
               corrected: validated.corrected,
               notes: validated.notes,
               errorPatterns: validated.errorPatterns,
               variety,
-              rubric: validated.rubric,
+              areas: validated.areas,
+              wordCount: validated.wordCount,
+              contentCappedUnder100: validated.contentCappedUnder100,
+              wordCountTip: validated.wordCountTip,
             },
             corrections: uiCorrections,
             status: 'evaluated',
@@ -227,16 +271,14 @@ ${wrapLearnerSubmission(text)}`;
       });
     }
 
-    const weekTask = Number.isInteger(body.weekNumber) ? await loadLearnerWeek(body.weekNumber!) : null;
-    const weeklyTask = Boolean(weekTask && prompt.startsWith(sanitizeLearnerText(weekTask.writingPrompt, 500).text));
-    const modelAnswer = weeklyTask && guard.userId
-      ? await recordWeekSubmission(guard.userId, body.weekNumber, 'writing') : null;
+    const modelAnswer =
+      weeklyTask && guard.userId
+        ? await recordWeekSubmission(guard.userId, body.weekNumber, 'writing')
+        : null;
 
     return NextResponse.json(
       {
         modelAnswer,
-        // Keep useful feedback even if recording progress fails, but do not
-        // leave a learner believing that their weekly task was counted.
         weekRecorded: weekTask ? Boolean(modelAnswer) : null,
         submissionId,
         corrected: validated.corrected,
@@ -244,17 +286,16 @@ ${wrapLearnerSubmission(text)}`;
         notes: validated.notes,
         corrections: uiCorrections,
         errorPatterns: validated.errorPatterns,
-        rubric: validated.rubric,
-        score: validated.score,
+        areas: validated.areas,
+        wordCount: validated.wordCount,
+        contentCappedUnder100: validated.contentCappedUnder100,
+        wordCountTip: validated.wordCountTip,
         newBadges,
         cached: cacheHit,
       },
       { headers: guard.headers },
     );
   } catch (err: unknown) {
-    // The learner's text lives only in this request until the row is inserted
-    // below, and a failure means it never was. Saying "your work is saved" here
-    // would be a lie, so they are asked to keep it.
     const failure = await providerFailureResponse({
       admin: supabase,
       endpoint: ENDPOINT,
