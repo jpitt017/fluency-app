@@ -113,7 +113,7 @@ jobs:
       # git rev-parse --short origin/main instead of judging by eye.
       - run: node --test tests/unit/deploy-version.test.mjs
       - run: node --experimental-strip-types --test tests/unit/listening-trial.test.mjs
-      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/placement-request-filter.test.mjs
+      - run: node --test tests/unit/e2e-supabase-target.test.mjs tests/unit/e2e-supabase-seed.test.mjs tests/unit/e2e-ai-mock.test.mjs tests/unit/placement-request-filter.test.mjs
       - run: node --test tests/unit/listening-gloss-save.test.mjs
       - run: node --test tests/unit/listening-audio-pipeline.test.mjs
       - run: node --test tests/unit/listening-audio-delete.test.mjs
@@ -269,14 +269,21 @@ jobs:
         id: init_e2e_audit
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
         run: |
           mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
           : > "$E2E_NETWORK_AUDIT_FILE"
+          : > "$E2E_AI_MOCK_AUDIT_FILE"
+          : > "$E2E_AI_LOG_TIMING_FILE"
       - name: Test new app against 0080 on isolated Supabase
         if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
         env:
           E2E_ROLLOUT_PAIR: new-app-old-schema
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -323,6 +330,9 @@ jobs:
           E2E_ROLLOUT_PAIR: old-app-new-schema
           E2E_OLD_APP_DIR: ${{ runner.temp }}/fluency-pre-0081
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -343,13 +353,20 @@ jobs:
         # the writing step on a phone viewport, the writing-step word counter and
         # hint, both request timeouts, and the service-worker install.
         run: |
-          # Run the deletion and recording integration cases first so failures
-          # reach annotations early. The second invocation excludes exactly
-          # those files and still runs every other browser test under this lock.
+          # Exercise the actual logging routes against a synthetic AI response.
+          # The fake key is scoped to this invocation; the preload and loopback
+          # URL ensure it cannot send a request to a paid provider.
+          GROQ_API_KEY=e2e-mock-only npm run test:e2e -- tests/e2e/ai-request-logging.spec.mjs --reporter=line,github
+          node scripts/report-e2e-ai-audit.mjs --require-mock
+          # Run deletion and recording cases early, then every remaining test.
           npm run test:e2e -- 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs' --reporter=line,github
-          npm run test:e2e -- --grep-invert 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs' --reporter=line,github
+          npm run test:e2e -- --grep-invert 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs|ai-request-logging\.spec\.mjs' --reporter=line,github
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_RUN_ID: ${{ github.run_id }}
@@ -364,6 +381,12 @@ jobs:
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           GROQ_API_KEY: ''
 
+      - name: Report AI logging E2E stage timings
+        if: always() && steps.init_e2e_audit.outcome == 'success' && steps.run_e2e.outcome != 'skipped'
+        env:
+          E2E_AI_LOG_TIMING_FILE: ${{ runner.temp }}/e2e-ai-logging-timings.jsonl
+        run: node scripts/report-e2e-ai-timings.mjs
+
       # This isolated contract temporarily enables the fence, tests the real
       # browser/server and Storage against both deletion states, then resets it.
       # It runs alone under the same project lock, never alongside other tests.
@@ -371,6 +394,9 @@ jobs:
         env:
           E2E_OLD_APP_DIR: ${{ steps.apply_e2e_migrations.outputs.staged_0081 == 'true' && format('{0}/fluency-pre-0081', runner.temp) || '' }}
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+          GROQ_BASE_URL: http://127.0.0.1:1
+          NODE_OPTIONS: --require=${{ github.workspace }}/tests/e2e/helpers/mock-ai-provider.cjs
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
@@ -423,7 +449,10 @@ jobs:
         if: always() && steps.verify_e2e_target.outcome == 'success' && steps.init_e2e_audit.outcome == 'success'
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
-        run: node scripts/report-e2e-network-audit.mjs
+          E2E_AI_MOCK_AUDIT_FILE: ${{ runner.temp }}/e2e-ai-provider-audit.txt
+        run: |
+          node scripts/report-e2e-network-audit.mjs
+          node scripts/report-e2e-ai-audit.mjs
 
       - name: Delete this run's isolated E2E learner
         if: always() && steps.verify_e2e_target.outcome == 'success' && steps.apply_e2e_migrations.outcome == 'success'

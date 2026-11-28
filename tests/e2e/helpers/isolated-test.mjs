@@ -5,42 +5,44 @@ import { LIVE_PROJECT_REF } from '../../../scripts/assert-e2e-supabase-target.mj
 export { expect };
 
 const liveOrigin = `https://${LIVE_PROJECT_REF}.supabase.co`;
+const aiDomains = ['groq.com', 'openai.com', 'anthropic.com'];
 
-// Every browser test blocks and audits requests to the production Supabase host.
-// The app's server-side and admin clients separately use only E2E_* settings.
+// Browser tests block and audit production Supabase and live AI-provider URLs.
+// The app's server-side clients use the isolated E2E target and AI preload.
 export const test = base.extend({
   page: async ({ page, context }, use, testInfo) => {
     const blockedRequests = [];
     const recordedRequests = new WeakSet();
-    const recordLiveRequest = (request) => {
+    const recordBlockedRequest = (request) => {
       let url;
       try {
         url = new URL(request.url());
       } catch {
         return null;
       }
-      if (url.origin !== liveOrigin) return null;
+      const liveSupabase = url.origin === liveOrigin;
+      const liveAi = aiDomains.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`));
+      if (!liveSupabase && !liveAi) return null;
       if (!recordedRequests.has(request)) {
-        const event = {
-          test: testInfo.title,
-          method: request.method(),
-          origin: url.origin,
-          pathname: url.pathname,
-        };
         recordedRequests.add(request);
-        blockedRequests.push(event);
-        const auditFile = process.env.E2E_NETWORK_AUDIT_FILE;
-        if (auditFile) appendFileSync(auditFile, `${JSON.stringify(event)}\n`);
+        blockedRequests.push(request);
+        if (liveSupabase && process.env.E2E_NETWORK_AUDIT_FILE) {
+          appendFileSync(process.env.E2E_NETWORK_AUDIT_FILE, `${JSON.stringify({
+            test: testInfo.title, method: request.method(), origin: url.origin, pathname: url.pathname,
+          })}\n`);
+        }
+        // Do not record AI URLs, headers, prompts or responses.
+        if (liveAi && process.env.E2E_AI_MOCK_AUDIT_FILE) appendFileSync(process.env.E2E_AI_MOCK_AUDIT_FILE, 'blocked\n');
       }
       return url;
     };
 
     // Observe request events as well as routing, including requests originating
     // in service workers (which Playwright routing does not intercept).
-    context.on('request', recordLiveRequest);
+    context.on('request', recordBlockedRequest);
     await context.route('**/*', async (route) => {
       const request = route.request();
-      if (!recordLiveRequest(request)) return route.continue();
+      if (!recordBlockedRequest(request)) return route.continue();
       return route.abort('blockedbyclient');
     });
 
@@ -48,7 +50,7 @@ export const test = base.extend({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
     if (blockedRequests.length > 0) {
-      throw new Error(`Blocked ${blockedRequests.length} browser request(s) to the live Supabase project.`);
+      throw new Error(`Blocked ${blockedRequests.length} browser request(s) to production Supabase or a live AI provider.`);
     }
   },
 });
