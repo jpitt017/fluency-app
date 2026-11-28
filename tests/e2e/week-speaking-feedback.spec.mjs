@@ -132,9 +132,9 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
 
     await record(page, 'Say it again');
     await expect(page.getByText('We found although in your transcript. This checks the pattern, not all your grammar or pronunciation.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Listen to your improved answer' })).toBeVisible();
     await page.locator('summary').filter({ hasText: 'Another example' }).click();
-    await expect(page.getByRole('button', { name: 'Listen to the model', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Listen to the model', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Play model', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Show the script' }).click();
     await expect(page.getByText('The change — Introduces the change.')).toBeVisible();
     await page.getByLabel('Structure 1 (optional)').selectOption("Since then, I've");

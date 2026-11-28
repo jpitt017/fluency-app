@@ -334,7 +334,7 @@ export default function WeekSpeakingSupport(props: Props) {
           Week {week} · speaking (4 parts · only the long turn is required to finish the week)
         </p>
         <h2 id="week-speaking-title" tabIndex={-1} className="mt-1 text-xl font-semibold">
-          Plan, record and improve
+          Plan, record and compare
         </h2>
         <p className="mt-2 text-sm leading-6 text-stone-700">{prompt}</p>
       </div>

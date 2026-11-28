@@ -267,7 +267,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 
     await page.getByRole('button', { name: /Evaluate writing/i }).click();
-    await expect(page.getByText('4/5').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('4 / 5').first()).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
     await expect(page.getByText(/Practise your mistakes|Nothing to practise today/i).first()).toBeVisible();

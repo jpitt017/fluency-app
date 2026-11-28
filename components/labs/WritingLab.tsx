@@ -224,7 +224,7 @@ export default function WritingLab({
         placeholder={
           compactLesson
             ? 'Write your sentences here…'
-            : 'Write 120–150 words here…'
+            : 'Write your B1 → B2 response here (aim for 120–150 words)…'
         }
         className="w-full rounded-xl border border-stone-300 bg-white p-3.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
       />
