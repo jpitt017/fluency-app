@@ -8,6 +8,23 @@
 -- Old-schema fallback retains the old schema's issue-upload race; see rollout
 -- notes. Do not enable the legacy fence until all old app instances retire.
 
+-- The new app must also issue durable, disjoint recording keys on 0080. Its
+-- compatibility path consumes the existing ownerless AI-log identity; abort
+-- expansion if that identity has drifted into a form that could reuse values.
+-- This does not replace a live preflight of service-role grants and sequence
+-- recovery state before any production deployment.
+do $$
+begin
+  if not exists (
+    select 1 from pg_catalog.pg_attribute a
+    join pg_catalog.pg_sequence s
+      on s.seqrelid = pg_get_serial_sequence('public.ai_request_logs', 'id')::regclass
+    where a.attrelid = 'public.ai_request_logs'::regclass and a.attname = 'id'
+      and a.attidentity = 'a' and a.atttypid = 'pg_catalog.int8'::regtype
+      and s.seqincrement > 0 and s.seqmin >= 1 and not s.seqcycle
+  ) then raise exception 'The 0080 recording-key compatibility identity is not safe'; end if;
+end $$;
+
 -- The account is intentionally retained on learning-data deletion. These
 -- two small security markers let the service reject stale uploads and clean
 -- up late files without mistaking new, generation-tagged work for old work.
@@ -40,10 +57,11 @@ grant select on public.data_deletion_safety_config to service_role;
 grant update (enforce_legacy_fence, sweep_enabled) on public.data_deletion_safety_config to service_role;
 
 -- One global, non-cycling counter issues new-app recording IDs without keeping
--- per-learner history after deletion. A distinct UUIDv8 namespace cannot collide
--- with the old app's UUIDv4 IDs. This is deliberately not owned by a learner
--- row and must never be reset on deletion, restore, or ordinary maintenance.
--- Postgres nextval values are not rolled back, so failed requests consume IDs.
+-- per-learner history after deletion. Its UUIDv8 namespace begins with f;
+-- the 0080 compatibility allocator uses 0 and the old app uses UUIDv4. These
+-- are disjoint even when a request spans schema expansion. Neither counter may
+-- be reset on deletion, restore, or ordinary maintenance. Postgres nextval
+-- values are not rolled back, so failed requests consume IDs.
 create sequence public.recording_key_sequence as bigint minvalue 1 maxvalue 1152921504606846975 no cycle cache 1;
 revoke all on sequence public.recording_key_sequence from public, anon, authenticated, service_role;
 create function public.allocate_recording_key() returns uuid
@@ -57,7 +75,7 @@ begin
   -- never introduces collisions. It is not an authorization mechanism.
   v_mask := (('x' || substr(v_namespace, 16, 15))::bit(60))::bigint;
   v_encoded := lpad(to_hex(v_counter # v_mask), 15, '0');
-  return (substr(v_namespace, 1, 8) || '-' || substr(v_namespace, 9, 4) || '-8' ||
+  return ('f' || substr(v_namespace, 2, 7) || '-' || substr(v_namespace, 9, 4) || '-8' ||
     substr(v_namespace, 13, 3) || '-8' || substr(v_encoded, 1, 3) || '-' || substr(v_encoded, 4, 12))::uuid;
 end $$;
 revoke all on function public.allocate_recording_key() from public, anon, authenticated;

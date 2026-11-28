@@ -5,18 +5,22 @@ import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { hasExplicitUploadGeneration, readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
 import { freshRecordingKeyId } from '../../lib/b1b2/recording-key.mjs';
+import { legacyRecordingKeyFixture } from '../helpers/legacy-recording-key-fixture.mjs';
 
 const USER = '11111111-1111-4111-8111-111111111111';
 const GENERATION = '33333333-3333-4333-8333-333333333333';
-function fixture({ markerError = null, failInsert = false, uploadError = false, fence = false, keyError = false } = {}) {
-  const uploads = []; const removals = []; let inserted; let allocated = 0;
+function fixture({ markerError = null, failInsert = false, uploadError = false, fence = false, keyError = false, legacyKeyError = false } = {}) {
+  const uploads = []; const removals = []; const transcriptions = []; let inserted; let allocated = 0;
+  const legacyAllocator = legacyRecordingKeyFixture();
+  legacyAllocator.state.insertError = legacyKeyError;
   const admin = {
     rpc: async (name) => {
       assert.equal(name, 'allocate_recording_key');
       return keyError ? { data: null, error: { message: 'allocator offline' } }
-        : { data: `00000000-0000-8000-8000-${String(++allocated).padStart(12, '0')}`, error: null };
+        : { data: `f0000000-0000-8000-8000-${String(++allocated).padStart(12, '0')}`, error: null };
     },
     from(table) {
+      if (table === 'ai_request_logs') return legacyAllocator.table;
       if (table === 'profiles') return { select: () => ({ eq: () => ({ maybeSingle: async () => markerError
         ? { data: null, error: { code: markerError } }
         : { data: { data_deletion_generation: GENERATION }, error: null } }) }) };
@@ -42,7 +46,7 @@ function fixture({ markerError = null, failInsert = false, uploadError = false, 
     if (name === '@/lib/b1b2/deletion-generation.mjs') return { hasExplicitUploadGeneration, readDeletionGeneration };
     if (name === '@/lib/b1b2/recording-key.mjs') return { freshRecordingKeyId };
     if (name === '@/lib/curriculum/current-week') return { currentLearnerWeek: async () => 1 };
-    if (name === '@/lib/b1b2/transcription') return { transcribeAudio: async () => 'test' };
+    if (name === '@/lib/b1b2/transcription') return { transcribeAudio: async () => { transcriptions.push(true); return 'test'; } };
     if (name === '@/lib/b1b2/observability') return { logAiRequest: async () => {} };
     if (name === '@/lib/issues/email') return { sendIssueAlert: async () => {} };
     throw new Error(name);
@@ -51,7 +55,7 @@ function fixture({ markerError = null, failInsert = false, uploadError = false, 
   form.set('type', 'feedback'); form.set('mode', 'text'); form.set('message', 'Fixture report');
   form.set('page', 'https://example.test/week/1?private=1');
   form.set('screenshot', new File([Buffer.from('89504e470d0a1a0a', 'hex')], 'test.png', { type: 'image/png' }));
-  return { POST: exports.POST, uploads, removals, get inserted() { return inserted; }, request: { headers: currentHeaders(), formData: async () => form } };
+  return { POST: exports.POST, uploads, removals, transcriptions, get inserted() { return inserted; }, request: { headers: currentHeaders(), formData: async () => form } };
 }
 
 function currentHeaders() {
@@ -123,11 +127,14 @@ test('stale issue pages are tagged during overlap and rejected once the fence is
   assert.equal((await current.POST(current.request)).status, 201);
 });
 
-test('an unavailable 0081 allocator fails before any issue attachment is saved', async () => {
-  const f = fixture({ keyError: true });
-  assert.equal((await f.POST(voiceRequest())).status, 503);
-  assert.equal(f.uploads.length, 0);
-  assert.equal(f.inserted, undefined);
+test('an unavailable allocator fails before issue audio is transcribed or saved on either schema', async () => {
+  for (const options of [{ keyError: true }, { markerError: '42703', legacyKeyError: true }]) {
+    const f = fixture(options);
+    assert.equal((await f.POST(voiceRequest())).status, 503);
+    assert.equal(f.transcriptions.length, 0);
+    assert.equal(f.uploads.length, 0);
+    assert.equal(f.inserted, undefined);
+  }
 });
 
 test('new issue route remains usable on the old schema with the documented legacy path', async () => {

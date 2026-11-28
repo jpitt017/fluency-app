@@ -9,6 +9,7 @@ import { runInNewContext } from 'node:vm';
 import pg from 'pg';
 import ts from 'typescript';
 import * as deletion from '../../lib/b1b2/retryable-data-deletion.mjs';
+import { freshRecordingKeyId } from '../../lib/b1b2/recording-key.mjs';
 
 const rawUrl = process.env.TEST_DATABASE_URL;
 if (!rawUrl) throw new Error('A disposable TEST_DATABASE_URL is required');
@@ -146,6 +147,38 @@ const admin = {
   } },
 };
 
+// The 0080 allocator adapter issues the same ownerless insert and targeted
+// delete as PostgREST, against the actual old-schema identity. Hosted staged
+// tests separately verify the real service-role PostgREST API and route.
+const legacyKeyAdmin = { from(table) {
+  assert.equal(table, 'ai_request_logs');
+  return {
+    insert(row) {
+      assert.deepEqual(row, { user_id: null, endpoint: '/internal/recording-key-allocation', model: 'internal', status_code: 204, latency_ms: 0 });
+      return { select(columns) { assert.equal(columns, 'id::text'); return { async single() {
+        const result = await client.query(`insert into public.ai_request_logs(user_id,endpoint,model,status_code,latency_ms)
+          values(null,$1,'internal',204,0) returning id::text`, [row.endpoint]);
+        return { data: result.rows[0], error: null };
+      } }; } };
+    },
+    delete() {
+      const filters = {};
+      const query = {
+        eq(key, value) { filters[key] = value; return query; },
+        is(key, value) { filters[key] = value; return query; },
+        select(columns) { assert.equal(columns, 'id::text'); return query; },
+        async maybeSingle() {
+          assert.equal(filters.endpoint, '/internal/recording-key-allocation');
+          assert.equal(filters.user_id, null);
+          const result = await client.query('delete from public.ai_request_logs where id=$1::bigint and endpoint=$2 and user_id is null returning id::text', [filters.id, filters.endpoint]);
+          return { data: result.rows[0] ?? null, error: null };
+        },
+      };
+      return query;
+    },
+  };
+} };
+
 function route(source, owner) {
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
@@ -182,6 +215,31 @@ try {
   await client.query('begin');
   await client.query("select set_config('storage.allow_delete_query','true',true)");
   assert.equal((await client.query("select to_regprocedure('public.promote_retryable_data_deletion(uuid,uuid)') as value")).rows[0].value, null);
+  const identity = (await client.query(`select a.attidentity, format_type(a.atttypid,a.atttypmod) as type,
+    s.seqincrement::text as increment, s.seqmin::text as minimum, s.seqcycle as cycles
+    from pg_attribute a join pg_sequence s on s.seqrelid=pg_get_serial_sequence('public.ai_request_logs','id')::regclass
+    where a.attrelid='public.ai_request_logs'::regclass and a.attname='id'`)).rows[0];
+  assert.deepEqual(identity, { attidentity: 'a', type: 'bigint', increment: '1', minimum: '1', cycles: false });
+  const keyBeforeDeletion = await freshRecordingKeyId(legacyKeyAdmin, null);
+  assert.match(keyBeforeDeletion, /^00000000-0000-8000-8/);
+  // Failed transactions consume identity values rather than returning them to
+  // the allocator. No learner-linked bookkeeping survives normal allocation.
+  await client.query('savepoint allocation_rollback');
+  const rolledBackKey = await freshRecordingKeyId(legacyKeyAdmin, null);
+  await client.query('rollback to savepoint allocation_rollback');
+  const afterRollback = await freshRecordingKeyId(legacyKeyAdmin, null);
+  assert.equal(new Set([keyBeforeDeletion, rolledBackKey, afterRollback]).size, 3);
+  assert.equal((await client.query("select count(*)::int as n from public.ai_request_logs where endpoint='/internal/recording-key-allocation'")).rows[0].n, 0);
+  // Model the existing Supabase service-role table grants on the disposable
+  // replay, then exercise the precise insert/select/delete under that role.
+  // The live preflight still has to verify its actual grants.
+  await client.query('savepoint service_identity');
+  await client.query('grant select,insert,delete on public.ai_request_logs to service_role');
+  await client.query('set local role service_role');
+  const serviceKey = await freshRecordingKeyId(legacyKeyAdmin, null);
+  await client.query('reset role');
+  await client.query('rollback to savepoint service_identity');
+  assert.equal(new Set([keyBeforeDeletion, rolledBackKey, afterRollback, serviceKey]).size, 4);
   for (const user of [ownerOldSchema, ownerNewSchema, ownerNewApp, other]) await seedUser(user);
   const oldSchemaPath = await seedObject(ownerOldSchema, 'issue-attachments', 'old-schema.png');
   const oldSchemaOther = await seedObject(other, 'issue-attachments', 'other.png');
@@ -202,11 +260,28 @@ try {
   assert.equal(await exists('issue-attachments', oldSchemaPath), false);
   assert.equal(await exists('issue-attachments', oldSchemaOther), true);
   assert.equal((await client.query('select count(*)::int as n from public.ai_evaluation_cache')).rows[0].n, 0);
+  const keyAfterDeletion = await freshRecordingKeyId(legacyKeyAdmin, null);
+  assert.ok(![keyBeforeDeletion, rolledBackKey, afterRollback, serviceKey].includes(keyAfterDeletion));
+
+  // A cycling identity would eventually reuse IDs after cleanup; expansion
+  // refuses this drift before changing schema or purging the cache.
+  const oldSequence = (await client.query("select pg_get_serial_sequence('public.ai_request_logs','id') as name")).rows[0].name;
+  assert.match(oldSequence, /^[a-z0-9_]+\.[a-z0-9_]+$/);
+  await client.query('savepoint bad_identity');
+  await client.query(`alter sequence ${oldSequence} cycle`);
+  await assert.rejects(() => client.query(migration), /compatibility identity is not safe/);
+  await client.query('rollback to savepoint bad_identity');
 
   // Expand transactionally, then drive the unchanged old route against it.
   await client.query("select set_config('request.jwt.claim.sub','',true), set_config('fluency.data_deletion_token','',true)");
   await client.query(migration);
   expanded = true;
+  const newKey = await freshRecordingKeyId({ rpc: async (name) => {
+    assert.equal(name, 'allocate_recording_key');
+    return { data: (await client.query('select public.allocate_recording_key() as id')).rows[0].id, error: null };
+  } }, '33333333-3333-4333-8333-333333333333');
+  assert.match(newKey, /^f[0-9a-f]{7}-[0-9a-f]{4}-8/);
+  assert.ok(![keyBeforeDeletion, rolledBackKey, afterRollback, serviceKey, keyAfterDeletion].includes(newKey));
   const oldPath = await seedObject(ownerNewSchema, 'issue-attachments', 'old-client.png');
   const orphan = await seedObject(ownerNewSchema, 'issue-attachments', 'old-orphan.png');
   await client.query("insert into public.issue_reports(user_id,type,message,page_url,screenshot_path) values($1,'feedback','synthetic','/test',$2)", [ownerNewSchema, oldPath]);

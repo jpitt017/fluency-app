@@ -194,8 +194,8 @@ test('contract fence blocks old servers, stale tabs, direct and signed uploads f
       const second = await postFromBrowser(page, '/api/week/speaking/capture', { explicit: true });
       expect(first.status, JSON.stringify(first.body)).toBe(200);
       expect(second.status, JSON.stringify(second.body)).toBe(200);
-      expect(first.body.takeId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/);
-      expect(second.body.takeId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/);
+      expect(first.body.takeId).toMatch(/^f[0-9a-f]{7}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/);
+      expect(second.body.takeId).toMatch(/^f[0-9a-f]{7}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/);
       expect(first.body.takeId).not.toBe(second.body.takeId);
       const rows = await admin.from('week_speaking_takes').select('id,recording_path,status').eq('user_id', user.id)
         .in('id', [first.body.takeId, second.body.takeId]);

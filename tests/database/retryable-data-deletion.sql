@@ -21,7 +21,7 @@ begin
   exception when raise_exception then null; end;
   allocated_after := public.allocate_recording_key();
   if allocated_before = allocated_rolled_back or allocated_after in (allocated_before, allocated_rolled_back)
-     or substring(allocated_before::text, 15, 1) <> '8' then
+     or substring(allocated_before::text, 1, 1) <> 'f' or substring(allocated_before::text, 15, 1) <> '8' then
     raise exception 'recording allocator reused an ID or did not use its UUIDv8 namespace';
   end if;
   insert into auth.users(id, email, raw_user_meta_data, raw_app_meta_data, aud, role) values

@@ -8,6 +8,7 @@ import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
 import { parseWeekSpeakingTakePath } from '../../lib/b1b2/week-speaking-recordings.mjs';
 import { hasExplicitUploadGeneration, readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
 import { freshRecordingKeyId } from '../../lib/b1b2/recording-key.mjs';
+import { legacyRecordingKeyFixture } from '../helpers/legacy-recording-key-fixture.mjs';
 import { fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
 
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json')).weeks[0];
@@ -30,6 +31,8 @@ function load(path, modules) {
 /** Exercise real route handlers with an isolated in-memory provider/storage/RPC. */
 function fixture(options = {}) {
   const takes = new Map(); const checks = new Map(); const objects = new Map();
+  const legacyAllocator = legacyRecordingKeyFixture();
+  legacyAllocator.state.insertError = Boolean(options.legacyKeyError);
   const events = []; let checksUsed = 0; let allocated = 0;
   const auth = { auth: { getUser: async () => ({ data: { user: options.user === null ? null : { id: USER } }, error: null }) } };
   const admin = {
@@ -37,7 +40,7 @@ function fixture(options = {}) {
       events.push(name);
       if (name === 'allocate_recording_key') {
         if (options.keyError) return { data: null, error: { message: 'allocator offline' } };
-        return { data: `00000000-0000-8000-8000-${String(++allocated).padStart(12, '0')}`, error: null };
+        return { data: `f0000000-0000-8000-8000-${String(++allocated).padStart(12, '0')}`, error: null };
       }
       if (name === 'reserve_week_speaking_take') {
         const path = `${args.p_user_id}/week-speaking/${args.p_week_number}/${ATTEMPT}/recording-${args.p_take_id}.${args.p_extension}`;
@@ -83,6 +86,7 @@ function fixture(options = {}) {
       };
     } },
     from(table) {
+      if (table === 'ai_request_logs') return legacyAllocator.table;
       if (table === 'profiles') return { select: () => ({ eq: () => ({ maybeSingle: async () => options.oldSchema
         ? { data: null, error: { code: '42703' } }
         : { data: { data_deletion_generation: '44444444-4444-4444-8444-444444444444' }, error: null } }) }) };
@@ -228,9 +232,17 @@ test('a stale browser is tagged during overlap and rejected after the fence', as
 test('weekly capture remains usable with the old schema and legacy metadata', async () => {
   const f = fixture({ oldSchema: true });
   assert.equal((await f.capture(captureRequest())).status, 200);
-  const options = f.events.find((item) => Array.isArray(item) && item[0] === 'upload')[2];
-  assert.equal(options.upsert, false);
-  assert.equal(options.metadata, undefined);
+  const upload = f.events.find((item) => Array.isArray(item) && item[0] === 'upload');
+  assert.match(parseWeekSpeakingTakePath(upload[1]).takeId, /^00000000-0000-8000-8/);
+  assert.equal(upload[2].upsert, false);
+  assert.equal(upload[2].metadata, undefined);
+});
+
+test('an unavailable 0080 identity fails closed before reservation or upload', async () => {
+  const f = fixture({ oldSchema: true, legacyKeyError: true });
+  assert.equal((await f.capture(captureRequest())).status, 503);
+  assert.equal(f.takes.size, 0);
+  assert.ok(!f.events.some((event) => Array.isArray(event) && event[0] === 'upload'));
 });
 
 test('a checked weekly take requests Whisper segments and charges six units after reserving', async () => {

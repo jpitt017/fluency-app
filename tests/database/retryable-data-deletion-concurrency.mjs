@@ -44,7 +44,24 @@ try {
   )));
   const ids = allocations.flatMap((result) => result.rows.map((row) => row.id));
   assert.equal(new Set(ids).size, 200);
-  assert.ok(ids.every((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/.test(id)));
+  assert.ok(ids.every((id) => /^f[0-9a-f]{7}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/.test(id)));
+
+  // The 0080 compatibility allocator consumes this existing identity via
+  // ownerless temporary log rows. Concurrent inserts and rolled-back rows
+  // must still consume distinct sequence values, with no retained fixture.
+  const oldBatches = await Promise.all([a, b].map(async (client) => {
+    await client.query('begin');
+    const rows = (await client.query(`insert into public.ai_request_logs(user_id,endpoint,model,status_code,latency_ms)
+      select null,'/internal/recording-key-allocation','internal',204,0 from generate_series(1,100) returning id::text`)).rows;
+    await client.query('rollback');
+    return rows.map((row) => row.id);
+  }));
+  const oldIds = oldBatches.flat();
+  assert.equal(new Set(oldIds).size, 200);
+  const laterOld = await admin.query(`insert into public.ai_request_logs(user_id,endpoint,model,status_code,latency_ms)
+    values(null,'/internal/recording-key-allocation','internal',204,0) returning id::text`);
+  assert.ok(!oldIds.includes(laterOld.rows[0].id));
+  await admin.query('delete from public.ai_request_logs where id=$1::bigint', [laterOld.rows[0].id]);
   for (const u of [...users, staff]) await admin.query("insert into auth.users(id,email,raw_user_meta_data,raw_app_meta_data,aud,role) values ($1,$2,'{}','{}','authenticated','authenticated')", [u, `delete-race-${u}@example.test`]);
   await admin.query("update public.profiles set role='teacher' where id=$1", [staff]);
   const generations = (await admin.query('select id,data_deletion_generation from public.profiles where id=any($1::uuid[])', [users])).rows;

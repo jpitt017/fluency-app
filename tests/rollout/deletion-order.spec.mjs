@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { test, expect as baseExpect } from '../e2e/helpers/isolated-test.mjs';
 import { signInExistingLearner } from '../e2e/helpers/reading-gate.mjs';
@@ -12,6 +13,29 @@ const oldApp = pair === 'old-app-new-schema';
 if (!newApp && !oldApp) throw new Error('Explicit rollout pair required');
 if (process.env.E2E_TAG_TEST_USERS !== 'true') throw new Error('Rollout fixtures must be tagged for isolated cleanup');
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+const notes = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json', 'utf8'))
+  .weeks[0].planNotes.map((label) => ({ label, note: '' }));
+
+async function capture(page) {
+  return page.evaluate(async (notes) => {
+    const form = new FormData();
+    form.set('weekNumber', '1'); form.set('kind', 'first');
+    form.set('notes', JSON.stringify(notes)); form.set('phrases', '[]');
+    form.set('audio', new Blob(['synthetic recording'], { type: 'audio/webm' }), 'test.webm');
+    const response = await fetch('/api/week/speaking/capture', { method: 'POST', body: form });
+    return { status: response.status, body: await response.json().catch(() => null) };
+  }, notes);
+}
+async function report(page, message) {
+  return page.evaluate(async (message) => {
+    const form = new FormData();
+    form.set('type', 'feedback'); form.set('mode', 'text'); form.set('message', message);
+    form.set('page', location.origin + '/week/1');
+    form.set('screenshot', new Blob([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], { type: 'image/png' }), 'test.png');
+    const response = await fetch('/api/issues', { method: 'POST', body: form });
+    return { status: response.status, body: await response.json().catch(() => null) };
+  }, message);
+}
 
 // The app server is a real production Next build; Auth, PostgREST, Postgres and
 // private Storage are the hosted *isolated* Supabase project, not fakes. CI
@@ -73,6 +97,31 @@ test('learning-data deletion survives the staged application/schema order', asyn
 
     await signInExistingLearner(page, owner);
     await page.goto('/privacy');
+    let previousTake;
+    let previousReport;
+    let initialAllocationRows;
+    if (newApp) {
+      const initial = await admin.from('ai_request_logs').select('id', { count: 'exact', head: true })
+        .eq('endpoint', '/internal/recording-key-allocation').is('user_id', null);
+      if (initial.error) throw initial.error;
+      initialAllocationRows = initial.count;
+      const first = await capture(page);
+      expect(first.status, JSON.stringify(first.body)).toBe(200);
+      expect(first.body.takeId).toMatch(/^00000000-0000-8000-8[0-9a-f]{3}-[0-9a-f]{12}$/);
+      const firstRow = await admin.from('week_speaking_takes').select('id,recording_path').eq('id', first.body.takeId).single();
+      if (firstRow.error) throw firstRow.error;
+      previousTake = firstRow.data;
+      expect((await admin.storage.from('speaking-recordings').download(previousTake.recording_path)).error).toBeNull();
+      const firstReport = await report(page, 'Synthetic earlier recording-key report');
+      expect(firstReport.status, JSON.stringify(firstReport.body)).toBe(201);
+      const firstReportRow = await admin.from('issue_reports').select('id,screenshot_path').eq('user_id', owner.id)
+        .eq('message', 'Synthetic earlier recording-key report').single();
+      if (firstReportRow.error) throw firstReportRow.error;
+      previousReport = firstReportRow.data;
+      expect(previousReport.id).toMatch(/^00000000-0000-8000-8[0-9a-f]{3}-[0-9a-f]{12}$/);
+      expect(previousReport.id).not.toBe(previousTake.id);
+      expect((await admin.storage.from('issue-attachments').download(previousReport.screenshot_path)).error).toBeNull();
+    }
     const confirm = async () => {
       await page.getByRole('button', { name: 'Delete my learning data & recordings' }).click();
       await page.getByPlaceholder('DELETE').fill('DELETE');
@@ -111,6 +160,10 @@ test('learning-data deletion survives the staged application/schema order', asyn
 
     expect((await admin.storage.from('issue-attachments').download(issue)).error).toBeTruthy();
     expect((await admin.storage.from('speaking-recordings').download(audio)).error).toBeTruthy();
+    if (newApp) {
+      expect((await admin.storage.from('speaking-recordings').download(previousTake.recording_path)).error).toBeTruthy();
+      expect((await admin.storage.from('issue-attachments').download(previousReport.screenshot_path)).error).toBeTruthy();
+    }
     expect((await admin.storage.from('issue-attachments').download(otherIssue)).error).toBeNull();
     const ownReports = await admin.from('issue_reports').select('id').eq('user_id', owner.id);
     const otherReports = await admin.from('issue_reports').select('id').eq('user_id', other.id);
@@ -121,11 +174,29 @@ test('learning-data deletion survives the staged application/schema order', asyn
     if (newApp) {
       const cache = await admin.from('ai_evaluation_cache').select('cache_key').in('cache_key', oldCacheKeys);
       expect(cache.error).toBeNull(); expect(cache.data).toHaveLength(0);
-      const fresh = await admin.from('issue_reports').insert({ user_id: owner.id, type: 'feedback', message: 'Synthetic later work', page_url: '/week/1' });
-      if (fresh.error) throw fresh.error;
+      const second = await capture(page);
+      expect(second.status, JSON.stringify(second.body)).toBe(200);
+      const laterTake = await admin.from('week_speaking_takes').select('id,recording_path').eq('id', second.body.takeId).single();
+      if (laterTake.error) throw laterTake.error;
+      const laterReportResponse = await report(page, 'Synthetic later recording-key report');
+      expect(laterReportResponse.status, JSON.stringify(laterReportResponse.body)).toBe(201);
+      const laterReport = await admin.from('issue_reports').select('id,screenshot_path').eq('user_id', owner.id)
+        .eq('message', 'Synthetic later recording-key report').single();
+      if (laterReport.error) throw laterReport.error;
+      expect(new Set([previousTake.id, previousReport.id, laterTake.data.id, laterReport.data.id]).size).toBe(4);
+      expect(laterTake.data.id).toMatch(/^00000000-0000-8000-8/);
+      expect(laterReport.data.id).toMatch(/^00000000-0000-8000-8/);
+      expect(laterTake.data.recording_path).not.toBe(previousTake.recording_path);
+      expect(laterReport.data.screenshot_path).not.toBe(previousReport.screenshot_path);
+      const allocationRows = await admin.from('ai_request_logs').select('id', { count: 'exact', head: true })
+        .eq('endpoint', '/internal/recording-key-allocation').is('user_id', null);
+      if (allocationRows.error) throw allocationRows.error;
+      expect(allocationRows.count).toBe(initialAllocationRows);
       const duplicate = await page.request.post('/api/account/delete-data', { data: { confirm: 'DELETE', phase: 'finish', receipt } });
       expect(duplicate.status()).toBe(200);
       expect((await duplicate.json()).alreadyCompleted).toBe(true);
+      expect((await admin.storage.from('speaking-recordings').download(laterTake.data.recording_path)).error).toBeNull();
+      expect((await admin.storage.from('issue-attachments').download(laterReport.data.screenshot_path)).error).toBeNull();
       const later = await admin.from('issue_reports').select('id').eq('user_id', owner.id);
       expect(later.error).toBeNull(); expect(later.data).toHaveLength(1);
     } else {

@@ -190,9 +190,12 @@ await supabase.from('lesson_progress').upsert({
 Storage upload (audio): the supported weekly speaking workflow sends the audio
 from the browser to `/api/week/speaking/capture`. The server reserves a fresh
 take key and uploads without overwriting; issue-report audio is likewise saved
-through `/api/issues` under a fresh report key. With 0081, IDs come from a
-non-cycling database allocator; on 0080 the compatibility fallback is UUIDv4. Do not add browser-to-Storage
-recording uploads or reuse keys. After the 0081 contract fence is enabled, direct,
+through `/api/issues` under a fresh report key. Both schema versions allocate
+IDs from persistent non-cycling database sequences in disjoint UUIDv8
+namespaces; on 0080 this temporarily consumes the existing ownerless AI-log
+identity. See the rollout notes for its preflight, cleanup and recovery
+requirements. Do not add browser-to-Storage recording uploads or reuse keys.
+After the 0081 contract fence is enabled, direct,
 signed, resumable and S3 writes to the learner audio/attachment buckets are no
 longer supported. Older `speaking_attempts.audio_path` entries remain available
 for playback; the speaking lab's transcription/evaluation routes do not save an

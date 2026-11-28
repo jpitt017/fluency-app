@@ -14,6 +14,6 @@
       "tests/unit/eval-cache-deletion.test.mjs",
       "tests/unit/teacher-deletion-generation.test.mjs"
     ],
-    "overlap_notes": "The owner accepted legacy key-reuse/new-work-loss risk only during overlap, conditional on fresh new-app keys, fence and sweep before pilot, and evidence old clients cannot upload. The new app uses a fresh random UUIDv4 on 0080; 0081 allocates non-reused UUIDv8 IDs with a persistent counter. No mathematical lifetime non-reuse is proven on 0080. See docs/rollouts/retryable-data-deletion-0081.md."
+    "overlap_notes": "The owner accepted legacy key-reuse/new-work-loss risk only during overlap, conditional on fresh new-app keys, fence and sweep before pilot, and evidence old clients cannot upload. Both schema versions issue disjoint, database-sequenced UUIDv8 keys for new-app recordings; 0080 consumes its existing AI-log identity via a temporary ownerless row. Verify its definition and grants before deployment and protect both sequences across recovery. See docs/rollouts/retryable-data-deletion-0081.md."
   }
 }

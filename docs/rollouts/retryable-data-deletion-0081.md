@@ -100,24 +100,31 @@ may also have been saved after deletion in the overlap; the file sweep does not
 claim to remove or distinguish such rows. This is why the exception ends before
 pilot, not why it is safe to leave legacy instances running.
 
-On 0081 the new app obtains a **new database-issued UUIDv8** for every weekly
-capture and every report, including retries. A non-cycling global sequence and
-namespace persist across learner deletion, so normal allocations cannot reuse an
-ID after its object or learner rows are removed; issue audio and screenshots use
-different suffixes. `upsert: false` and duplicate-safe cleanup also protect an
-existing object. The counter carries no per-learner recording history. Protect
-its state: never reset the sequence or its namespace, and before a database
-restore/recovery with independently retained Storage, preserve/reseed the
-high-water mark or use a newly reviewed namespace before accepting uploads.
-Privileged manual writes, restore/reset errors and arbitrary old-client keys
-are outside this allocation guarantee.
+The new app obtains a **new database-issued UUIDv8** for every weekly capture
+and every report, including retries. On 0081 a non-cycling global sequence and
+namespace survive learner deletion. On the required **new app / 0080 schema**
+compatibility path, the existing non-cycling `ai_request_logs.id` identity
+provides the durable counter: the server creates an ownerless bookkeeping row
+and removes it before issuing the key. The row contains no user ID, audio or
+learner content. Failed or ambiguous allocation/cleanup fails closed; an
+ownerless row left by an ambiguous failure can persist until normal log
+retention and can affect global log counts. These allocations also advance the
+AI-log identity, so log IDs are not consecutive. The legacy counter is
+reversibly masked, not secret, and should not be treated as authentication.
 
-For the required **new app / 0080 schema** compatibility case, 0080 has no
-persistent allocator: the fallback is a fresh UUIDv4 on every request with no
-overwrite. UUIDv4 collision is extraordinarily unlikely but not a mathematical
-lifetime non-reuse proof after old rows are deleted. The production plan is
-schema-first, so the new app should not normally serve on 0080; do not claim an
-absolute guarantee for that fallback.
+The 0080 and 0081 UUIDv8 prefixes are disjoint, including across requests that
+span expansion; old app IDs are UUIDv4. Both paths use non-overwriting writes;
+issue audio and screenshots use different suffixes. Under normal operation,
+allocated IDs do not recur after rollback, deletion or retry, and neither
+counter keeps per-learner recording history. The migration aborts if the old
+identity is not a positive, non-cycling bigint `GENERATED ALWAYS` identity;
+preflight must also verify the service-role table grants and live recovery
+state. Never reset either sequence or the 0081 namespace. Before restoring a
+database while independently retaining Storage, preserve/reseed both sequence
+high-water marks or use a newly reviewed non-overlapping namespace before
+accepting uploads. Never point independently advancing database clones at the
+same Storage. Privileged arbitrary writes, key reuse by old clients, resets and
+recovery errors remain outside the new-app allocation guarantee.
 
 Storage removal is by key, not a conditional object-version deletion. With the
 fence off, a legacy/direct client can reuse an untagged key after a worker
@@ -139,9 +146,13 @@ risk; do not claim the sweep covers it. Do not backfill all accounts as deleted.
 1. Obtain approval for this **read-only preflight**; approval of one step does
    not approve the next. Check newest migration numbers on main, live numeric
    history and open PRs. Recheck bucket privacy/versioning and the two
-   existing schema/deletion coverage verifiers. Count the shared cache entries
-   that this migration will discard (23 on the read-only check during development;
-   recheck at rollout). Capture and compare the **live** definitions of
+   existing schema/deletion coverage verifiers. Confirm `ai_request_logs.id`
+   is a positive, non-cycling bigint `GENERATED ALWAYS` identity and the service
+   role can insert, select and delete its rows; check its high-water mark and
+   recovery procedure, and plan protection of the new sequence after creation.
+   Do not probe by consuming a live sequence. Count the shared cache entries
+   that this migration will discard (23 on the read-only check during
+   development; recheck at rollout). Capture and compare the **live** definitions of
    `public.delete_my_learning_data()`,
    `public.finish_week_speaking_deletion(uuid,uuid)`,
    `public.get_ai_eval_cache(text)` and
@@ -217,5 +228,8 @@ real Auth and Storage and tests deletion, cache cleanup and owner isolation in
 both orders. The app servers run on the CI runner, not Vercel; this is not a
 production deployment or production deletion. CI keeps these fixtures in the
 same isolated-project lock as the schema rebuild, so another branch cannot
-replace the schema between phases. Hosted Storage, CORS and the new GitHub CI
-run still need to pass before rollout; adding a fixture is not evidence it ran.
+replace the schema between phases. The old-schema stage exercises real
+PostgREST identity allocation and uploads before and after deletion; it does
+not prove the production identity or its privileges. The isolated Storage,
+CORS and CI fixtures must pass on the current commit before rollout; merely
+adding a fixture is not evidence it ran.
