@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeSentenceForCompare } from './diff';
+import { evaluateAiCorrectionForCard } from './ai-review-card-filter.mjs';
 import { UNTRUSTED_DATA_SYSTEM_RULE } from './prompt-guard';
 
 export const ERROR_CATEGORIES = [
@@ -158,7 +159,7 @@ ${STRETCH_MARKING_RULE}- Write every "explanation" and "feedback" in clear, simp
 - If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Do NOT invent mistakes in clean sentences.
 - Every item in "corrections" MUST include:
   - "original": the full clause or sentence containing the error (not an isolated 1-word fragment)
-  - "corrected_sentence": the natural, accurate B2-ready corrected clause or sentence
+  - "corrected_sentence": the natural, accurate B2-ready corrected clause or sentence. The corrected sentence must keep the learner's ideas. Don't add new information or phrases.
   - "error_category": strictly one of ${CATEGORY_LIST_PROMPT}
   - "other_label": ONLY when error_category is "other", provide a short descriptive label (e.g. "relative pronoun omission")
   - "explanation": concise B1-level British English explanation of why the fix is needed
@@ -206,6 +207,7 @@ CRITICAL TRANSCRIPTION RULE:
 - Do not give pronunciation tips or claim that any word was spoken incorrectly. Sound practice is selected by separate fixed rules.
 - Write all explanations and feedback in clear, encouraging CEFR B1 British English (using British spelling such as "practise", "organised", "centre").
 - If there are no grammatical or lexical errors, return "corrections": [] and "errorPatterns": [].
+- For every item in "corrections": The corrected sentence must keep the learner's ideas. Don't add new information or phrases.
 - Give exactly one optional sentence-structure upgrade. Its original MUST be an entire sentence copied exactly from the transcript. Preserve the idea, make ONE natural B2 structure and explain it in one short line. Use the week's preferred structure when it fits; otherwise use although, which, so that or because of. The structure field must be exactly one of: although, which, so that, because of, present perfect, time or if clause, modal, passive, conditional, future perfect, past modal.
 - For cuePoints, only include a supplied cue-card label when the transcript addresses it; quote the learner's exact words as evidence. Never invent a quotation. Return [] if no labels are supplied.
 
@@ -473,7 +475,7 @@ export async function persistLearnerErrors(
   const { data: insertedErrors, error: errInsert } = await supabase
     .from('learner_errors')
     .insert(errorRows)
-    .select('id, category, original, corrected, explanation, severity');
+    .select('id, category, other_label, original, corrected, explanation, severity');
 
   if (errInsert) {
     console.error('Failed to persist learner_errors:', errInsert.message);
@@ -499,7 +501,7 @@ export async function persistLearnerErrors(
       .gte('due_at', new Date(startOfUtcDay.getTime() + 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('error_review_cards')
-      .select('id, category, prompt_sentence, normalized_key, occurrence_count')
+      .select('id, category, prompt_sentence, corrected_sentence, normalized_key, occurrence_count')
       .eq('user_id', params.userId)
       .eq('mastered', false)
       .order('created_at', { ascending: false })
@@ -512,6 +514,7 @@ export async function persistLearnerErrors(
     id: string;
     category: string;
     prompt_sentence: string;
+    corrected_sentence?: string | null;
     normalized_key: string | null;
     occurrence_count: number | null;
   }[];
@@ -523,28 +526,44 @@ export async function persistLearnerErrors(
   });
 
   for (const row of sortedErrors) {
-    const contextSentence = findContainingSentence(params.sourceText, row.original);
-    const promptSentence =
+    const containingSentence = findContainingSentence(params.sourceText, row.original);
+    const rawOriginal =
       row.original.split(/\s+/).length >= 3
         ? row.original
-        : contextSentence ?? row.original;
+        : containingSentence ?? row.original;
 
-    // Skip vague single-word cards that have no sentence context
-    if (promptSentence.split(/\s+/).length < 3) continue;
-
-    const correctedSentence =
-      contextSentence && row.original.split(/\s+/).length < 3
-        ? contextSentence.replace(row.original, row.corrected)
+    const rawCorrected =
+      containingSentence && row.original.split(/\s+/).length < 3
+        ? containingSentence.replace(row.original, row.corrected)
         : row.corrected;
+
+    // Requirement 7a/7b: only create a Review card for a single-point grammar
+    // or vocabulary fix (<= 4 changed words, original <= 25 words, not
+    // coherence/organisation/style). Multi-point rewrites stay in feedback only.
+    const filtered = evaluateAiCorrectionForCard({
+      original: rawOriginal,
+      corrected: rawCorrected,
+      category: row.category,
+      otherLabel: row.other_label ?? null,
+      contextSentence: containingSentence && containingSentence !== rawOriginal ? containingSentence : null,
+    });
+    if (!filtered.ok) continue;
+
+    const promptSentence = filtered.promptSentence;
+    const correctedSentence = filtered.correctedSentence;
+    const contextSentence = filtered.contextSentence;
 
     const normKey = normalizeSentenceForCompare(promptSentence);
     if (!normKey) continue;
 
-    // Near-identical deduplication against existing open cards in same category
+    // Deduplicate against existing open cards (same category near-identical, or
+    // identical prompt+correction across categories so one sentence doesn't spawn duplicates).
+    const normCorrected = normalizeSentenceForCompare(correctedSentence);
     const duplicate = openCards.find(
       (c) =>
-        c.category === row.category &&
-        (c.normalized_key === normKey || tokenJaccardSimilarity(c.prompt_sentence, promptSentence) >= 0.85),
+        (c.category === row.category &&
+          (c.normalized_key === normKey || tokenJaccardSimilarity(c.prompt_sentence, promptSentence) >= 0.85))
+        || (c.normalized_key === normKey && normalizeSentenceForCompare(c.corrected_sentence ?? '') === normCorrected),
     );
 
     if (duplicate) {
@@ -571,7 +590,7 @@ export async function persistLearnerErrors(
       dueAtIso = futureDate.toISOString();
     }
 
-    const cardFormat = contextSentence ? 'cloze' : 'fix_sentence';
+    const cardFormat = 'fix_sentence';
     const { data: created, error: cardErr } = await supabase
       .from('error_review_cards')
       .upsert(
@@ -589,7 +608,7 @@ export async function persistLearnerErrors(
         },
         { onConflict: 'user_id,category,normalized_key' },
       )
-      .select('id, category, prompt_sentence, normalized_key, occurrence_count')
+      .select('id, category, prompt_sentence, corrected_sentence, normalized_key, occurrence_count')
       .maybeSingle();
 
     if (!cardErr && created) {

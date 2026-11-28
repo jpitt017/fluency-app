@@ -105,7 +105,7 @@ for (const { label, width, height, motion, behavior } of [
     const { admin, user } = await createReadingLearner(page, `finish-advice-${label}`);
     try {
       // Grammar below 50%: a checked wrong answer is a valid partial finish.
-      await mark(page, 'grammar', 'W1-M1', 'Yes', false);
+      await mark(page, 'grammar', 'W1-C1', 'have moved', false);
       await page.goto('/week/1');
       const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
       await finish(page, grammar, 'grammar');
@@ -121,14 +121,14 @@ for (const { label, width, height, motion, behavior } of [
       await panel.getByRole('link', { name: 'Practise my mistakes' }).focus();
       await Promise.all([page.waitForURL('**/review'), page.keyboard.press('Enter')]);
       await expect(page.getByRole('heading', { name: 'Practise your mistakes' })).toBeVisible();
-      await expect(page.getByText(/Had the speaker lived abroad before moving to Bristol/)).toBeVisible();
+      await expect(page.getByText(/I ___ to Bristol three years ago\./)).toBeVisible();
       await page.goto('/week/1');
       await expect(grammar.getByRole('heading', { name: 'Step 1 of 5: See it' })).toBeVisible();
       await expectAdvice(grammar, 'grammar', 'low', grammarLow);
 
       // 1 of 2 is exactly 50%: Review and Next, but no revisit button.
-      await mark(page, 'grammar', 'W1-M1', 'No', true);
-      await mark(page, 'grammar', 'W1-M3', 'No', false);
+      await mark(page, 'grammar', 'W1-C1', 'moved', true);
+      await mark(page, 'grammar', 'W1-C2', 'made', false);
       await page.reload();
       await expect(grammar.getByText('Your latest answers may not match this score. Press Finish again to update it.')).toBeVisible();
       await expect(grammar.getByText('New mistakes may not be in Review yet.')).toBeVisible();
@@ -141,9 +141,9 @@ for (const { label, width, height, motion, behavior } of [
       await expect(vocabulary.getByRole('heading', { name: 'Step 1 of 7: Words' })).toBeFocused();
 
       // 4 of 5 is exactly 80%: only Next remains, including after reload.
+      await mark(page, 'grammar', 'W1-M1', 'No', true);
       await mark(page, 'grammar', 'W1-M2', 'waiting', true);
-      await mark(page, 'grammar', 'W1-C1', 'moved', true);
-      await mark(page, 'grammar', 'W1-C2', 'have made', true);
+      await mark(page, 'grammar', 'W1-C3', 'had left', true);
       await page.reload();
       await openWeekTask(page, 'grammar-practice');
       // The server initially renders its first-unanswered fallback; hydration

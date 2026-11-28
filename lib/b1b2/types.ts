@@ -494,6 +494,35 @@ export interface VocabDueRow {
   due_at: string;
 }
 
+export interface ReviewPracticeItem {
+  id: string;
+  prompt: string;
+  options: string[];
+  kind: 'choice' | 'gap' | 'fix';
+}
+
+export interface ErrorReviewMeta {
+  itemId: string | null;
+  kind: 'choice' | 'gap' | 'fix';
+  instruction: string;
+  options: string[];
+  rule: { reason: string; examples: string[] } | null;
+  collocation: string | null;
+  meaning: string | null;
+  es: string | null;
+  extraExample: string | null;
+  practiceItems: ReviewPracticeItem[];
+  displayCorrectedSentence: string;
+}
+
+export interface VocabReviewMeta {
+  collocation: string | null;
+  meaning: string;
+  es: string | null;
+  extraExample: string | null;
+  practiceItems: ReviewPracticeItem[];
+}
+
 /**
  * One card in the daily review queue, of either kind.
  *
@@ -502,7 +531,11 @@ export interface VocabDueRow {
  * answer); a card without one keeps the four self-rating buttons.
  */
 export type ReviewQueueCard =
-  | (ErrorReviewCardRow & { type: 'error'; hasTypedAnswer: true })
+  | (ErrorReviewCardRow & {
+      type: 'error';
+      hasTypedAnswer: true;
+      reviewMeta?: ErrorReviewMeta;
+    })
   | {
       type: 'vocab';
       id: string;
@@ -523,6 +556,7 @@ export type ReviewQueueCard =
       last_review_at: string | null;
       last_reviewed_on: string | null;
       hasTypedAnswer: false;
+      vocabMeta?: VocabReviewMeta;
     };
 
 export type PlacementSkill = 'grammar' | 'vocabulary' | 'reading';

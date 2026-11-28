@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createServerSupabase } from '@/utils/supabase/server';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { computeWordDiff, normalizeSentenceForCompare } from '@/lib/b1b2/diff';
+import { checkReviewCardAnswer, enrichErrorReviewCard } from '@/lib/curriculum/review-enrichment';
 import { createGroqJsonCompletion } from '@/lib/b1b2/groq-json';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     const { data: card, error: cardErr } = await supabase
       .from('error_review_cards')
-      .select('id, prompt_sentence, corrected_sentence, explanation, category, mastered, hint_revealed_at')
+      .select('id, prompt_sentence, corrected_sentence, context_sentence, normalized_key, explanation, category, mastered, hint_revealed_at')
       .eq('id', parsed.data.cardId)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -132,13 +133,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'We could not find your card. Please try again.' }, { status: 404 });
     }
 
+    const enriched = enrichErrorReviewCard(card);
+    const displayCorrected = enriched.displayCorrectedSentence || card.corrected_sentence;
+    const displayExplanation = enriched.rule?.reason || card.explanation;
+
     if (parsed.data.revealOnly) {
       await supabase.rpc('reveal_error_card_hint', { p_card_id: card.id });
       return NextResponse.json({
         cardId: card.id,
         revealed: true,
-        correctedSentence: card.corrected_sentence,
-        explanation: card.explanation,
+        correctedSentence: displayCorrected,
+        explanation: displayExplanation,
       });
     }
 
@@ -147,33 +152,41 @@ export async function POST(request: NextRequest) {
     inputChars = sanitizedRewrite.length;
     const normRewrite = normalizeSentenceForCompare(rawRewrite);
     const normOriginal = normalizeSentenceForCompare(card.prompt_sentence);
-    const normTarget = normalizeSentenceForCompare(card.corrected_sentence);
 
-    const diffFromOriginal = computeWordDiff(card.prompt_sentence, rawRewrite);
-    const diffToTarget = computeWordDiff(rawRewrite, card.corrected_sentence);
+    const deterministic = checkReviewCardAnswer(card, rawRewrite);
+    const effectiveTarget = deterministic.canonicalCorrectedSentence || displayCorrected;
+    const effectiveAttempt = deterministic.expandedAttempt || rawRewrite;
+
+    const diffFromOriginal = computeWordDiff(card.prompt_sentence, effectiveAttempt);
+    const diffToTarget = computeWordDiff(effectiveAttempt, effectiveTarget);
 
     // Anti-no-op guard: submitting the original flawed sentence cannot pass or master
     if (!normRewrite || normRewrite === normOriginal) {
       return NextResponse.json({
         cardId: card.id,
         fixed: false,
+        nearly: false,
         sameAsOriginal: true,
         mastered: Boolean(card.mastered),
         xpAwarded: 0,
         reason: "That's the same as the original. Change the mistake first.",
         diffFromOriginal,
         diffToTarget,
-        correctedSentence: card.corrected_sentence,
-        explanation: card.explanation,
+        correctedSentence: effectiveTarget,
+        explanation: displayExplanation,
       });
     }
 
-    // Step 1: Cheap deterministic match (0 AI usage units)
-    let fixed = normRewrite === normTarget;
-    let reason = fixed ? 'This matches the correct answer.' : '';
+    // Step 1: Deterministic match (0 AI usage units) — handles contractions,
+    // authored accepted variants, choice options, gap answers, and nearly-right notes.
+    let fixed = deterministic.matched ? Boolean(deterministic.fixed) : false;
+    const nearly = deterministic.matched ? Boolean(deterministic.nearly) : false;
+    let reason = deterministic.matched
+      ? (deterministic.reason || (fixed ? 'This matches the correct answer.' : ''))
+      : '';
 
-    // Step 2: Tolerant semantic check for alternative valid repairs (enforces 1 AI usage unit)
-    if (!fixed && process.env.GROQ_API_KEY) {
+    // Step 2: Tolerant semantic check for open-ended alternative valid repairs (1 AI usage unit)
+    if (!deterministic.matched && !fixed && process.env.GROQ_API_KEY) {
       const guard = await enforceAiUsage(supabase, '/api/review/check-rewrite', 1);
       responseHeaders = guard.headers;
       if (!guard.allowed && guard.response) {
@@ -185,7 +198,7 @@ export async function POST(request: NextRequest) {
       try {
         const semantic = await checkSemanticEquivalence({
           original: card.prompt_sentence,
-          reference: card.corrected_sentence,
+          reference: effectiveTarget,
           category: card.category,
           rewrite: sanitizedRewrite,
         });
@@ -203,7 +216,7 @@ export async function POST(request: NextRequest) {
         statusCode = 503;
         errorMessage = 'Semantic checker failed';
       }
-    } else if (!fixed) {
+    } else if (!deterministic.matched && !fixed) {
       // Keep the deterministic result but record that the requested semantic
       // check could not run because the provider is not configured.
       usedLlm = true;
@@ -238,14 +251,15 @@ export async function POST(request: NextRequest) {
       {
         cardId: card.id,
         fixed,
+        nearly,
         mastered,
         blockedByRecentReveal,
         xpAwarded,
         reason,
         diffFromOriginal,
         diffToTarget,
-        correctedSentence: card.corrected_sentence,
-        explanation: card.explanation,
+        correctedSentence: effectiveTarget,
+        explanation: displayExplanation,
       },
       { headers: responseHeaders },
     );

@@ -61,7 +61,7 @@ jobs:
       - run: node --test tests/unit/grammar-practice-position.test.mjs
       # Grammar alternatives, sentence verdicts, and Review scheduling stay
       # server-side and are exercised with fake providers and an in-memory DB.
-      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-sentence-support.test.mjs tests/unit/week-sentence-practice.test.mjs tests/unit/week-sentence-rollout.test.mjs tests/unit/grammar-use-it-feedback.test.mjs tests/unit/week-vocab-review-server.test.mjs
+      - run: node --test tests/unit/learner-grammar.test.mjs tests/unit/free-text-marking.test.mjs tests/unit/week-sentence-feedback.test.mjs tests/unit/week-sentence-route.test.mjs tests/unit/week-sentence-server.test.mjs tests/unit/week-sentence-support.test.mjs tests/unit/week-sentence-practice.test.mjs tests/unit/week-sentence-rollout.test.mjs tests/unit/grammar-use-it-feedback.test.mjs tests/unit/week-vocab-review-server.test.mjs tests/unit/review-marking-contract.test.mjs tests/unit/review-card-quality.test.mjs
       # The vocabulary exercise bank and its learner projection: no keys or
       # reasons ship to the browser, and every gap has an authored reason.
       - run: node --test tests/unit/vocabulary-exercises.test.mjs

@@ -3,6 +3,7 @@ import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from './week-speaking-recordings.mjs';
 import { orderQueue, planQueue } from './review-queue.mjs';
+import { enrichErrorReviewCard, enrichVocabReviewCard } from '@/lib/curriculum/review-enrichment';
 import type {
   AiObservabilitySummary,
   DashboardSkillTelemetry,
@@ -366,7 +367,7 @@ export async function loadReviewQueue(options: { ignoreCap?: boolean } = {}): Pr
     supabase
       .from('error_review_cards')
       .select(
-        'id, category, prompt_sentence, corrected_sentence, context_sentence, card_format, occurrence_count, mastered, explanation, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, last_reviewed_on',
+        'id, category, prompt_sentence, corrected_sentence, context_sentence, normalized_key, card_format, occurrence_count, mastered, explanation, due_at, interval_days, stability, difficulty, fsrs_state, learning_steps, reps, lapses, last_review_at, last_reviewed_on',
       )
       .eq('user_id', user.id)
       .eq('suspended', false)
@@ -387,37 +388,49 @@ export async function loadReviewQueue(options: { ignoreCap?: boolean } = {}): Pr
       .gte('reviewed_at', `${today}T00:00:00.000Z`),
   ]);
 
-  const errorCards = (errorResult.data as ErrorReviewCardRow[] | null) ?? [];
+  const errorCards = (errorResult.data as (ErrorReviewCardRow & { normalized_key?: string | null })[] | null) ?? [];
   const vocabRows = (vocabResult.data as VocabDueRow[] | null) ?? [];
 
   const cards: ReviewQueueCard[] = [
-    ...errorCards.map((card) => ({
-      ...card,
-      type: 'error' as const,
-      // An error card is repaired by typing; that is the whole exercise.
-      hasTypedAnswer: true as const,
-    })),
-    ...vocabRows.map((row) => ({
-      type: 'vocab' as const,
-      id: row.card_id,
-      vocab_item_id: row.vocab_item_id,
-      term: row.term,
-      definition: row.definition,
-      example: row.example,
-      part_of_speech: row.part_of_speech,
-      translation_es: row.translation_es,
-      due_at: row.due_at,
-      interval_days: null,
-      stability: null,
-      difficulty: null,
-      fsrs_state: null,
-      learning_steps: null,
-      reps: null,
-      lapses: null,
-      last_review_at: null,
-      last_reviewed_on: null,
-      hasTypedAnswer: false as const,
-    })),
+    ...errorCards.map((card) => {
+      const reviewMeta = enrichErrorReviewCard(card);
+      const { normalized_key: _unusedKey, ...rest } = card;
+      void _unusedKey;
+      return {
+        ...rest,
+        corrected_sentence: reviewMeta.displayCorrectedSentence || card.corrected_sentence,
+        explanation: reviewMeta.rule?.reason || card.explanation,
+        type: 'error' as const,
+        // An error card is repaired by typing (or choosing an option); that is the whole exercise.
+        hasTypedAnswer: true as const,
+        reviewMeta,
+      };
+    }),
+    ...vocabRows.map((row) => {
+      const vocabMeta = enrichVocabReviewCard(row);
+      return {
+        type: 'vocab' as const,
+        id: row.card_id,
+        vocab_item_id: row.vocab_item_id,
+        term: row.term,
+        definition: vocabMeta.meaning || row.definition,
+        example: row.example,
+        part_of_speech: row.part_of_speech,
+        translation_es: vocabMeta.es,
+        due_at: row.due_at,
+        interval_days: null,
+        stability: null,
+        difficulty: null,
+        fsrs_state: null,
+        learning_steps: null,
+        reps: null,
+        lapses: null,
+        last_review_at: null,
+        last_reviewed_on: null,
+        hasTypedAnswer: false as const,
+        vocabMeta,
+      };
+    }),
   ];
 
   const reviewedToday = (errorToday.count ?? 0) + (vocabToday.count ?? 0);

@@ -268,7 +268,8 @@
               ],
               "key": "moved",
               "accepted": [],
-              "reason": "\"Three years ago\" is a finished time."
+              "reason": "\"Three years ago\" is a finished time.",
+              "rule": "past-simple-finished"
             },
             {
               "id": "W1-C2",
@@ -281,7 +282,8 @@
               ],
               "key": "have made",
               "accepted": [],
-              "reason": "\"Since then\" means up to now."
+              "reason": "\"Since then\" means up to now.",
+              "rule": "present-perfect-experience"
             },
             {
               "id": "W1-C3",
@@ -294,7 +296,8 @@
               ],
               "key": "had left",
               "accepted": [],
-              "reason": "It left before I arrived."
+              "reason": "It left before I arrived.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-C4",
@@ -307,7 +310,8 @@
               ],
               "key": "was cooking",
               "accepted": [],
-              "reason": "A longer action interrupted by a short one."
+              "reason": "A longer action interrupted by a short one.",
+              "rule": "past-continuous"
             },
             {
               "id": "W1-C5",
@@ -326,7 +330,8 @@
                 [],
                 []
               ],
-              "reason": "\"Ever\" asks about life experience up to now."
+              "reason": "\"Ever\" asks about life experience up to now.",
+              "rule": "present-perfect-experience"
             },
             {
               "id": "W1-C6",
@@ -339,7 +344,8 @@
               ],
               "key": "left",
               "accepted": [],
-              "reason": "\"Last month\" is a finished time."
+              "reason": "\"Last month\" is a finished time.",
+              "rule": "past-simple-finished"
             },
             {
               "id": "W1-G1",
@@ -349,7 +355,8 @@
               "options": [],
               "key": "were driving",
               "accepted": [],
-              "reason": "Background action."
+              "reason": "Background action.",
+              "rule": "past-continuous"
             },
             {
               "id": "W1-G2",
@@ -359,7 +366,8 @@
               "options": [],
               "key": "had gone",
               "accepted": [],
-              "reason": "They left before I arrived."
+              "reason": "They left before I arrived.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-G3",
@@ -369,7 +377,8 @@
               "options": [],
               "key": "have known",
               "accepted": [],
-              "reason": "Up to now with \"since\"; know is not used in the continuous."
+              "reason": "Up to now with \"since\"; know is not used in the continuous.",
+              "rule": "present-perfect-experience"
             },
             {
               "id": "W1-G4",
@@ -379,7 +388,8 @@
               "options": [],
               "key": "spent",
               "accepted": [],
-              "reason": "Finished time."
+              "reason": "Finished time.",
+              "rule": "past-simple-finished"
             },
             {
               "id": "W1-G5",
@@ -391,7 +401,8 @@
               "accepted": [
                 "had not slept"
               ],
-              "reason": "Earlier than the moment she was tired."
+              "reason": "Earlier than the moment she was tired.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-F1",
@@ -401,7 +412,8 @@
               "options": [],
               "key": "I moved to Leeds in 2023.",
               "accepted": [],
-              "reason": "\"In 2023\" is a finished time, so use the past simple."
+              "reason": "\"In 2023\" is a finished time, so use the past simple.",
+              "rule": "past-simple-finished"
             },
             {
               "id": "W1-F2",
@@ -411,7 +423,8 @@
               "options": [],
               "key": "When I got home, my flatmate had already cooked dinner.",
               "accepted": [],
-              "reason": "Cooking happened before I got home."
+              "reason": "Cooking happened before I got home.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-F3",
@@ -420,8 +433,11 @@
               "prompt": "I was knowing her for years before we worked together.",
               "options": [],
               "key": "I had known her for years before we worked together.",
-              "accepted": [],
-              "reason": "Know is a state verb, and this happened before the other past event."
+              "accepted": [
+                "I knew her for years before we worked together."
+              ],
+              "reason": "Know is a state verb, and this happened before the other past event.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-R1",
@@ -433,7 +449,8 @@
               "accepted": [
                 "I have been learning English since 2020."
               ],
-              "reason": "An activity that continues up to now."
+              "reason": "An activity that continues up to now.",
+              "rule": "present-perfect-continuous"
             },
             {
               "id": "W1-R2",
@@ -445,7 +462,8 @@
               "accepted": [
                 "The film had already started when we arrived."
               ],
-              "reason": "The past perfect shows which happened first."
+              "reason": "The past perfect shows which happened first.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-R3",
@@ -457,7 +475,8 @@
               "accepted": [
                 "I saw an accident while I was walking home."
               ],
-              "reason": "Background plus event."
+              "reason": "Background plus event.",
+              "rule": "past-continuous"
             },
             {
               "id": "W1-L1",
@@ -469,8 +488,11 @@
                 "would live"
               ],
               "key": "used to live",
-              "accepted": [],
-              "reason": "Live is a state, so would is not possible."
+              "accepted": [
+                "lived"
+              ],
+              "reason": "Live is a state, so would is not possible.",
+              "rule": "used-to-would"
             },
             {
               "id": "W1-L2",
@@ -483,9 +505,11 @@
               ],
               "key": "would take",
               "accepted": [
-                "used to take"
+                "used to take",
+                "took"
               ],
-              "reason": "A repeated action in the past."
+              "reason": "A repeated action in the past.",
+              "rule": "used-to-would"
             },
             {
               "id": "W1-L3",
@@ -498,7 +522,8 @@
               ],
               "key": "'ve been studying",
               "accepted": [],
-              "reason": "An activity up to now with a result you can see."
+              "reason": "An activity up to now with a result you can see.",
+              "rule": "present-perfect-continuous"
             },
             {
               "id": "W1-U1",
@@ -531,7 +556,8 @@
               ],
               "key": "walk",
               "accepted": [],
-              "reason": "A usual habit uses the present simple."
+              "reason": "A usual habit uses the present simple.",
+              "rule": "present-simple-habit"
             },
             {
               "id": "W1-V2",
@@ -544,7 +570,8 @@
               ],
               "key": "an",
               "accepted": [],
-              "reason": "Use an before a vowel sound."
+              "reason": "Use an before a vowel sound.",
+              "rule": "articles-a-an"
             },
             {
               "id": "W1-E1",
@@ -554,7 +581,8 @@
               "options": [],
               "key": "were watching",
               "accepted": [],
-              "reason": "Background action interrupted."
+              "reason": "Background action interrupted.",
+              "rule": "past-continuous"
             },
             {
               "id": "W1-E2",
@@ -564,7 +592,8 @@
               "options": [],
               "key": "had never seen",
               "accepted": [],
-              "reason": "Before another past event."
+              "reason": "Before another past event.",
+              "rule": "past-perfect"
             },
             {
               "id": "W1-E3",
@@ -576,8 +605,43 @@
               "accepted": [
                 "has been working"
               ],
-              "reason": "Up to now with \"since\"; both forms are correct."
+              "reason": "Up to now with \"since\"; both forms are correct.",
+              "rule": "present-perfect-experience"
             }
+          ]
+        },
+        "ruleExamples": {
+          "past-simple-finished": [
+            "I moved to Madrid in 2022.",
+            "We visited Paris two years ago."
+          ],
+          "present-perfect-experience": [
+            "I've lived here since 2021.",
+            "Have you ever worked abroad?"
+          ],
+          "past-perfect": [
+            "When I arrived, the train had already left.",
+            "She was tired because she hadn't slept well."
+          ],
+          "past-continuous": [
+            "While we were walking home, it started to rain.",
+            "I was cooking dinner when my phone rang."
+          ],
+          "used-to-would": [
+            "We used to live in a small flat.",
+            "Every summer, my grandfather would take us fishing."
+          ],
+          "present-perfect-continuous": [
+            "I've been studying English for three years.",
+            "She's tired because she's been working all morning."
+          ],
+          "present-simple-habit": [
+            "I usually walk to work, but today I'm taking the bus.",
+            "He drinks coffee every morning."
+          ],
+          "articles-a-an": [
+            "She's an engineer and he's a teacher.",
+            "I waited for an hour outside the station."
           ]
         }
       },
@@ -725,82 +789,115 @@
             "type": "v.",
             "cefr": "B2",
             "use": "B",
-            "example": "I had to adapt to living abroad."
+            "example": "I had to adapt to living abroad.",
+            "extraExample": "Children usually adapt quickly to a new school."
           },
           {
             "target": "turning point",
             "type": "n. phr.",
             "cefr": "B2*",
             "use": "B",
-            "example": "Moving to Leeds was a turning point in my life."
+            "example": "Moving to Leeds was a turning point in my life.",
+            "collocation": "a turning point",
+            "extraExample": "Getting that scholarship was a real turning point."
           },
           {
             "target": "challenge",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "I faced several challenges while I was studying abroad."
+            "example": "I faced several challenges while I was studying abroad.",
+            "collocation": "face a challenge",
+            "extraExample": "Everyone has to face a challenge when they start a new job."
           },
           {
             "target": "get used to",
             "type": "v. phr.",
             "cefr": "B1",
             "use": "P",
-            "example": "It took me a month to get used to living alone."
+            "example": "It took me a month to get used to living alone.",
+            "collocation": "get used to",
+            "es": "acostumbrarse a + infinitivo = get used to + -ing (not get used to live)",
+            "extraExample": "She soon got used to driving on the left."
           },
           {
             "target": "look back on",
             "type": "mw. v.",
             "cefr": "B2*",
             "use": "B",
-            "example": "When I look back on my first year abroad, I remember the people I met."
+            "example": "When I look back on my first year abroad, I remember the people I met.",
+            "collocation": "look back on",
+            "extraExample": "We often look back on that summer and laugh."
           },
           {
             "target": "regret",
             "type": "v.",
             "cefr": "B1",
             "use": "P",
-            "example": "I've never regretted leaving my old job."
+            "example": "I've never regretted leaving my old job.",
+            "collocation": "regret",
+            "es": "arrepentirse de = regret + -ing (no preposition: not regret of)",
+            "extraExample": "He regretted leaving his job without a plan."
           },
           {
             "target": "gradually",
             "type": "adv.",
             "cefr": "B2*",
             "use": "B",
-            "example": "My English gradually improved while I was living in York."
+            "example": "My English gradually improved while I was living in York.",
+            "extraExample": "The noise gradually faded as we walked into the park."
           },
           {
             "target": "memorable",
             "type": "adj.",
             "cefr": "B2*",
             "use": "B",
-            "example": "Travelling alone was a memorable experience."
+            "example": "Travelling alone was a memorable experience.",
+            "extraExample": "Seeing the Northern Lights was the most memorable night of the trip."
           }
         ],
         "collocations": [
           {
             "target": "make a big decision",
-            "example": "I made a big decision about my future."
+            "example": "I made a big decision about my future.",
+            "collocation": "make a big decision",
+            "es": "tomar una gran decisión = make a big decision, not take a big decision",
+            "extraExample": "She made a big decision to move closer to her family."
           },
           {
             "target": "take a risk",
-            "example": "I took a risk and applied for a job abroad."
+            "example": "I took a risk and applied for a job abroad.",
+            "collocation": "take a risk",
+            "es": "correr un riesgo = take a risk, not run a risk",
+            "extraExample": "Starting your own café means taking a risk."
           },
           {
             "target": "make a change",
-            "example": "I decided to make a change and cycle to work."
+            "example": "I decided to make a change and cycle to work.",
+            "collocation": "make a change",
+            "es": "hacer un cambio = make a change, not do a change",
+            "extraExample": "We're going to make a few changes to the schedule."
           },
           {
             "target": "keep in touch",
-            "example": "I've kept in touch with my old school friends."
+            "example": "I've kept in touch with my old school friends.",
+            "collocation": "keep in touch",
+            "es": "mantener el contacto = keep in touch, not maintain contact",
+            "extraExample": "Let's keep in touch after the course finishes."
           },
           {
             "target": "make progress",
-            "example": "I've been making good progress since September."
+            "example": "I've been making good progress since September.",
+            "collocation": "make progress",
+            "es": "hacer progresos = make progress, not do progress",
+            "extraExample": "You've made real progress with your speaking this month."
           },
           {
             "target": "take up",
-            "example": "I took up photography after I moved."
+            "example": "I took up photography after I moved.",
+            "collocation": "take up",
+            "es": "empezar una afición = take up (a hobby)",
+            "extraExample": "He took up running to get fit."
           }
         ],
         "families": [
@@ -1002,7 +1099,8 @@
               ],
               "key": "'s going to",
               "accepted": [],
-              "reason": "A prediction based on what you can see now."
+              "reason": "A prediction based on what you can see now.",
+              "rule": "going-to-plan-prediction"
             },
             {
               "id": "W2-C2",
@@ -1014,8 +1112,11 @@
                 "have"
               ],
               "key": "'m having",
-              "accepted": [],
-              "reason": "A fixed arrangement."
+              "accepted": [
+                "'m going to have"
+              ],
+              "reason": "A fixed arrangement.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-C3",
@@ -1027,8 +1128,11 @@
                 "is leave"
               ],
               "key": "leaves",
-              "accepted": [],
-              "reason": "Timetables use the present simple."
+              "accepted": [
+                "is leaving"
+              ],
+              "reason": "Timetables use the present simple.",
+              "rule": "present-simple-timetable"
             },
             {
               "id": "W2-C4",
@@ -1041,7 +1145,8 @@
               ],
               "key": "'ll pay",
               "accepted": [],
-              "reason": "An offer or decision made while speaking."
+              "reason": "An offer or decision made while speaking.",
+              "rule": "will-offer-opinion"
             },
             {
               "id": "W2-C5",
@@ -1054,7 +1159,8 @@
               ],
               "key": "get",
               "accepted": [],
-              "reason": "After as soon as, use the present simple for the future."
+              "reason": "After as soon as, use the present simple for the future.",
+              "rule": "time-clauses-present-simple"
             },
             {
               "id": "W2-C6",
@@ -1067,7 +1173,8 @@
               ],
               "key": "'m going to",
               "accepted": [],
-              "reason": "An intention with no fixed arrangement yet."
+              "reason": "An intention with no fixed arrangement yet.",
+              "rule": "going-to-plan-prediction"
             },
             {
               "id": "W2-G1",
@@ -1077,9 +1184,11 @@
               "options": [],
               "key": "'re moving",
               "accepted": [
-                "are moving"
+                "are moving",
+                "are going to move"
               ],
-              "reason": "A fixed arrangement."
+              "reason": "A fixed arrangement.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-G2",
@@ -1089,9 +1198,11 @@
               "options": [],
               "key": "'ll enjoy",
               "accepted": [
-                "will enjoy"
+                "will enjoy",
+                "are going to enjoy"
               ],
-              "reason": "A prediction based on opinion."
+              "reason": "A prediction based on opinion.",
+              "rule": "will-offer-opinion"
             },
             {
               "id": "W2-G3",
@@ -1101,7 +1212,8 @@
               "options": [],
               "key": "start",
               "accepted": [],
-              "reason": "After before, use the present simple for the future."
+              "reason": "After before, use the present simple for the future.",
+              "rule": "time-clauses-present-simple"
             },
             {
               "id": "W2-G4",
@@ -1111,9 +1223,11 @@
               "options": [],
               "key": "'m not coming",
               "accepted": [
-                "am not coming"
+                "am not coming",
+                "am not going to come"
               ],
-              "reason": "A fixed arrangement."
+              "reason": "A fixed arrangement.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-G5",
@@ -1125,7 +1239,8 @@
               "accepted": [
                 "will help"
               ],
-              "reason": "An offer made while speaking."
+              "reason": "An offer made while speaking.",
+              "rule": "will-offer-opinion"
             },
             {
               "id": "W2-F1",
@@ -1135,7 +1250,8 @@
               "options": [],
               "key": "I'll tell you when I know the results.",
               "accepted": [],
-              "reason": "After when, use the present simple for the future."
+              "reason": "After when, use the present simple for the future.",
+              "rule": "time-clauses-present-simple"
             },
             {
               "id": "W2-F2",
@@ -1144,8 +1260,11 @@
               "prompt": "I can't come on Saturday. I will visit my parents. We arranged it last week.",
               "options": [],
               "key": "I'm visiting my parents.",
-              "accepted": [],
-              "reason": "It was arranged, so use the present continuous."
+              "accepted": [
+                "I can't come on Saturday. I'm visiting my parents. We arranged it last week."
+              ],
+              "reason": "It was arranged, so use the present continuous.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-F3",
@@ -1155,7 +1274,8 @@
               "options": [],
               "key": "We're going to the cinema tonight.",
               "accepted": [],
-              "reason": "The present continuous needs the -ing form."
+              "reason": "The present continuous needs the -ing form.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-R1",
@@ -1165,7 +1285,8 @@
               "options": [],
               "key": "I'm going to find a new flat.",
               "accepted": [],
-              "reason": "An intention."
+              "reason": "An intention.",
+              "rule": "going-to-plan-prediction"
             },
             {
               "id": "W2-R2",
@@ -1177,7 +1298,8 @@
               "accepted": [
                 "As soon as I finish work, I'll phone you."
               ],
-              "reason": "Will in the main clause, present simple after as soon as."
+              "reason": "Will in the main clause, present simple after as soon as.",
+              "rule": "time-clauses-present-simple"
             },
             {
               "id": "W2-R3",
@@ -1186,8 +1308,15 @@
               "prompt": "Meeting with Ana, Thursday 3 p.m., booked. (present continuous)",
               "options": [],
               "key": "I'm meeting Ana on Thursday at 3 p.m.",
-              "accepted": [],
-              "reason": "A fixed arrangement."
+              "accepted": [
+                "I'm meeting Ana at 3 p.m. on Thursday.",
+                "I'm meeting Ana at 3pm on Thursday.",
+                "I'm meeting Ana at 3 pm on Thursday.",
+                "I'm meeting Ana on Thursday at 3pm.",
+                "I'm meeting Ana on Thursday at 3 pm."
+              ],
+              "reason": "A fixed arrangement.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-L1",
@@ -1200,7 +1329,8 @@
               ],
               "key": "melts",
               "accepted": [],
-              "reason": "Zero conditional: always true."
+              "reason": "Zero conditional: always true.",
+              "rule": "conditionals-0-2"
             },
             {
               "id": "W2-L2",
@@ -1213,7 +1343,8 @@
               ],
               "key": "rains",
               "accepted": [],
-              "reason": "First conditional: present simple after if."
+              "reason": "First conditional: present simple after if.",
+              "rule": "conditionals-0-2"
             },
             {
               "id": "W2-L3",
@@ -1228,7 +1359,8 @@
               "accepted": [
                 "was"
               ],
-              "reason": "Second conditional: an imagined situation."
+              "reason": "Second conditional: an imagined situation.",
+              "rule": "conditionals-0-2"
             },
             {
               "id": "W2-U1",
@@ -1260,8 +1392,11 @@
                 "lived"
               ],
               "key": "'ve lived",
-              "accepted": [],
-              "reason": "Up to now with since."
+              "accepted": [
+                "'ve been living"
+              ],
+              "reason": "Up to now with since.",
+              "rule": "present-perfect-experience"
             },
             {
               "id": "W2-V2",
@@ -1274,7 +1409,8 @@
               ],
               "key": "used to",
               "accepted": [],
-              "reason": "Love is a state, so would is not possible."
+              "reason": "Love is a state, so would is not possible.",
+              "rule": "used-to-would"
             },
             {
               "id": "W2-E1",
@@ -1284,9 +1420,11 @@
               "options": [],
               "key": "'m seeing",
               "accepted": [
-                "am seeing"
+                "am seeing",
+                "'m going to see"
               ],
-              "reason": "A fixed arrangement."
+              "reason": "A fixed arrangement.",
+              "rule": "present-continuous-arrangement"
             },
             {
               "id": "W2-E2",
@@ -1296,9 +1434,11 @@
               "options": [],
               "key": "'ll be",
               "accepted": [
-                "will be"
+                "will be",
+                "'s going to be"
               ],
-              "reason": "A prediction based on opinion."
+              "reason": "A prediction based on opinion.",
+              "rule": "will-offer-opinion"
             },
             {
               "id": "W2-E3",
@@ -1307,9 +1447,46 @@
               "prompt": "Call me after you ___ (land).",
               "options": [],
               "key": "land",
-              "accepted": [],
-              "reason": "After after, use the present simple for the future."
+              "accepted": [
+                "'ve landed"
+              ],
+              "reason": "After after, use the present simple for the future.",
+              "rule": "time-clauses-present-simple"
             }
+          ]
+        },
+        "ruleExamples": {
+          "going-to-plan-prediction": [
+            "Look at those clouds — it's going to rain.",
+            "I'm going to start a Spanish course next month."
+          ],
+          "present-continuous-arrangement": [
+            "I'm meeting Sara for lunch tomorrow.",
+            "We're moving to Valencia next week — we signed the contract."
+          ],
+          "present-simple-timetable": [
+            "The train leaves at 7:30 a.m.",
+            "Our course starts on Monday."
+          ],
+          "will-offer-opinion": [
+            "Don't worry, I'll carry that bag for you.",
+            "I think it'll be warm at the weekend."
+          ],
+          "time-clauses-present-simple": [
+            "I'll call you as soon as I get home.",
+            "Text me when the flight lands."
+          ],
+          "conditionals-0-2": [
+            "If it rains tomorrow, we'll stay inside.",
+            "If I had more free time, I'd learn Italian."
+          ],
+          "present-perfect-experience": [
+            "I've lived in this city since 2021.",
+            "We've known each other for five years."
+          ],
+          "used-to-would": [
+            "When I was young, I used to love cartoons.",
+            "She used to live near the sea."
           ]
         }
       },
@@ -1457,89 +1634,121 @@
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "Her ambition is to run her own restaurant."
+            "example": "Her ambition is to run her own restaurant.",
+            "extraExample": "His main ambition is to write a novel."
           },
           {
             "target": "goal",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "My goal is to start a career in design."
+            "example": "My goal is to start a career in design.",
+            "extraExample": "Our goal is to finish the project by June."
           },
           {
             "target": "achieve",
             "type": "v.",
             "cefr": "B1",
             "use": "P",
-            "example": "If you practise regularly, you'll achieve your goal."
+            "example": "If you practise regularly, you'll achieve your goal.",
+            "collocation": "achieve a goal",
+            "extraExample": "She worked hard and achieved her goal."
           },
           {
             "target": "intend",
             "type": "v.",
             "cefr": "B1",
             "use": "P",
-            "example": "We intend to move to the coast next year."
+            "example": "We intend to move to the coast next year.",
+            "es": "tener intención de = intend; intentar = try (not intend to call)",
+            "extraExample": "I intend to finish the report before Friday."
           },
           {
             "target": "career",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "She's going to start a career in engineering."
+            "example": "She's going to start a career in engineering.",
+            "es": "carrera profesional = career; carrera universitaria = degree",
+            "extraExample": "He spent twenty years building a career in architecture."
           },
           {
             "target": "deadline",
             "type": "n.",
             "cefr": "B2",
             "use": "B",
-            "example": "The deadline for applications is 30 April."
+            "example": "The deadline for applications is 30 April.",
+            "extraExample": "They moved the deadline to next Wednesday."
           },
           {
             "target": "apply",
             "type": "v.",
             "cefr": "B1",
             "use": "P",
-            "example": "She's going to apply for a job at the museum."
+            "example": "She's going to apply for a job at the museum.",
+            "collocation": "apply for a job",
+            "es": "solicitar un trabajo = apply for a job (not ask a job)",
+            "extraExample": "Over fifty people applied for the job."
           },
           {
             "target": "look forward to",
             "type": "mw. v.",
             "cefr": "B1",
             "use": "P",
-            "example": "I'm looking forward to starting my new course."
+            "example": "I'm looking forward to starting my new course.",
+            "collocation": "look forward to",
+            "es": "tener ganas de = look forward to + -ing (not look forward to start)",
+            "extraExample": "I'm looking forward to seeing you next week."
           },
           {
             "target": "determined",
             "type": "adj.",
             "cefr": "B1",
             "use": "B",
-            "example": "He's determined to pass, so he's going to practise every day."
+            "example": "He's determined to pass, so he's going to practise every day.",
+            "extraExample": "She was determined to learn French before moving to Lyon."
           }
         ],
         "collocations": [
           {
             "target": "work towards",
-            "example": "I'm working towards a degree in nursing."
+            "example": "I'm working towards a degree in nursing.",
+            "collocation": "work towards",
+            "extraExample": "He's working towards a promotion next year."
           },
           {
             "target": "take the first step",
-            "example": "I'll take the first step and contact the college."
+            "example": "I'll take the first step and contact the college.",
+            "collocation": "take the first step",
+            "es": "dar el primer paso = take the first step, not give the first step",
+            "extraExample": "Signing up for the class was taking the first step."
           },
           {
             "target": "improve your skills",
-            "example": "This course will help you improve your skills."
+            "example": "This course will help you improve your skills.",
+            "collocation": "improve your skills",
+            "extraExample": "Volunteering is a great way to improve your skills."
           },
           {
             "target": "put (something) off",
-            "example": "Don't put off booking the course. With a pronoun: put it off."
+            "example": "Don't put off booking the course. With a pronoun: put it off.",
+            "collocation": "put (something) off",
+            "es": "posponer / dejar para más tarde = put off",
+            "extraExample": "I keep putting off calling the dentist."
           },
           {
             "target": "set a goal",
-            "example": "I'm going to set myself a goal of reading one book a month."
+            "example": "I'm going to set myself a goal of reading one book a month.",
+            "collocation": "set a goal",
+            "es": "marcarse un objetivo = set (yourself) a goal",
+            "extraExample": "It helps to set a clear goal at the start of the year."
           },
           {
             "target": "meet a deadline",
-            "example": "We'll need to finish on Thursday to meet Friday's deadline."
+            "example": "We'll need to finish on Thursday to meet Friday's deadline.",
+            "collocation": "meet a deadline",
+            "es": "cumplir un plazo = meet a deadline, not complete a deadline",
+            "extraExample": "We stayed late to meet the deadline."
           }
         ],
         "families": [
@@ -1736,8 +1945,11 @@
                 "should"
               ],
               "key": "have to",
-              "accepted": [],
-              "reason": "A rule, not just advice."
+              "accepted": [
+                "must"
+              ],
+              "reason": "A rule, not just advice.",
+              "rule": "obligation-have-to-must"
             },
             {
               "id": "W3-C2",
@@ -1750,7 +1962,8 @@
               ],
               "key": "don't have to",
               "accepted": [],
-              "reason": "Paying isn't necessary, but it isn't forbidden."
+              "reason": "Paying isn't necessary, but it isn't forbidden.",
+              "rule": "no-obligation-dont-have-to"
             },
             {
               "id": "W3-C3",
@@ -1763,7 +1976,8 @@
               ],
               "key": "should",
               "accepted": [],
-              "reason": "Advice, not a rule."
+              "reason": "Advice, not a rule.",
+              "rule": "advice-should"
             },
             {
               "id": "W3-C4",
@@ -1775,8 +1989,12 @@
                 "Must"
               ],
               "key": "Could",
-              "accepted": [],
-              "reason": "Asking for permission."
+              "accepted": [
+                "Can",
+                "May"
+              ],
+              "reason": "Asking for permission.",
+              "rule": "permission-can-could"
             },
             {
               "id": "W3-C5",
@@ -1788,8 +2006,11 @@
                 "can"
               ],
               "key": "could",
-              "accepted": [],
-              "reason": "General ability in the past."
+              "accepted": [
+                "was able to"
+              ],
+              "reason": "General ability in the past.",
+              "rule": "ability-can-could"
             },
             {
               "id": "W3-C6",
@@ -1801,8 +2022,12 @@
                 "don't have to"
               ],
               "key": "mustn't",
-              "accepted": [],
-              "reason": "It is forbidden."
+              "accepted": [
+                "can't",
+                "aren't allowed to"
+              ],
+              "reason": "It is forbidden.",
+              "rule": "prohibition-mustnt"
             },
             {
               "id": "W3-G1",
@@ -1811,8 +2036,11 @@
               "prompt": "I ___ (have to / work) late tomorrow, so I can't come.",
               "options": [],
               "key": "have to work",
-              "accepted": [],
-              "reason": "A requirement."
+              "accepted": [
+                "'ll have to work"
+              ],
+              "reason": "A requirement.",
+              "rule": "obligation-have-to-must"
             },
             {
               "id": "W3-G2",
@@ -1822,7 +2050,8 @@
               "options": [],
               "key": "don't have to bring",
               "accepted": [],
-              "reason": "Not necessary."
+              "reason": "Not necessary.",
+              "rule": "no-obligation-dont-have-to"
             },
             {
               "id": "W3-G3",
@@ -1834,7 +2063,8 @@
               "accepted": [
                 "cannot hear"
               ],
-              "reason": "Ability, negative."
+              "reason": "Ability, negative.",
+              "rule": "ability-can-could"
             },
             {
               "id": "W3-G4",
@@ -1844,7 +2074,8 @@
               "options": [],
               "key": "should talk",
               "accepted": [],
-              "reason": "Advice."
+              "reason": "Advice.",
+              "rule": "advice-should"
             },
             {
               "id": "W3-G5",
@@ -1854,7 +2085,8 @@
               "options": [],
               "key": "Can I borrow",
               "accepted": [],
-              "reason": "A permission question: can before the subject."
+              "reason": "A permission question: can before the subject.",
+              "rule": "permission-can-could"
             },
             {
               "id": "W3-F1",
@@ -1863,8 +2095,11 @@
               "prompt": "You must to show your ticket.",
               "options": [],
               "key": "You must show your ticket.",
-              "accepted": [],
-              "reason": "Modals are followed by the verb without to."
+              "accepted": [
+                "You have to show your ticket."
+              ],
+              "reason": "Modals are followed by the verb without to.",
+              "rule": "obligation-have-to-must"
             },
             {
               "id": "W3-F2",
@@ -1874,7 +2109,8 @@
               "options": [],
               "key": "She can speak three languages.",
               "accepted": [],
-              "reason": "No -s after a modal."
+              "reason": "No -s after a modal.",
+              "rule": "ability-can-could"
             },
             {
               "id": "W3-F3",
@@ -1883,8 +2119,12 @@
               "prompt": "Do I can leave early today?",
               "options": [],
               "key": "Can I leave early today?",
-              "accepted": [],
-              "reason": "Modals make questions without do."
+              "accepted": [
+                "Could I leave early today?",
+                "May I leave early today?"
+              ],
+              "reason": "Modals make questions without do.",
+              "rule": "permission-can-could"
             },
             {
               "id": "W3-R1",
@@ -1896,7 +2136,8 @@
               "accepted": [
                 "We don't have to book a table."
               ],
-              "reason": "Not necessary."
+              "reason": "Not necessary.",
+              "rule": "no-obligation-dont-have-to"
             },
             {
               "id": "W3-R2",
@@ -1905,8 +2146,11 @@
               "prompt": "Smoking is not allowed here. (mustn't)",
               "options": [],
               "key": "You mustn't smoke here.",
-              "accepted": [],
-              "reason": "Forbidden."
+              "accepted": [
+                "We mustn't smoke here."
+              ],
+              "reason": "Forbidden.",
+              "rule": "prohibition-mustnt"
             },
             {
               "id": "W3-R3",
@@ -1915,8 +2159,11 @@
               "prompt": "Is it OK if I sit here? (Could)",
               "options": [],
               "key": "Could I sit here?",
-              "accepted": [],
-              "reason": "A polite permission question."
+              "accepted": [
+                "Could I sit here, please?"
+              ],
+              "reason": "A polite permission question.",
+              "rule": "permission-can-could"
             },
             {
               "id": "W3-L1",
@@ -1926,7 +2173,8 @@
               "options": [],
               "key": "What time do you usually get home?",
               "accepted": [],
-              "reason": "Auxiliary before the subject in questions."
+              "reason": "Auxiliary before the subject in questions.",
+              "rule": "question-word-order"
             },
             {
               "id": "W3-L2",
@@ -1939,7 +2187,8 @@
               ],
               "key": "Who takes",
               "accepted": [],
-              "reason": "Who is the subject, so no do."
+              "reason": "Who is the subject, so no do.",
+              "rule": "question-word-order"
             },
             {
               "id": "W3-L3",
@@ -1951,8 +2200,11 @@
                 "Apart from that"
               ],
               "key": "On the other hand",
-              "accepted": [],
-              "reason": "It introduces a contrasting point."
+              "accepted": [
+                "However"
+              ],
+              "reason": "It introduces a contrasting point.",
+              "rule": "contrast-linkers"
             },
             {
               "id": "W3-U1",
@@ -1984,8 +2236,11 @@
                 "will arrive"
               ],
               "key": "arrive",
-              "accepted": [],
-              "reason": "After when, use the present simple for the future."
+              "accepted": [
+                "get"
+              ],
+              "reason": "After when, use the present simple for the future.",
+              "rule": "time-clauses-present-simple"
             },
             {
               "id": "W3-V2",
@@ -1998,7 +2253,8 @@
               ],
               "key": "had closed",
               "accepted": [],
-              "reason": "It closed before we arrived."
+              "reason": "It closed before we arrived.",
+              "rule": "past-perfect"
             },
             {
               "id": "W3-E1",
@@ -2008,7 +2264,8 @@
               "options": [],
               "key": "don't have to",
               "accepted": [],
-              "reason": "It isn't required."
+              "reason": "It isn't required.",
+              "rule": "no-obligation-dont-have-to"
             },
             {
               "id": "W3-E2",
@@ -2018,7 +2275,8 @@
               "options": [],
               "key": "mustn't touch",
               "accepted": [],
-              "reason": "It is forbidden."
+              "reason": "It is forbidden.",
+              "rule": "prohibition-mustnt"
             },
             {
               "id": "W3-E3",
@@ -2028,8 +2286,51 @@
               "options": [],
               "key": "Could I ask",
               "accepted": [],
-              "reason": "A polite permission question."
+              "reason": "A polite permission question.",
+              "rule": "permission-can-could"
             }
+          ]
+        },
+        "ruleExamples": {
+          "obligation-have-to-must": [
+            "You have to wear a seatbelt in a car.",
+            "You must show your ticket at the door."
+          ],
+          "no-obligation-dont-have-to": [
+            "It's free, so you don't have to pay.",
+            "You don't have to bring anything — we have plenty of food."
+          ],
+          "prohibition-mustnt": [
+            "You mustn't smoke inside the building.",
+            "Passengers mustn't use their phones during take-off."
+          ],
+          "advice-should": [
+            "You look tired — you should get some rest.",
+            "I think you should talk to your manager."
+          ],
+          "permission-can-could": [
+            "Could I open the window?",
+            "Can I borrow your charger for a minute?"
+          ],
+          "ability-can-could": [
+            "She can speak three languages.",
+            "When I was ten, I could swim really fast."
+          ],
+          "question-word-order": [
+            "What time do you usually get home?",
+            "Who takes the bins out on Thursdays?"
+          ],
+          "contrast-linkers": [
+            "The flat is small. On the other hand, it's close to the station.",
+            "The train was expensive. However, it was very fast."
+          ],
+          "time-clauses-present-simple": [
+            "I'll text you when I arrive at the station.",
+            "Call me as soon as you finish work."
+          ],
+          "past-perfect": [
+            "By the time we got there, the shop had closed.",
+            "She had already left when I called."
           ]
         }
       },
@@ -2179,85 +2480,120 @@
             "type": "mw. v.",
             "cefr": "B1",
             "use": "P",
-            "example": "You don't have to be close friends to get on with your colleagues."
+            "example": "You don't have to be close friends to get on with your colleagues.",
+            "collocation": "get on with",
+            "es": "llevarse bien con = get on with",
+            "extraExample": "She gets on really well with her new flatmates."
           },
           {
             "target": "catch up (with)",
             "type": "phr. v.",
             "cefr": "B2",
             "use": "B",
-            "example": "Can we meet after work and catch up? Here: exchange news."
+            "example": "Can we meet after work and catch up? Here: exchange news.",
+            "collocation": "catch up (with)",
+            "es": "ponerse al día = catch up (with someone)",
+            "extraExample": "We met for tea to catch up after the holidays."
           },
           {
             "target": "arrange",
             "type": "v.",
             "cefr": "B1",
             "use": "P",
-            "example": "We should arrange to meet outside the station."
+            "example": "We should arrange to meet outside the station.",
+            "es": "organizar / quedar = arrange; arreglar = fix or repair (not arrange my bike)",
+            "extraExample": "I've arranged a meeting with the landlord for Tuesday."
           },
           {
             "target": "routine",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "Try to stick to a routine during busy weeks."
+            "example": "Try to stick to a routine during busy weeks.",
+            "collocation": "stick to a routine",
+            "extraExample": "I try to stick to a routine even when work gets busy."
           },
           {
             "target": "rely on",
             "type": "mw. v.",
             "cefr": "B2",
             "use": "B",
-            "example": "You can rely on Maria to help if there's a problem."
+            "example": "You can rely on Maria to help if there's a problem.",
+            "collocation": "rely on",
+            "es": "contar con / confiar en = rely on (not rely in)",
+            "extraExample": "You can always rely on David to be on time."
           },
           {
             "target": "misunderstanding",
             "type": "n.",
             "cefr": "B2",
             "use": "B",
-            "example": "We should talk and clear up the misunderstanding."
+            "example": "We should talk and clear up the misunderstanding.",
+            "collocation": "clear up a misunderstanding",
+            "extraExample": "A quick phone call helped us clear up a misunderstanding."
           },
           {
             "target": "invite (someone) round",
             "type": "phr. v.",
             "cefr": "B1*",
             "use": "P",
-            "example": "Can I invite some friends round on Saturday? BrE."
+            "example": "Can I invite some friends round on Saturday? BrE.",
+            "collocation": "invite (someone) round",
+            "extraExample": "Let's invite our neighbours round for dinner on Friday."
           },
           {
             "target": "awkward (situation)",
             "type": "adj.",
             "cefr": "B2",
             "use": "B",
-            "example": "It was an awkward situation, but we managed to talk it through."
+            "example": "It was an awkward situation, but we managed to talk it through.",
+            "collocation": "an awkward situation",
+            "es": "incómodo / violento = awkward (for social moments)",
+            "extraExample": "Forgetting my boss's name put me in an awkward situation."
           },
           {
             "target": "politely",
             "type": "adv.",
             "cefr": "B1",
             "use": "P",
-            "example": "You can disagree politely."
+            "example": "You can disagree politely.",
+            "extraExample": "He politely asked if he could open the window."
           }
         ],
         "collocations": [
           {
             "target": "make an effort",
-            "example": "We should make an effort to welcome new colleagues."
+            "example": "We should make an effort to welcome new colleagues.",
+            "collocation": "make an effort",
+            "es": "hacer un esfuerzo = make an effort, not do an effort",
+            "extraExample": "She always makes an effort to remember people's names."
           },
           {
             "target": "have a lot in common",
-            "example": "We have a lot in common: we both love cycling."
+            "example": "We have a lot in common: we both love cycling.",
+            "collocation": "have a lot in common",
+            "extraExample": "Even though we're different ages, we have a lot in common."
           },
           {
             "target": "get in touch",
-            "example": "You should get in touch with the organiser."
+            "example": "You should get in touch with the organiser.",
+            "collocation": "get in touch",
+            "es": "ponerse en contacto = get in touch, not put in touch",
+            "extraExample": "Please get in touch if you need any help."
           },
           {
             "target": "come over",
-            "example": "Can you come over for coffee on Saturday?"
+            "example": "Can you come over for coffee on Saturday?",
+            "collocation": "come over",
+            "es": "pasarse por casa = come over",
+            "extraExample": "Why don't you come over after work?"
           },
           {
             "target": "keep a promise",
-            "example": "You should keep a promise even if it's difficult."
+            "example": "You should keep a promise even if it's difficult.",
+            "collocation": "keep a promise",
+            "es": "cumplir una promesa = keep a promise, not complete a promise",
+            "extraExample": "He always keeps his promises."
           }
         ],
         "families": [
@@ -2290,7 +2626,9 @@
         "optional": [
           {
             "target": "pop round",
-            "example": "Can I pop round after work? Informal BrE; short visit."
+            "example": "Can I pop round after work? Informal BrE; short visit.",
+            "collocation": "pop round",
+            "extraExample": "I'll pop round later to drop off your keys."
           }
         ],
         "newCards": 15,
@@ -2474,7 +2812,8 @@
               ],
               "key": "is spoken",
               "accepted": [],
-              "reason": "The language is the focus; people speak it."
+              "reason": "The language is the focus; people speak it.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-C2",
@@ -2487,7 +2826,8 @@
               ],
               "key": "was built",
               "accepted": [],
-              "reason": "Past time, passive."
+              "reason": "Past time, passive.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-C3",
@@ -2500,7 +2840,8 @@
               ],
               "key": "are cleaned",
               "accepted": [],
-              "reason": "Rooms don't clean; someone cleans them."
+              "reason": "Rooms don't clean; someone cleans them.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-C4",
@@ -2513,7 +2854,8 @@
               ],
               "key": "were caught",
               "accepted": [],
-              "reason": "The police did the action; the thieves received it."
+              "reason": "The police did the action; the thieves received it.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-C5",
@@ -2526,7 +2868,8 @@
               ],
               "key": "was stolen",
               "accepted": [],
-              "reason": "Someone stole it; we don't know who."
+              "reason": "Someone stole it; we don't know who.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-C6",
@@ -2538,8 +2881,11 @@
                 "usually serves"
               ],
               "key": "is usually served",
-              "accepted": [],
-              "reason": "Someone serves the paella."
+              "accepted": [
+                "is served"
+              ],
+              "reason": "Someone serves the paella.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-G1",
@@ -2549,7 +2895,8 @@
               "options": [],
               "key": "is held",
               "accepted": [],
-              "reason": "Present passive; hold, held, held."
+              "reason": "Present passive; hold, held, held.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-G2",
@@ -2559,7 +2906,8 @@
               "options": [],
               "key": "were delivered",
               "accepted": [],
-              "reason": "Past passive, plural subject."
+              "reason": "Past passive, plural subject.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-G3",
@@ -2569,7 +2917,8 @@
               "options": [],
               "key": "were taken",
               "accepted": [],
-              "reason": "Past passive; take, took, taken."
+              "reason": "Past passive; take, took, taken.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-G4",
@@ -2581,7 +2930,8 @@
               "accepted": [
                 "is not included"
               ],
-              "reason": "Present passive, negative."
+              "reason": "Present passive, negative.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-G5",
@@ -2597,7 +2947,8 @@
                 [],
                 []
               ],
-              "reason": "Past passive question."
+              "reason": "Past passive question.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-F1",
@@ -2607,7 +2958,8 @@
               "options": [],
               "key": "The museum was built in 1920.",
               "accepted": [],
-              "reason": "The passive needs the past participle."
+              "reason": "The passive needs the past participle.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-F2",
@@ -2617,7 +2969,8 @@
               "options": [],
               "key": "The windows are cleaned every week.",
               "accepted": [],
-              "reason": "Someone cleans them: use the past participle."
+              "reason": "Someone cleans them: use the past participle.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-F3",
@@ -2627,7 +2980,8 @@
               "options": [],
               "key": "The castle is visited by thousands of tourists every year.",
               "accepted": [],
-              "reason": "The passive needs be."
+              "reason": "The passive needs be.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-R1",
@@ -2636,8 +2990,11 @@
               "prompt": "They built the castle in the 12th century. (passive)",
               "options": [],
               "key": "The castle was built in the 12th century.",
-              "accepted": [],
-              "reason": "The castle is the focus."
+              "accepted": [
+                "The castle was built in the twelfth century."
+              ],
+              "reason": "The castle is the focus.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-R2",
@@ -2647,7 +3004,8 @@
               "options": [],
               "key": "Oranges are grown in this region.",
               "accepted": [],
-              "reason": "\"People\" adds nothing, so leave it out."
+              "reason": "\"People\" adds nothing, so leave it out.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-R3",
@@ -2657,7 +3015,8 @@
               "options": [],
               "key": "My wallet was stolen on the train.",
               "accepted": [],
-              "reason": "We don't know who did it."
+              "reason": "We don't know who did it.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-L1",
@@ -2669,8 +3028,11 @@
                 "which"
               ],
               "key": "where",
-              "accepted": [],
-              "reason": "Where for a place followed by a full clause."
+              "accepted": [
+                "in which"
+              ],
+              "reason": "Where for a place followed by a full clause.",
+              "rule": "relative-clauses"
             },
             {
               "id": "W4-L2",
@@ -2685,7 +3047,8 @@
               "accepted": [
                 "that"
               ],
-              "reason": "Who for people."
+              "reason": "Who for people.",
+              "rule": "relative-clauses"
             },
             {
               "id": "W4-L3",
@@ -2698,7 +3061,8 @@
               ],
               "key": "more beautiful than",
               "accepted": [],
-              "reason": "Comparing two places."
+              "reason": "Comparing two places.",
+              "rule": "comparatives"
             },
             {
               "id": "W4-U1",
@@ -2731,7 +3095,8 @@
               ],
               "key": "don't have to",
               "accepted": [],
-              "reason": "Not necessary, but not forbidden."
+              "reason": "Not necessary, but not forbidden.",
+              "rule": "no-obligation-dont-have-to"
             },
             {
               "id": "W4-V2",
@@ -2744,7 +3109,8 @@
               ],
               "key": "had",
               "accepted": [],
-              "reason": "Second conditional."
+              "reason": "Second conditional.",
+              "rule": "conditionals-0-2"
             },
             {
               "id": "W4-E1",
@@ -2754,7 +3120,8 @@
               "options": [],
               "key": "is grown",
               "accepted": [],
-              "reason": "Present passive for a general fact."
+              "reason": "Present passive for a general fact.",
+              "rule": "present-simple-passive"
             },
             {
               "id": "W4-E2",
@@ -2764,7 +3131,8 @@
               "options": [],
               "key": "was directed",
               "accepted": [],
-              "reason": "Past passive with by."
+              "reason": "Past passive with by.",
+              "rule": "past-simple-passive"
             },
             {
               "id": "W4-E3",
@@ -2774,8 +3142,35 @@
               "options": [],
               "key": "was turned",
               "accepted": [],
-              "reason": "Past passive."
+              "reason": "Past passive.",
+              "rule": "past-simple-passive"
             }
+          ]
+        },
+        "ruleExamples": {
+          "present-simple-passive": [
+            "English is spoken in many countries.",
+            "Breakfast isn't included in the price."
+          ],
+          "past-simple-passive": [
+            "This bridge was built in 1890.",
+            "My bike was stolen last night."
+          ],
+          "relative-clauses": [
+            "That's the café where we first met.",
+            "The woman who lives next door is a doctor."
+          ],
+          "comparatives": [
+            "The old town is quieter than the centre.",
+            "This route is more interesting than the motorway."
+          ],
+          "no-obligation-dont-have-to": [
+            "You don't have to book a ticket in advance.",
+            "Students don't have to wear a uniform here."
+          ],
+          "conditionals-0-2": [
+            "If I had more money, I'd travel more.",
+            "If I were you, I'd take the train."
           ]
         }
       },
@@ -2924,78 +3319,108 @@
             "type": "n.",
             "cefr": "B2",
             "use": "B",
-            "example": "Visitors are invited to take part in a local tradition."
+            "example": "Visitors are invited to take part in a local tradition.",
+            "collocation": "a local tradition",
+            "extraExample": "Lighting lanterns by the river is a local tradition every summer."
           },
           {
             "target": "custom",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "The guide explained a local custom: visitors are asked to take off their shoes before they go inside."
+            "example": "The guide explained a local custom: visitors are asked to take off their shoes before they go inside.",
+            "es": "costumbre = custom; aduana = customs (with -s)",
+            "extraExample": "Leaving a tip is a common custom in many restaurants."
           },
           {
             "target": "destination",
             "type": "n.",
             "cefr": "B1",
             "use": "P",
-            "example": "It's one of the most popular holiday destinations on the coast."
+            "example": "It's one of the most popular holiday destinations on the coast.",
+            "extraExample": "Lisbon is a popular destination for a short break."
           },
           {
             "target": "set off",
             "type": "phr. v.",
             "cefr": "B2",
             "use": "B",
-            "example": "We set off early to avoid the heavy traffic."
+            "example": "We set off early to avoid the heavy traffic.",
+            "collocation": "set off",
+            "es": "salir de viaje = set off",
+            "extraExample": "We set off at dawn to catch the first ferry."
           },
           {
             "target": "get around",
             "type": "phr. v.",
             "cefr": "B1*",
             "use": "P",
-            "example": "We were given a map to help us get around the city."
+            "example": "We were given a map to help us get around the city.",
+            "collocation": "get around",
+            "es": "moverse por una ciudad = get around",
+            "extraExample": "The underground makes it easy to get around London."
           },
           {
             "target": "unfamiliar",
             "type": "adj.",
             "cefr": "B2",
             "use": "B",
-            "example": "We were unfamiliar with the ticket system."
+            "example": "We were unfamiliar with the ticket system.",
+            "collocation": "unfamiliar with",
+            "extraExample": "I was unfamiliar with the ticket machines at first."
           },
           {
             "target": "welcoming",
             "type": "adj.",
             "cefr": "B2*",
             "use": "B",
-            "example": "The hotel where we stayed had a welcoming atmosphere."
+            "example": "The hotel where we stayed had a welcoming atmosphere.",
+            "extraExample": "The café staff were really warm and welcoming."
           },
           {
             "target": "local",
             "type": "adj.",
             "cefr": "B1",
             "use": "P",
-            "example": "Local food is served in the hotel restaurant."
+            "example": "Local food is served in the hotel restaurant.",
+            "collocation": "local food",
+            "extraExample": "We always try local food instead of eating at chain restaurants."
           }
         ],
         "collocations": [
           {
             "target": "take a guided tour",
-            "example": "We took a guided tour of the old town."
+            "example": "We took a guided tour of the old town.",
+            "collocation": "take a guided tour",
+            "es": "hacer una visita guiada = take a guided tour, not make a guided tour",
+            "extraExample": "We took a guided tour of the cathedral in the morning."
           },
           {
             "target": "try the local food",
-            "example": "We were encouraged to try the local food."
+            "example": "We were encouraged to try the local food.",
+            "collocation": "try the local food",
+            "es": "probar la comida local = try the local food, not prove the local food",
+            "extraExample": "Whenever we travel, we love trying the local food."
           },
           {
             "target": "travel light",
-            "example": "We travelled light because there wasn't much room for luggage."
+            "example": "We travelled light because there wasn't much room for luggage.",
+            "collocation": "travel light",
+            "es": "viajar ligero de equipaje = travel light",
+            "extraExample": "For a two-day trip, it's much easier to travel light."
           },
           {
             "target": "stop overnight",
-            "example": "We stopped overnight in York before driving on."
+            "example": "We stopped overnight in York before driving on.",
+            "collocation": "stop overnight",
+            "extraExample": "We stopped overnight in a small guesthouse near the coast."
           },
           {
             "target": "miss a connection",
-            "example": "Our flight was delayed, so we missed our connection."
+            "example": "Our flight was delayed, so we missed our connection.",
+            "collocation": "miss a connection",
+            "es": "perder una conexión / un enlace = miss a connection, not lose a connection",
+            "extraExample": "Because the first train was late, we missed our connection."
           }
         ],
         "families": [
@@ -3028,7 +3453,9 @@
         "optional": [
           {
             "target": "break your journey",
-            "example": "We broke our journey with an overnight stay in York. Mainly BrE."
+            "example": "We broke our journey with an overnight stay in York. Mainly BrE.",
+            "collocation": "break your journey",
+            "extraExample": "It's a six-hour drive, so we'll break our journey in Zaragoza."
           }
         ],
         "newCards": 14,
@@ -3303,7 +3730,7 @@
           {
             "id": "L1-X3",
             "step": "Language",
-            "question": "Complete from the clip: \"It took me months to ___ the silence.\"",
+            "question": "Complete from the clip: \"It took me months to ___ (3 words) the silence.\"",
             "options": [],
             "key": "get used to"
           }
@@ -3418,7 +3845,7 @@
           {
             "id": "L2-X3",
             "step": "Language",
-            "question": "Complete from the clip: \"I'm really ___ learning something new.\"",
+            "question": "Complete from the clip: \"I'm really ___ (3 words) learning something new.\"",
             "options": [],
             "key": "looking forward to"
           }
@@ -3533,9 +3960,12 @@
           {
             "id": "L3-X3",
             "step": "Language",
-            "question": "Complete from the clip: \"Apart from that, we all ___ each other really well.\"",
+            "question": "Complete from the clip: \"Apart from that, we all ___ (3 words) each other really well.\"",
             "options": [],
-            "key": "get on with"
+            "key": "get on with",
+            "accepted": [
+              "get along with"
+            ]
           }
         ],
         "respond": "Tell a new flatmate one rule in your home and one thing they don't have to do."
@@ -3638,14 +4068,14 @@
           {
             "id": "L4-X2",
             "step": "Language",
-            "question": "Complete from the clip: \"...a narrow street ___ butchers used to sell meat.\"",
+            "question": "Complete from the clip: \"...a narrow street ___ (1 word) butchers used to sell meat.\"",
             "options": [],
             "key": "where"
           },
           {
             "id": "L4-X3",
             "step": "Language",
-            "question": "Complete from the clip: \"It's much ___ up there than in the busy streets below.\"",
+            "question": "Complete from the clip: \"It's much ___ (1 word) up there than in the busy streets below.\"",
             "options": [],
             "key": "quieter"
           }
@@ -4217,7 +4647,7 @@
           {
             "id": "R4-X3",
             "step": "Language",
-            "question": "Complete from the text: \"It's ___ than the busy centre, and the views are better.\"",
+            "question": "Complete from the text: \"It's ___ (1 word) than the busy centre, and the views are better.\"",
             "options": [],
             "key": "quieter"
           }

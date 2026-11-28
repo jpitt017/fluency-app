@@ -174,8 +174,8 @@ test('Week 2 sentence repair and Week 3 word order produce clear, answerable Rev
 
 function sevenGrammarAnswers(fixture) {
   const values = [
-    ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
-    ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
+    ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'Yes', true],
+    ['W1-C1', 'have moved', false], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
     // An old false mark for a valid alternative is corrected on read.
     ['W1-C5', 'Did ... live', false],
   ];
@@ -197,8 +197,8 @@ test('real finish route counts seven checked questions, adds only the wrong one,
     { total: 22, answered: 7, correct: 6, wrong: 1 });
   assert.equal(summary.sentence, 'You answered 7 of 22. 6 were right. Great work! You know this grammar well. You can come back and finish the other questions.');
   assert.equal(fixture.tables.error_review_cards.length, 1);
-  assert.match(fixture.tables.error_review_cards[0].prompt_sentence, /^Answer this question: /);
-  assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'Yes');
+  assert.equal(fixture.tables.error_review_cards[0].prompt_sentence, 'I ___ to Bristol three years ago.');
+  assert.equal(fixture.tables.error_review_cards[0].corrected_sentence, 'I moved to Bristol three years ago.');
   assert.deepEqual(plain(fixture.tables.week_skill_completions[0]).answered, 7);
 
   const reloaded = await fixture.progress.loadWeekPracticeProgress(1);

@@ -387,8 +387,8 @@ test.describe('with a signed-in learner', () => {
     try {
       await signIn(page, user);
       const grammarAnswers = [
-        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'No', false],
-        ['W1-C1', 'moved', true], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
+        ['W1-M1', 'No', true], ['W1-M2', 'waiting', true], ['W1-M3', 'Yes', true],
+        ['W1-C1', 'have moved', false], ['W1-C2', 'have made', true], ['W1-C3', 'had left', true],
         ['W1-C5', 'Did ... live', true],
       ];
       for (const [id, answer, correct] of grammarAnswers) {
@@ -427,7 +427,7 @@ test.describe('with a signed-in learner', () => {
       expect((await page.evaluate(() => window.practiceScrolls)).filter((call) => call.id === 'grammar-practice').at(-1)?.behavior).toBe('instant');
       const cards = await admin.from('error_review_cards').select('category, corrected_sentence').eq('user_id', user.id);
       if (cards.error) throw cards.error;
-      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'Yes' }]);
+      expect(cards.data).toEqual([{ category: 'tense', corrected_sentence: 'I moved to Bristol three years ago.' }]);
 
       // The same Finish action scrolls smoothly when motion is not reduced.
       await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -504,13 +504,13 @@ test.describe('with a signed-in learner', () => {
       const calls = await page.evaluate(() => window.practiceScrolls);
       expect(calls.filter((call) => call.id === 'reading-practice').at(-1)?.behavior).toBe('instant');
 
-      // Meaning checks must reach Review as questions, not as sentence fixes.
+      // Choice mistakes reach Review with clear options and full corrected sentences.
       await page.goto('/review');
-      await expect(page.getByText('Answer this question without hints:')).toBeVisible();
-      await expect(page.getByText(/Does the speaker still live in Bristol/)).toBeVisible();
-      await page.getByLabel('Your answer', { exact: true }).fill('Yes');
+      await expect(page.getByText('Choose the missing word(s):')).toBeVisible();
+      await expect(page.getByText(/I ___ to Bristol three years ago\./)).toBeVisible();
+      await page.getByRole('button', { name: 'moved', exact: true }).click();
       await postFromUi(page, page.getByRole('button', { name: 'Check my answer' }), '/api/review/check-rewrite');
-      await expect(page.getByText(/Well done! You answered without help\./)).toBeVisible();
+      await expect(page.getByText(/Well done! You fixed it without help\./)).toBeVisible();
     } finally {
       await deleteTestUser(admin, user.id);
     }
