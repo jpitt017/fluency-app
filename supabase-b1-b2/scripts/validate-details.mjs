@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
+  buildFullSentence,
   inputGapReviewCard,
   isAnswerablePrompt,
   isFullSentence,
@@ -11,6 +12,7 @@ import {
 } from '../../lib/curriculum/week-practice-review.mjs';
 import { markLearnerGrammarAnswer } from '../../lib/curriculum/learner-grammar-marking.mjs';
 import { findCollocationSpan } from '../../lib/b1b2/collocation-highlight.mjs';
+import { answersEquivalent } from '../../lib/b1b2/contractions.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const content = join(here, '..', 'content', 'curriculum');
@@ -241,11 +243,51 @@ for (const week of details.weeks ?? []) {
     // Requirement 6d: every declared accepted answer must mark as correct.
     if (Array.isArray(item.key)) {
       check(markLearnerGrammarAnswer(item, item.key), `${item.id} key failed markLearnerGrammarAnswer`);
+      for (const gapList of item.accepted ?? []) {
+        for (const variant of gapList ?? []) {
+          check(typeof variant === 'string' && Boolean(variant.trim()), `${item.id} has empty accepted gap variant`);
+        }
+      }
     } else {
       check(markLearnerGrammarAnswer(item, item.key), `${item.id} key failed markLearnerGrammarAnswer`);
       for (const variant of item.accepted ?? []) {
         check(Boolean(variant.trim()), `${item.id} has empty accepted variant`);
         check(markLearnerGrammarAnswer(item, variant), `${item.id} accepted variant "${variant}" failed markLearnerGrammarAnswer`);
+      }
+    }
+  }
+
+  // Teacher-check Section E: a rule example must not equal any practice item's
+  // prompt or key (or accepted) sentence in the same week.
+  const weekItemSentences = [];
+  for (const item of week.grammar?.practice?.items ?? []) {
+    if (item.prompt?.trim()) {
+      weekItemSentences.push({ id: item.id, kind: 'prompt', text: item.prompt });
+    }
+    if (typeof item.prompt === 'string' && /_{2,}/.test(item.prompt)) {
+      const fullKey = buildFullSentence(item.prompt, item.key);
+      if (fullKey) weekItemSentences.push({ id: item.id, kind: 'key', text: fullKey });
+    } else if (typeof item.key === 'string' && item.key.trim()) {
+      weekItemSentences.push({ id: item.id, kind: 'key', text: item.key });
+    }
+    if (!Array.isArray(item.key)) {
+      for (const variant of item.accepted ?? []) {
+        if (typeof variant === 'string' && variant.trim()) {
+          const fullVariant = typeof item.prompt === 'string' && /_{2,}/.test(item.prompt)
+            ? buildFullSentence(item.prompt, variant)
+            : variant;
+          if (fullVariant) weekItemSentences.push({ id: item.id, kind: 'accepted', text: fullVariant });
+        }
+      }
+    }
+  }
+  for (const [ruleName, examples] of Object.entries(ruleExamples)) {
+    for (const example of examples ?? []) {
+      for (const sentence of weekItemSentences) {
+        check(
+          !answersEquivalent(example, sentence.text),
+          `week ${week.number} ruleExample for "${ruleName}" ("${example}") equals ${sentence.id} ${sentence.kind} ("${sentence.text}")`,
+        );
       }
     }
   }

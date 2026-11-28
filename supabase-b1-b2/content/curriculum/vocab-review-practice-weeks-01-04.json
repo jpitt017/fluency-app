@@ -168,10 +168,10 @@
       "week": 1,
       "term": "make a big decision",
       "prompt": "She ___ a big decision to change career.",
-      "options": ["made", "took", "did"],
+      "options": ["made", "did", "put"],
       "key": "made",
       "accepted": [],
-      "reason": "We say make a decision, not take a decision."
+      "reason": "We say make a decision, not do a decision."
     },
     {
       "id": "VR-W1-make-a-big-decision-2",
@@ -188,10 +188,10 @@
       "week": 1,
       "term": "take a risk",
       "prompt": "Opening a small bookshop means ___ a risk.",
-      "options": ["taking", "making", "running"],
+      "options": ["taking", "making", "doing"],
       "key": "taking",
       "accepted": [],
-      "reason": "We say take a risk, not run or make a risk."
+      "reason": "We say take a risk, not make or do a risk."
     },
     {
       "id": "VR-W1-take-a-risk-2",
@@ -348,10 +348,10 @@
       "week": 2,
       "term": "intend",
       "prompt": "We ___ to move closer to the coast next year.",
-      "options": ["intend", "try", "catch"],
+      "options": ["intend", "pretend", "catch"],
       "key": "intend",
       "accepted": [],
-      "reason": "Intend means plan to do something (unlike Spanish intentar = try)."
+      "reason": "Intend means plan. Careful! Spanish pretender means intend, but English pretend means fingir."
     },
     {
       "id": "VR-W2-intend-2",
@@ -648,7 +648,7 @@
       "week": 3,
       "term": "arrange",
       "prompt": "We should ___ a time to meet next week.",
-      "options": ["arrange", "repair", "fix"],
+      "options": ["arrange", "repair", "mend"],
       "key": "arrange",
       "accepted": [],
       "reason": "Arrange means plan or organise (Spanish arreglar a bike is fix)."

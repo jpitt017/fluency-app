@@ -8,6 +8,7 @@ import { markLearnerGrammarAnswer, nearlyRightGrammarFeedback } from '../../lib/
 import { markInputAnswer } from '../../lib/curriculum/input-marking.mjs';
 import { createReviewEnricher } from '../../lib/curriculum/review-card-enrichment.mjs';
 import {
+  buildFullSentence,
   inputGapReviewCard,
   isAnswerablePrompt,
   isFullSentence,
@@ -324,4 +325,37 @@ test('Requirement 4: every non-Meaning weekly grammar item builds an answerable 
       }
     }
   }
+});
+
+test('Teacher check: ruleExamples never repeat a same-week practice item prompt or key, and options/notes are accurate', () => {
+  for (const week of details.weeks) {
+    const itemSentences = [];
+    for (const item of week.grammar.practice.items) {
+      if (item.prompt?.trim()) itemSentences.push(item.prompt);
+      if (/_{2,}/.test(item.prompt)) {
+        const fullKey = buildFullSentence(item.prompt, item.key);
+        if (fullKey) itemSentences.push(fullKey);
+      } else if (typeof item.key === 'string' && item.key.trim()) {
+        itemSentences.push(item.key);
+      }
+    }
+    for (const [ruleName, examples] of Object.entries(week.grammar.ruleExamples)) {
+      for (const example of examples) {
+        for (const sentence of itemSentences) {
+          assert.equal(
+            answersEquivalent(example, sentence),
+            false,
+            `Week ${week.number} rule "${ruleName}" example "${example}" must not repeat "${sentence}"`,
+          );
+        }
+      }
+    }
+  }
+
+  // Spot-check Section A distractors do not contain secondary valid answers.
+  const byId = new Map(vocabPractice.items.map((item) => [item.id, item]));
+  assert.deepEqual(byId.get('VR-W1-make-a-big-decision-1').options, ['made', 'did', 'put']);
+  assert.deepEqual(byId.get('VR-W1-take-a-risk-1').options, ['taking', 'making', 'doing']);
+  assert.deepEqual(byId.get('VR-W2-intend-1').options, ['intend', 'pretend', 'catch']);
+  assert.deepEqual(byId.get('VR-W3-arrange-1').options, ['arrange', 'repair', 'mend']);
 });
