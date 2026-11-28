@@ -164,6 +164,14 @@ test.describe('with a signed-in learner', () => {
       await signIn(page, user);
       await answerGrammar(page);
 
+      const beforeFinish = await admin.from('week_skill_completions').select('skill')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'grammar');
+      if (beforeFinish.error) throw beforeFinish.error;
+      expect(beforeFinish.data).toEqual([], 'saving every required answer must not depend on the Finish summary action');
+      await page.goto('/dashboard');
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Grammar.*22 items answered/ })).toContainText('✓');
+
       await page.goto('/week/1');
       const grammar = page.getByRole('region', { name: 'Grammar practice', exact: true });
 
@@ -176,6 +184,7 @@ test.describe('with a signed-in learner', () => {
       }
       const finish = grammar.getByRole('button', { name: 'Finish grammar' });
       await expect(finish).toBeEnabled();
+      await expect(grammar.getByRole('status').filter({ hasText: 'You answered' })).toHaveCount(0);
       await finishFromUi(page, finish);
 
       // One short summary in B1 English, with the real counts: 21 of 22 right,
@@ -285,6 +294,14 @@ test.describe('with a signed-in learner', () => {
 
       await answerVocabulary(page);
 
+      const beforeFinish = await admin.from('week_skill_completions').select('skill')
+        .eq('user_id', user.id).eq('week_number', 1).eq('skill', 'vocabulary');
+      if (beforeFinish.error) throw beforeFinish.error;
+      expect(beforeFinish.data).toEqual([], 'saving every required answer must not depend on the Finish summary action');
+      await page.goto('/dashboard');
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Vocabulary.*16 items answered/ })).toContainText('✓');
+
       // The page opens at step 7, because every required question is answered
       // and step 7 -- the optional writing step -- is the only gap left. That is
       // the whole point of restoring progress: the learner lands where they
@@ -294,6 +311,7 @@ test.describe('with a signed-in learner', () => {
       await expect(vocabulary.getByText('Step 7 of 7: Your sentences')).toBeVisible();
       const finish = vocabulary.getByRole('button', { name: 'Finish vocabulary' });
       await expect(finish).toBeEnabled();
+      await expect(vocabulary.getByRole('status').filter({ hasText: 'You answered' })).toHaveCount(0);
       await finishFromUi(page, finish);
 
       const summary = vocabulary.getByRole('status').filter({ hasText: 'You answered' });
