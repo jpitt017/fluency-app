@@ -64,9 +64,13 @@ test('the layout keeps one task open at a time and jumps to the dashboard anchor
   assert.match(navigation, /new CustomEvent\('week-task:open', \{ detail: id \}\)/);
 });
 
-test('the week page reads the done marks from completions and saved attempts', () => {
+test('the week page reads task done state from the shared saved-progress loader', () => {
   const page = read('src/app/week/[n]/page.tsx');
+  const progress = read('lib/curriculum/week-progress.ts');
   assert.match(page, /loadWeekProgress\(viewer\.user\?\.id \?\? null, number\)/);
+  assert.match(progress, /week_grammar_attempts/);
+  assert.match(progress, /week_vocabulary_attempts/);
+  assert.doesNotMatch(progress, /week_skill_completions/);
   for (const skill of ['grammar', 'vocabulary', 'reading', 'listening', 'speaking', 'writing']) {
     assert.match(page, new RegExp(`done: weekProgress\\.${skill}\\.done`));
   }
