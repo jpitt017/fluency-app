@@ -18,6 +18,7 @@ import { learnerVocabulary } from '@/lib/curriculum/learner-vocabulary';
 import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
+import { ensureWeeklyPracticeSummary } from '@/lib/curriculum/week-practice-auto-finish';
 import { loadWeekProgress } from '@/lib/curriculum/week-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
 import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
@@ -30,18 +31,14 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const { n } = await params;
   if (!/^(?:[1-9]|[12][0-9]|3[0-2])$/.test(n)) notFound();
   const number = Number(n);
-  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice] = await Promise.all([
+  const [details, syllabus, viewer, trialAudio, speakingSupport, sentencePractice] = await Promise.all([
     loadLearnerWeek(number),
     loadSyllabusContent(),
     getViewer(),
     loadPlayableTrialAudio(number),
-    // Saved answers, the step to start on, and any completion summary. Read on
-    // the server so a reload shows the practice as it was left, not empty.
-    loadWeekPracticeProgress(number),
     loadWeekSpeakingSupport(number),
     loadWeekSentencePractice(number),
   ]);
-  const weekProgress = await loadWeekProgress(viewer.user?.id ?? null, number);
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
   const header = <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>
@@ -53,6 +50,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     {header}
     <section id="week-activities-unavailable" className="scroll-mt-20 rounded-xl border border-stone-200 p-5"><h2 tabIndex={-1} className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">This week&apos;s tasks aren&apos;t ready yet. You can practise in Practice.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Free practice</Link></section>
   </main>;
+  if (viewer.user?.id) await ensureWeeklyPracticeSummary(number);
+  const [practice, weekProgress] = await Promise.all([
+    loadWeekPracticeProgress(number),
+    loadWeekProgress(viewer.user?.id ?? null, number),
+  ]);
   const grammar = learnerGrammar(number);
   const cards = learnerVocabulary(number);
   const vocabulary = learnerVocabularyExercises(number);

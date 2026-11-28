@@ -55,6 +55,8 @@ jobs:
       - run: node --test tests/unit/week-practice-finish.test.mjs
       # Exercise the real finish route and reload against an in-memory database.
       - run: node --test tests/unit/week-practice-server.test.mjs
+      # Fully answered practices get an idempotent Review summary on the next visit.
+      - run: node --test tests/unit/week-practice-auto-finish.test.mjs
       # Browser position is scoped, validated, and safe when storage is blocked.
       - run: node --test tests/unit/grammar-practice-position.test.mjs
       # Grammar alternatives, sentence verdicts, and Review scheduling stay
