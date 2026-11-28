@@ -70,7 +70,7 @@ jobs:
       - run: node --test tests/unit/week-vocab-mark-server.test.mjs
       # A manually requested Review-card cleanup must require consent, the
       # correct owner and unchanged, unreviewed IDs, never a broad deletion.
-      - run: node --test tests/unit/approved-review-removal.test.mjs
+      - run: node --test tests/unit/approved-review-removal.test.mjs tests/unit/review-cards-cleanup-pr117.test.mjs
       # The explicit alias list from inflected gap answers to their cards, and
       # that every linked term resolves to an authored card (44 of 44).
       - run: node --test tests/unit/vocabulary-review-link.test.mjs
