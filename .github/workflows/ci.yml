@@ -91,6 +91,8 @@ jobs:
       # tour, the shared main-action button, the text-size and feedback-colour
       # rules, and the listening picture slot.
       - run: node --test tests/unit/week-task-overview.test.mjs
+      # Shared six-task progress mapping, including saved-answer completion fallback and estimated minutes.
+      - run: node --test tests/unit/week-progress-shape.test.mjs
       - run: node --test tests/unit/chat-language.test.mjs
       - run: node --test tests/unit/ai-route-auth.test.mjs
       - run: node --test tests/unit/ai-request-logging.test.mjs

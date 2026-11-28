@@ -38,7 +38,7 @@ function route(path, dependencies, logs) {
   return exports.POST;
 }
 
-function setup({ noAdmin = false, writeError = null, throwWrite = false, readError = null, trial = null } = {}) {
+function setup({ noAdmin = false, writeError = null, throwWrite = false, readError = null, completionReadError = null, completionWriteError = null, throwCompletionWrite = false, trial = null } = {}) {
   const attempts = [];
   const completions = [];
   const logs = [];
@@ -64,13 +64,29 @@ function setup({ noAdmin = false, writeError = null, throwWrite = false, readErr
   };
   const admin = noAdmin ? null : {
     from(table) {
+      const filters = {};
       return {
-        async upsert(row) {
+        select() { return this; },
+        eq(key, value) { filters[key] = value; return this; },
+        then(resolve, reject) {
+          const rows = table === 'week_input_answers' ? attempts : [];
+          const filtered = rows.filter((row) => Object.entries(filters).every(([key, value]) => row[key] === value));
+          const error = table === 'week_input_answers' ? completionReadError : null;
+          return Promise.resolve({ data: filtered, error }).then(resolve, reject);
+        },
+        async upsert(row, options = {}) {
+          if (table === 'week_input_submissions' && throwCompletionWrite) throw new Error('private completion database exception');
+          if (table === 'week_input_submissions' && completionWriteError) return { error: { message: completionWriteError } };
           if (throwWrite) throw new Error('private database exception');
           if (writeError) return { error: { message: writeError } };
-          if (table === 'week_input_answers') attempts.push(row);
-          else if (table === 'week_input_submissions') completions.push(row);
-          else throw new Error(`Unexpected table: ${table}`);
+          if (table === 'week_input_answers') {
+            const index = attempts.findIndex((existing) => existing.user_id === row.user_id && existing.week_number === row.week_number && existing.skill === row.skill && existing.item_id === row.item_id);
+            if (index >= 0) attempts[index] = row;
+            else attempts.push(row);
+          } else if (table === 'week_input_submissions') {
+            const exists = completions.some((existing) => existing.user_id === row.user_id && existing.week_number === row.week_number && existing.skill === row.skill);
+            if (!exists || !options.ignoreDuplicates) completions.push(row);
+          } else throw new Error(`Unexpected table: ${table}`);
           return { error: null };
         },
       };
@@ -117,6 +133,30 @@ test('an input mark succeeds only after the answer is saved', async () => {
   assert.equal(fixture.attempts[0].item_id, first.id);
 });
 
+test('a completed input answer reports completion read or write failures so the learner can retry', async () => {
+  const questionsForWeek = questions.reading;
+  for (const config of [
+    { completionReadError: { message: 'private completion read failure' } },
+    { completionWriteError: 'private completion write failure' },
+    { throwCompletionWrite: true },
+  ]) {
+    const fixture = setup(config);
+    for (const question of questionsForWeek.slice(0, -1)) {
+      fixture.attempts.push({
+        user_id: 'learner-1', week_number: 1, skill: 'reading', item_id: question.id,
+      });
+    }
+    const final = questionsForWeek.at(-1);
+    const result = await fixture.mark(request({ week: 1, skill: 'reading', id: final.id, answer: final.options[0] ?? 'gradually' }));
+    assert.equal(result.status, 503, JSON.stringify(result.body));
+    assert.match(result.body.error, /answer was saved.*task completion could not be saved/i);
+    assert.equal(fixture.attempts.length, questionsForWeek.length, 'the checked answer remains saved for a retry');
+    assert.equal(fixture.completions.length, 0);
+    assert.ok(fixture.logs.length > 0, 'the completion error is logged');
+    assert.doesNotMatch(JSON.stringify(result.body), /SQL|private|database/i);
+  }
+});
+
 test('finish counts saved checked answers, not placeholders supplied by the browser', async () => {
   const fixture = setup();
   const forged = await fixture.finish(request({ week: 1, skill: 'reading', answers: Object.fromEntries(questions.reading.map((q) => [q.id, 'answered'])) }));
@@ -130,6 +170,7 @@ test('finish counts saved checked answers, not placeholders supplied by the brow
   }
   assert.equal(fixture.attempts.length, questions.reading.length);
   assert.ok(fixture.attempts.some((row) => !row.correct), 'a checked wrong answer still counts as answered');
+  assert.equal(fixture.completions.length, 1, 'the final checked answer also completes the task');
   const result = await fixture.finish(request({ week: 1, skill: 'reading' }));
   assert.equal(result.status, 200);
   assert.equal(result.body.saved, true);

@@ -66,13 +66,10 @@ test('the layout keeps one task open at a time and jumps to the dashboard anchor
 
 test('the week page reads the done marks from completions and saved attempts', () => {
   const page = read('src/app/week/[n]/page.tsx');
-  assert.match(page, /Boolean\(practice\.grammar\?\.summary\)/);
-  assert.match(page, /Boolean\(practice\.vocabulary\?\.summary\)/);
-  assert.match(page, /details\.readingSupport\.questionsAnswered/);
-  assert.match(page, /details\.listeningSupport\.transcriptUnlocked/);
-  assert.match(page, /speakingSupport\.recordings\.length > 0/);
-  assert.match(page, /loadWeekOutputSubmissions/);
-  assert.match(page, /submissions\.writing/);
+  assert.match(page, /loadWeekProgress\(viewer\.user\?\.id \?\? null, number\)/);
+  for (const skill of ['grammar', 'vocabulary', 'reading', 'listening', 'speaking', 'writing']) {
+    assert.match(page, new RegExp(`done: weekProgress\\.${skill}\\.done`));
+  }
 });
 
 test('the week page assembles the tasks in one shared slot per task', () => {

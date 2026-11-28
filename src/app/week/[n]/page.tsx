@@ -18,9 +18,9 @@ import { learnerVocabulary } from '@/lib/curriculum/learner-vocabulary';
 import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
+import { loadWeekProgress } from '@/lib/curriculum/week-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
 import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
-import { loadWeekOutputSubmissions } from '@/lib/curriculum/week-models';
 import { WEEK_TASKS, ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
@@ -30,7 +30,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
   const { n } = await params;
   if (!/^(?:[1-9]|[12][0-9]|3[0-2])$/.test(n)) notFound();
   const number = Number(n);
-  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice, submissions] = await Promise.all([
+  const [details, syllabus, viewer, trialAudio, practice, speakingSupport, sentencePractice] = await Promise.all([
     loadLearnerWeek(number),
     loadSyllabusContent(),
     getViewer(),
@@ -40,8 +40,8 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     loadWeekPracticeProgress(number),
     loadWeekSpeakingSupport(number),
     loadWeekSentencePractice(number),
-    loadWeekOutputSubmissions(number),
   ]);
+  const weekProgress = await loadWeekProgress(viewer.user?.id ?? null, number);
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
   const header = <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>
@@ -72,7 +72,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         ...task,
         heading: 'Grammar practice',
         regionLabel: 'Grammar practice',
-        done: Boolean(practice.grammar?.summary),
+        done: weekProgress.grammar.done,
+
+        itemsAnswered: weekProgress.grammar.itemsAnswered,
+
+        progressMinutes: weekProgress.grammar.minutes,
         body: <GrammarPractice key={`${number}:${viewer.user?.id ?? 'guest'}`} grammar={grammar} week={number} signedIn={viewer.signedIn} userId={viewer.user?.id ?? null} progress={practice.grammar} sentencePractice={sentencePractice} hasVocabulary={Boolean(cards && vocabulary)} />,
       }];
     }
@@ -81,7 +85,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         ...task,
         heading: `Vocabulary: ${vocabulary.title}`,
         regionLabel: 'Vocabulary practice',
-        done: Boolean(practice.vocabulary?.summary),
+        done: weekProgress.vocabulary.done,
+
+        itemsAnswered: weekProgress.vocabulary.itemsAnswered,
+
+        progressMinutes: weekProgress.vocabulary.minutes,
         body: <VocabularyPractice cards={cards} exercises={vocabulary} signedIn={viewer.signedIn} progress={practice.vocabulary} sentencePractice={sentencePractice} />,
       }];
     }
@@ -90,7 +98,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         ...task,
         heading: `Reading: ${details.reading.title}`,
         regionLabel: 'Reading practice',
-        done: details.readingSupport.questionsAnswered,
+        done: weekProgress.reading.done,
+
+        itemsAnswered: weekProgress.reading.itemsAnswered,
+
+        progressMinutes: weekProgress.reading.minutes,
         body: <ReadingPracticeLayout
           before={<ReadingBeforeQuestions support={details.readingSupport.support} />}
           text={readingText}
@@ -104,7 +116,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         ...task,
         heading: `Listening: ${details.listening.title}`,
         regionLabel: 'Listening practice',
-        done: details.listeningSupport.transcriptUnlocked,
+        done: weekProgress.listening.done,
+
+        itemsAnswered: weekProgress.listening.itemsAnswered,
+
+        progressMinutes: weekProgress.listening.minutes,
         body: <>
           <ListeningBeforePlayer support={details.listeningSupport.support} />
           {trialAudio ? <><p className="text-sm text-stone-600">Listen once for the main idea, then once more for the detail.</p><ListeningTrialPlayer trial={trialAudio}>{listeningQuestions}{listeningAfterQuestions}</ListeningTrialPlayer></> : <>{details.listening.audioUrl ? <audio controls src={details.listening.audioUrl} /> : <p>Audio coming soon.</p>}{listeningQuestions}{listeningAfterQuestions}</>}
@@ -116,7 +132,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
         ...task,
         heading: 'Speaking',
         regionLabel: 'Speaking practice',
-        done: speakingSupport ? speakingSupport.recordings.length > 0 : submissions.speaking,
+        done: weekProgress.speaking.done,
+
+        itemsAnswered: weekProgress.speaking.itemsAnswered,
+
+        progressMinutes: weekProgress.speaking.minutes,
         body: speakingSupport ? <WeekSpeakingSupport
           week={number} prompt={details.speakingPrompt} cueCard={details.cueCard} signedIn={viewer.signedIn}
           planNotes={speakingSupport.planNotes} usefulPhrases={speakingSupport.usefulPhrases}
@@ -131,7 +151,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       ...task,
       heading: 'Writing',
       regionLabel: 'Writing practice',
-      done: submissions.writing,
+      done: weekProgress.writing.done,
+
+      itemsAnswered: weekProgress.writing.itemsAnswered,
+
+      progressMinutes: weekProgress.writing.minutes,
       body: <div className="space-y-3"><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
     }];
   });

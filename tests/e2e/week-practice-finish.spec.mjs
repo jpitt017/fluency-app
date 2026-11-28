@@ -253,6 +253,10 @@ test.describe('with a signed-in learner', () => {
         .eq('week_number', 1);
       if (rows.error) throw rows.error;
       expect(rows.data?.length).toBe(1);
+      await page.goto('/dashboard');
+      await page.reload();
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Grammar.*22 items answered/ })).toContainText('✓');
     } finally {
       await deleteTestUser(admin, user.id);
     }
@@ -323,6 +327,10 @@ test.describe('with a signed-in learner', () => {
       // The typed word comes back with the mark it was given.
       await expect(reloaded.locator('input#V1-R1')).toHaveValue('take up');
       await expect(reloaded.getByRole('status').filter({ hasText: 'Correct! ' }).first()).toBeVisible();
+      await page.goto('/dashboard');
+      await page.reload();
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Vocabulary.*16 items answered/ })).toContainText('✓');
     } finally {
       await deleteTestUser(admin, user.id);
     }
