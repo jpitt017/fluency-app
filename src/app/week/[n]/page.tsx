@@ -8,7 +8,7 @@ import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
 import WeekInputTask from '@/components/b1b2/WeekInputTask';
 import WeekSpeakingSupport from '@/components/b1b2/WeekSpeakingSupport';
-import WritingTaskInputs from '@/components/b1b2/WritingTaskInputs';
+import WritingLab from '@/components/labs/WritingLab';
 import WeekTaskLayout, { type WeekTaskEntry } from '@/components/b1b2/WeekTaskLayout';
 import { getViewer } from '@/lib/b1b2/data';
 import { notFound } from 'next/navigation';
@@ -18,10 +18,15 @@ import { learnerGrammar } from '@/lib/curriculum/learner-grammar';
 import { learnerVocabulary } from '@/lib/curriculum/learner-vocabulary';
 import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
+import { loadUnlockedModels } from '@/lib/curriculum/week-models';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import { loadWeekProgress } from '@/lib/curriculum/week-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
-import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import { grammarWritingIdeas, loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import {
+  plainGrammarTargetsForWeek,
+  targetWordsForWeek,
+} from '@/lib/curriculum/week-writing-support.mjs';
 import { WEEK_TASKS, ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
@@ -42,7 +47,11 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     loadWeekSpeakingSupport(number),
     loadWeekSentencePractice(number),
   ]);
-  const weekProgress = await loadWeekProgress(viewer.user?.id ?? null, number);
+  const [weekProgress, unlockedModels] = await Promise.all([
+    loadWeekProgress(viewer.user?.id ?? null, number),
+    viewer.signedIn ? loadUnlockedModels(number) : Promise.resolve(null),
+  ]);
+  const weekGrammarIdeas = viewer.signedIn ? grammarWritingIdeas(sentencePractice, number) : [];
   const week = syllabus.weeks.find((item) => item.number === number);
   if (!week) notFound();
   const header = <header><p className="text-sm font-semibold text-indigo-700">Week {number}</p><h1 className="font-serif text-3xl font-semibold">{details?.title ?? week.theme}</h1>
@@ -157,7 +166,26 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       itemsAnswered: weekProgress.writing.itemsAnswered,
 
       progressMinutes: weekProgress.writing.minutes,
-      body: <div className="space-y-3"><p>{details.writingPrompt}</p><WritingTaskInputs inputEmail={details.writingInputEmail} callForArticles={details.writingCallForArticles} /><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
+      body: <div className="space-y-4">
+        <WritingLab
+          unlockedModel={unlockedModels?.writing ?? null}
+          grammarIdeas={weekGrammarIdeas}
+          planFrame={details.writingPlanFrame}
+          usefulLanguage={details.writingUsefulLanguage}
+          linkers={details.writingLinkers}
+          wordRange={details.writingWords}
+          inputEmail={details.writingInputEmail}
+          callForArticles={details.writingCallForArticles}
+          lessonContext={{
+            prompt: details.writingPrompt,
+            mode: 'free',
+            weekNumber: number,
+            targetGrammar: plainGrammarTargetsForWeek(number, details.writingGrammar),
+            targetVocabulary: targetWordsForWeek(details.writingFeaturedWords, details.writingLinkers),
+          }}
+        />
+        {!viewer.signedIn && <Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link>}
+      </div>,
     }];
   });
 

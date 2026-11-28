@@ -120,9 +120,20 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
 
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByText('Your kept first recording counts for Week 1.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Build a better sentence' })).toHaveCount(1);
-    await expect(page.getByLabel('Fluency information').getByText(/48 words a minute/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build a better sentence' })).toHaveCount(0);
+    await expect(page.getByText(/We do not know how you pronounced them/)).toHaveCount(0);
+    await expect(page.getByText(/There are five checks in total/)).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'One thing to try next time' })).toBeVisible();
     await expect(page.getByRole('heading', { name: '3. Your answer, improved' })).toBeVisible();
+    // Highlight 0 is shown initially; tapping highlight 1 switches to its one-line B1 reason.
+    await expect(page.getByText('Connects the past change to now.')).toBeVisible();
+    await page.getByRole('button', { name: 'When I look back on' }).first().click();
+    await expect(page.getByText('Introduces your reflection clearly.')).toBeVisible();
+    await expect(page.getByTestId('improved-answer-card').getByRole('button', { name: 'Listen' })).toBeVisible();
+    await expect(page.getByTestId('improved-answer-card').getByText('Computer voice', { exact: true })).toBeVisible();
+    await expect(page.locator('summary').filter({ hasText: 'Practise these sounds' }).first()).toBeVisible();
+    await expect(page.locator('summary').filter({ hasText: 'Your transcript' }).first()).toBeVisible();
+
     const flow = await admin.from('week_speaking_flows').select('*').eq('user_id', learner.id).eq('week_number', 1).single();
     const firstTakes = await admin.from('week_speaking_takes').select('*').eq('user_id', learner.id).eq('kind', 'first').order('sequence');
     expect(firstTakes.data).toHaveLength(3);
@@ -130,9 +141,6 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
     expect(firstTakes.data.filter((row) => row.transcript)).toHaveLength(1);
     expect((await admin.from('week_output_submissions').select('skill').eq('user_id', learner.id).eq('skill', 'speaking')).data).toHaveLength(1);
 
-    await record(page, 'Say it again');
-    await expect(page.getByText('We found although in your transcript. This checks the pattern, not all your grammar or pronunciation.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Listen (British voice)' }).first()).toBeVisible();
     await page.locator('summary').filter({ hasText: 'Another example' }).click();
     await expect(page.getByRole('button', { name: 'Play model', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Show the script' }).click();
@@ -157,15 +165,15 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
       await expect(comparison.locator('p').filter({ hasText: 'Cue-card points found:' }))
         .toHaveText(`Cue-card points found: ${previousPoint} → Now`);
     }
-    await expect(page.getByText('You have used all five checks for this task.')).toBeVisible();
+    await expect(page.getByText('You have recorded all three tries.')).toBeVisible();
     await page.reload();
     await openWeekTask(page, 'speaking-practice');
-    await expect(page.getByText('5 of 5 weekly checks used.')).toBeVisible();
+    await expect(page.getByText('Checks left: 1')).toBeVisible();
     const allTakes = await admin.from('week_speaking_takes').select('id,recording_path,kind').eq('user_id', learner.id);
-    expect(allTakes.data).toHaveLength(7);
+    expect(allTakes.data).toHaveLength(6);
     const html = await page.content();
     for (const take of allTakes.data) expect(html).not.toContain(take.recording_path);
-    expect((await admin.from('week_speaking_checks').select('id').eq('user_id', learner.id)).data).toHaveLength(5);
+    expect((await admin.from('week_speaking_checks').select('id').eq('user_id', learner.id)).data).toHaveLength(4);
 
     const deletion = await page.request.post('/api/account/delete-data', { data: { confirm: 'DELETE' } });
     expect(deletion.status()).toBe(200);
@@ -177,7 +185,7 @@ test('weekly versions, model, phrase card, three comparisons and deletion surviv
   } finally { await deleteTestUser(admin, learner.id); }
 });
 
-test('saved recordings recover from quota, provider and sentence-practice errors after reload', async ({ page }) => {
+test('saved recordings recover from quota, provider and retry-check errors after reload', async ({ page }) => {
   test.skip(!canUseFixture, 'Isolated E2E Supabase admin credentials are unavailable.');
   test.setTimeout(240_000);
   const target = assertE2ESupabaseApiTarget();
@@ -204,39 +212,30 @@ test('saved recordings recover from quota, provider and sentence-practice errors
 
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Daily practice limit reached.' })).toBeVisible();
-    await expect(page.getByText('0 of 5 weekly checks used.')).toBeVisible();
+    await expect(page.getByText('Checks left: 5')).toBeVisible();
     await page.reload();
     await openWeekTask(page, 'speaking-practice');
     await expect(page.getByRole('button', { name: 'Keep and check this recording' })).toBeEnabled();
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'The check is unavailable.' })).toBeVisible();
-    await expect(page.getByText('1 of 5 weekly checks used.')).toBeVisible();
+    await expect(page.getByText('Checks left: 4')).toBeVisible();
     await page.getByRole('button', { name: 'Keep and check this recording' }).click();
     await expect(page.getByText('Your kept first recording counts for Week 1.')).toBeVisible();
-    await expect(page.getByText('2 of 5 weekly checks used.')).toBeVisible();
+    await expect(page.getByText('Checks left: 3')).toBeVisible();
 
     failCapture = true;
-    const point = page.getByRole('region', { name: 'Build a better sentence' }).first();
-    await record(page, 'Say it again');
-    await expect(point.getByRole('alert')).toContainText('We could not save this recording.');
-    await expect(point.getByRole('button', { name: 'Say it again' })).toBeEnabled();
+    await record(page, 'Record try 1');
+    await expect(page.getByRole('alert').filter({ hasText: 'We could not save this recording.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Record try 1' })).toBeEnabled();
     responses.push('failed');
-    await record(page, 'Say it again');
-    try {
-      await expect(point.getByRole('button', { name: 'Check this saved sentence again' })).toBeVisible();
-    } catch (error) {
-      // Preserve useful synthetic-fixture diagnostics in CI annotations even
-      // where browser artifacts or live job logs cannot be downloaded.
-      const state = await admin.from('week_speaking_takes').select('kind,status').eq('user_id', learner.id);
-      const visibleText = await point.allTextContents();
-      throw new Error(`Saved sentence did not become recheckable; takes=${JSON.stringify(state.data)}, UI=${JSON.stringify(visibleText)}`, { cause: error });
-    }
-    await expect(page.getByText('3 of 5 weekly checks used.')).toBeVisible();
+    await record(page, 'Record try 1');
+    await expect(page.getByRole('button', { name: 'Check your saved try' })).toBeVisible();
+    await expect(page.getByText('Checks left: 2')).toBeVisible();
     await page.reload();
     await openWeekTask(page, 'speaking-practice');
-    await page.getByRole('button', { name: 'Check this saved sentence again' }).click();
-    await expect(page.getByText('We found although in your transcript. This checks the pattern, not all your grammar or pronunciation.')).toBeVisible();
-    await expect(page.getByText('4 of 5 weekly checks used.')).toBeVisible();
+    await page.getByRole('button', { name: 'Check your saved try' }).click();
+    await expect(page.getByRole('heading', { name: 'Try 1', exact: true })).toBeVisible();
+    await expect(page.getByText('Checks left: 1')).toBeVisible();
   } finally { await deleteTestUser(admin, learner.id); }
 });
 

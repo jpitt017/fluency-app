@@ -56,6 +56,8 @@ workflow for some other reason (a production smoke test, say) does not start it
 either. To run it, dispatch the workflow and tick **Run the live Groq prompt
 gate (spends the day's Groq quota for the app)**.
 
+> **Do not run `live-prompt-evals` while `GROQ_API_KEY` is on the free Groq plan.** One full run uses roughly **220k tokens** — more than the free Groq daily token limit (~200k tokens/day) — and will exhaust the whole day's learner budget before finishing. Keep it un-run until the paid Groq plan is active.
+
 ### Why it was turned off
 
 A scheduled run goes off at 03:00 UTC and spends the whole day's Groq budget

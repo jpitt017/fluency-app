@@ -21,11 +21,9 @@ test('one structure point must use a real full transcript sentence and a support
     { original: 'I made friends.', upgraded: 'Although I made friends, I left.', explanation: 'Use although.', structure: 'although' },
     { original: 'I made some friends.', upgraded: 'I made more friends.', explanation: 'Use although.', structure: 'although' },
     { original: 'I made some friends.', upgraded: 'I made friends. Which is nice.', explanation: 'Use which.', structure: 'which' },
+    { original: 'I made some friends.', upgraded: 'I made some friends, which is something I want to talk about.', explanation: 'Use which.', structure: 'which' },
   ]) {
-    const fallback = structurePoint(invalid, transcript, 1);
-    assert.equal(fallback.original, 'I moved to a new city.');
-    assert.equal(fallback.structure, 'which');
-    assert.equal(structureUsed(fallback.upgraded, 'which'), true);
+    assert.equal(structurePoint(invalid, transcript, 1), null, 'never invent filler when structurePoint is invalid');
   }
   assert.equal(structurePoint({}, 'Hi?', 1), null);
 });
@@ -53,9 +51,8 @@ test('recognisable later-week grammar is preferred, otherwise a checked connecto
   const source = 'I waited too long.';
   const preferred = structurePoint({ original: source, upgraded: "I shouldn't have waited so long.", explanation: 'Use should have to talk about a past choice.', structure: 'past modal' }, source, 17);
   assert.equal(preferred.structure, 'past modal');
-  const fallback = structurePoint({ original: source, upgraded: "I shouldn't have waited so long.", explanation: 'Use should have.', structure: 'past modal' }, source, 6);
-  assert.equal(fallback.structure, 'which');
-  assert.equal(fallback.original, source);
+  const disallowedWeek = structurePoint({ original: source, upgraded: "I shouldn't have waited so long.", explanation: 'Use should have.', structure: 'past modal' }, source, 6);
+  assert.equal(disallowedWeek, null);
 });
 
 test('Whisper segment timing produces approximate words/minute and gaps strictly over one second', () => {

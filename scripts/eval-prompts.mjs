@@ -27,7 +27,13 @@ import {
   maxSentenceWordCount,
   simplifyToB1B2,
 } from '../lib/b1b2/level-guard.mjs';
-import { validateImprovedHighlights } from '../lib/b1b2/speaking-feedback.mjs';
+import {
+  cleanTranscriptionArtifacts,
+  hasMeaninglessFiller,
+  soundTips,
+  stripMeaninglessFiller,
+  validateImprovedHighlights,
+} from '../lib/b1b2/speaking-feedback.mjs';
 import { z } from 'zod';
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
 
@@ -87,7 +93,7 @@ const SpeakingHighlightSchema = z.object({
 const SpeakingEvalSchema = z.object({
   feedback: z.string().trim().min(1),
   improvedResponse: z.string().trim().min(1),
-  highlights: z.array(SpeakingHighlightSchema).max(4),
+  highlights: z.array(SpeakingHighlightSchema).max(3),
   areas: z.object({
     grammar_and_vocabulary: AreaFeedbackSchema,
     discourse_management: AreaFeedbackSchema,
@@ -101,7 +107,7 @@ export const SAMPLE_B1_WRITING_TEXTS = [
   {
     id: 'w-b1-01',
     week: 1,
-    prompt: 'Write a friendly email (120–150 words) to a friend about a big change in your life.',
+    prompt: 'Write a friendly email (100–120 words) to a friend about a big change in your life.',
     learnerText:
       'Hi Sam, How are you? I want tell you about a big change in my life. Last September I moved to a smaller town near the coast because I started a new job at a clinic. At first it was quite lonely and I missed my old friends every weekend. However, my neighbours invited me for coffee and helped me find a local running club. Since then I have met several friendly people and my daily routine feels much calmer. Now I walk to work in ten minutes instead of sitting on a crowded bus. Come and visit me soon! Best wishes, Leo',
     sampleImproved:
@@ -110,7 +116,7 @@ export const SAMPLE_B1_WRITING_TEXTS = [
   {
     id: 'w-b1-02',
     week: 3,
-    prompt: 'Reply to Alex’s email (120–150 words) using all four notes about flat rules and shared jobs.',
+    prompt: 'Reply to Alex’s email (100–120 words) using all four notes about flat rules and shared jobs.',
     learnerText:
       'Hi Alex, It is great news that you are moving in on Saturday! In our flat we take turns cleaning the kitchen every Sunday evening, so each person only does it once a month. One important rule is that we must not play loud music after eleven at night because everyone works early. On Friday evenings we sometimes cook dinner together, although you do not have to join if you are tired. For the kitchen, you should bring your favourite mug and a small lunch box, as we already have plenty of pans and plates. Let me know what time you arrive! See you soon, Marta',
     sampleImproved:
@@ -119,7 +125,7 @@ export const SAMPLE_B1_WRITING_TEXTS = [
   {
     id: 'w-b1-03',
     week: 4,
-    prompt: 'Write an article (120–150 words) about a place worth visiting in your region.',
+    prompt: 'Write an article (100–120 words) about a place worth visiting in your region.',
     learnerText:
       'Have you ever wanted to escape the noisy city for an afternoon? My favourite place near my home is the old river park on the edge of town. The stone bridge was built two hundred years ago, and the paths are surrounded by tall trees. In spring it is much quieter than the main beaches, and the air feels fresh and cool. Visitors can rent a bike, have a cheap picnic on the grass, or watch small boats on the water. Anyone who enjoys nature and photography would love spending a sunny Sunday there.',
     sampleImproved:
@@ -185,6 +191,21 @@ export const SAMPLE_B1_SPEAKING_TRANSCRIPTS = [
       { substring: 'It was built in 1910', label: 'Past simple passive', explanation: 'Describes when the building was made.' },
       { substring: 'are sold there every morning', label: 'Present simple passive', explanation: 'Focuses on what happens in the market today.' },
       { substring: 'livelier and cheaper than', label: 'Comparatives', explanation: 'Compares the market clearly with big supermarkets.' },
+    ],
+  },
+  {
+    id: 's-b1-05',
+    week: 2,
+    includeInteractive: false,
+    prompt: "Talk for 60–90 seconds about a goal and what you've arranged.",
+    transcript:
+      "All right, so my goal is to create a TV stroke podcast focused around a state in rural England. So what have I already arranged? I've written a pilot script, highlighted each of the individual characters within the story and written a one minute pilot. When it's done, I'd like to distribute it to some TV people to listen to on a podcast style format to give me their opinions. If it doesn't work out, I will look at the various different options as to whether to turn it into a story with like a storybook or maybe go down the podcast route instead of making it into a TV series.",
+    sampleImproved:
+      "My goal is to create a TV/podcast set on an estate in rural England. So far, I've written a one-minute pilot script and described each character in the story. When it's finished, I'm going to send it to TV producers in a podcast-style format for their opinions. If that doesn't work out, I'll look at other options, like turning it into a storybook or a podcast.",
+    sampleHighlights: [
+      { substring: 'set on an estate', label: 'Natural phrase', explanation: 'Uses set on for the place of a story.' },
+      { substring: "I'm going to send it", label: 'Plan with going to', explanation: 'Uses going to for a clear future plan.' },
+      { substring: 'in a podcast-style format', label: 'Preposition fix', explanation: 'Uses in with format instead of on.' },
     ],
   },
 ];
@@ -386,9 +407,10 @@ function checkOfflineSuite() {
   }
 
   for (const sSample of SAMPLE_B1_SPEAKING_TRANSCRIPTS) {
+    const cleanedAsr = cleanTranscriptionArtifacts(sSample.transcript);
     const outWords = findOutOfListWords(sSample.sampleImproved, {
       weekNumber: sSample.week,
-      learnerText: sSample.transcript,
+      learnerText: cleanedAsr.cleanedTranscript,
     });
     if (outWords.length > 0) {
       failures++;
@@ -398,13 +420,25 @@ function checkOfflineSuite() {
       failures++;
       console.error(`FAIL [${sSample.id}] sentence over 20 words in speaking improved answer`);
     }
+    if (hasMeaninglessFiller(sSample.sampleImproved)) {
+      failures++;
+      console.error(`FAIL [${sSample.id}] speaking improved answer contains meaningless filler`);
+    }
     const validatedHighlights = validateImprovedHighlights(
       sSample.sampleHighlights,
       sSample.sampleImproved,
     );
-    if (validatedHighlights.length !== sSample.sampleHighlights.length) {
+    if (validatedHighlights.length !== sSample.sampleHighlights.length || validatedHighlights.length > 3) {
       failures++;
-      console.error(`FAIL [${sSample.id}] sample highlights must be exact substrings of sampleImproved`);
+      console.error(`FAIL [${sSample.id}] sample highlights must be <= 3 exact substrings of sampleImproved`);
+    }
+    const tips = soundTips(sSample.transcript, {
+      excludeWords: cleanedAsr.repairedWords,
+      weekNumber: sSample.week,
+    });
+    if (tips.length > 2 || tips.some((t) => t.word.toLowerCase() === 'stroke')) {
+      failures++;
+      console.error(`FAIL [${sSample.id}] soundTips exceeded 2 items or included ASR word "stroke"`, tips);
     }
     const parsedSpeaking = SpeakingEvalSchema.safeParse({
       feedback: 'Clear ideas on the topic.',
@@ -432,6 +466,44 @@ function checkOfflineSuite() {
   if (!flaggedC1.includes('ubiquitous')) {
     failures++;
     console.error('FAIL level-guard C1 word detector did not flag ubiquitous');
+  }
+
+  // Eval case (1b & 1e): never allow meaningless filler like "which is something I want to talk about",
+  // and clean "TV stroke podcast" / "a state in rural England" before feedback/soundTips.
+  const fillerSentence = 'I moved to Madrid last year, which is something I want to talk about.';
+  if (!hasMeaninglessFiller(fillerSentence)) {
+    failures++;
+    console.error('FAIL [s-filler-guard] hasMeaninglessFiller did not detect empty filler clause');
+  }
+  const strippedFiller = stripMeaninglessFiller(fillerSentence);
+  if (hasMeaninglessFiller(strippedFiller) || strippedFiller !== 'I moved to Madrid last year.') {
+    failures++;
+    console.error(`FAIL [s-filler-guard] stripMeaninglessFiller produced unexpected output: ${strippedFiller}`);
+  }
+  const rejectedFillerHighlights = validateImprovedHighlights(
+    [
+      {
+        substring: 'which is something I want to talk about',
+        label: 'Relative clause',
+        explanation: 'Adds filler.',
+      },
+    ],
+    fillerSentence,
+    1,
+    { learnerTranscript: 'I moved to Madrid last year.' },
+  );
+  if (rejectedFillerHighlights.some((h) => h.substring.includes('which is something I want to talk about'))) {
+    failures++;
+    console.error('FAIL [s-filler-guard] validateImprovedHighlights accepted meaningless filler');
+  }
+  const tvPodcastSample = SAMPLE_B1_SPEAKING_TRANSCRIPTS.find((s) => s.id === 's-b1-05');
+  const tvPodcastAsr = cleanTranscriptionArtifacts(tvPodcastSample.transcript);
+  if (
+    !tvPodcastAsr.cleanedTranscript.includes('TV/podcast') ||
+    !tvPodcastAsr.cleanedTranscript.includes('an estate in rural England')
+  ) {
+    failures++;
+    console.error('FAIL [s-b1-05] ASR cleanup did not convert "TV stroke podcast" and "a state in rural England"');
   }
   const cleanedDraft = simplifyToB1B2(c1Draft, { weekNumber: 1, maxSentenceWords: 20 });
   if (cleanedDraft.toLowerCase().includes('furthermore') || cleanedDraft.toLowerCase().includes('ubiquitous')) {
@@ -729,7 +801,13 @@ export async function runLiveGroqSuite(groq) {
       console.error(`FAIL [${sSample.id}] live Groq speaking schema:`, schemaCheck.error.issues);
       continue;
     }
-    const cleanedImproved = simplifyToB1B2(schemaCheck.data.improvedResponse, {
+    if (hasMeaninglessFiller(schemaCheck.data.improvedResponse)) {
+      cambridgeSampleFailures++;
+      failedCases.push(`${sSample.id}(speaking-filler)`);
+      console.error(`FAIL [${sSample.id}] live Groq speaking output contained meaningless filler`);
+      continue;
+    }
+    const cleanedImproved = simplifyToB1B2(stripMeaninglessFiller(schemaCheck.data.improvedResponse), {
       weekNumber: sSample.week,
       learnerText: sSample.transcript,
       maxSentenceWords: 20,
@@ -738,6 +816,7 @@ export async function runLiveGroqSuite(groq) {
       schemaCheck.data.highlights,
       cleanedImproved,
       sSample.week,
+      { learnerTranscript: cleanTranscriptionArtifacts(sSample.transcript).cleanedTranscript },
     );
     const outOfList = findOutOfListWords(cleanedImproved, {
       weekNumber: sSample.week,

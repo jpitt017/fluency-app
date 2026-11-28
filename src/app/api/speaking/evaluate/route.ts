@@ -224,12 +224,16 @@ export async function POST(req: NextRequest) {
     cacheHit = evaluation.cacheHit;
     promptTokens = evaluation.promptTokens;
     completionTokens = evaluation.completionTokens;
+    const cleanedTranscript = validated.cleanedTranscript || transcript;
     const uiCorrections = validated.corrections.map((c) => ({
       ...c,
       alternative: c.corrected_sentence,
     }));
-    const sounds = soundTips(transcript);
-    const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+    const sounds = soundTips(cleanedTranscript, {
+      excludeWords: validated.repairedWords,
+      weekNumber: effectiveWeek,
+    });
+    const wordCount = cleanedTranscript.split(/\s+/).filter(Boolean).length;
     let savedAttemptId: string | null = null;
     let newBadges: string[] = [];
 
@@ -245,7 +249,7 @@ export async function POST(req: NextRequest) {
             mime_type: mimeType || null,
             duration_seconds:
               fluency?.seconds != null ? Math.max(1, Math.round(fluency.seconds)) : null,
-            transcript,
+            transcript: cleanedTranscript,
             word_count: wordCount,
             fluency: validated.areas.discourse_management.score,
             lexical_range: validated.areas.grammar_and_vocabulary.score,
@@ -255,6 +259,7 @@ export async function POST(req: NextRequest) {
             overall: null,
             feedback: {
               summary: validated.feedback,
+              nextStep: validated.nextStep,
               improvedResponse: validated.improvedResponse,
               highlights: validated.highlights,
               showExampleFirst: validated.showExampleFirst,
@@ -291,7 +296,7 @@ export async function POST(req: NextRequest) {
         sourceType: 'speaking',
         sourceId: savedAttemptId,
         lessonId: lessonId || null,
-        sourceText: transcript,
+        sourceText: cleanedTranscript,
         sourceWordCount: wordCount,
         corrections: validated.corrections,
       });
@@ -307,7 +312,8 @@ export async function POST(req: NextRequest) {
         weekRecorded: weeklyTask ? Boolean(modelAnswer) : weekTask && !isOptionalPart ? false : null,
         supportSaved: null,
         attemptId: savedAttemptId,
-        transcript,
+        transcript: cleanedTranscript,
+        nextStep: validated.nextStep,
         improvedResponse: validated.improvedResponse,
         highlights: validated.highlights,
         showExampleFirst: validated.showExampleFirst,

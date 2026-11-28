@@ -6,8 +6,11 @@ import {
   DAILY_TTS_LIMIT,
   ELEVEN_TTS_MODEL_ID,
   IMPROVED_TTS_ENDPOINT,
+  isImprovedAnswerTtsEnabled,
   madridDayStartIso,
+  madridMonthStartIso,
   resolveApprovedBritishVoice,
+  resolveMonthlyTtsCharLimit,
 } from '@/lib/b1b2/improved-tts-config.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -16,14 +19,14 @@ const NO_STORE = { 'cache-control': 'private, no-store' };
 
 /**
  * Serves or generates-once British English TTS for a learner's saved
- * "Your answer, improved", cached per attempt/take in private Storage and
- * spending 0 AI usage units.
+ * "Your answer, improved", gated behind `IMPROVED_ANSWER_TTS_ENABLED` (off by default).
  *
- * - Uses the approved British voice (`Host` = Jack Anthony, `sp7QaEHmiNEd5HgrXuOo`)
- *   by default, allowing only reviewed British/Irish overrides.
- * - Caps new ElevenLabs syntheses at 5 per learner per Europe/Madrid calendar day;
- *   cached replays do not count towards the 5-a-day synthesis limit.
- * - Falls back cleanly (204 / 429) so the browser plays British Web Speech (`en-GB`).
+ * - When `IMPROVED_ANSWER_TTS_ENABLED` is unset or not `'true'`/`'1'`, returns 204
+ *   immediately so the browser uses its `en-GB` "Computer voice" and ElevenLabs is
+ *   never called in production on the free plan.
+ * - When enabled, caps new syntheses at 2 per learner per Europe/Madrid day and
+ *   at `ELEVENLABS_MONTHLY_CHAR_LIMIT` (default 40,000) characters per month across
+ *   all learners, logging `inputChars` to `ai_request_logs`.
  */
 export async function GET(req: NextRequest) {
   const startedAt = Date.now();
@@ -46,6 +49,13 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get('id') ?? '';
   if ((kind !== 'attempt' && kind !== 'take') || !UUID.test(id)) {
     return NextResponse.json({ error: 'Invalid audio request.' }, { status: 400, headers: NO_STORE });
+  }
+
+  if (!isImprovedAnswerTtsEnabled(process.env.IMPROVED_ANSWER_TTS_ENABLED)) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: { ...NO_STORE, 'X-TTS-Disabled': '1' },
+    });
   }
 
   const table = kind === 'attempt' ? 'speaking_attempts' : 'week_speaking_takes';
@@ -112,8 +122,8 @@ export async function GET(req: NextRequest) {
   if (usedToday >= DAILY_TTS_LIMIT) {
     return NextResponse.json(
       {
-        error:
-          'You have used all 5 British voice plays for new answers today. Playing with a temporary computer voice instead.',
+        error: 'Daily voice limit reached. Playing with Computer voice instead.',
+        reason: 'daily_limit',
         dailyLimit: DAILY_TTS_LIMIT,
         remainingToday: 0,
       },
@@ -123,6 +133,43 @@ export async function GET(req: NextRequest) {
           ...NO_STORE,
           'X-TTS-Daily-Limit': String(DAILY_TTS_LIMIT),
           'X-TTS-Remaining-Day': '0',
+        },
+      },
+    );
+  }
+
+  const textToSynthesize = improvedResponse.slice(0, 1800);
+  const monthlyLimit = resolveMonthlyTtsCharLimit(process.env.ELEVENLABS_MONTHLY_CHAR_LIMIT);
+  const { data: monthRows, error: monthErr } = await admin
+    .from('ai_request_logs')
+    .select('input_chars')
+    .eq('endpoint', IMPROVED_TTS_ENDPOINT)
+    .eq('cache_hit', false)
+    .eq('status_code', 200)
+    .gte('created_at', madridMonthStartIso());
+
+  if (monthErr || !Array.isArray(monthRows)) {
+    return new NextResponse(null, { status: 204, headers: NO_STORE });
+  }
+
+  const monthlyCharsUsed = monthRows.reduce(
+    (sum, item) => sum + (typeof item?.input_chars === 'number' && item.input_chars > 0 ? item.input_chars : 0),
+    0,
+  );
+  if (monthlyCharsUsed >= monthlyLimit || monthlyCharsUsed + textToSynthesize.length > monthlyLimit) {
+    return NextResponse.json(
+      {
+        error: 'Monthly voice character limit reached. Playing with Computer voice instead.',
+        reason: 'monthly_char_limit',
+        monthlyCharLimit: monthlyLimit,
+        monthlyCharsUsed,
+      },
+      {
+        status: 429,
+        headers: {
+          ...NO_STORE,
+          'X-TTS-Monthly-Char-Limit': String(monthlyLimit),
+          'X-TTS-Monthly-Chars-Used': String(monthlyCharsUsed),
         },
       },
     );
@@ -141,7 +188,7 @@ export async function GET(req: NextRequest) {
           Accept: 'audio/mpeg',
         },
         body: JSON.stringify({
-          text: improvedResponse.slice(0, 1800),
+          text: textToSynthesize,
           model_id: ELEVEN_TTS_MODEL_ID,
           voice_settings: approvedVoice.voiceSettings,
         }),
@@ -175,10 +222,11 @@ export async function GET(req: NextRequest) {
       statusCode: 200,
       latencyMs: Date.now() - startedAt,
       cacheHit: false,
-      inputChars: improvedResponse.length,
+      inputChars: textToSynthesize.length,
     }, true);
 
     const remainingToday = Math.max(0, DAILY_TTS_LIMIT - usedToday - 1);
+    const updatedMonthlyChars = monthlyCharsUsed + textToSynthesize.length;
     return new NextResponse(mp3Bytes, {
       status: 200,
       headers: {
@@ -187,6 +235,8 @@ export async function GET(req: NextRequest) {
         'X-TTS-Cache': 'MISS',
         'X-TTS-Daily-Limit': String(DAILY_TTS_LIMIT),
         'X-TTS-Remaining-Day': String(remainingToday),
+        'X-TTS-Monthly-Char-Limit': String(monthlyLimit),
+        'X-TTS-Monthly-Chars-Used': String(updatedMonthlyChars),
       },
     });
   } catch {

@@ -10,9 +10,10 @@ type Segment =
   | { kind: 'highlight'; text: string; highlight: ImprovedHighlight; index: number };
 
 function segmentImprovedText(text: string, highlights: ImprovedHighlight[]): Segment[] {
-  if (!text || !highlights.length) return [{ kind: 'plain', text }];
+  const capped = highlights.slice(0, 3);
+  if (!text || !capped.length) return [{ kind: 'plain', text }];
 
-  const valid = highlights
+  const valid = capped
     .map((highlight, index) => ({ highlight, index, pos: text.indexOf(highlight.substring) }))
     .filter((item) => item.pos >= 0 && item.highlight.substring.length > 0)
     .sort((a, b) => a.pos - b.pos || b.highlight.substring.length - a.highlight.substring.length);
@@ -54,13 +55,16 @@ export default function ImprovedAnswerCard({
   ttsId?: string | null;
   heading?: string;
 }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(highlights.length > 0 ? 0 : null);
+  const cappedHighlights = highlights.slice(0, 3);
+  const [activeIndex, setActiveIndex] = useState<number | null>(
+    cappedHighlights.length > 0 ? 0 : null,
+  );
   const [playing, setPlaying] = useState(false);
-  const [usingWebSpeech, setUsingWebSpeech] = useState(false);
+  const [voiceMode, setVoiceMode] = useState<'audio' | 'web-speech'>('web-speech');
 
-  const segments = segmentImprovedText(improvedResponse, highlights);
+  const segments = segmentImprovedText(improvedResponse, cappedHighlights);
   const activeHighlight =
-    activeIndex !== null ? highlights[activeIndex] ?? null : null;
+    activeIndex !== null ? cappedHighlights[activeIndex] ?? null : null;
   const cacheKey = `${ttsKind ?? 'inline'}:${ttsId ?? improvedResponse.slice(0, 80)}`;
 
   async function handleToggleAudio() {
@@ -77,7 +81,7 @@ export default function ImprovedAnswerCard({
       id: ttsId,
       onEnd: () => setPlaying(false),
     });
-    setUsingWebSpeech(mode === 'web-speech');
+    setVoiceMode(mode);
   }
 
   return (
@@ -88,34 +92,41 @@ export default function ImprovedAnswerCard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h4 className="text-sm font-semibold text-indigo-950">{heading}</h4>
-          <p className="text-xs text-stone-600">
-            Your own ideas with errors fixed. Tap a highlighted phrase to see why it works.
+          <p className="text-sm text-stone-600">
+            {cappedHighlights.length > 0
+              ? 'Tap a highlighted change to see the reason.'
+              : 'Your own ideas in natural B1 English.'}
           </p>
         </div>
-            <button
-              type="button"
-              onClick={() => void handleToggleAudio()}
-              aria-describedby={usingWebSpeech ? 'improved-tts-temporary-voice' : undefined}
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void handleToggleAudio()}
+            aria-describedby={voiceMode === 'web-speech' ? 'improved-tts-computer-voice' : undefined}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm font-semibold text-indigo-900 hover:bg-indigo-100"
+          >
+            {playing ? (
+              <>
+                <Square className="h-4 w-4" />
+                <span>Stop audio</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="h-4 w-4" />
+                <span>Listen</span>
+              </>
+            )}
+          </button>
+          {voiceMode === 'web-speech' && (
+            <span
+              id="improved-tts-computer-voice"
+              className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-600"
             >
-              {playing ? (
-                <>
-                  <Square className="h-3.5 w-3.5" />
-                  <span>Stop audio</span>
-                </>
-              ) : (
-                <>
-                  <Volume2 className="h-3.5 w-3.5" />
-                  <span>Listen (British voice)</span>
-                </>
-              )}
-            </button>
-          </div>
-          {usingWebSpeech && (
-            <p id="improved-tts-temporary-voice" className="text-xs text-amber-800">
-              Temporary computer voice
-            </p>
+              Computer voice
+            </span>
           )}
+        </div>
+      </div>
 
       <p className="rounded-lg border border-indigo-100 bg-white p-3.5 text-sm leading-7 text-stone-900">
         {segments.map((seg, i) =>
@@ -144,9 +155,14 @@ export default function ImprovedAnswerCard({
       {activeHighlight && (
         <div
           role="region"
-          aria-label="Highlighted structure explanation"
-          className="rounded-lg border border-indigo-200 bg-white p-3 text-xs text-stone-800"
+          aria-label="Highlighted change reason"
+          className="rounded-lg border border-indigo-200 bg-white p-3 text-sm text-stone-800"
         >
+          {activeHighlight.before && (
+            <p className="text-stone-600">
+              <strong>Changed from:</strong> &ldquo;{activeHighlight.before}&rdquo;
+            </p>
+          )}
           <p className="font-semibold text-indigo-900">
             {activeHighlight.label}: &ldquo;{activeHighlight.substring}&rdquo;
           </p>

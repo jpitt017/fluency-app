@@ -8,6 +8,7 @@ import ts from 'typescript';
 import * as levelGuard from '../../lib/b1b2/level-guard.mjs';
 import * as speakingFeedback from '../../lib/b1b2/speaking-feedback.mjs';
 import * as improvedTtsConfig from '../../lib/b1b2/improved-tts-config.mjs';
+import * as weekWritingSupport from '../../lib/curriculum/week-writing-support.mjs';
 import * as diffModule from '../../lib/b1b2/diff.ts';
 import { B1_SPEECH_RATE, SPEAKER_VOICES, VOICE_SETTINGS } from '../../scripts/lib/course-audio/tts.mjs';
 import { BENCHMARK_SENTENCES, LIVE_GROQ_MODEL, runLiveGroqSuite } from '../../scripts/eval-prompts.mjs';
@@ -55,7 +56,7 @@ const feedbackSchema = transpileLoad('lib/b1b2/feedback-schema.ts', {
   './speaking-feedback.mjs': speakingFeedback,
 });
 
-test('writing feedback marks four 0-5 areas, has no overall score, caps Content under 100 words, warns over 180 words, and caps corrections at 3 with week grammar first', () => {
+test('writing feedback marks four 0-5 areas, has no overall score, caps Content under 80 words for Weeks 1-8, warns over 150 words ("Try to keep to 100–120 words."), and caps corrections at 3 with week grammar first', () => {
   const shortText = 'Hi Alex, thanks for your message. I moved into the flat last month and I really enjoy living near the park.';
   const rawWriting = {
     score: 95,
@@ -75,31 +76,33 @@ test('writing feedback marks four 0-5 areas, has no overall score, caps Content 
     ],
   };
 
-  const under100 = feedbackSchema.validateWritingFeedback(rawWriting, shortText, { weekNumber: 3 });
-  assert.equal(Object.hasOwn(under100, 'score'), false);
-  assert.equal(Object.hasOwn(under100, 'rubric'), false);
-  assert.equal(under100.contentCappedUnder100, true);
-  assert.equal(under100.areas.content.score, 3, 'under 100 words must cap Content at 3');
-  assert.equal(under100.wordCountTip, null);
-  assert.equal(under100.corrections.length, 3, 'at most 3 corrections per text');
-  assert.equal(under100.corrections[0].error_category, 'modal_verb', 'Week 3 modal grammar comes first');
+  const under80 = feedbackSchema.validateWritingFeedback(rawWriting, shortText, { weekNumber: 3 });
+  assert.equal(Object.hasOwn(under80, 'score'), false);
+  assert.equal(Object.hasOwn(under80, 'rubric'), false);
+  assert.equal(under80.contentCappedUnder100, true);
+  assert.equal(under80.areas.content.score, 3, 'under 80 words must cap Content at 3 for Weeks 1-8');
+  assert.equal(under80.wordCountTip, null);
+  assert.equal(under80.corrections.length, 3, 'at most 3 corrections per text');
+  assert.equal(under80.corrections[0].error_category, 'modal_verb', 'Week 3 modal grammar comes first');
 
-  // Placement samples (60-100 words) opt out of the 120-150 under-100 Content cap.
+  // Placement samples opt out of the Content cap.
   const placementSample = feedbackSchema.validateWritingFeedback(rawWriting, shortText, {
     skipUnder100Cap: true,
   });
   assert.equal(placementSample.areas.content.score, 5);
 
-  const mediumText = Array.from({ length: 135 }, () => 'word').join(' ') + '.';
+  // 105 words (inside 100-120 target for Weeks 1-8) is NOT capped and has no over-limit warning.
+  const mediumText = Array.from({ length: 105 }, () => 'word').join(' ') + '.';
   const onTarget = feedbackSchema.validateWritingFeedback(rawWriting, mediumText, { weekNumber: 1 });
   assert.equal(onTarget.contentCappedUnder100, false);
   assert.equal(onTarget.areas.content.score, 5);
   assert.equal(onTarget.wordCountTip, null);
 
-  const longText = Array.from({ length: 185 }, () => 'word').join(' ') + '.';
-  const over180 = feedbackSchema.validateWritingFeedback(rawWriting, longText, { weekNumber: 1 });
-  assert.equal(over180.wordCountTip, 'Try to keep to 120–150 words.');
-  assert.equal(over180.notes[0], 'Try to keep to 120–150 words.');
+  // Over 150 words gets "Try to keep to 100–120 words." for Weeks 1-8.
+  const longText = Array.from({ length: 155 }, () => 'word').join(' ') + '.';
+  const over150 = feedbackSchema.validateWritingFeedback(rawWriting, longText, { weekNumber: 1 });
+  assert.equal(over150.wordCountTip, 'Try to keep to 100–120 words.');
+  assert.equal(over150.notes[0], 'Try to keep to 100–120 words.');
 });
 
 test('Weeks 1-4 curriculum has Week 3 email+4 notes, Week 4 call for articles, 4 speaking parts per week, and 0-5 B1-B2 descriptors', () => {
@@ -239,9 +242,17 @@ test('B1-B2 level guard flags C1+ words, enforces <= 20-word sentences, and keep
   assert.equal(preserved, learner);
 });
 
-test('improved-tts defaults to the approved British voice, enforces a 5-a-day synthesis limit, keeps cached replays unlimited, and spends zero AI units', async () => {
-  // 1. Approved British voice contract matches course-audio pipeline constants.
-  assert.equal(improvedTtsConfig.DAILY_TTS_LIMIT, 5);
+test('improved-tts is feature-flagged OFF by default, enforces 2/day and 40k/month caps when enabled, logs inputChars, and labels browser voice "Computer voice"', async () => {
+  // 1. Flag off by default + approved British voice + 2/day + 40,000/month defaults.
+  assert.equal(improvedTtsConfig.isImprovedAnswerTtsEnabled(undefined), false);
+  assert.equal(improvedTtsConfig.isImprovedAnswerTtsEnabled(''), false);
+  assert.equal(improvedTtsConfig.isImprovedAnswerTtsEnabled('false'), false);
+  assert.equal(improvedTtsConfig.isImprovedAnswerTtsEnabled('true'), true);
+  assert.equal(improvedTtsConfig.isImprovedAnswerTtsEnabled('1'), true);
+  assert.equal(improvedTtsConfig.DAILY_TTS_LIMIT, 2);
+  assert.equal(improvedTtsConfig.DEFAULT_MONTHLY_TTS_CHAR_LIMIT, 40_000);
+  assert.equal(improvedTtsConfig.resolveMonthlyTtsCharLimit(undefined), 40_000);
+  assert.equal(improvedTtsConfig.resolveMonthlyTtsCharLimit('120'), 120);
   assert.equal(improvedTtsConfig.DEFAULT_APPROVED_BRITISH_VOICE_ID, SPEAKER_VOICES.Host.voice);
   assert.equal(improvedTtsConfig.DEFAULT_APPROVED_BRITISH_VOICE_ID, 'sp7QaEHmiNEd5HgrXuOo');
   assert.equal(improvedTtsConfig.B1_TTS_SPEED, B1_SPEECH_RATE);
@@ -265,7 +276,7 @@ test('improved-tts defaults to the approved British voice, enforces a 5-a-day sy
   assert.equal(approvedOverride.voiceSettings.style, 0.3);
   assert.equal(approvedOverride.voiceSettings.speed, 0.8);
 
-  // Europe/Madrid midnight helper handles CET (UTC+1) and CEST (UTC+2).
+  // Europe/Madrid midnight & month-start helpers handle CET (UTC+1) and CEST (UTC+2).
   assert.equal(
     improvedTtsConfig.madridDayStartIso(new Date('2026-11-28T10:30:00.000Z')),
     '2026-11-27T23:00:00.000Z',
@@ -274,19 +285,31 @@ test('improved-tts defaults to the approved British voice, enforces a 5-a-day sy
     improvedTtsConfig.madridDayStartIso(new Date('2026-07-15T00:30:00.000Z')),
     '2026-07-14T22:00:00.000Z',
   );
+  assert.equal(
+    improvedTtsConfig.madridMonthStartIso(new Date('2026-11-28T10:30:00.000Z')),
+    '2026-10-31T23:00:00.000Z',
+  );
 
-  // 2. Route behaviour: auth, default British voice URL, 5/day synthesis limit, unlimited cache replays, 0 AI units.
+  // Browser en-GB fallback is labelled simply "Computer voice" and staff dashboard shows monthly TTS chars.
+  const improvedCardSource = read('components/b1b2/ImprovedAnswerCard.tsx');
+  assert.match(improvedCardSource, />[\s\r\n]*Computer voice[\s\r\n]*</);
+  const dashboardSource = read('src/app/dashboard/page.tsx');
+  assert.match(dashboardSource, /TTS characters this month:/);
+
+  // 2. Route behaviour: 204 when feature flag is off by default; when enabled, 2/day + monthly char cap + cached replay.
   const userId = '11111111-1111-4111-8111-111111111111';
   const storedObjects = new Map();
   const takes = new Map();
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 4; i++) {
     const id = `22222222-2222-4222-8222-22222222222${i}`;
     takes.set(id, { improvedResponse: `Since then, I've made good friends in town ${i}.` });
   }
   const loggedSyntheses = [];
+  let extraMonthlyChars = 0;
   const fetchedUrls = [];
   const fetchedBodies = [];
   let countShouldError = false;
+  const envVars = { ELEVENLABS_API_KEY: 'fake-eleven-key' };
 
   const supabase = {
     auth: { getUser: async () => ({ data: { user: { id: userId } }, error: null }) },
@@ -299,29 +322,35 @@ test('improved-tts defaults to the approved British voice, enforces a 5-a-day sy
     from(table) {
       if (table === 'ai_request_logs') {
         const filters = {};
-        const countChain = {
-          select(_cols, opts) {
-            assert.equal(opts?.count, 'exact');
-            assert.equal(opts?.head, true);
-            return countChain;
+        let isCountHead = false;
+        const logChain = {
+          select(cols, opts) {
+            isCountHead = Boolean(opts?.count === 'exact' && opts?.head === true);
+            if (!isCountHead) assert.equal(cols, 'input_chars');
+            return logChain;
           },
           eq(col, val) {
             filters[col] = val;
-            return countChain;
+            return logChain;
           },
           gte(col, val) {
             filters[col] = val;
-            assert.equal(filters.user_id, userId);
             assert.equal(filters.endpoint, '/api/speaking/improved-tts');
             assert.equal(filters.cache_hit, false);
             assert.equal(filters.status_code, 200);
-            if (countShouldError) {
-              return Promise.resolve({ count: null, error: { message: 'db unavailable' } });
+            if (isCountHead) {
+              assert.equal(filters.user_id, userId);
+              if (countShouldError) {
+                return Promise.resolve({ count: null, error: { message: 'db unavailable' } });
+              }
+              return Promise.resolve({ count: loggedSyntheses.length, error: null });
             }
-            return Promise.resolve({ count: loggedSyntheses.length, error: null });
+            const rows = loggedSyntheses.map((entry) => ({ input_chars: entry.inputChars }));
+            if (extraMonthlyChars > 0) rows.push({ input_chars: extraMonthlyChars });
+            return Promise.resolve({ data: rows, error: null });
           },
         };
-        return countChain;
+        return logChain;
       }
       assert.equal(table, 'week_speaking_takes');
       let targetId = null;
@@ -402,7 +431,7 @@ test('improved-tts defaults to the approved British voice, enforces a 5-a-day sy
       '@/lib/b1b2/improved-tts-config.mjs': improvedTtsConfig,
     },
     {
-      process: { env: { ELEVENLABS_API_KEY: 'fake-eleven-key' } },
+      process: { env: envVars },
       fetch: async (url, init) => {
         fetchedUrls.push(url);
         fetchedBodies.push(JSON.parse(init.body));
@@ -414,44 +443,63 @@ test('improved-tts defaults to the approved British voice, enforces a 5-a-day sy
     },
   );
 
-  // Synthesize 5 distinct takes: all 5 succeed with the approved British voice and count down 4 -> 0.
-  for (let i = 1; i <= 5; i++) {
+  // Off by default: returns 204 immediately and NEVER calls ElevenLabs.
+  const firstId = '22222222-2222-4222-8222-222222222221';
+  const disabledRes = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${firstId}` });
+  assert.equal(disabledRes.status, 204);
+  assert.equal(disabledRes.headers['X-TTS-Disabled'], '1');
+  assert.equal(fetchedUrls.length, 0);
+
+  // Enable flag: synthesize 2 takes (2-a-day cap), logging inputChars.
+  envVars.IMPROVED_ANSWER_TTS_ENABLED = 'true';
+  for (let i = 1; i <= 2; i++) {
     const id = `22222222-2222-4222-8222-22222222222${i}`;
     const res = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${id}` });
     assert.equal(res.status, 200);
-    assert.equal(res.headers['X-TTS-Daily-Limit'], '5');
-    assert.equal(res.headers['X-TTS-Remaining-Day'], String(5 - i));
+    assert.equal(res.headers['X-TTS-Daily-Limit'], '2');
+    assert.equal(res.headers['X-TTS-Remaining-Day'], String(2 - i));
     assert.equal(takes.get(id).ttsAudioPath, `${userId}/tts/take/${id}.mp3`);
   }
-  assert.equal(fetchedUrls.length, 5);
+  assert.equal(fetchedUrls.length, 2);
   assert.ok(
     fetchedUrls.every((u) => u.includes('/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?')),
     'all syntheses must use the approved British Host voice by default',
   );
   assert.equal(fetchedBodies[0].model_id, 'eleven_multilingual_v2');
   assert.equal(fetchedBodies[0].voice_settings.speed, 0.8);
-  assert.equal(loggedSyntheses.length, 5);
+  assert.equal(loggedSyntheses.length, 2);
+  assert.ok(loggedSyntheses[0].inputChars > 20, 'inputChars must be logged');
 
-  // 6th new uncached take on the same day is blocked with 429 and does NOT call ElevenLabs.
-  const sixthId = '22222222-2222-4222-8222-222222222226';
-  const sixth = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${sixthId}` });
-  assert.equal(sixth.status, 429);
-  assert.equal(sixth.headers['X-TTS-Daily-Limit'], '5');
-  assert.equal(sixth.headers['X-TTS-Remaining-Day'], '0');
-  assert.equal(fetchedUrls.length, 5, '6th synthesis must not call ElevenLabs');
+  // 3rd new uncached take on the same day is blocked with 429 (2/day cap) and does NOT call ElevenLabs.
+  const thirdId = '22222222-2222-4222-8222-222222222223';
+  const third = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${thirdId}` });
+  assert.equal(third.status, 429);
+  assert.equal(third.body.reason, 'daily_limit');
+  assert.equal(third.headers['X-TTS-Daily-Limit'], '2');
+  assert.equal(third.headers['X-TTS-Remaining-Day'], '0');
+  assert.equal(fetchedUrls.length, 2);
 
-  // Replaying an already-cached take STILL succeeds (unlimited cached replays) even after hitting 5/day!
-  const firstId = '22222222-2222-4222-8222-222222222221';
+  // Cached replay still succeeds even after hitting 2/day!
   const cachedReplay = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${firstId}` });
   assert.equal(cachedReplay.status, 200);
   assert.equal(cachedReplay.headers['X-TTS-Cache'], 'HIT');
-  assert.equal(fetchedUrls.length, 5, 'cached replay must not call ElevenLabs');
+  assert.equal(fetchedUrls.length, 2);
+
+  // Monthly total character cap (default 40,000, configurable via ELEVENLABS_MONTHLY_CHAR_LIMIT):
+  loggedSyntheses.length = 0;
+  envVars.ELEVENLABS_MONTHLY_CHAR_LIMIT = '100';
+  extraMonthlyChars = 90;
+  const monthBlocked = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${thirdId}` });
+  assert.equal(monthBlocked.status, 429);
+  assert.equal(monthBlocked.body.reason, 'monthly_char_limit');
+  assert.equal(monthBlocked.headers['X-TTS-Monthly-Char-Limit'], '100');
+  assert.equal(fetchedUrls.length, 2);
 
   // DB count failure fails closed with 204 so browser Web Speech takes over safely.
   countShouldError = true;
-  const closedOnError = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${sixthId}` });
+  const closedOnError = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${thirdId}` });
   assert.equal(closedOnError.status, 204);
-  assert.equal(fetchedUrls.length, 5);
+  assert.equal(fetchedUrls.length, 2);
 });
 
 test('live prompt eval is wired exclusively to Groq (groq-sdk + GROQ_API_KEY + openai/gpt-oss-20b) without running live network calls', async () => {
@@ -583,8 +631,146 @@ test('live prompt eval is wired exclusively to Groq (groq-sdk + GROQ_API_KEY + o
   }
 
   assert.equal(gateFailures, 0);
-  // 60 benchmark sentences + 2 rewrite injections + 3 B1 writing texts + 4 B1 speaking transcripts = 69 Groq calls.
-  assert.equal(recordedCalls.length, 69);
+  // 60 benchmark sentences + 2 rewrite injections + 3 B1 writing texts + 5 B1 speaking transcripts = 70 Groq calls.
+  assert.equal(recordedCalls.length, 70);
+});
+
+test('1e exact "TV stroke podcast" transcript cleans ASR artefacts, emits no filler, no "stroke" tip, and <= 3 changed highlights', () => {
+  const exactTranscript =
+    "All right, so my goal is to create a TV stroke podcast focused around a state in rural England. So what have I already arranged? I've written a pilot script, highlighted each of the individual characters within the story and written a one minute pilot. When it's done, I'd like to distribute it to some TV people to listen to on a podcast style format to give me their opinions. If it doesn't work out, I will look at the various different options as to whether to turn it into a story with like a storybook or maybe go down the podcast route instead of making it into a TV series.";
+
+  const asr = speakingFeedback.cleanTranscriptionArtifacts(exactTranscript);
+  assert.ok(asr.cleanedTranscript.includes('TV/podcast'), 'TV stroke podcast -> TV/podcast');
+  assert.ok(asr.cleanedTranscript.includes('an estate in rural England'), 'a state -> an estate');
+  assert.ok(asr.repairedWords.includes('stroke'));
+  assert.ok(asr.repairedWords.includes('estate'));
+
+  const validated = feedbackSchema.validateSpeakingFeedback(
+    {
+      feedback: 'You explained your TV/podcast plan and back-up options clearly.',
+      nextStep: 'Use going to when you describe your next planned step.',
+      improvedResponse:
+        "My goal is to create a TV/podcast set on an estate in rural England. So far, I've written a one-minute pilot script and described each character in the story, which is something I want to talk about. When it's finished, I'm going to send it to TV people in a podcast-style format for their opinions. If that doesn't work out, I'll look at other options, like turning it into a storybook or a podcast.",
+      highlights: [
+        { substring: 'set on an estate', label: 'Natural phrase', explanation: 'Uses set on for the setting of a story.' },
+        { substring: "I'm going to send it", label: 'Plan with going to', explanation: 'Uses going to for a decided plan.' },
+        { substring: 'in a podcast-style format', label: 'Preposition fix', explanation: 'Uses in with format instead of on.' },
+        { substring: 'which is something I want to talk about', label: 'Filler', explanation: 'Must be stripped.' },
+        { substring: 'like turning it into a storybook', label: 'Extra fourth', explanation: 'Must be capped at 3.' },
+      ],
+      corrections: [
+        {
+          original: 'TV stroke podcast',
+          corrected_sentence: 'TV/podcast',
+          error_category: 'word_choice',
+          explanation: 'Use a slash.',
+          severity: 'minor',
+        },
+        {
+          original: 'around a state in rural England',
+          corrected_sentence: 'around an estate in rural England',
+          error_category: 'word_choice',
+          explanation: 'Use estate.',
+          severity: 'minor',
+        },
+        {
+          original: 'listen to on a podcast style format',
+          corrected_sentence: 'listen to in a podcast-style format',
+          error_category: 'preposition',
+          explanation: 'Use in a format, not on a format.',
+          severity: 'moderate',
+        },
+      ],
+      areas: {
+        grammar_and_vocabulary: { score: 4, strength: 'Clear vocabulary.', improvement: 'Use in with format.' },
+        discourse_management: { score: 4, strength: 'Good sequence.', improvement: 'Keep clauses concise.' },
+        pronunciation: null,
+        interactive_communication: null,
+      },
+    },
+    exactTranscript,
+    { weekNumber: 2, includeInteractive: false },
+  );
+
+  assert.equal(speakingFeedback.hasMeaninglessFiller(validated.improvedResponse), false, 'no filler in improvedResponse');
+  assert.equal(validated.improvedResponse.includes('which is something I want to talk about'), false);
+  assert.ok(validated.highlights.length >= 1 && validated.highlights.length <= 3, 'at most 3 highlighted changes');
+  for (const h of validated.highlights) {
+    assert.ok(validated.improvedResponse.includes(h.substring), 'every highlight is an exact substring');
+    assert.ok(h.explanation.length > 5, 'every highlight has a one-line B1 reason');
+  }
+  assert.equal(
+    validated.corrections.some((c) => /stroke|\ba state\b/i.test(c.original)),
+    false,
+    'never correct ASR transcription slips',
+  );
+
+  const tips = speakingFeedback.soundTips(exactTranscript, {
+    excludeWords: validated.repairedWords,
+    weekNumber: 2,
+  });
+  assert.ok(tips.length <= 2, 'at most 2 sound tips');
+  assert.equal(tips.some((t) => t.word.toLowerCase() === 'stroke'), false, 'never give a sound tip on "stroke"');
+  for (const tip of tips) {
+    assert.equal(levelGuard.isCommonB1B2Word(tip.word, 2), true, `${tip.word} must be on the B1-B2 word list`);
+  }
+});
+
+test('Labs targets load plain-English grammar with examples and <= 4 target words per week, empty with no week, and zero C1 terms across all weeks', () => {
+  const labsSource = read('src/app/labs/page.tsx');
+  assert.doesNotMatch(labsSource, /Hedging & concession|compelling evidence|concede a point|on balance/);
+
+  const c1JargonRegex = /\b(?:hedging|concession|compelling|concede|inversion|cleft|fronting|ellipsis|subsequently|ubiquitous|narrative tenses|present continuous|conditionals)\b/i;
+  for (const wk of details.weeks) {
+    const grammarLines = weekWritingSupport.plainGrammarTargetsForWeek(wk.number, wk.writing.grammar);
+    const words = weekWritingSupport.targetWordsForWeek(wk.writing.featuredWords, wk.writing.linkers);
+    assert.ok(grammarLines.length >= 1 && grammarLines.length <= 2);
+    for (const line of grammarLines) {
+      assert.ok(line.includes(':'), `plain grammar line should include an example: ${line}`);
+      assert.doesNotMatch(line, c1JargonRegex);
+    }
+    assert.ok(words.length >= 1 && words.length <= 4, `Week ${wk.number} has at most 4 target words`);
+    for (const w of words) {
+      assert.doesNotMatch(w, c1JargonRegex);
+    }
+  }
+  // Week 2 specifically shows Plans example + Week 2 target words.
+  const week2Grammar = weekWritingSupport.plainGrammarTargetsForWeek(2, details.weeks[1].writing.grammar);
+  assert.ok(week2Grammar[0].startsWith('Plans:'));
+  assert.deepEqual(
+    weekWritingSupport.targetWordsForWeek(details.weeks[1].writing.featuredWords, details.weeks[1].writing.linkers),
+    ['goal', 'intend to', 'career', 'look forward to'],
+  );
+
+  // Weeks 5-32 also never emit C1 terms.
+  for (let wk = 5; wk <= 32; wk += 1) {
+    for (const line of weekWritingSupport.plainGrammarTargetsForWeek(wk, '')) {
+      assert.doesNotMatch(line, c1JargonRegex);
+    }
+  }
+
+  // B1 writing helpers: 4 paragraph prompts with 2-3 starters each, task-matching grammar filter, and model highlights.
+  for (const wk of details.weeks) {
+    const paraPrompts = weekWritingSupport.buildParagraphPlanPrompts(
+      wk.writing.planFrame,
+      wk.writing.usefulLanguage,
+      wk.number,
+    );
+    assert.equal(paraPrompts.length, 4);
+    for (const p of paraPrompts) {
+      assert.ok(p.starters.length >= 2 && p.starters.length <= 3);
+    }
+    const modelHighlights = weekWritingSupport.highlightModelAnswer(
+      wk.writing.modelAnswer,
+      wk.number,
+      wk.writing.linkers,
+    );
+    assert.ok(modelHighlights.length >= 3);
+    for (const h of modelHighlights) {
+      assert.ok(wk.writing.modelAnswer.includes(h.substring));
+      assert.ok(h.explanation.length > 5);
+    }
+  }
 });
 
 test('teacher review route lets teachers override 0-5 area marks including Pronunciation and rejects invalid marks', async () => {

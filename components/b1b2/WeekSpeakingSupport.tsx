@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import SpeakingModelPlayer from './SpeakingModelPlayer';
 import SpeakingFeedbackDetails, { RecordButton } from './SpeakingFeedbackDetails';
-import ImprovedAnswerCard from './ImprovedAnswerCard';
 import { OptionalPart1Questions, OptionalPart3And4 } from './WeekSpeakingParts';
 import WeekSpeakingRecordings, { type WeekSpeakingRecordingLink } from './WeekSpeakingRecordings';
 import { phrasesUsed, splitHighlightedText } from '@/lib/curriculum/speaking-support.mjs';
@@ -89,9 +88,6 @@ function Comparison({
       </p>
       <p>
         <strong>Cue-card points found:</strong> {points(before)} → {points(after)}
-      </p>
-      <p className="text-sm text-stone-600">
-        Points are based on words found in the transcripts, not a mark.
       </p>
     </div>
   );
@@ -283,38 +279,15 @@ export default function WeekSpeakingSupport(props: Props) {
     }
   }
 
-  const canPractise = (take: WeekTake) => Boolean(take.id && checksRemaining > 0 && !blocked);
-  const details = (take: WeekTake, showImprovedInline = false) =>
+  const details = (take: WeekTake, showImprovedInline = true) =>
     take.feedback && (
-      <>
-        {!take.id && <p className="text-sm text-stone-600">Scores for older recordings used a different method and are not shown here.</p>}
-        <SpeakingFeedbackDetails
-          key={take.id ?? `legacy-${take.sequence}`}
-          feedback={take.feedback}
-          practice={take.practice}
-          practiceAllowed={canPractise(take)}
-          practiceUnavailableMessage={
-            !take.id
-              ? 'Extra sentence practice is not available for an older recording.'
-              : checksRemaining === 0
-                ? 'No weekly checks remain for this extra practice.'
-                : 'Wait until the current recording or check has finished.'
-          }
-          onPractice={
-            take.id
-              ? async (blob) => {
-                  const result = await save(blob, 'structure', take.id ?? undefined);
-                  if (!result) throw new Error('We could not check this sentence.');
-                  return result;
-                }
-              : undefined
-          }
-          onRecheckPractice={checkSaved}
-          showImprovedInline={showImprovedInline}
-          ttsKind="take"
-          ttsId={take.id}
-        />
-      </>
+      <SpeakingFeedbackDetails
+        key={take.id ?? `legacy-${take.sequence}`}
+        feedback={take.feedback}
+        showImprovedInline={showImprovedInline}
+        ttsKind="take"
+        ttsId={take.id}
+      />
     );
 
   const lastTry = tries.at(-1);
@@ -380,10 +353,7 @@ export default function WeekSpeakingSupport(props: Props) {
         <section className="space-y-3 rounded-xl border border-stone-200 p-4">
           <h3 className="font-semibold">2. Record · 60–90 seconds</h3>
           <p className="text-sm text-stone-600">
-            Listen to your recording and, if you like, record again up to twice. Only the version you keep is checked and counts for the week.
-          </p>
-          <p className="text-sm text-stone-600">
-            There are five checks in total for this weekly task. A first check or later try uses one; “Say it again” also uses one. Saving first versions uses none.
+            Listen to your recording and, if you like, record again up to twice before checking.
           </p>
           {!signedIn && (
             <p className="rounded-lg bg-amber-50 p-3 text-sm">
@@ -454,10 +424,9 @@ export default function WeekSpeakingSupport(props: Props) {
                   We could not check whether this recording counts. Please refresh the page.
                 </p>
               )}
-              {details(first, false)}
             </div>
           )}
-          <p className="text-sm text-stone-600">{props.checksUsed} of 5 weekly checks used.</p>
+          <p className="text-sm font-medium text-stone-700">Checks left: {checksRemaining}</p>
           <WeekSpeakingRecordings recordings={props.recordings} />
         </section>
 
@@ -475,25 +444,11 @@ export default function WeekSpeakingSupport(props: Props) {
                     'Try again using this example to help you.'
                   }
                 />
-                {improvedResponse && (
-                  <ImprovedAnswerCard
-                    improvedResponse={improvedResponse}
-                    highlights={firstHighlights}
-                    ttsKind="take"
-                    ttsId={first?.id ?? null}
-                  />
-                )}
+                {first && details(first, true)}
               </>
             ) : (
               <>
-                {improvedResponse ? (
-                  <ImprovedAnswerCard
-                    improvedResponse={improvedResponse}
-                    highlights={firstHighlights}
-                    ttsKind="take"
-                    ttsId={first?.id ?? null}
-                  />
-                ) : null}
+                {first && details(first, true)}
                 <AnotherExampleBlock
                   model={model}
                   usefulPhrases={usefulPhrases}
@@ -506,7 +461,7 @@ export default function WeekSpeakingSupport(props: Props) {
 
         {model && (
           <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-            <h3 className="font-semibold">4. Try again · optional</h3>
+            <h3 className="font-semibold">4. Record again · optional</h3>
             <p className="text-sm">
               {props.retryGoal} You can make up to three tries while checks remain.
             </p>

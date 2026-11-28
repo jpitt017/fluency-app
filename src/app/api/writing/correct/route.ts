@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = buildEvalCacheKey({
       endpoint: ENDPOINT,
       model: MODEL_ID,
-      prompt: `writing-cambridge-v4|w:${weekNumber ?? ''}|${prompt}|${targetKeywords.join(',')}`,
+      prompt: `writing-cambridge-v5|w:${weekNumber ?? ''}|${prompt}|${targetKeywords.join(',')}`,
       input: text,
       variety,
     });
@@ -217,13 +217,18 @@ ${wrapLearnerSubmission(text)}`;
 
     if (supabase && guard.userId) {
       if (taskId) {
+        const revisedFromUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          revisedFrom,
+        )
+          ? revisedFrom
+          : null;
         const { data: inserted, error: insertError } = await supabase
           .from('writing_submissions')
           .insert({
             user_id: guard.userId,
             task_id: taskId,
             lesson_id: lessonId || null,
-            revised_from: revisedFrom || null,
+            revised_from: revisedFromUuid,
             body: text,
             word_count: wordCount,
             task_response: validated.areas.content.score,

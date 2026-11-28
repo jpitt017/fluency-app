@@ -206,21 +206,34 @@ export async function POST(req: NextRequest) {
       cacheHit = evaluation.cacheHit;
       promptTokens = evaluation.promptTokens;
       completionTokens = evaluation.completionTokens;
+      const cleanedTranscript =
+        typeof evaluation.validated?.cleanedTranscript === 'string' &&
+        evaluation.validated.cleanedTranscript.trim()
+          ? evaluation.validated.cleanedTranscript
+          : transcript;
+      const repairedWords = Array.isArray(evaluation.validated?.repairedWords)
+        ? evaluation.validated.repairedWords
+        : [];
       const cueChecklist =
         evaluation.cueChecklist ??
-        cueChecklistFromEvidence(evaluation.cuePoints, transcript, config.planNotes);
+        cueChecklistFromEvidence(evaluation.cuePoints, cleanedTranscript, config.planNotes);
       const highlightsToReport =
         sourceHighlights.length > 0
           ? sourceHighlights
           : phrases.map((p) => ({ substring: p, label: p }));
       const usedHighlights =
         info.kind === 'retry' && highlightsToReport.length > 0
-          ? detectUsedHighlights(transcript, highlightsToReport)
+          ? detectUsedHighlights(cleanedTranscript, highlightsToReport)
           : [];
       feedback = {
-        transcript,
+        transcript: cleanedTranscript,
         summary: evaluation.validated.feedback,
         feedback: evaluation.validated.feedback,
+        nextStep:
+          evaluation.validated.nextStep ??
+          evaluation.validated.improvements?.[0] ??
+          evaluation.validated.areas?.grammar_and_vocabulary?.improvement ??
+          null,
         areas: evaluation.validated.areas ?? null,
         improvedResponse: evaluation.validated.improvedResponse ?? null,
         highlights: evaluation.validated.highlights ?? [],
@@ -232,14 +245,21 @@ export async function POST(req: NextRequest) {
         cuePoints: evaluation.cuePoints,
         cueChecklist,
         fluency,
-        soundTips: soundTips(transcript),
+        soundTips: soundTips(cleanedTranscript, {
+          excludeWords: repairedWords,
+          weekNumber: info.week,
+        }),
       };
     }
+    const finalTranscript =
+      typeof feedback.transcript === 'string' && feedback.transcript.trim()
+        ? feedback.transcript
+        : transcript;
     const saved = await admin.rpc('finish_week_speaking_check', {
       p_user_id: user.id,
       p_check_id: checkId,
       p_status: 'succeeded',
-      p_transcript: transcript,
+      p_transcript: finalTranscript,
       p_feedback: feedback,
     });
     if (saved.error || saved.data !== true) {

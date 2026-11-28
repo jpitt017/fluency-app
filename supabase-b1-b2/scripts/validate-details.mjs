@@ -33,7 +33,7 @@ details.weeks?.forEach((week, index) => {
   check(Boolean(week.cefr?.level?.trim()), `week ${position} needs a CEFR level`);
   check(Boolean(week.grammar?.main?.trim()), `week ${position} needs main grammar notes`);
   check(Boolean(week.grammar?.light?.trim()), `week ${position} needs light grammar notes`);
-  check(Boolean(week.writing?.words?.[0] === 120 && week.writing?.words?.[1] === 150), `week ${position} writing must be 120–150 words`);
+  check(Boolean(week.writing?.words?.[0] === 100 && week.writing?.words?.[1] === 120), `week ${position} writing must be 100–120 words`);
   check(Boolean(week.conversation?.openingLine?.trim()), `week ${position} needs a conversation scenario`);
   check(week.vocabulary?.core?.length === expectedCore[index], `week ${position} core count is wrong`);
   check(week.vocabulary?.collocations?.length === expectedCollocations[index], `week ${position} collocation count is wrong`);
@@ -104,7 +104,7 @@ details.weeks?.forEach((week, index) => {
   const writing = week.writing;
   check(String(writing?.status).includes('pilot draft'), `week ${index + 1} writing must be marked as pilot draft`);
   check(Boolean(writing?.prompt?.trim()), `week ${index + 1} needs a writing prompt`);
-  check(writing?.words?.[0] === 120 && writing?.words?.[1] === 150, `week ${index + 1} writing must be 120–150 words`);
+  check(writing?.words?.[0] === 100 && writing?.words?.[1] === 120, `week ${index + 1} writing must be 100–120 words`);
   check(writing?.requiredPoints?.length === [5, 6, 5, 5][index], `week ${index + 1} needs the revised number of required points`);
   check(writing?.planFrame?.length === 4, `week ${index + 1} needs a four-step plan frame`);
   check(writing?.usefulLanguage?.length >= 5, `week ${index + 1} needs useful language`);

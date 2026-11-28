@@ -12,7 +12,10 @@ import {
   splitSentences,
 } from './level-guard.mjs';
 import {
+  MAX_IMPROVED_HIGHLIGHTS,
+  cleanTranscriptionArtifacts,
   isShortOrOffTopicTranscript,
+  stripMeaninglessFiller,
   validateImprovedHighlights,
   type ImprovedHighlight,
 } from './speaking-feedback.mjs';
@@ -181,7 +184,7 @@ export const SPEAKING_AREA_SPECS: Record<
   },
 };
 
-export const OVER_WORD_LIMIT_TIP = 'Try to keep to 120–150 words.';
+export const OVER_WORD_LIMIT_TIP = 'Try to keep to 100–120 words.';
 export const SHORT_OR_OFF_TOPIC_MESSAGE = 'Try again using this example to help you.';
 
 const WEEK_PRIORITY_CATEGORIES: Record<number, ErrorCategory[]> = {
@@ -300,11 +303,15 @@ export const ImprovedHighlightSchema = z.object({
   substring: z.string().trim().min(1).max(160),
   label: z.string().trim().min(1).max(70),
   explanation: z.string().trim().min(1).max(180),
+  before: z.string().trim().max(160).optional(),
 });
 
 export const SpeakingFeedbackSchema = z.object({
+  cleanedTranscript: z.string().trim(),
+  repairedWords: z.array(z.string()),
+  nextStep: z.string().trim().min(1),
   improvedResponse: z.string().trim().min(1),
-  highlights: z.array(ImprovedHighlightSchema).max(4),
+  highlights: z.array(ImprovedHighlightSchema).max(MAX_IMPROVED_HIGHLIGHTS),
   showExampleFirst: z.boolean(),
   examplePromptMessage: z.string().nullable(),
   offTopic: z.boolean(),
@@ -404,7 +411,7 @@ ${STRETCH_MARKING_RULE}- Write every "strength", "improvement", "explanation", a
 - Never claim to be official or endorsed by Cambridge, and avoid technical linguistic jargon.
 - Use British English spelling in feedback ("colour", "practise" as a verb, "organised", "centre", "programme").
 - Preferred English variety for "corrected": ${variety} English.
-- Word count rules: target is 120–150 words. Under 100 words caps "content" at 3. Over 180 words includes the tip "${OVER_WORD_LIMIT_TIP}".
+- Word count rules (Weeks 1–8): target is 100–120 words. Under 80 words caps "content" at 3. Over 150 words includes the tip "${OVER_WORD_LIMIT_TIP}".
 - If the learner's text has NO errors, return "corrections": [] and "errorPatterns": []. Keep clear, correct sentences exactly as they are.
 - Return AT MOST 3 items in "corrections", putting mistakes with this week's grammar first.
 - Every item in "corrections" MUST include:
@@ -476,7 +483,7 @@ CRITICAL SPEAKING TRANSCRIPT RULES:
 - You ONLY receive a speech-to-text transcript (from Whisper), NOT raw audio.
 - DO NOT guess or score pronunciation, word stress, intonation, or accent. Pronunciation is marked by a teacher only — NEVER mention pronunciation in any field.
 - Never infer or penalise speaking speed or pauses from punctuation or transcript length.
-- Ignore whisper transcription artefacts (missing punctuation, minor capitalisation, filler "uh/um"). Focus on spoken grammar, vocabulary, linking, and task content.
+- Before giving feedback, spot obvious speech-to-text transcription mistakes (for example "TV stroke podcast" -> "TV/podcast", or "a state" -> "an estate" when context shows a country/housing estate) and list them in "transcriptionFixes": [{ "heard": "TV stroke podcast", "intended": "TV/podcast" }]. Silently use the intended words in "improvedResponse" and NEVER treat transcription mistakes as learner errors.
 ${STRETCH_MARKING_RULE}
 ${LEVEL_RULES_PROMPT_BLOCK}
 
@@ -493,25 +500,31 @@ ${interactiveBlock}
 - Write every "strength" and "improvement" as ONE plain B1 sentence in British English.
 
 "YOUR ANSWER, IMPROVED" ("improvedResponse" & "highlights"):
-- Rewrite the learner's own spoken answer into "improvedResponse":
+- Rewrite the learner's own spoken answer into ONE clean version in "improvedResponse":
   - Keep ONLY their ideas; do NOT add new facts, places, people, or details they did not mention.
-  - Fix errors and keep clear sentences as they are.
+  - Fix real errors and keep clear, natural learner sentences as they are.
+  - Every change MUST fix an error or add one of this week's structures. NEVER add filler with no meaning (for example NEVER add "which is something I want to talk about").
   - Keep roughly the same length (within about 20% of their word count when they spoke 20+ words).
   - Use ${variety} English, B1–B2 words only, and sentences of at most 20 words.
-  - Naturally use 2–4 of these target structures where they fit the learner's ideas:
+  - Naturally use up to 3 of these target structures where they genuinely fit the learner's ideas:
 ${weekStructures.map((s) => `    * ${s}`).join('\n')}
-- Return those 2–4 used target structures in "highlights":
-  - "substring": an EXACT verbatim substring copied character-for-character from "improvedResponse"
-  - "label": short B1 label (2–5 words, e.g. "Present perfect with since")
-  - "explanation": one-line plain B1 explanation (1 short sentence)
+- Return AT MOST 3 changed phrases in "highlights" (only phrases that actually changed compared with what the learner said):
+  - "substring": an EXACT verbatim changed substring copied character-for-character from "improvedResponse"
+  - "before": the learner's original wording that changed (optional if added cleanly)
+  - "label": short B1 label (2–4 words, e.g. "Present perfect with since")
+  - "explanation": one-line plain B1 reason why this change helps (1 short sentence)
+- Return "nextStep": ONE short plain B1 sentence telling the learner one clear thing to try next time.
 - Set "offTopic": true ONLY if the learner's transcript has nothing to do with the prompt.
 
 CORRECTIONS:
-- Return AT MOST 3 items in "corrections", putting mistakes with this week's grammar first.
+- Return AT MOST 3 items in "corrections", putting mistakes with this week's grammar first (never include speech-to-text transcription slips).
 - Each correction needs "original", "corrected_sentence" (<= 20 words, B1–B2 words only), "error_category" (${CATEGORY_LIST_PROMPT}), "explanation" (1 plain B1 sentence), and "severity".
 
 Return ONLY valid JSON with this exact structure (no overall score, no pronunciation field):
 {
+  "transcriptionFixes": [
+    { "heard": "TV stroke podcast", "intended": "TV/podcast" }
+  ],
   "areas": {
     "grammar_and_vocabulary": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
     "discourse_management": { "score": 4, "strength": "One plain B1 sentence.", "improvement": "One plain B1 sentence." },
@@ -519,12 +532,14 @@ Return ONLY valid JSON with this exact structure (no overall score, no pronuncia
   },
   "offTopic": false,
   "feedback": "1–2 encouraging plain B1 sentences.",
-  "improvedResponse": "The learner's own ideas with errors fixed, within ~20% length, B1–B2 words only, <= 20 words per sentence.",
+  "nextStep": "One clear B1 thing to try next time.",
+  "improvedResponse": "The learner's own ideas with errors fixed, no filler, within ~20% length, B1–B2 words only, <= 20 words per sentence.",
   "highlights": [
     {
-      "substring": "exact substring from improvedResponse",
-      "label": "Short structure label",
-      "explanation": "One-line plain B1 explanation."
+      "substring": "exact changed substring from improvedResponse",
+      "before": "what the learner said",
+      "label": "Short B1 label",
+      "explanation": "One-line plain B1 reason."
     }
   ],
   "strengths": ["1–2 short strengths"],
@@ -625,8 +640,14 @@ export function validateWritingFeedback(
   const legacyRubric = obj.rubric && typeof obj.rubric === 'object' ? (obj.rubric as Record<string, unknown>) : {};
 
   const wordCount = countPlainWords(originalText);
-  const contentCappedUnder100 = !options.skipUnder100Cap && wordCount > 0 && wordCount < 100;
-  const wordCountTip = wordCount > 180 ? OVER_WORD_LIMIT_TIP : null;
+  const isWeeks9Plus = typeof options.weekNumber === 'number' && options.weekNumber > 8;
+  const minUncappedWords = isWeeks9Plus ? 100 : 80;
+  const maxWordsBeforeTip = isWeeks9Plus ? 180 : 150;
+  const wordLimitTipText = isWeeks9Plus
+    ? 'Try to keep to 120–150 words.'
+    : OVER_WORD_LIMIT_TIP;
+  const contentCappedUnder100 = !options.skipUnder100Cap && wordCount > 0 && wordCount < minUncappedWords;
+  const wordCountTip = wordCount > maxWordsBeforeTip ? wordLimitTipText : null;
 
   function parseArea(
     key: WritingAreaKey,
@@ -644,7 +665,9 @@ export function validateWritingFeedback(
     }
     const improvementFallback =
       key === 'content' && contentCappedUnder100
-        ? 'Add more detail so you reach 120–150 words and cover every part.'
+        ? isWeeks9Plus
+          ? 'Add more detail so you reach 120–150 words and cover every part.'
+          : 'Add a little more detail so you reach 100–120 words and cover every part.'
         : defaultImprovement;
     return {
       score,
@@ -850,10 +873,27 @@ export function validateSpeakingFeedback(
       : null,
   };
 
-  const corrections = sanitizeCorrections(obj.corrections, {
-    learnerText: originalTranscript,
+  const { cleanedTranscript, repairedWords } = cleanTranscriptionArtifacts(
+    originalTranscript,
+    Array.isArray(obj.transcriptionFixes)
+      ? (obj.transcriptionFixes as Array<{ heard: string; intended: string }>)
+      : null,
+  );
+  const repairedSet = new Set(repairedWords.map((w) => w.toLowerCase()));
+
+  const rawSanitizedCorrections = sanitizeCorrections(obj.corrections, {
+    learnerText: cleanedTranscript,
     weekNumber: options.weekNumber,
     stripPronunciation: true,
+  });
+  // Never correct ASR speech-to-text mistakes ("TV stroke podcast", "a state" -> "an estate")
+  const corrections = rawSanitizedCorrections.filter((item) => {
+    const origLower = item.original.toLowerCase();
+    if (/\bstroke\b/.test(origLower) && repairedSet.has('stroke')) return false;
+    if (/\ba state\b/.test(origLower) && repairedSet.has('estate')) return false;
+    const origWords = origLower.match(/[a-z0-9]+/g) ?? [];
+    if (origWords.length > 0 && origWords.every((w) => repairedSet.has(w))) return false;
+    return true;
   });
   const derivedPatterns = Array.from(new Set(corrections.map((c) => c.error_category)));
   const rawPatterns = Array.isArray(obj.errorPatterns)
@@ -876,40 +916,55 @@ export function validateSpeakingFeedback(
         weekNumber: options.weekNumber,
         maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
       })
-    : 'You communicated your main message clearly. Read your improved answer below and try the highlighted structures.';
+    : 'You shared your main ideas clearly.';
 
   const rawImproved =
     typeof obj.improvedResponse === 'string' && obj.improvedResponse.trim()
-      ? obj.improvedResponse.trim()
-      : originalTranscript.trim() || 'No speech detected.';
-  const simplifiedImproved = simplifyToB1B2(rawImproved, {
+      ? stripMeaninglessFiller(obj.improvedResponse.trim())
+      : cleanedTranscript || 'No speech detected.';
+  const withRepairsApplied = cleanTranscriptionArtifacts(rawImproved).cleanedTranscript;
+  const simplifiedImproved = simplifyToB1B2(withRepairsApplied, {
     weekNumber: options.weekNumber,
-    learnerText: originalTranscript,
+    learnerText: cleanedTranscript,
     maxSentenceWords: MAX_B1B2_SENTENCE_WORDS,
   });
   const improvedResponse =
-    clampLengthNearTranscript(simplifiedImproved, originalTranscript) ||
-    originalTranscript.trim() ||
+    stripMeaninglessFiller(clampLengthNearTranscript(simplifiedImproved, cleanedTranscript)) ||
+    cleanedTranscript ||
     'No speech detected.';
 
   const highlights: ImprovedHighlight[] = validateImprovedHighlights(
     obj.highlights,
     improvedResponse,
     options.weekNumber ?? null,
+    {
+      learnerTranscript: cleanedTranscript,
+      excludeWords: repairedWords,
+      corrections,
+    },
+  );
+  const improvementsList = cleanList(obj.improvements);
+  const nextStep = oneB1Sentence(
+    obj.nextStep ?? improvementsList[0] ?? areas.grammar_and_vocabulary.improvement,
+    areas.grammar_and_vocabulary.improvement,
+    { weekNumber: options.weekNumber, stripPronunciation: true },
   );
   const offTopic = Boolean(obj.offTopic);
-  const showExampleFirst = isShortOrOffTopicTranscript(originalTranscript, offTopic);
+  const showExampleFirst = isShortOrOffTopicTranscript(cleanedTranscript, offTopic);
   const examplePromptMessage = showExampleFirst ? SHORT_OR_OFF_TOPIC_MESSAGE : null;
 
   return SpeakingFeedbackSchema.parse({
+    cleanedTranscript: cleanedTranscript || 'No speech detected.',
+    repairedWords,
+    nextStep,
     improvedResponse,
     highlights,
     showExampleFirst,
     examplePromptMessage,
     offTopic,
-    feedback: feedback || 'You communicated your main message clearly.',
+    feedback: feedback || 'You shared your main ideas clearly.',
     strengths: cleanList(obj.strengths),
-    improvements: cleanList(obj.improvements),
+    improvements: improvementsList,
     corrections,
     errorPatterns: corrections.length > 0 ? derivedPatterns : rawPatterns,
     tips: cleanList(obj.tips),

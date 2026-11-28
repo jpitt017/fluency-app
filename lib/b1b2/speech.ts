@@ -136,9 +136,9 @@ export function clearImprovedAnswerTtsCache() {
 }
 
 /**
- * Plays British English TTS for "Your answer, improved", cached per attempt/take,
- * capped at 5 new server syntheses a day, and spending 0 AI units. Uses
- * server-cached British MP3 when available and falls back to British Web Speech (`en-GB`).
+ * Plays British English TTS for "Your answer, improved".
+ * When server TTS is off by default (`IMPROVED_ANSWER_TTS_ENABLED` not enabled) or
+ * capped (2/day per learner, 40,000 chars/month), plays the browser's `en-GB` voice ("Computer voice").
  */
 export async function playImprovedAnswerTts(params: {
   cacheKey: string;

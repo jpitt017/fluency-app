@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
 import { parseWeekSpeakingTakePath } from '../../lib/b1b2/week-speaking-recordings.mjs';
-import { cueChecklistFromEvidence, detectUsedHighlights, fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
+import * as speakingFeedbackAll from '../../lib/b1b2/speaking-feedback.mjs';
 
 const details = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json')).weeks[0];
@@ -128,7 +128,7 @@ function fixture(options = {}) {
         completionTokens: 2,
       };
     } },
-    '@/lib/b1b2/speaking-feedback.mjs': { cueChecklistFromEvidence, detectUsedHighlights, fluencyFromWhisper, soundTips, structureUsed },
+    '@/lib/b1b2/speaking-feedback.mjs': speakingFeedbackAll,
     '@/lib/b1b2/prompt-guard': { sanitizeLearnerText: (value, max) => ({ text: String(value ?? '').trim().slice(0, max) }) },
     '@/lib/b1b2/provider-failure-response': { providerFailureResponse: async () => ({ status: 503, errorMessage: 'redacted', response: { status: 503, body: { error: 'Please try again.' } } }) },
     '@/lib/b1b2/observability': { logAiRequest: async () => {} },

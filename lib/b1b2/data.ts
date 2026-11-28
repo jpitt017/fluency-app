@@ -2,6 +2,11 @@ import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from './week-speaking-recordings.mjs';
+import {
+  IMPROVED_TTS_ENDPOINT,
+  madridMonthStartIso,
+  resolveMonthlyTtsCharLimit,
+} from './improved-tts-config.mjs';
 import { orderQueue, planQueue } from './review-queue.mjs';
 import type {
   AiObservabilitySummary,
@@ -443,7 +448,30 @@ export async function loadObservabilitySummary(days = 7): Promise<AiObservabilit
 
   const { data, error } = await supabase.rpc('get_ai_observability_summary', { p_days: days });
   if (error || !data) return null;
-  return data as AiObservabilitySummary;
+
+  let ttsMonthlyChars = 0;
+  const admin = createAdminSupabase();
+  if (admin) {
+    const { data: ttsRows } = await admin
+      .from('ai_request_logs')
+      .select('input_chars')
+      .eq('endpoint', IMPROVED_TTS_ENDPOINT)
+      .eq('cache_hit', false)
+      .eq('status_code', 200)
+      .gte('created_at', madridMonthStartIso());
+    if (Array.isArray(ttsRows)) {
+      ttsMonthlyChars = ttsRows.reduce(
+        (sum, row) => sum + (typeof row?.input_chars === 'number' && row.input_chars > 0 ? row.input_chars : 0),
+        0,
+      );
+    }
+  }
+
+  return {
+    ...(data as AiObservabilitySummary),
+    tts_monthly_chars: ttsMonthlyChars,
+    tts_monthly_char_limit: resolveMonthlyTtsCharLimit(process.env.ELEVENLABS_MONTHLY_CHAR_LIMIT),
+  };
 }
 
 /** Learner-facing placement questions: no answer indices, via the safe view. */

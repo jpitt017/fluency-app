@@ -220,13 +220,15 @@ export default function SpeakingLab({
               <strong>Pronunciation tip:</strong> {pronunciationFocus}
             </p>
           )}
-          <p className="text-[11px] text-emerald-900/80">
-            The AI reads what you said and checks your ideas, grammar and words. Pronunciation is marked by your teacher; to practise sounds, use Pronunciation practice.
-          </p>
           {(lessonContext?.targetGrammar?.length ?? 0) > 0 && (
-            <p className="text-xs text-stone-700">
-              <strong>Target grammar:</strong> {lessonContext?.targetGrammar?.join(' · ')}
-            </p>
+            <div className="space-y-1 text-xs text-stone-700">
+              <strong>Grammar to try:</strong>
+              <ul className="list-disc space-y-0.5 pl-4">
+                {lessonContext?.targetGrammar?.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
           )}
           {languages.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -249,42 +251,44 @@ export default function SpeakingLab({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-4">
-        {!isRecording ? (
-          <button
-            type="button"
-            onClick={startRecording}
-            disabled={isAnalyzing || isStarting}
-            className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
-          >
-            {isStarting
-              ? 'Starting microphone…'
-              : isAnalyzing
-                ? 'Transcribing & analysing…'
-                : recordButtonLabel}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={stopRecording}
-            className="animate-pulse rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white"
-          >
-            Stop recording
-          </button>
-        )}
-        <canvas
-          ref={canvasRef}
-          width={160}
-          height={36}
-          aria-label="Live audio waveform"
-          className={`rounded-lg border border-stone-700 bg-stone-900 ${isRecording ? 'opacity-100' : 'opacity-40'}`}
-        />
-        {isRecording && (
-          <span aria-live="polite" className="text-xs font-medium text-rose-600">
-            Recording live…
-          </span>
-        )}
-      </div>
+      {(!feedback || isRecording || isAnalyzing || isStarting) && (
+        <div className="flex flex-wrap items-center gap-4">
+          {!isRecording ? (
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={isAnalyzing || isStarting}
+              className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
+            >
+              {isStarting
+                ? 'Starting microphone…'
+                : isAnalyzing
+                  ? 'Transcribing & analysing…'
+                  : recordButtonLabel}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="animate-pulse rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Stop recording
+            </button>
+          )}
+          <canvas
+            ref={canvasRef}
+            width={160}
+            height={36}
+            aria-label="Live audio waveform"
+            className={`rounded-lg border border-stone-700 bg-stone-900 ${isRecording ? 'opacity-100' : 'opacity-40'}`}
+          />
+          {isRecording && (
+            <span aria-live="polite" className="text-xs font-medium text-rose-600">
+              Recording live…
+            </span>
+          )}
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -320,6 +324,17 @@ export default function SpeakingLab({
             ttsKind="attempt"
             ttsId={feedback.attemptId ?? null}
           />
+          {!isRecording && !isAnalyzing && !isStarting && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={startRecording}
+                className="min-h-11 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+              >
+                Record again
+              </button>
+            </div>
+          )}
         </div>
       )}
 

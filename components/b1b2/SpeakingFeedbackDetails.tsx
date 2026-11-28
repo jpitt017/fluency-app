@@ -2,20 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { speakPhrase } from '@/lib/b1b2/speech';
-import {
-  structureUsed,
-  type ShortSpeakingFeedback,
-  type StructurePoint,
-} from '@/lib/b1b2/speaking-feedback.mjs';
+import type { ShortSpeakingFeedback } from '@/lib/b1b2/speaking-feedback.mjs';
 import ImprovedAnswerCard from './ImprovedAnswerCard';
-
-type PracticeResult = { transcript: string; used: boolean };
-type PracticeState = {
-  id: string;
-  status: string;
-  transcript: string | null;
-  used: boolean | null;
-} | null;
 
 const SPEAKING_AREAS_META = [
   {
@@ -191,165 +179,47 @@ function SoundPractice({ word, label, tip }: { word: string; label: string; tip:
   );
 }
 
-async function transcribePractice(blob: Blob, point: StructurePoint): Promise<PracticeResult> {
-  const form = new FormData();
-  form.set('audio', blob, 'sentence.webm');
-  const response = await fetch('/api/speaking/transcribe', { method: 'POST', body: form });
-  const data = (await response.json()) as { transcript?: string; error?: string };
-  if (!response.ok || !data.transcript) {
-    throw new Error(data.error || 'We could not check this sentence.');
-  }
-  return { transcript: data.transcript, used: structureUsed(data.transcript, point.structure) };
-}
-
 export default function SpeakingFeedbackDetails({
   feedback,
-  practice = null,
-  onPractice,
-  onRecheckPractice,
-  practiceAllowed = true,
-  practiceUnavailableMessage = 'No weekly checks remain for this extra practice.',
   showImprovedInline = false,
   ttsKind,
   ttsId,
 }: {
   feedback: ShortSpeakingFeedback;
-  practice?: PracticeState;
-  onPractice?: (blob: Blob) => Promise<PracticeResult>;
-  onRecheckPractice?: (takeId: string) => Promise<PracticeResult>;
-  practiceAllowed?: boolean;
-  practiceUnavailableMessage?: string;
   showImprovedInline?: boolean;
   ttsKind?: 'attempt' | 'take';
   ttsId?: string | null;
 }) {
-  const [localResult, setLocalResult] = useState<PracticeResult | null>(null);
-  const [attempted, setAttempted] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const point = feedback.structure;
-  const savedResult =
-    practice?.status === 'checked' && practice.transcript && typeof practice.used === 'boolean'
-      ? { transcript: practice.transcript, used: practice.used }
-      : null;
-  const result = localResult ?? savedResult;
-
-  async function run(blob: Blob) {
-    if (!point) return;
-    setAttempted(true);
-    setBusy(true);
-    setError('');
-    try {
-      setLocalResult(await (onPractice ? onPractice(blob) : transcribePractice(blob, point)));
-    } catch (cause) {
-      setAttempted(false);
-      setError(cause instanceof Error ? cause.message : 'We could not check this sentence.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function recheck() {
-    if (!practice || !onRecheckPractice) return;
-    setBusy(true);
-    setError('');
-    try {
-      setLocalResult(await onRecheckPractice(practice.id));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'We could not check this sentence.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const f = feedback.fluency;
   const areas = feedback.areas;
   const teacherMarks = feedback.teacherAreaMarks;
+  const oneThingToTry =
+    feedback.nextStep ||
+    areas?.grammar_and_vocabulary?.improvement ||
+    areas?.discourse_management?.improvement ||
+    feedback.summary ||
+    feedback.feedback ||
+    '';
 
   return (
-    <div className="space-y-4 text-sm">
-      {feedback.transcript && (
-        <div>
-          <p className="text-xs font-bold uppercase text-stone-500">Your transcript</p>
-          <p className="mt-1 whitespace-pre-line">{feedback.transcript}</p>
-        </div>
+    <div className="space-y-3 text-sm">
+      {/* 1. Your answer, improved */}
+      {showImprovedInline && feedback.improvedResponse && (
+        <ImprovedAnswerCard
+          improvedResponse={feedback.improvedResponse}
+          highlights={feedback.highlights ?? []}
+          ttsKind={ttsKind}
+          ttsId={ttsId}
+        />
       )}
 
-      {(areas || teacherMarks) && (
-        <section aria-label="Speaking feedback by area" className="space-y-2.5">
-          <p className="text-xs font-bold uppercase text-stone-500">
-            Speaking areas (0–5 where marked)
-          </p>
-          <div className="grid gap-2.5 sm:grid-cols-2">
-            {SPEAKING_AREAS_META.map((meta) => {
-              const aiItem = areas ? areas[meta.key] : null;
-              const teacherOverride = teacherMarks?.[meta.key];
-              const effectiveScore =
-                typeof teacherOverride === 'number'
-                  ? teacherOverride
-                  : typeof aiItem?.score === 'number'
-                    ? aiItem.score
-                    : null;
-              return (
-                <div
-                  key={meta.key}
-                  className="space-y-1.5 rounded-lg border border-stone-200 bg-white p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-stone-900">{meta.label}</span>
-                    {effectiveScore !== null ? (
-                      <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-800">
-                        {effectiveScore} / 5
-                        {typeof teacherOverride === 'number' ? ' · teacher' : ''}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
-                        {meta.emptyBadge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-stone-500">{meta.question}</p>
-                  {aiItem && (
-                    <>
-                      <p className="text-xs text-emerald-900">
-                        <strong>Good:</strong> {aiItem.strength}
-                      </p>
-                      <p className="text-xs text-stone-700">
-                        <strong>Next step:</strong> {aiItem.improvement}
-                      </p>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {(feedback.cueChecklist?.length ?? 0) > 0 && (
+      {/* 2. One thing to try next time */}
+      {oneThingToTry && (
         <section
-          aria-label="Cue points checklist"
-          className="space-y-2 rounded-lg border border-stone-200 bg-white p-3"
+          aria-label="One thing to try next time"
+          className="space-y-1 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5"
         >
-          <p className="text-xs font-bold uppercase text-stone-500">
-            Cue points covered (checklist)
-          </p>
-          <ul className="grid gap-1.5 sm:grid-cols-2">
-            {feedback.cueChecklist?.map((item) => (
-              <li key={item.label} className="flex items-center gap-2 text-xs text-stone-800">
-                <span
-                  aria-hidden="true"
-                  className={`font-bold ${item.covered ? 'text-emerald-700' : 'text-stone-400'}`}
-                >
-                  {item.covered ? '✓' : '✗'}
-                </span>
-                <span>
-                  {item.label}{' '}
-                  <span className="sr-only">{item.covered ? 'covered' : 'not yet covered'}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <h4 className="font-semibold text-emerald-950">One thing to try next time</h4>
+          <p className="text-stone-800">{oneThingToTry}</p>
         </section>
       )}
 
@@ -361,18 +231,18 @@ export default function SpeakingFeedbackDetails({
           <p className="text-xs font-bold uppercase text-indigo-900">
             Structures from your improved answer
           </p>
-          <ul className="space-y-1 text-xs">
+          <ul className="space-y-1 text-sm">
             {feedback.usedHighlights?.map((item) => (
               <li key={item.substring} className="flex items-center gap-2 text-stone-800">
                 <span
                   aria-hidden="true"
-                  className={`font-bold ${item.used ? 'text-emerald-700' : 'text-stone-400'}`}
+                  className={`font-bold ${item.used ? 'text-emerald-700' : 'text-stone-500'}`}
                 >
                   {item.used ? '✓' : '✗'}
                 </span>
                 <span>
                   <strong>{item.label}:</strong> &ldquo;{item.substring}&rdquo; (
-                  {item.used ? 'used in this try' : 'not found in this try'})
+                  {item.used ? 'used in this try' : 'not yet used'})
                 </span>
               </li>
             ))}
@@ -380,92 +250,108 @@ export default function SpeakingFeedbackDetails({
         </section>
       )}
 
-      {showImprovedInline && feedback.improvedResponse && (
-        <ImprovedAnswerCard
-          improvedResponse={feedback.improvedResponse}
-          highlights={feedback.highlights ?? []}
-          ttsKind={ttsKind}
-          ttsId={ttsId}
-        />
-      )}
-
-      {f && (
-        <div className="rounded-lg bg-sky-50 p-3" aria-label="Fluency information">
-          <p className="font-semibold">Fluency</p>
-          <p>
-            {f.wordsPerMinute === null
-              ? 'Speaking speed is not available.'
-              : `About ${f.wordsPerMinute} words a minute.`}{' '}
-            {f.pauses === null
-              ? 'Pause information is not available.'
-              : `${f.pauses} ${f.pauses === 1 ? 'pause' : 'pauses'} over one second between speech sections.`}
-          </p>
-          <p className="mt-1 text-xs text-stone-600">
-            Only gaps between transcript sections are counted. Speed and pauses do not change your marks.
-          </p>
-        </div>
-      )}
-
-      {point && (
-        <section
-          className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3"
-          aria-label="Build a better sentence"
-        >
-          <h4 className="font-semibold">Build a better sentence</h4>
-          <p>
-            <span className="font-medium">You said:</span> {point.original}
-          </p>
-          <p>
-            <span className="font-medium">Try:</span> {point.upgraded}
-          </p>
-          <p>{point.explanation}</p>
-          {!result && !practice && (
-            <RecordButton
-              label={busy ? 'Checking…' : 'Say it again'}
-              disabled={busy || attempted || !practiceAllowed}
-              onRecorded={(blob) => void run(blob)}
-            />
-          )}
-          {!practiceAllowed && !result && (
-            <p className="text-xs text-stone-600">{practiceUnavailableMessage}</p>
-          )}
-          {practice && ['ready', 'checking'].includes(practice.status) && onRecheckPractice && (
-            <button
-              type="button"
-              disabled={busy || !practiceAllowed}
-              onClick={() => void recheck()}
-              className="min-h-11 rounded-lg border border-indigo-300 bg-white px-3 py-2 font-semibold disabled:opacity-50"
-            >
-              {busy ? 'Checking…' : 'Check this saved sentence again'}
-            </button>
-          )}
-          {result && (
-            <p role="status" className="rounded-lg bg-white p-2">
-              {result.used
-                ? `We found ${point.structure} in your transcript.`
-                : `We could not find ${point.structure} in your transcript.`}{' '}
-              This checks the pattern, not all your grammar or pronunciation.
-            </p>
-          )}
-          {error && (
-            <p role="alert" className="text-rose-700">
-              {error}
-            </p>
-          )}
-        </section>
-      )}
-
+      {/* 3. Practise these sounds (folded, <= 2 common B1-B2 wordlist words) */}
       {(feedback.soundTips?.length ?? 0) > 0 && (
         <details className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <summary className="cursor-pointer font-semibold">Practise these sounds</summary>
-          <p className="my-2 text-xs text-stone-700">
-            These words came from your transcript. We do not know how you pronounced them. Listen and compare for yourself; these practice recordings stay on this device.
-          </p>
-          <ul className="space-y-2">
+          <summary className="cursor-pointer font-semibold text-stone-900">
+            Practise these sounds
+          </summary>
+          <ul className="mt-2 space-y-2">
             {feedback.soundTips?.slice(0, 2).map((tip) => (
               <SoundPractice key={`${tip.word}:${tip.label}`} {...tip} />
             ))}
           </ul>
+        </details>
+      )}
+
+      {/* Folded transcript */}
+      {feedback.transcript && (
+        <details className="rounded-lg border border-stone-200 bg-white p-3">
+          <summary className="cursor-pointer font-semibold text-stone-800">
+            Your transcript
+          </summary>
+          <p className="mt-2 whitespace-pre-line text-stone-800">{feedback.transcript}</p>
+        </details>
+      )}
+
+      {/* Folded area marks & cue checklist */}
+      {(areas || teacherMarks || (feedback.cueChecklist?.length ?? 0) > 0) && (
+        <details className="rounded-lg border border-stone-200 bg-white p-3">
+          <summary className="cursor-pointer font-semibold text-stone-800">
+            More detail on your speaking
+          </summary>
+          <div className="mt-3 space-y-3">
+            {(areas || teacherMarks) && (
+              <section aria-label="Speaking feedback by area" className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {SPEAKING_AREAS_META.map((meta) => {
+                    const aiItem = areas ? areas[meta.key] : null;
+                    const teacherOverride = teacherMarks?.[meta.key];
+                    const effectiveScore =
+                      typeof teacherOverride === 'number'
+                        ? teacherOverride
+                        : typeof aiItem?.score === 'number'
+                          ? aiItem.score
+                          : null;
+                    return (
+                      <div
+                        key={meta.key}
+                        className="space-y-1 rounded-lg border border-stone-200 bg-stone-50/70 p-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-stone-900">{meta.label}</span>
+                          {effectiveScore !== null ? (
+                            <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-800">
+                              {effectiveScore} / 5
+                              {typeof teacherOverride === 'number' ? ' · teacher' : ''}
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
+                              {meta.emptyBadge}
+                            </span>
+                          )}
+                        </div>
+                        {aiItem && (
+                          <>
+                            <p className="text-emerald-900">
+                              <strong>Good:</strong> {aiItem.strength}
+                            </p>
+                            <p className="text-stone-700">
+                              <strong>Next step:</strong> {aiItem.improvement}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {(feedback.cueChecklist?.length ?? 0) > 0 && (
+              <section aria-label="Cue points checklist" className="space-y-1.5">
+                <p className="text-xs font-bold uppercase text-stone-600">Cue points covered</p>
+                <ul className="grid gap-1 sm:grid-cols-2">
+                  {feedback.cueChecklist?.map((item) => (
+                    <li key={item.label} className="flex items-center gap-2 text-stone-800">
+                      <span
+                        aria-hidden="true"
+                        className={`font-bold ${item.covered ? 'text-emerald-700' : 'text-stone-500'}`}
+                      >
+                        {item.covered ? '✓' : '✗'}
+                      </span>
+                      <span>
+                        {item.label}{' '}
+                        <span className="sr-only">
+                          {item.covered ? 'covered' : 'not yet covered'}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
         </details>
       )}
     </div>

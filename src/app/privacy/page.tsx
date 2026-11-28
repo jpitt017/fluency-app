@@ -34,7 +34,7 @@ export default async function PrivacyPage() {
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li><strong>Supabase:</strong> Database hosting, private storage buckets, and user authentication.</li>
               <li><strong>Groq:</strong> Turns speech into text and provides feedback.</li>
-              <li><strong>OpenAI &amp; ElevenLabs:</strong> Course and British improved-answer speech audio synthesis.</li>
+              <li><strong>OpenAI &amp; ElevenLabs:</strong> Course speech audio synthesis (and optional British improved-answer audio when enabled).</li>
               <li><strong>Stripe:</strong> Payment processing, customer records, and subscription billing.</li>
               <li><strong>Resend:</strong> Sends an alert when a user reports a broken feature.</li>
               <li><strong>Vercel:</strong> Hosts the app and runs scheduled data deletion.</li>

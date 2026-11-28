@@ -38,7 +38,7 @@
       }
     ],
     "rules": [
-      "Length. Target word counts stay 120–150 words for Weeks 1–4. Under 100 words caps Content at 3. Over 180 words adds the tip \"Try to keep to 120–150 words.\"",
+      "Length. Target word counts are 100–120 words for Weeks 1–8. Under 80 words caps Content at 3. Over 150 words adds the tip \"Try to keep to 100–120 words.\"",
       "Week goals. Required points, linkers, and the week's grammar become checks feeding Content, Organisation, and Language rather than separate marks.",
       "Corrections. At most 3 corrections per text, putting the week's grammar first, and keeping clear, correct sentences as they are.",
       "Spelling and honesty. British spelling is taught; American spelling is noted once but not marked as an error. Pasted text is flagged where a teacher is involved, and teachers can change any area mark."
@@ -47,12 +47,12 @@
     "wordRanges": [
       {
         "weeks": "1-4",
-        "range": "120–150 words",
+        "range": "100–120 words",
         "targetBand": "B1"
       },
       {
         "weeks": "5-8",
-        "range": "150–180 words",
+        "range": "100–120 words",
         "targetBand": "B1"
       },
       {

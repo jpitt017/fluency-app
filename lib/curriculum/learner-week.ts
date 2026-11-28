@@ -81,6 +81,12 @@ export type LearnerWeek = {
   speakingParts: SafeSpeakingParts | null;
   shadowingChunks: { text: string; note: string; audioUrl: string | null }[];
   writingPrompt: string;
+  writingPlanFrame: string[];
+  writingUsefulLanguage: string[];
+  writingFeaturedWords: string[];
+  writingLinkers: string[];
+  writingGrammar: string;
+  writingWords: [number, number];
   writingInputEmail: SafeWritingInputEmail | null;
   writingCallForArticles: SafeWritingCallForArticles | null;
   reading: Input;
@@ -183,6 +189,15 @@ export async function loadLearnerWeek(number: number): Promise<LearnerWeek | nul
     speakingPrompt: week.speaking.prompt, speakingLength: week.speaking.flow.record.match(/\b\d+[–-]\d+\s*s\b/)?.[0].replace(/\s*s$/, ' seconds') ?? null, cueCard: week.speaking.cueCard,
     speakingParts: rawWeekSpeaking.parts ?? null,
     writingPrompt: week.writing.prompt,
+    writingPlanFrame: Array.isArray(week.writing.planFrame) ? [...week.writing.planFrame] : [],
+    writingUsefulLanguage: Array.isArray(week.writing.usefulLanguage) ? [...week.writing.usefulLanguage] : [],
+    writingFeaturedWords: Array.isArray(week.writing.featuredWords) ? [...week.writing.featuredWords] : [],
+    writingLinkers: Array.isArray(week.writing.linkers) ? [...week.writing.linkers] : [],
+    writingGrammar: typeof week.writing.grammar === 'string' ? week.writing.grammar : '',
+    writingWords:
+      Array.isArray(week.writing.words) && week.writing.words.length >= 2
+        ? [Number(week.writing.words[0]) || 100, Number(week.writing.words[1]) || 120]
+        : [100, 120],
     writingInputEmail: rawWeekWriting.inputEmail ?? null,
     writingCallForArticles: rawWeekWriting.callForArticles ?? null,
     reading: { title: reading.title, text: reading.text, questions: readingQuestions },

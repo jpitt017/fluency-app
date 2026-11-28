@@ -90,9 +90,16 @@ test('the model script is hidden until asked for, with labelled parts and compar
   assert.doesNotMatch(component, /focusQuestion|markFocusAnswer|saveNotice|noticeSelected|Check and continue|tap the phrases you hear/);
 });
 
-test('older recordings explain why their previous scores are not shown', () => {
+test('system explanations are removed from learner speaking view and transcript is folded', () => {
   const component = read('components/b1b2/WeekSpeakingSupport.tsx');
-  assert.match(component, /!take\.id && <p[^>]*>Scores for older recordings used a different method/);
+  const detailsView = read('components/b1b2/SpeakingFeedbackDetails.tsx');
+  assert.match(component, /Checks left: \{checksRemaining\}/);
+  assert.doesNotMatch(component, /Scores for older recordings used a different method/);
+  assert.doesNotMatch(component, /There are five checks in total/);
+  assert.doesNotMatch(component, /of 5 weekly checks used/);
+  assert.doesNotMatch(detailsView, /We do not know how you pronounced them/);
+  assert.doesNotMatch(detailsView, /Build a better sentence/);
+  assert.match(detailsView, /<details[\s\S]*?<summary[^>]*>\s*Your transcript\s*<\/summary>/);
 });
 
 test('the speaking model uses the shared audio transport controls, including stop', () => {

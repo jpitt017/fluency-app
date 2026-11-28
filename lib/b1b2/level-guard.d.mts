@@ -12,6 +12,7 @@ export interface LevelGuardOptions {
 
 export function getWeekVocabularySet(weekNumber?: number | null): Set<string>;
 export function isAllowedB1B2Word(rawToken: string, options?: LevelGuardOptions): boolean;
+export function isCommonB1B2Word(rawToken: string, weekNumber?: number | null): boolean;
 export function findOutOfListWords(text: string, options?: LevelGuardOptions): string[];
 export function splitSentences(text: string): string[];
 export function countPlainWords(text: string): number;

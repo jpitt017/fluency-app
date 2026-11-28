@@ -6,6 +6,7 @@ import { buildSpeakingSystemPrompt, validateSpeakingFeedback } from './feedback-
 import { createGroqJsonCompletion } from './groq-json';
 import { wrapLearnerSubmission } from './prompt-guard';
 import {
+  cleanTranscriptionArtifacts,
   cueChecklistFromEvidence,
   cuePointEvidence,
   structurePoint,
@@ -40,11 +41,12 @@ export async function evaluateSpeakingTranscript(params: {
     decisionTask,
   } = params;
   const preferred = weekStructure(weekNumber);
+  const preCleaned = cleanTranscriptionArtifacts(transcript).cleanedTranscript || transcript;
   const cacheKey = buildEvalCacheKey({
     endpoint: '/api/speaking/evaluate',
     model: 'openai/gpt-oss-20b',
-    prompt: `speaking-cambridge-v4|${prompt}|${targetPhrase}|w:${weekNumber ?? ''}|int:${includeInteractive ? '1' : '0'}|${partLabel ?? ''}|${preferred ?? ''}|${JSON.stringify(cueLabels)}`,
-    input: transcript,
+    prompt: `speaking-cambridge-v5|${prompt}|${targetPhrase}|w:${weekNumber ?? ''}|int:${includeInteractive ? '1' : '0'}|${partLabel ?? ''}|${preferred ?? ''}|${JSON.stringify(cueLabels)}`,
+    input: preCleaned,
     variety: 'British',
   });
   let raw = await readEvalCache<Record<string, unknown>>(supabase, cacheKey);
@@ -54,21 +56,16 @@ export async function evaluateSpeakingTranscript(params: {
   let validated;
   if (raw) {
     try {
-      validated = validateSpeakingFeedback(raw, transcript, { weekNumber, includeInteractive });
+      validated = validateSpeakingFeedback(raw, preCleaned, { weekNumber, includeInteractive });
     } catch {
       raw = null;
       cacheHit = false;
     }
   }
   if (!raw || !validated) {
-    const extraJsonFields = [
-      `Also include "structure": { "original": "exact full sentence from transcript", "upgraded": "one B1–B2 sentence (<= 20 words) using ${preferred || 'although, which, so that, or because of'}", "explanation": "one short B1 sentence", "structure": "${preferred || 'which'}" }.`,
-      cueLabels.length
-        ? `Also include "cuePoints": [{ "label": one of ${JSON.stringify(cueLabels)}, "quote": "exact words from the transcript" }] for each cue point actually covered.`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const extraJsonFields = cueLabels.length
+      ? `Also include "cuePoints": [{ "label": one of ${JSON.stringify(cueLabels)}, "quote": "exact words from the transcript" }] for each cue point actually covered.`
+      : '';
 
     const userPrompt = `Context/Prompt: ${prompt || 'General B1 → B2 speaking practice'}
 Target Language: ${targetPhrase || 'None'}
@@ -76,7 +73,7 @@ Preferred structure this week: ${preferred || 'none; use one of the four connect
 Cue-card labels: ${cueLabels.length ? JSON.stringify(cueLabels) : 'none'}
 ${extraJsonFields}
 
-${wrapLearnerSubmission(transcript)}`;
+${wrapLearnerSubmission(preCleaned)}`;
     const evaluation = await createGroqJsonCompletion(groq, {
       model: 'openai/gpt-oss-20b',
       messages: [
@@ -102,9 +99,10 @@ ${wrapLearnerSubmission(transcript)}`;
         ? (evaluation.parsed as Record<string, unknown>)
         : {};
     validated = validateSpeakingFeedback(raw, transcript, { weekNumber, includeInteractive });
-    const structure = structurePoint(raw.structure, transcript, weekNumber);
-    const cuePoints = cuePointEvidence(raw.cuePoints, transcript, cueLabels);
-    const cueChecklist = cueChecklistFromEvidence(raw.cuePoints, transcript, cueLabels);
+    const effectiveTranscript = validated.cleanedTranscript || preCleaned;
+    const structure = structurePoint(raw.structure, effectiveTranscript, weekNumber);
+    const cuePoints = cuePointEvidence(raw.cuePoints, effectiveTranscript, cueLabels);
+    const cueChecklist = cueChecklistFromEvidence(raw.cuePoints, effectiveTranscript, cueLabels);
     await writeEvalCache(supabase, {
       cacheKey,
       endpoint: '/api/speaking/evaluate',
@@ -112,11 +110,12 @@ ${wrapLearnerSubmission(transcript)}`;
       response: { ...validated, structure, cuePoints, cueChecklist },
     });
   }
-  const cuePoints = cuePointEvidence(raw.cuePoints, transcript, cueLabels);
-  const cueChecklist = cueChecklistFromEvidence(raw.cuePoints, transcript, cueLabels);
+  const effectiveTranscript = validated.cleanedTranscript || preCleaned;
+  const cuePoints = cuePointEvidence(raw.cuePoints, effectiveTranscript, cueLabels);
+  const cueChecklist = cueChecklistFromEvidence(raw.cuePoints, effectiveTranscript, cueLabels);
   return {
     validated,
-    structure: structurePoint(raw.structure, transcript, weekNumber),
+    structure: structurePoint(raw.structure, effectiveTranscript, weekNumber),
     cuePoints,
     cueChecklist,
     cacheHit,
