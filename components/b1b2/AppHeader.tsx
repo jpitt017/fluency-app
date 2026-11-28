@@ -125,8 +125,6 @@ export default function AppHeader({ summary, week, pricingEnabled }: { summary: 
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-indigo-700">{BAND_LABEL[summary.band] ?? 'B1 Low'}</span>
-                <span aria-hidden className="text-stone-300">·</span>
-                <span className="font-medium text-amber-700">{summary.streakDays}d</span>
               </Link>
               <SignOutButton />
             </>

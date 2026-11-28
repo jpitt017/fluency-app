@@ -28,6 +28,8 @@ export type WeekTaskEntry = {
   /** Dashboard anchor ("reading-practice"); also the region's id. */
   anchor: string;
   minutes: number;
+  itemsAnswered: number;
+  progressMinutes: number;
   /** The ✓ on the card and the row, from completions and saved attempts. */
   done: boolean;
   /** Exact region label for tasks whose tests address them by region name. */
@@ -104,7 +106,12 @@ export default function WeekTaskLayout({ tasks }: { tasks: WeekTaskEntry[] }) {
                 onClick={() => setOpenKey(task.key)}
                 className="flex items-center justify-between gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 hover:border-indigo-300"
               >
-                <span className="text-sm font-semibold">{task.label}</span>
+                <span>
+                  <span className="block text-sm font-semibold">{task.label}</span>
+                  <span className="mt-1 block text-sm text-stone-600">
+                    {task.itemsAnswered} answered · {task.progressMinutes} min estimated
+                  </span>
+                </span>
                 <span className="flex items-center gap-2 text-sm text-stone-600">
                   {weekTaskMinutesText(task.minutes)}
                   {task.done ? <DoneMark /> : null}

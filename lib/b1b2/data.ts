@@ -5,7 +5,6 @@ import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from './week
 import { orderQueue, planQueue } from './review-queue.mjs';
 import type {
   AiObservabilitySummary,
-  DashboardPayload,
   DashboardSkillTelemetry,
   ErrorReviewCardRow,
   HeaderSummary,
@@ -16,7 +15,6 @@ import type {
   ReviewQueueCard,
   TeacherRosterLearner,
   VocabDueRow,
-  WeeklyReportRow,
   XpEventRow,
 } from './types';
 
@@ -61,10 +59,9 @@ export async function getViewer() {
 
 export async function loadDashboard(): Promise<{
   signedIn: boolean;
-  dashboard: DashboardPayload | null;
+  userId: string | null;
   recentXp: XpEventRow[];
   weeklyGoalHours: number;
-  weeklyReport: WeeklyReportRow | null;
   subscriptionStatus: string | null;
   telemetry: DashboardSkillTelemetry;
 }> {
@@ -84,9 +81,6 @@ export async function loadDashboard(): Promise<{
     hasEnoughTrendData: false,
     minWordsRequired: 200,
     totalWordsEvaluated: 0,
-    dueErrorCards: 0,
-    masteredErrorCards: 0,
-    missedPracticeCount: 0,
     placementRecommendation: null,
   };
 
@@ -94,10 +88,9 @@ export async function loadDashboard(): Promise<{
   if (!supabase) {
     return {
       signedIn: false,
-      dashboard: null,
+      userId: null,
       recentXp: [],
       weeklyGoalHours: 4,
-      weeklyReport: null,
       subscriptionStatus: null,
       telemetry: emptyTelemetry,
     };
@@ -110,35 +103,27 @@ export async function loadDashboard(): Promise<{
   if (!user) {
     return {
       signedIn: false,
-      dashboard: null,
+      userId: null,
       recentXp: [],
       weeklyGoalHours: 4,
-      weeklyReport: null,
       subscriptionStatus: null,
       telemetry: emptyTelemetry,
     };
   }
 
-  const nowIso = new Date().toISOString();
   const sevenDaysAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const fourteenDaysAgoIso = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
-    dashRes,
     xpRes,
     prefRes,
     subRes,
-    reportRes,
     vocabMasteredRes,
     vocabTotalRes,
     speakingRes,
     writingRes,
-    missedRes,
     learnerErrorsRes,
-    dueErrorCardsRes,
-    masteredErrorCardsRes,
   ] = await Promise.all([
-    supabase.rpc('get_learner_dashboard'),
     supabase
       .from('xp_events')
       .select('id, source, points, note, created_at')
@@ -146,13 +131,6 @@ export async function loadDashboard(): Promise<{
       .limit(6),
     supabase.from('curriculum_preferences').select('target_hours_per_week').maybeSingle(),
     supabase.from('profiles').select('subscription_status, placement_result').eq('id', user.id).maybeSingle(),
-    supabase
-      .from('weekly_reports')
-      .select('id, week_start, study_minutes, words_learned, recordings, writing_tasks, weakest_skill, payload')
-      .eq('user_id', user.id)
-      .order('week_start', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
     supabase
       .from('vocab_cards')
       .select('id', { count: 'exact', head: true })
@@ -177,33 +155,13 @@ export async function loadDashboard(): Promise<{
       .order('created_at', { ascending: false })
       .limit(30),
     supabase
-      .from('practice_attempts')
-      .select('item_id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_correct', false),
-    supabase
       .from('learner_errors')
       .select('category, created_at, source_word_count')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(300),
-    supabase
-      .from('error_review_cards')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('suspended', false)
-      .eq('mastered', false)
-      .lte('due_at', nowIso),
-    supabase
-      .from('error_review_cards')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('mastered', true),
   ]);
 
-  if (dashRes.error) {
-    console.error('get_learner_dashboard failed:', dashRes.error.message);
-  }
 
   const speakingRows = (speakingRes.data ?? []) as {
     overall: number | null;
@@ -317,10 +275,9 @@ export async function loadDashboard(): Promise<{
 
   return {
     signedIn: true,
-    dashboard: (dashRes.data as DashboardPayload | null) ?? null,
+    userId: user.id,
     recentXp: (xpRes.data as XpEventRow[] | null) ?? [],
     weeklyGoalHours: Number(prefRes.data?.target_hours_per_week ?? 4),
-    weeklyReport: (reportRes.data as WeeklyReportRow | null) ?? null,
     subscriptionStatus: subRes.data?.subscription_status ?? null,
     telemetry: {
       activeVocabMastered: vocabMasteredRes.count ?? 0,
@@ -338,9 +295,6 @@ export async function loadDashboard(): Promise<{
       hasEnoughTrendData,
       minWordsRequired: MIN_WORDS_FOR_RATE,
       totalWordsEvaluated: totalWords,
-      dueErrorCards: dueErrorCardsRes.count ?? 0,
-      masteredErrorCards: masteredErrorCardsRes.count ?? 0,
-      missedPracticeCount: missedRes.count ?? 0,
       placementRecommendation: placementRaw ?? null,
     },
   };
@@ -350,7 +304,7 @@ export async function loadHeaderSummary(): Promise<HeaderSummary> {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) {
-      return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+      return { signedIn: false, band: 'B1_low' };
     }
 
     const {
@@ -358,28 +312,18 @@ export async function loadHeaderSummary(): Promise<HeaderSummary> {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+      return { signedIn: false, band: 'B1_low' };
     }
 
-    const [profileRes, completedRes] = await Promise.all([
-      supabase.from('profiles').select('xp_total, streak_days, learner_band, role').eq('id', user.id).maybeSingle(),
-      supabase
-        .from('lesson_progress')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'completed'),
-    ]);
+    const profileRes = await supabase.from('profiles').select('learner_band, role').eq('id', user.id).maybeSingle();
 
     return {
       signedIn: true,
-      xpTotal: profileRes.data?.xp_total ?? 0,
-      streakDays: profileRes.data?.streak_days ?? 0,
       band: (profileRes.data?.learner_band as LearnerBand | undefined) ?? 'B1_low',
-      lessonsCompleted: completedRes.count ?? 0,
       role: (profileRes.data?.role as HeaderSummary['role']) ?? 'learner',
     };
   } catch {
-    return { signedIn: false, xpTotal: 0, streakDays: 0, band: 'B1_low', lessonsCompleted: 0 };
+    return { signedIn: false, band: 'B1_low' };
   }
 }
 
@@ -401,15 +345,16 @@ export async function loadReviewQueue(options: { ignoreCap?: boolean } = {}): Pr
   signedIn: boolean;
   queue: ReturnType<typeof planQueue> & { cards: ReviewQueueCard[] };
   totalDue: number;
+  reviewedToday: number;
 }> {
   const empty = planQueue([]);
   const supabase = await createServerSupabase();
-  if (!supabase) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0 };
+  if (!supabase) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0, reviewedToday: 0 };
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0 };
+  if (!user) return { signedIn: false, queue: { ...empty, cards: [] }, totalDue: 0, reviewedToday: 0 };
 
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
@@ -485,7 +430,7 @@ export async function loadReviewQueue(options: { ignoreCap?: boolean } = {}): Pr
     cards: options.ignoreCap ? ordered : ordered.slice(0, plan.shown),
   };
 
-  return { signedIn: true, queue, totalDue: cards.length };
+  return { signedIn: true, queue, totalDue: cards.length, reviewedToday };
 }
 
 export async function loadObservabilitySummary(days = 7): Promise<AiObservabilitySummary | null> {

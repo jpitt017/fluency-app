@@ -268,14 +268,20 @@ test.describe('with a signed-in learner', () => {
       if (attempts.error) throw attempts.error;
       expect(attempts.data?.length).toBe(1);
 
-      // The gloss check must not unlock the next week: it writes no submission.
+      // The last saved answer writes the listening completion automatically,
+      // even if the learner never clicks the separate Finish button.
       const submissions = await admin
         .from('week_input_submissions')
         .select('skill')
         .eq('user_id', user.id)
         .eq('week_number', 1);
       if (submissions.error) throw submissions.error;
-      expect(submissions.data?.length ?? 0).toBe(0);
+      expect(submissions.data?.map((row) => row.skill)).toEqual(['listening']);
+
+      await page.goto('/dashboard');
+      await page.reload();
+      await expect(page.getByText('1 of 6 tasks done')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Listening.*10 items answered.*8 min estimated/ })).toContainText('✓');
 
       // "Delete my data" clears the gloss rows with the rest.
       const deleted = await page.request.post('/api/account/delete-data', { data: { confirm: 'DELETE' } });
