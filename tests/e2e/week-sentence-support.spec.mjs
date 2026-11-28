@@ -179,15 +179,18 @@ test('saved versions reload, ideas stay in the same week, and deletion clears th
 
     await page.goto('/labs?week=1#writing');
     const writing = page.locator('#writing');
-    await expect(writing.getByRole('heading', { name: 'Ideas from your grammar practice' })).toBeVisible();
+    await expect(writing.getByRole('heading', { name: 'Useful phrases' })).toBeVisible();
+    await writing.locator('summary').filter({ hasText: 'Your grammar-practice sentences' }).click();
     await expect(writing).toContainText(second.corrected);
     await expect(writing).not.toContainText('We are meeting on Sunday.');
     await expect(writing).not.toContainText('A vocabulary correction.');
     await page.goto('/labs?week=2#writing');
+    await page.locator('#writing').locator('summary').filter({ hasText: 'Your grammar-practice sentences' }).click();
     await expect(page.locator('#writing')).toContainText('We are meeting on Sunday.');
     await expect(page.locator('#writing')).not.toContainText(second.corrected);
     await page.goto('/labs#writing');
-    await expect(page.getByRole('heading', { name: 'Ideas from your grammar practice' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Useful phrases' })).toHaveCount(0);
+    await expect(page.locator('summary').filter({ hasText: 'Your grammar-practice sentences' })).toHaveCount(0);
 
     const deletion = await page.request.post('/api/account/delete-data', { data: { confirm: 'DELETE' } });
     expect(deletion.status()).toBe(200);
@@ -195,7 +198,7 @@ test('saved versions reload, ideas stay in the same week, and deletion clears th
     if (remaining.error) throw remaining.error;
     expect(remaining.data).toHaveLength(0);
     await page.goto('/labs?week=1#writing');
-    await expect(page.getByRole('heading', { name: 'Ideas from your grammar practice' })).toHaveCount(0);
+    await expect(page.locator('summary').filter({ hasText: 'Your grammar-practice sentences' })).toHaveCount(0);
   } finally {
     await removeReadingLearner(admin, user);
   }

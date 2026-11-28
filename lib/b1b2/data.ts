@@ -2,6 +2,11 @@ import { createServerSupabase } from '@/utils/supabase/server';
 import { createAdminSupabase } from '@/utils/supabase/admin';
 import { ERROR_CATEGORY_LABELS } from './feedback-schema';
 import { weekSpeakingAttemptRecordings, weekSpeakingTakeRecording } from './week-speaking-recordings.mjs';
+import {
+  IMPROVED_TTS_ENDPOINT,
+  madridMonthStartIso,
+  resolveMonthlyTtsCharLimit,
+} from './improved-tts-config.mjs';
 import { orderQueue, planQueue } from './review-queue.mjs';
 import { enrichErrorReviewCard, enrichVocabReviewCard } from '@/lib/curriculum/review-enrichment';
 import type {
@@ -456,7 +461,30 @@ export async function loadObservabilitySummary(days = 7): Promise<AiObservabilit
 
   const { data, error } = await supabase.rpc('get_ai_observability_summary', { p_days: days });
   if (error || !data) return null;
-  return data as AiObservabilitySummary;
+
+  let ttsMonthlyChars = 0;
+  const admin = createAdminSupabase();
+  if (admin) {
+    const { data: ttsRows } = await admin
+      .from('ai_request_logs')
+      .select('input_chars')
+      .eq('endpoint', IMPROVED_TTS_ENDPOINT)
+      .eq('cache_hit', false)
+      .eq('status_code', 200)
+      .gte('created_at', madridMonthStartIso());
+    if (Array.isArray(ttsRows)) {
+      ttsMonthlyChars = ttsRows.reduce(
+        (sum, row) => sum + (typeof row?.input_chars === 'number' && row.input_chars > 0 ? row.input_chars : 0),
+        0,
+      );
+    }
+  }
+
+  return {
+    ...(data as AiObservabilitySummary),
+    tts_monthly_chars: ttsMonthlyChars,
+    tts_monthly_char_limit: resolveMonthlyTtsCharLimit(process.env.ELEVENLABS_MONTHLY_CHAR_LIMIT),
+  };
 }
 
 /** Learner-facing placement questions: no answer indices, via the safe view. */
@@ -582,6 +610,7 @@ export async function loadTeacherRoster(): Promise<{
 
   const roster = (Array.isArray(data) ? data : []) as TeacherRosterLearner[];
   const recordingsByUser = new Map<string, ReturnType<typeof weekSpeakingAttemptRecordings>>();
+  const weeklyTakesByUser = new Map<string, NonNullable<TeacherRosterLearner['weekly_takes']>>();
   // The roster RPC is already staff-gated. Use the service-role client for the
   // weekly rows when available so teacher playback works before 0062 is applied
   // to a project; otherwise the authenticated client's staff RLS policy applies.
@@ -605,17 +634,33 @@ export async function loadTeacherRoster(): Promise<{
     }
     const { data: takeRows, error: takeError } = await recordingClient
       .from('week_speaking_takes')
-      .select('id,user_id,week_number,attempt_id,kind,sequence,recording_path,status,created_at')
+      .select('id,user_id,week_number,attempt_id,kind,sequence,recording_path,status,transcript,feedback,created_at')
       .in('user_id', roster.map((learner) => learner.user_id))
       .in('status', ['ready', 'checking', 'checked', 'abandoned'])
       .order('created_at', { ascending: false }).limit(1500);
     if (takeError) console.error('teacher weekly takes failed:', takeError.message);
     else for (const row of takeRows ?? []) {
       const link = weekSpeakingTakeRecording(row);
-      if (!link) continue;
-      const list = recordingsByUser.get(row.user_id) ?? [];
-      list.push(link);
-      recordingsByUser.set(row.user_id, list);
+      if (link) {
+        const list = recordingsByUser.get(row.user_id) ?? [];
+        list.push(link);
+        recordingsByUser.set(row.user_id, list);
+      }
+      if (row.status === 'checked' && (row.kind === 'first' || row.kind === 'retry')) {
+        const takesList = weeklyTakesByUser.get(row.user_id) ?? [];
+        if (takesList.length < 10) {
+          takesList.push({
+            id: String(row.id),
+            week_number: Number(row.week_number),
+            kind: String(row.kind),
+            sequence: Number(row.sequence),
+            transcript: row.transcript ? String(row.transcript) : null,
+            feedback: (row.feedback as Record<string, unknown> | null) ?? null,
+            created_at: String(row.created_at),
+          });
+          weeklyTakesByUser.set(row.user_id, takesList);
+        }
+      }
     }
     for (const list of recordingsByUser.values()) {
       list.sort((a, b) => a.weekNumber - b.weekNumber || a.takeNumber - b.takeNumber);
@@ -627,6 +672,7 @@ export async function loadTeacherRoster(): Promise<{
     pilot: pilotRes.error ? null : (pilotRes.data ?? []).some((row) => row.user_id === learner.user_id),
     mediation_attempts: attemptsByUser.get(learner.user_id) ?? [],
     weekly_recordings: recordingsByUser.get(learner.user_id) ?? [],
+    weekly_takes: weeklyTakesByUser.get(learner.user_id) ?? [],
   }));
 
   return { signedIn: true, authorized: true, learners };

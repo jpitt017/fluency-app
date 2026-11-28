@@ -586,6 +586,8 @@ export interface AiObservabilitySummary {
   failure_count: number;
   avg_latency_ms: number;
   total_cost_usd: number;
+  tts_monthly_chars?: number;
+  tts_monthly_char_limit?: number;
   endpoints: {
     endpoint: string;
     requests: number;
@@ -710,5 +712,14 @@ export interface TeacherRosterLearner {
     takeNumber: number;
     label: string;
     href: string;
+  }[];
+  weekly_takes?: {
+    id: string;
+    week_number: number;
+    kind: string;
+    sequence: number;
+    transcript: string | null;
+    feedback: Record<string, unknown> | null;
+    created_at: string;
   }[];
 }

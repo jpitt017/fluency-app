@@ -8,6 +8,7 @@ import RememberWeek from '@/components/b1b2/RememberWeek';
 import VocabularyPractice from '@/components/b1b2/VocabularyPractice';
 import WeekInputTask from '@/components/b1b2/WeekInputTask';
 import WeekSpeakingSupport from '@/components/b1b2/WeekSpeakingSupport';
+import WritingLab from '@/components/labs/WritingLab';
 import WeekTaskLayout, { type WeekTaskEntry } from '@/components/b1b2/WeekTaskLayout';
 import { getViewer } from '@/lib/b1b2/data';
 import { notFound } from 'next/navigation';
@@ -17,11 +18,16 @@ import { learnerGrammar } from '@/lib/curriculum/learner-grammar';
 import { learnerVocabulary } from '@/lib/curriculum/learner-vocabulary';
 import { learnerVocabularyExercises } from '@/lib/curriculum/learner-vocabulary-exercises';
 import { loadSyllabusContent } from '@/lib/curriculum/syllabus';
+import { loadUnlockedModels } from '@/lib/curriculum/week-models';
 import { loadWeekPracticeProgress } from '@/lib/curriculum/week-practice-progress';
 import { ensureWeeklyPracticeSummary } from '@/lib/curriculum/week-practice-auto-finish';
 import { loadWeekProgress } from '@/lib/curriculum/week-progress';
 import { loadWeekSpeakingSupport } from '@/lib/curriculum/week-speaking-support';
-import { loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import { grammarWritingIdeas, loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import {
+  plainGrammarTargetsForWeek,
+  targetWordsForWeek,
+} from '@/lib/curriculum/week-writing-support.mjs';
 import { WEEK_TASKS, ACTION_BUTTON_CLASS } from '@/lib/curriculum/week-tasks.mjs';
 import RefreshCurrentWeekOnVisit from '@/components/b1b2/RefreshCurrentWeekOnVisit';
 
@@ -51,10 +57,12 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
     <section id="week-activities-unavailable" className="scroll-mt-20 rounded-xl border border-stone-200 p-5"><h2 tabIndex={-1} className="font-semibold">Week {number} activities are coming soon</h2><p className="mt-2 text-sm">This week&apos;s tasks aren&apos;t ready yet. You can practise in Practice.</p><Link className="mt-3 inline-block text-indigo-700 underline" href="/labs">Free practice</Link></section>
   </main>;
   if (viewer.user?.id) await ensureWeeklyPracticeSummary(number);
-  const [practice, weekProgress] = await Promise.all([
+  const [practice, weekProgress, unlockedModels] = await Promise.all([
     loadWeekPracticeProgress(number),
     loadWeekProgress(viewer.user?.id ?? null, number),
+    viewer.signedIn ? loadUnlockedModels(number) : Promise.resolve(null),
   ]);
+  const weekGrammarIdeas = viewer.signedIn ? grammarWritingIdeas(sentencePractice, number) : [];
   const grammar = learnerGrammar(number);
   const cards = learnerVocabulary(number);
   const vocabulary = learnerVocabularyExercises(number);
@@ -145,7 +153,7 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
           retryGoal={speakingSupport.retryGoal} initialNotes={speakingSupport.notes} available={speakingSupport.available} weekRecorded={speakingSupport.weekRecorded}
           first={speakingSupport.first} tries={speakingSupport.tries} firstVersions={speakingSupport.firstVersions}
           retryCount={speakingSupport.retryCount} checksUsed={speakingSupport.checksUsed} pending={speakingSupport.pending}
-          recordings={speakingSupport.recordings} model={speakingSupport.model}
+          recordings={speakingSupport.recordings} model={speakingSupport.model} speakingParts={details.speakingParts}
         /> : <div className="space-y-3"><p>{details.speakingPrompt}</p><p><strong>Cue card: </strong>{details.cueCard}</p><Link href={`/labs?week=${number}#speaking`} className={ACTION_BUTTON_CLASS}>Start speaking task</Link></div>,
       }];
     }
@@ -158,7 +166,26 @@ export default async function LearnerWeekPage({ params }: { params: Promise<{ n:
       itemsAnswered: weekProgress.writing.itemsAnswered,
 
       progressMinutes: weekProgress.writing.minutes,
-      body: <div className="space-y-3"><p>{details.writingPrompt}</p><Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link></div>,
+      body: <div className="space-y-4">
+        <WritingLab
+          unlockedModel={unlockedModels?.writing ?? null}
+          grammarIdeas={weekGrammarIdeas}
+          planFrame={details.writingPlanFrame}
+          usefulLanguage={details.writingUsefulLanguage}
+          linkers={details.writingLinkers}
+          wordRange={details.writingWords}
+          inputEmail={details.writingInputEmail}
+          callForArticles={details.writingCallForArticles}
+          lessonContext={{
+            prompt: details.writingPrompt,
+            mode: 'free',
+            weekNumber: number,
+            targetGrammar: plainGrammarTargetsForWeek(number, details.writingGrammar),
+            targetVocabulary: targetWordsForWeek(details.writingFeaturedWords, details.writingLinkers),
+          }}
+        />
+        {!viewer.signedIn && <Link href={`/labs?week=${number}#writing`} className={ACTION_BUTTON_CLASS}>Start writing task</Link>}
+      </div>,
     }];
   });
 

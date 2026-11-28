@@ -12,6 +12,10 @@ import { loadLearnerWeek } from '@/lib/curriculum/learner-week';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
 import { learnerWeekFromParam, phaseForWeek } from '@/lib/curriculum/syllabus';
 import { grammarWritingIdeas, loadWeekSentencePractice } from '@/lib/curriculum/week-sentence-practice';
+import {
+  plainGrammarTargetsForWeek,
+  targetWordsForWeek,
+} from '@/lib/curriculum/week-writing-support.mjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,12 +41,18 @@ export default async function LabsPage({ searchParams }: LabsProps) {
     ? grammarWritingIdeas(await loadWeekSentencePractice(weekNumber), weekNumber)
     : [];
   const pronunciationFocus = phaseForWeek(weekNumber)?.pronunciationFocus;
+  const weekTargetGrammar = selectedWeek
+    ? plainGrammarTargetsForWeek(weekNumber, selectedWeek.writingGrammar)
+    : [];
+  const weekTargetWords = selectedWeek
+    ? targetWordsForWeek(selectedWeek.writingFeaturedWords, selectedWeek.writingLinkers)
+    : [];
   const freeContext: LessonLabContext = {
     prompt:
       'Practise speaking for 1–2 minutes. Use linking words like however and so to connect your ideas.',
     mode: 'free',
-    targetGrammar: ['Present perfect vs. past simple', 'Conditionals', 'Hedging & concession'],
-    targetVocabulary: ['turning point', 'compelling evidence', 'on balance', 'concede a point'],
+    targetGrammar: weekTargetGrammar,
+    targetVocabulary: weekTargetWords,
   };
   const freeWritingContext: LessonLabContext = {
     ...freeContext,
@@ -121,7 +131,17 @@ export default async function LabsPage({ searchParams }: LabsProps) {
               <p className="mt-1 text-xs font-semibold text-emerald-800">This task counts for Week {weekNumber}.</p>
             )}
           </div>
-          <WritingLab unlockedModel={unlockedModels?.writing} grammarIdeas={grammarIdeas} lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext} />
+          <WritingLab
+            unlockedModel={unlockedModels?.writing}
+            grammarIdeas={grammarIdeas}
+            planFrame={selectedWeek?.writingPlanFrame ?? []}
+            usefulLanguage={selectedWeek?.writingUsefulLanguage ?? []}
+            linkers={selectedWeek?.writingLinkers ?? []}
+            wordRange={selectedWeek?.writingWords}
+            inputEmail={selectedWeek?.writingInputEmail ?? null}
+            callForArticles={selectedWeek?.writingCallForArticles ?? null}
+            lessonContext={selectedWeek ? { ...freeWritingContext, prompt: selectedWeek.writingPrompt, weekNumber } : weekParam ? { ...freeWritingContext, weekNumber } : freeWritingContext}
+          />
         </section>
 
         <section id="speaking" className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs lg:col-span-6">
@@ -173,7 +193,9 @@ export default async function LabsPage({ searchParams }: LabsProps) {
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
         <ConversationalSpeakingLab
           sessionTitle="B1 → B2 role-play practice"
-          keyLanguage={['on balance', 'to be honest', 'nevertheless', 'turning point']}
+          weekNumber={weekParam ? weekNumber : undefined}
+          discussAndDecide={selectedWeek?.speakingParts?.discussAndDecide ?? null}
+          keyLanguage={weekTargetWords}
         />
       </section>
     </main>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { clearGrammarPositions } from '@/lib/curriculum/grammar-practice-position.mjs';
+import { clearImprovedAnswerTtsCache } from '@/lib/b1b2/speech';
 
 export default function DeleteDataButton({ userId }: { userId: string | null }) {
   const [confirming, setConfirming] = useState(false);
@@ -31,6 +32,7 @@ export default function DeleteDataButton({ userId }: { userId: string | null }) 
       }
       try {
         clearGrammarPositions(window.localStorage, userId);
+        clearImprovedAnswerTtsCache();
       } catch {
         // Access to browser storage may itself be disabled; server data is deleted.
       }

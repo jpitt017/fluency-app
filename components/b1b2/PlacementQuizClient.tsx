@@ -41,6 +41,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   const [stage, setStage] = useState<'quiz' | 'writing' | 'done'>('quiz');
   const [writingSample, setWritingSample] = useState('');
   const [writingScore, setWritingScore] = useState<number | null>(null);
+  const [writingAreaSummary, setWritingAreaSummary] = useState('');
   const [writingFeedback, setWritingFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   // The index the "did not move" warning belongs to, not a bare boolean: when the
@@ -117,6 +118,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
   async function finishPlacement(skipWriting = false) {
     setLoading(true);
     let evaluatedScore: number | null = null;
+    let evaluatedAreaSummary = '';
     let feedbackText = '';
     let scored: number;
     let resultPlacement: Placement;
@@ -160,8 +162,34 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
           }),
         }, WRITING_TIMEOUT_MS, 'We could not read your writing this time. Your quiz result still shows your level.');
         if (res.ok) {
-          const data = (await res.json()) as { score?: number; feedback?: string };
-          if (typeof data.score === 'number') evaluatedScore = data.score;
+          const data = (await res.json()) as {
+            score?: number;
+            feedback?: string;
+            areas?: {
+              content?: { score?: number };
+              communicative_achievement?: { score?: number };
+              organisation?: { score?: number };
+              language?: { score?: number };
+            };
+          };
+          if (data.areas?.content && typeof data.areas.content.score === 'number') {
+            evaluatedAreaSummary = [
+              `Content ${data.areas.content.score}/5`,
+              typeof data.areas.communicative_achievement?.score === 'number'
+                ? `Style ${data.areas.communicative_achievement.score}/5`
+                : null,
+              typeof data.areas.organisation?.score === 'number'
+                ? `Organisation ${data.areas.organisation.score}/5`
+                : null,
+              typeof data.areas.language?.score === 'number'
+                ? `Language ${data.areas.language.score}/5`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+          } else if (typeof data.score === 'number') {
+            evaluatedScore = data.score;
+          }
           if (typeof data.feedback === 'string') feedbackText = data.feedback;
         } else {
           feedbackText = 'We could not read your writing this time. Your quiz result still shows your level.';
@@ -175,6 +203,7 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
     }
 
     setWritingScore(evaluatedScore);
+    setWritingAreaSummary(evaluatedAreaSummary);
     setWritingFeedback(feedbackText);
 
     const rec = placementRecommendation(resultPlacement);
@@ -377,7 +406,11 @@ export default function PlacementQuizClient({ questions, texts }: { questions: P
                 </span>
                 <span className="text-sm font-bold text-stone-900">
                   Quiz {quizScore}/{questions.length}
-                  {writingScore !== null ? ` · Writing ${writingScore}/100` : ''}
+                  {writingAreaSummary
+                    ? ` · Writing (${writingAreaSummary})`
+                    : writingScore !== null
+                      ? ` · Writing ${writingScore}/100`
+                      : ''}
                 </span>
               </div>
               <p className="text-sm leading-6 text-stone-700">{recommendation.summary}</p>

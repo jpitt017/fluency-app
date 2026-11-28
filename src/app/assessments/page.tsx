@@ -108,19 +108,24 @@ export default async function AssessmentsPage() {
           <table className="w-full min-w-[900px] text-left text-xs">
             <thead className="bg-stone-50 text-[10px] font-bold uppercase tracking-wider text-stone-500">
               <tr>
-                <th className="px-4 py-3">Criterion</th>
-                <th className="px-4 py-3">Getting there · A2+</th>
-                <th className="px-4 py-3">On target · B1</th>
-                <th className="px-4 py-3">Beyond target · B1+ → B2</th>
+                <th className="px-4 py-3">Area &amp; learner question</th>
+                <th className="px-4 py-3">5 · Strong B1+</th>
+                <th className="px-4 py-3">3 · Solid B1</th>
+                <th className="px-4 py-3">1 · Below B1</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {descriptor.criteria.map((criterion) => (
                 <tr key={criterion.key} className="align-top">
-                  <th className="px-4 py-3 text-left font-bold text-stone-900">{criterion.label}</th>
-                  <td className="px-4 py-3 leading-5 text-stone-600">{criterion.gettingThere}</td>
-                  <td className="px-4 py-3 leading-5 text-stone-800">{criterion.onTarget}</td>
-                  <td className="px-4 py-3 leading-5 text-stone-600">{criterion.beyondTarget}</td>
+                  <th className="px-4 py-3 text-left font-bold text-stone-900">
+                    {criterion.label}
+                    {criterion.question && (
+                      <span className="mt-0.5 block font-normal text-stone-500">{criterion.question}</span>
+                    )}
+                  </th>
+                  <td className="px-4 py-3 leading-5 text-stone-800">{criterion.band5 ?? criterion.beyondTarget}</td>
+                  <td className="px-4 py-3 leading-5 text-stone-700">{criterion.band3 ?? criterion.onTarget}</td>
+                  <td className="px-4 py-3 leading-5 text-stone-600">{criterion.band1 ?? criterion.gettingThere}</td>
                 </tr>
               ))}
             </tbody>

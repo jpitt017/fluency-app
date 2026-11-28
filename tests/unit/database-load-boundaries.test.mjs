@@ -9,9 +9,9 @@ test('account deletion removes exact database-recorded paths instead of searchin
   assert.match(route, /from\(table\)\.select\(columns, \{ count: 'exact' \}\)\.eq\('user_id', user!\.id\)/);
   assert.match(route, /\.order\('id', \{ ascending: true \}\)\.range\(rows\.length, rows\.length \+ 499\)/);
   assert.match(route, /readOwned\('issue_reports', 'audio_path,screenshot_path'\)/);
-  assert.match(route, /readOwned\('speaking_attempts', 'audio_path'\)/);
-  assert.match(route, /readOwned\('week_speaking_attempts', 'first_recording_path,second_recording_path'\)/);
-  assert.match(route, /readOwned\('week_speaking_takes', 'recording_path'\)/);
+  assert.match(route, /readOwned\('speaking_attempts', 'audio_path,feedback'\)/);
+  assert.match(route, /readOwned\('week_speaking_attempts', 'first_recording_path,second_recording_path,first_feedback,second_feedback'\)/);
+  assert.match(route, /readOwned\('week_speaking_takes', 'recording_path,feedback'\)/);
   assert.match(route, /removeFiles\('issue-attachments', issuePaths\)/);
   assert.match(route, /removeFiles\(RECORDING_BUCKET, recordingPaths\)/);
   assert.match(route, /\.remove\(paths\.slice\(start, start \+ 100\)\)/);

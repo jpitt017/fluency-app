@@ -24,19 +24,26 @@ export function SpeakingDescriptors({ descriptors }: { descriptors: DescriptorSe
         <table className="w-full min-w-[900px] text-left text-xs">
           <thead className="bg-stone-50 text-[10px] font-bold uppercase tracking-wider text-stone-500">
             <tr>
-              <th className="px-4 py-3">Criterion</th>
-              <th className="px-4 py-3">Getting there · A2+</th>
-              <th className="px-4 py-3">On target · B1</th>
-              <th className="px-4 py-3">Beyond target · B1+ → B2</th>
+              <th className="px-4 py-3">Area &amp; learner question</th>
+              <th className="px-4 py-3">Marked by</th>
+              <th className="px-4 py-3">5 · Strong B1+</th>
+              <th className="px-4 py-3">3 · Solid B1</th>
+              <th className="px-4 py-3">1 · Below B1</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
             {descriptors.criteria.map((criterion) => (
               <tr key={criterion.key} className="align-top">
-                <th className="px-4 py-3 text-left font-bold text-stone-900">{criterion.label}</th>
-                <td className="px-4 py-3 leading-5 text-stone-600">{criterion.gettingThere}</td>
-                <td className="px-4 py-3 leading-5 text-stone-800">{criterion.onTarget}</td>
-                <td className="px-4 py-3 leading-5 text-stone-600">{criterion.beyondTarget}</td>
+                <th className="px-4 py-3 text-left font-bold text-stone-900">
+                  {criterion.label}
+                  {criterion.question && (
+                    <span className="mt-0.5 block font-normal text-stone-500">{criterion.question}</span>
+                  )}
+                </th>
+                <td className="px-4 py-3 leading-5 text-stone-600">{criterion.markedBy ?? 'AI'}</td>
+                <td className="px-4 py-3 leading-5 text-stone-800">{criterion.band5 ?? criterion.beyondTarget}</td>
+                <td className="px-4 py-3 leading-5 text-stone-700">{criterion.band3 ?? criterion.onTarget}</td>
+                <td className="px-4 py-3 leading-5 text-stone-600">{criterion.band1 ?? criterion.gettingThere}</td>
               </tr>
             ))}
           </tbody>
@@ -65,10 +72,30 @@ export default function SpeakingSpec({ speaking }: { speaking: SpeakingDetail })
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">Speaking · pilot draft</p>
-          <h3 className="font-serif text-lg font-semibold text-stone-900">60–90 second recording, shadowing and conversation</h3>
+          <h3 className="font-serif text-lg font-semibold text-stone-900">Four-part speaking: questions about you, long turn, discuss &amp; decide, follow-up</h3>
         </div>
         <span className="text-[10px] text-stone-500">Main: {speaking.main}</span>
       </div>
+
+      {speaking.parts && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <Panel title="Part 1 · Questions about you (~1 min, optional)" icon={Mic}>
+            <ol className="list-decimal space-y-1 pl-4">
+              {speaking.parts.questionsAboutYou.map((q) => <li key={q}>{q}</li>)}
+            </ol>
+          </Panel>
+          <Panel title="Part 3 · Discuss and decide (~3 min, optional)" icon={MessageCircle}>
+            <p className="font-semibold text-stone-800">{speaking.parts.discussAndDecide.topic}</p>
+            <p>{speaking.parts.discussAndDecide.options.join(' · ')}</p>
+            <p><strong className="font-semibold text-stone-800">Decision:</strong> {speaking.parts.discussAndDecide.decisionTask}</p>
+          </Panel>
+          <Panel title="Part 4 · Follow-up questions (~2 min, optional)" icon={Mic}>
+            <ol className="list-decimal space-y-1 pl-4">
+              {speaking.parts.followUpQuestions.map((q) => <li key={q}>{q}</li>)}
+            </ol>
+          </Panel>
+        </div>
+      )}
 
       <div className="grid gap-3 md:grid-cols-2">
         <Panel title="Prompt and cue card" icon={Mic}>

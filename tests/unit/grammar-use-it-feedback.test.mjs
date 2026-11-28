@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { z } from 'zod';
+import * as levelGuard from '../../lib/b1b2/level-guard.mjs';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 function load(path, modules = {}) {
@@ -22,6 +23,7 @@ function setup(parsed) {
     'zod': { z },
     '@/lib/b1b2/groq-json': { createGroqJsonCompletion: async (_client, options) => { calls.push(options); return { parsed, promptTokens: 2, completionTokens: 3 }; } },
     '@/lib/b1b2/prompt-guard': guard,
+    '@/lib/b1b2/level-guard.mjs': levelGuard,
   });
   return { ...feedbackApi, calls };
 }

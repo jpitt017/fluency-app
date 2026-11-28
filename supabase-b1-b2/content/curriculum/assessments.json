@@ -1,54 +1,58 @@
 {
-  "version": "2026-11-21",
-  "note": "Cut scores and thresholds are provisional until the pilot calibrates them.",
+  "version": "2026-11-28",
+  "note": "Writing and speaking tasks and 0–5 area marks prepare learners for B1 Preliminary and B2 First formats using original tasks and plain B1–B2 descriptors (not endorsed by or affiliated with Cambridge).",
   "writingDescriptors": {
-    "intro": "Writing is marked on the same four criteria as speaking, with B1 as the target for weeks 1–4. Learners see 'Getting there', 'On target' or 'Beyond target' for each criterion, never a number.",
+    "intro": "Writing is marked 0–5 on four areas, with no overall score. Each area gets one short strength and one short improvement in plain B1 English. Teachers can change any mark.",
     "criteria": [
       {
-        "key": "task_achievement",
-        "label": "Task achievement",
-        "gettingThere": "Misses one or more required points, or under 100 words; the reader would be unsure of the purpose.",
-        "onTarget": "Covers every required point in 120–150 words; the text suits its reader (a friend, a flatmate, a visitor).",
-        "beyondTarget": "Develops every point with detail, reasons or examples, with a clear sense of the reader."
+        "key": "content",
+        "label": "Content",
+        "question": "Did you answer every part of the task?",
+        "band5": "All parts answered clearly with relevant detail. Fits the reader.",
+        "band3": "Most parts answered; one part is thin or missing.",
+        "band1": "Important parts missing or off-topic."
       },
       {
-        "key": "vocabulary",
-        "label": "Vocabulary",
-        "gettingThere": "Basic, repeated words; errors with common words sometimes block meaning.",
-        "onTarget": "Enough everyday vocabulary for the topic; at least two of the week's featured items used correctly; spelling mostly correct.",
-        "beyondTarget": "A wider range, accurate collocations, few spelling errors, and paraphrase where a word is missing."
-      },
-      {
-        "key": "grammar",
-        "label": "Grammar",
-        "gettingThere": "Frequent errors in the week's main form; some sentences are hard to follow.",
-        "onTarget": "The week's main form used correctly at least once; simple sentences mostly accurate; errors do not block meaning.",
-        "beyondTarget": "Main and light forms used accurately; some longer sentences (relative clauses, time clauses, linkers)."
+        "key": "communicative_achievement",
+        "label": "Communicative achievement",
+        "question": "Does it sound right for your reader?",
+        "band5": "Right tone and format (email, article, story). Holds the reader's interest.",
+        "band3": "Mostly the right tone; format works.",
+        "band1": "Wrong tone or format; hard to read as that text type."
       },
       {
         "key": "organisation",
         "label": "Organisation",
-        "gettingThere": "No clear order or paragraphs; few or no linkers.",
-        "onTarget": "A clear beginning, middle and end; paragraphs or clear sections; basic linkers, including the week's linkers.",
-        "beyondTarget": "Well-built paragraphs, varied linkers, and a clear opening and closing."
+        "question": "Is it easy to follow?",
+        "band5": "Clear paragraphs and smooth linking.",
+        "band3": "Grouped ideas and simple linkers, with a few jumps.",
+        "band1": "Little order; few or misused linkers."
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "question": "Are your grammar and words clear?",
+        "band5": "Good B1+ range; tries the week's grammar; errors don't confuse.",
+        "band3": "Everyday words and simple grammar; some errors, meaning clear.",
+        "band1": "Frequent basic errors sometimes hide the meaning."
       }
     ],
     "rules": [
-      "Length. Under 100 words caps task achievement at 'Getting there'. Over 180 words is not penalised, but feedback suggests cutting.",
-      "Spelling. British spelling is taught; American spelling is noted once but not marked as an error.",
-      "Honesty. Pasted text, or a sudden jump well above the learner's usual writing, is flagged for teacher review where a teacher is involved. Checkpoint writing has pasting disabled.",
-      "Spanish-speaker errors. Typical Spanish-speaker errors (missing subjects, false friends) are corrected like any other error and logged, so later Spanish-specific notes can draw on them."
+      "Length. Target word counts are 100–120 words for Weeks 1–8. Under 80 words caps Content at 3. Over 150 words adds the tip \"Try to keep to 100–120 words.\"",
+      "Week goals. Required points, linkers, and the week's grammar become checks feeding Content, Organisation, and Language rather than separate marks.",
+      "Corrections. At most 3 corrections per text, putting the week's grammar first, and keeping clear, correct sentences as they are.",
+      "Spelling and honesty. British spelling is taught; American spelling is noted once but not marked as an error. Pasted text is flagged where a teacher is involved, and teachers can change any area mark."
     ],
-    "learnerFeedback": "A band for each criterion; one strength quoting the learner's words; up to two corrections, prioritising the week's grammar, each with the corrected sentence; then revise-and-retry with a word-by-word comparison of the two drafts.",
+    "learnerFeedback": "Four area marks (0–5) with no overall score; one-sentence strength and one-sentence improvement per area in B1 English; at most 3 corrections (the week's grammar first); and an improved B1–B2 version that keeps clear sentences as they are.",
     "wordRanges": [
       {
         "weeks": "1-4",
-        "range": "120–150 words",
+        "range": "100–120 words",
         "targetBand": "B1"
       },
       {
         "weeks": "5-8",
-        "range": "150–180 words",
+        "range": "100–120 words",
         "targetBand": "B1"
       },
       {
@@ -69,46 +73,54 @@
     ]
   },
   "speakingDescriptors": {
-    "intro": "The AI gives a band for each of the syllabus's four criteria; the target for weeks 1-4 is B1. Learners see the bands as \"Getting there\", \"On target\" and \"Beyond target\", never as a number.",
+    "intro": "Speaking uses four areas (0–5 where marked), with one-sentence strengths and improvements in plain B1 English. Pronunciation is marked by a teacher only, and Interactive communication is marked by AI in Discuss and decide only.",
     "criteria": [
       {
-        "key": "task_achievement",
-        "label": "Task achievement",
-        "gettingThere": "Covers fewer than three cue points, or under 45 seconds; some content off-task",
-        "onTarget": "Covers every cue point in 60-90 seconds; content is relevant and easy to follow",
-        "beyondTarget": "Covers every cue point and adds reasons, examples or a personal reaction"
+        "key": "grammar_and_vocabulary",
+        "label": "Grammar and vocabulary",
+        "question": "Did you use clear grammar and the right words?",
+        "markedBy": "AI",
+        "band5": "Good everyday vocabulary; tries the week's grammar; errors don't block meaning.",
+        "band3": "Simple grammar and vocabulary; errors are noticeable, main point is clear.",
+        "band1": "Very limited words or frequent errors make the message hard to follow."
       },
       {
-        "key": "vocabulary",
-        "label": "Vocabulary",
-        "gettingThere": "Basic words only; gaps sometimes stop the meaning",
-        "onTarget": "Enough everyday vocabulary for the topic; at least two of the week's featured items used correctly",
-        "beyondTarget": "A wider range, accurate collocations, and paraphrase when a word is missing"
+        "key": "discourse_management",
+        "label": "Discourse management",
+        "question": "Did you speak for long enough and link your ideas?",
+        "markedBy": "AI",
+        "band5": "Full answer for the task length, relevant, connected with simple linkers.",
+        "band3": "Answers the prompt but briefly, or repeats a couple of linkers.",
+        "band1": "Very short turns or unconnected fragments."
       },
       {
-        "key": "grammar",
-        "label": "Grammar",
-        "gettingThere": "Frequent errors in the week's main form; meaning sometimes unclear",
-        "onTarget": "The week's main form used correctly at least once; errors do not block meaning",
-        "beyondTarget": "Main and light forms used accurately and flexibly; some longer, linked sentences"
+        "key": "pronunciation",
+        "label": "Pronunciation",
+        "question": "Could people understand you easily?",
+        "markedBy": "Teacher only",
+        "band5": "Easy to understand throughout; clear stress and endings.",
+        "band3": "Mostly clear, with occasional effort needed on stress or sounds.",
+        "band1": "Often hard to understand."
       },
       {
-        "key": "coherence",
-        "label": "Coherence",
-        "gettingThere": "Isolated sentences; few or no linking words",
-        "onTarget": "A clear order with basic linkers (then, so, because, since then, apart from that)",
-        "beyondTarget": "Ideas develop logically with varied linkers and clear signposting"
+        "key": "interactive_communication",
+        "label": "Interactive communication",
+        "question": "Did you answer your partner and keep the talk going?",
+        "markedBy": "AI in Discuss and decide only",
+        "band5": "Responds to the partner's point, asks back or invites their view, helps reach a choice.",
+        "band3": "Answers what's asked and takes turns, rarely builds on the partner's idea.",
+        "band1": "One-word replies or talks past the partner."
       }
     ],
     "notes": [
-      "Not marked automatically: pronunciation and accent. The AI never treats an accent, or a word its speech recognition misheard, as a grammar or vocabulary error. Long pauses are not penalised; where a teacher reviews a recording, they may comment on fluency and pronunciation.",
-      "Confidence. If the AI's bands are uncertain, or the transcript quality is poor, the recording is flagged for teacher review where a teacher is available, and the learner sees \"Feedback may be less accurate for this recording\"."
+      "Pronunciation is never marked by the AI. Learners still get \"Practise these sounds\" from words in their transcript, and teachers can add or change any mark.",
+      "Cue-card points are shown as a checklist (✓ / ✗), not a mark. Only the long turn is required to finish the week; Questions about you, Discuss and decide, and Follow-up questions are optional."
     ],
     "learnerFeedback": [
-      "1. A band for each criterion.",
-      "2. One strength, quoting the learner's own words.",
-      "3. One specific correction, prioritising the week's main grammar point, with the corrected sentence.",
-      "4. A prompt to record again."
+      "1. Marks (0–5) on Grammar and vocabulary and Discourse management (plus Interactive communication in Discuss and decide), with one strength and one improvement each.",
+      "2. Cue points covered as a ✓ / ✗ checklist on the long turn.",
+      "3. \"Your answer, improved\" keeping the learner's ideas with 2–4 tappable target-structure highlights and a cached British TTS play button (or \"Another example\" first if under ~20 words or off-topic).",
+      "4. \"Practise these sounds\" and \"Take with you\" highlights checked on retries."
     ],
     "recordings": "Four model answers, British English, natural pace (about 130-150 words a minute), with transcripts; 12 shadowing clips at normal and 0.8 speed with transcripts."
   },

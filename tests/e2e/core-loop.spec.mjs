@@ -170,13 +170,17 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          score: 82,
           feedback: 'Clear B1+ structure with accurate tenses and natural connectors.',
           corrected: 'I want to reach B2 English to lead client workshops confidently.',
           notes: [],
           corrections: [],
           errorPatterns: [],
-          rubric: { task_response: 4, organisation: 4, grammar_accuracy: 4, lexical_range: 4, style: 4 },
+          areas: {
+            content: { score: 4, strength: 'Clear goals.', improvement: 'Add one example.' },
+            communicative_achievement: { score: 4, strength: 'Natural tone.', improvement: 'Keep this style.' },
+            organisation: { score: 4, strength: 'Logical flow.', improvement: 'Use one more linker.' },
+            language: { score: 4, strength: 'Good vocabulary.', improvement: 'Check verb forms.' },
+          },
         }),
       });
     });
@@ -211,7 +215,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await page.getByRole('button', { name: /Evaluate Sample & Recommend Level/i }).click();
 
     await expect(page.getByText(/Placement Check Complete/i)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/Writing 82\/100/i)).toBeVisible();
+    await expect(page.getByText(/Content 4\/5/i)).toBeVisible();
   });
 
   test('authenticated learner completes lesson -> writing -> stubbed feedback -> review -> rewrite check', async ({
@@ -228,8 +232,6 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             submissionId: null,
-            score: 74,
-            passed: true,
             feedback: 'Good effort! Watch article and preposition collocations.',
             corrected: 'Moving to Edinburgh was a turning point in my career.',
             notes: ['Use "a turning point" and "responsible for".'],
@@ -245,7 +247,12 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
               },
             ],
             errorPatterns: ['article'],
-            rubric: { task_response: 4, organisation: 3.5, grammar_accuracy: 3.5, lexical_range: 4, style: 3.5 },
+            areas: {
+              content: { score: 4, strength: 'Clear main idea.', improvement: 'Add a detail.' },
+              communicative_achievement: { score: 4, strength: 'Suitable style.', improvement: 'Keep tone steady.' },
+              organisation: { score: 3, strength: 'Sensible order.', improvement: 'Link sentences smoothly.' },
+              language: { score: 3, strength: 'Good words.', improvement: 'Add missing articles.' },
+            },
             newBadges: [],
           }),
         });
@@ -260,7 +267,7 @@ test.describe('B1 -> B2 Core Learning Loop', () => {
     await draftArea.fill('Moving to Edinburgh was turning point in my career.');
 
     await page.getByRole('button', { name: /Evaluate writing/i }).click();
-    await expect(page.getByText(/74%/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('4 / 5').first()).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/review');
     await expect(page.getByText(/Practise your mistakes|Nothing to practise today/i).first()).toBeVisible();

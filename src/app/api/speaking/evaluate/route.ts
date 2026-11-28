@@ -17,6 +17,28 @@ const MODEL_ID = 'openai/gpt-oss-20b';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const MAX_TRANSCRIPT_CHARS = 4000;
 
+type SpeakingPartType = 'questions_about_you' | 'long_turn' | 'discuss_and_decide' | 'follow_up' | '';
+
+function normalizePartType(raw: unknown): SpeakingPartType {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  if (
+    s === 'questions_about_you' ||
+    s === 'long_turn' ||
+    s === 'discuss_and_decide' ||
+    s === 'follow_up'
+  ) {
+    return s;
+  }
+  return '';
+}
+
+const PART_LABELS: Record<Exclude<SpeakingPartType, ''>, string> = {
+  questions_about_you: 'Part 1: Questions about you (~1 min)',
+  long_turn: 'Part 2: Long turn (60–90 seconds)',
+  discuss_and_decide: 'Part 3: Discuss and decide (~3 min)',
+  follow_up: 'Part 4: Follow-up questions (~2 min)',
+};
+
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const supabase = await createServerSupabase();
@@ -40,6 +62,10 @@ export async function POST(req: NextRequest) {
     let lessonId = '';
     let audioPath = '';
     let mimeType = '';
+    let partType: SpeakingPartType = '';
+    let optionsList: string[] = [];
+    let decisionTask = '';
+    let cueLabels: string[] = [];
     let audioFile: File | null = null;
     let fluency = null;
 
@@ -49,23 +75,51 @@ export async function POST(req: NextRequest) {
       const rawWeek = form.get('weekNumber');
       if (rawWeek && /^\d+$/.test(String(rawWeek))) weekNumber = Number(rawWeek);
       const rawGrammarWeek = Number(form.get('grammarWeek'));
-      if (Number.isInteger(rawGrammarWeek) && rawGrammarWeek >= 1 && rawGrammarWeek <= 32) grammarWeek = rawGrammarWeek;
+      if (Number.isInteger(rawGrammarWeek) && rawGrammarWeek >= 1 && rawGrammarWeek <= 32) {
+        grammarWeek = rawGrammarWeek;
+      }
       targetPhrase = sanitizeLearnerText(form.get('targetPhrase'), 400).text;
       promptContext = sanitizeLearnerText(form.get('prompt'), 500).text;
       taskId = String(form.get('taskId') || '').trim();
       lessonId = String(form.get('lessonId') || '').trim();
       audioPath = String(form.get('audioPath') || '').trim();
       mimeType = String(form.get('mimeType') || audioFile?.type || '').trim();
+      partType = normalizePartType(form.get('partType'));
+      try {
+        const parsedCues = JSON.parse(String(form.get('cueLabels') || '[]'));
+        if (Array.isArray(parsedCues)) {
+          cueLabels = parsedCues
+            .map((c) => sanitizeLearnerText(c, 80).text)
+            .filter(Boolean)
+            .slice(0, 8);
+        }
+      } catch {
+        /* ignore invalid cueLabels */
+      }
       if (!audioFile || typeof audioFile.size !== 'number') {
         statusCode = 400;
         return NextResponse.json({ error: 'No audio file provided.' }, { status: 400 });
       }
       if (audioFile.size > MAX_AUDIO_BYTES) {
         statusCode = 413;
-        return NextResponse.json({ error: 'Audio file exceeds the 10 MB limit.' }, { status: 413 });
+        return NextResponse.json(
+          { error: 'Audio file exceeds the 10 MB limit.' },
+          { status: 413 },
+        );
       }
     } else {
       const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+      if (typeof body.weekNumber === 'number' && Number.isInteger(body.weekNumber)) {
+        weekNumber = body.weekNumber;
+      }
+      if (
+        typeof body.grammarWeek === 'number' &&
+        Number.isInteger(body.grammarWeek) &&
+        body.grammarWeek >= 1 &&
+        body.grammarWeek <= 32
+      ) {
+        grammarWeek = body.grammarWeek;
+      }
       transcript = sanitizeLearnerText(body.transcript, MAX_TRANSCRIPT_CHARS).text;
       targetPhrase = sanitizeLearnerText(body.targetPhrase, 400).text;
       promptContext = sanitizeLearnerText(body.prompt, 500).text;
@@ -73,17 +127,46 @@ export async function POST(req: NextRequest) {
       lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
       audioPath = typeof body.audioPath === 'string' ? body.audioPath.trim() : '';
       mimeType = typeof body.mimeType === 'string' ? body.mimeType.trim() : '';
+      partType = normalizePartType(body.partType);
+      if (Array.isArray(body.optionsList)) {
+        optionsList = body.optionsList
+          .map((item) => sanitizeLearnerText(item, 80).text)
+          .filter(Boolean)
+          .slice(0, 8);
+      }
+      if (typeof body.decisionTask === 'string') {
+        decisionTask = sanitizeLearnerText(body.decisionTask, 180).text;
+      }
+      if (Array.isArray(body.cueLabels)) {
+        cueLabels = body.cueLabels
+          .map((c) => sanitizeLearnerText(c, 80).text)
+          .filter(Boolean)
+          .slice(0, 8);
+      }
     }
 
-    const weekTask = weekNumber ? await loadLearnerWeek(weekNumber) : null;
-    const weeklyTask = Boolean(isAudio && weekTask && weekNumber
-      && promptContext === sanitizeLearnerText(weekTask.speakingPrompt, 500).text);
-    // Dedicated weeks must use the saved-take route: a direct lab POST cannot
-    // unlock the model or bypass their five-check ledger. Other published
-    // weeks retain their existing lab-based completion flow.
+    const isOptionalPart =
+      partType === 'questions_about_you' ||
+      partType === 'discuss_and_decide' ||
+      partType === 'follow_up';
+
+    const weekTask = isAudio && weekNumber ? await loadLearnerWeek(weekNumber) : null;
+    const weeklyTask = Boolean(
+      isAudio &&
+        !isOptionalPart &&
+        weekTask &&
+        weekNumber &&
+        promptContext === sanitizeLearnerText(weekTask.speakingPrompt, 500).text,
+    );
+    // Dedicated weeks must use the saved-take route for the required long turn:
+    // a direct lab POST cannot unlock the model or bypass their five-check ledger.
+    // Optional Parts 1, 3, and 4 never complete the week on their own.
     if (weeklyTask && weekNumber && speakingSupportConfig(weekNumber)) {
       statusCode = 409;
-      return NextResponse.json({ error: `Record this weekly task on the Week ${weekNumber} page.` }, { status: 409 });
+      return NextResponse.json(
+        { error: `Record this weekly task on the Week ${weekNumber} page.` },
+        { status: 409 },
+      );
     }
 
     // Audio transcription and evaluation cost six units; typed text costs three.
@@ -93,13 +176,18 @@ export async function POST(req: NextRequest) {
       statusCode = guard.response.status;
       return guard.response;
     }
-    if (!process.env.GROQ_API_KEY) throw Object.assign(new Error('Speech service is not configured'), { status: 401 });
+    if (!process.env.GROQ_API_KEY) {
+      throw Object.assign(new Error('Speech service is not configured'), { status: 401 });
+    }
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     if (audioFile) {
       const transcription = await groq.audio.transcriptions.create({
-        file: audioFile, model: 'whisper-large-v3-turbo', language: 'en',
-        response_format: 'verbose_json', timestamp_granularities: ['segment'],
+        file: audioFile,
+        model: 'whisper-large-v3-turbo',
+        language: 'en',
+        response_format: 'verbose_json',
+        timestamp_granularities: ['segment'],
       });
       transcript = sanitizeLearnerText(transcription.text, MAX_TRANSCRIPT_CHARS).text;
       fluency = fluencyFromWhisper(transcript, transcription);
@@ -108,75 +196,171 @@ export async function POST(req: NextRequest) {
     inputChars = transcript.length;
     if (!transcript) {
       statusCode = 400;
-      return NextResponse.json({ error: 'Could not detect any speech in the recording. Please try speaking closer to the microphone.' }, { status: 400, headers: guard.headers });
+      return NextResponse.json(
+        {
+          error:
+            'Could not detect any speech in the recording. Please try speaking closer to the microphone.',
+        },
+        { status: 400, headers: guard.headers },
+      );
     }
 
+    const effectiveWeek = grammarWeek ?? weekNumber;
+    const includeInteractive = partType === 'discuss_and_decide';
     const evaluation = await evaluateSpeakingTranscript({
-      groq, supabase, transcript, prompt: promptContext, targetPhrase, weekNumber: grammarWeek ?? weekNumber,
+      groq,
+      supabase,
+      transcript,
+      prompt: promptContext,
+      targetPhrase,
+      weekNumber: effectiveWeek,
+      cueLabels,
+      includeInteractive,
+      partLabel: partType ? PART_LABELS[partType] : undefined,
+      optionsList: optionsList.length > 0 ? optionsList : undefined,
+      decisionTask: decisionTask || undefined,
     });
-    const { validated, structure, cuePoints } = evaluation;
+    const { validated, structure, cuePoints, cueChecklist } = evaluation;
     cacheHit = evaluation.cacheHit;
     promptTokens = evaluation.promptTokens;
     completionTokens = evaluation.completionTokens;
-    const uiCorrections = validated.corrections.map((c) => ({ ...c, alternative: c.corrected_sentence }));
-    const sounds = soundTips(transcript);
-    const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+    const cleanedTranscript = validated.cleanedTranscript || transcript;
+    const uiCorrections = validated.corrections.map((c) => ({
+      ...c,
+      alternative: c.corrected_sentence,
+    }));
+    const sounds = soundTips(cleanedTranscript, {
+      excludeWords: validated.repairedWords,
+      weekNumber: effectiveWeek,
+    });
+    const wordCount = cleanedTranscript.split(/\s+/).filter(Boolean).length;
     let savedAttemptId: string | null = null;
     let newBadges: string[] = [];
 
     if (supabase && guard.userId) {
       if (taskId) {
-        const { data: inserted, error: insertError } = await supabase.from('speaking_attempts').insert({
-          user_id: guard.userId, task_id: taskId, lesson_id: lessonId || null,
-          audio_path: audioPath || null, mime_type: mimeType || null,
-          // The display keeps Whisper's fractional seconds, but the saved
-          // speaking_attempts.duration_seconds column is an integer.
-          duration_seconds: fluency?.seconds != null ? Math.max(1, Math.round(fluency.seconds)) : null,
-          transcript, word_count: wordCount,
-          fluency: validated.rubric.task_achievement, lexical_range: validated.rubric.lexical_range,
-          grammar_accuracy: validated.rubric.grammar_accuracy, coherence: validated.rubric.coherence,
-          pronunciation: null, overall: validated.score,
-          feedback: { summary: validated.feedback, improvedResponse: validated.improvedResponse,
-            tips: validated.tips, corrections: uiCorrections, errorPatterns: validated.errorPatterns,
-            rubric: validated.rubric, structure, cuePoints, fluency, soundTips: sounds },
-          strengths: validated.strengths, improvements: validated.improvements,
-          status: 'evaluated', ai_model: MODEL_ID, evaluated_at: new Date().toISOString(),
-        }).select('id').single();
+        const { data: inserted, error: insertError } = await supabase
+          .from('speaking_attempts')
+          .insert({
+            user_id: guard.userId,
+            task_id: taskId,
+            lesson_id: lessonId || null,
+            audio_path: audioPath || null,
+            mime_type: mimeType || null,
+            duration_seconds:
+              fluency?.seconds != null ? Math.max(1, Math.round(fluency.seconds)) : null,
+            transcript: cleanedTranscript,
+            word_count: wordCount,
+            fluency: validated.areas.discourse_management.score,
+            lexical_range: validated.areas.grammar_and_vocabulary.score,
+            grammar_accuracy: validated.areas.grammar_and_vocabulary.score,
+            coherence: validated.areas.discourse_management.score,
+            pronunciation: null,
+            overall: null,
+            feedback: {
+              summary: validated.feedback,
+              nextStep: validated.nextStep,
+              improvedResponse: validated.improvedResponse,
+              highlights: validated.highlights,
+              showExampleFirst: validated.showExampleFirst,
+              examplePromptMessage: validated.examplePromptMessage,
+              tips: validated.tips,
+              corrections: uiCorrections,
+              errorPatterns: validated.errorPatterns,
+              areas: validated.areas,
+              partType: partType || null,
+              structure,
+              cuePoints,
+              cueChecklist,
+              fluency,
+              soundTips: sounds,
+            },
+            strengths: validated.strengths,
+            improvements: validated.improvements,
+            status: 'evaluated',
+            ai_model: MODEL_ID,
+            evaluated_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
         if (!insertError && inserted) {
           savedAttemptId = inserted.id;
           const { data: badgeCodes } = await supabase.rpc('evaluate_badges');
-          if (Array.isArray(badgeCodes)) newBadges = badgeCodes.filter((c): c is string => typeof c === 'string');
+          if (Array.isArray(badgeCodes)) {
+            newBadges = badgeCodes.filter((c): c is string => typeof c === 'string');
+          }
         }
       }
       await persistLearnerErrors(supabase, {
-        userId: guard.userId, sourceType: 'speaking', sourceId: savedAttemptId,
-        lessonId: lessonId || null, sourceText: transcript, sourceWordCount: wordCount, corrections: validated.corrections,
+        userId: guard.userId,
+        sourceType: 'speaking',
+        sourceId: savedAttemptId,
+        lessonId: lessonId || null,
+        sourceText: cleanedTranscript,
+        sourceWordCount: wordCount,
+        corrections: validated.corrections,
       });
     }
 
-    const modelAnswer = weeklyTask && guard.userId
-      ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking') : null;
-    return NextResponse.json({
-      modelAnswer, weekRecorded: weeklyTask ? Boolean(modelAnswer) : weekTask ? false : null, supportSaved: null,
-      attemptId: savedAttemptId, transcript, improvedResponse: validated.improvedResponse,
-      feedback: validated.feedback, strengths: validated.strengths, improvements: validated.improvements,
-      corrections: uiCorrections, errorPatterns: validated.errorPatterns, tips: validated.tips,
-      rubric: validated.rubric, score: validated.score, structure, cuePoints, fluency, soundTips: sounds,
-      transcriptionNote: 'The AI reads what you said and checks your ideas, grammar and words. Sound practice is not a pronunciation score.',
-      newBadges, cached: cacheHit,
-    }, { headers: guard.headers });
+    const modelAnswer =
+      weeklyTask && guard.userId
+        ? await recordWeekSubmission(guard.userId, weekNumber, 'speaking')
+        : null;
+    return NextResponse.json(
+      {
+        modelAnswer,
+        weekRecorded: weeklyTask ? Boolean(modelAnswer) : weekTask && !isOptionalPart ? false : null,
+        supportSaved: null,
+        attemptId: savedAttemptId,
+        transcript: cleanedTranscript,
+        nextStep: validated.nextStep,
+        improvedResponse: validated.improvedResponse,
+        highlights: validated.highlights,
+        showExampleFirst: validated.showExampleFirst,
+        examplePromptMessage: validated.examplePromptMessage,
+        feedback: validated.feedback,
+        strengths: validated.strengths,
+        improvements: validated.improvements,
+        corrections: uiCorrections,
+        errorPatterns: validated.errorPatterns,
+        tips: validated.tips,
+        areas: validated.areas,
+        structure,
+        cuePoints,
+        cueChecklist,
+        fluency,
+        soundTips: sounds,
+        transcriptionNote:
+          'The AI reads what you said and checks your ideas, grammar and words. Pronunciation is marked by your teacher only.',
+        newBadges,
+        cached: cacheHit,
+      },
+      { headers: guard.headers },
+    );
   } catch (err: unknown) {
     const failure = await providerFailureResponse({
-      admin: supabase, endpoint: ENDPOINT, model: MODEL_ID, error: err,
-      workSaved: false, workKind: isAudio ? 'recording' : 'text',
+      admin: supabase,
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      error: err,
+      workSaved: false,
+      workKind: isAudio ? 'recording' : 'text',
     });
     statusCode = failure.status;
     errorMessage = failure.errorMessage;
     return failure.response;
   } finally {
     await logAiRequest(supabase, {
-      endpoint: ENDPOINT, model: MODEL_ID, statusCode, latencyMs: Date.now() - startedAt,
-      cacheHit, audioSeconds, inputChars, promptTokens, completionTokens, errorMessage,
+      endpoint: ENDPOINT,
+      model: MODEL_ID,
+      statusCode,
+      latencyMs: Date.now() - startedAt,
+      cacheHit,
+      audioSeconds,
+      inputChars,
+      promptTokens,
+      completionTokens,
+      errorMessage,
     }, isSignedIn);
   }
 }

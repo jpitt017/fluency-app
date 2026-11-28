@@ -34,7 +34,7 @@ export default async function PrivacyPage() {
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li><strong>Supabase:</strong> Database hosting, private storage buckets, and user authentication.</li>
               <li><strong>Groq:</strong> Turns speech into text and provides feedback.</li>
-              <li><strong>OpenAI:</strong> Pre-generated curriculum audio synthesis (TTS, no learner PII).</li>
+              <li><strong>OpenAI &amp; ElevenLabs:</strong> Course speech audio synthesis (and optional British improved-answer audio when enabled).</li>
               <li><strong>Stripe:</strong> Payment processing, customer records, and subscription billing.</li>
               <li><strong>Resend:</strong> Sends an alert when a user reports a broken feature.</li>
               <li><strong>Vercel:</strong> Hosts the app and runs scheduled data deletion.</li>
@@ -60,7 +60,7 @@ export default async function PrivacyPage() {
           <div className="rounded-xl border border-stone-200 bg-stone-50 p-5">
             <h2 className="text-base font-semibold text-stone-900">5. Your EU / GDPR Rights &amp; Data Deletion</h2>
             <p className="mt-1.5 text-xs leading-5 text-stone-600">
-              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
+              Clicking <strong>Delete my learning data &amp; recordings</strong> below immediately erases your lesson progress, vocabulary and mistake review cards, learner error logs, writing drafts, speaking transcripts, issue reports, their attachments, AI request logs, and voice or improved-answer recordings in Supabase Storage. Your login email and any active Stripe subscription remain intact so paid access is not lost unexpectedly; to close your login account or cancel Stripe billing permanently, visit Billing or contact support.
             </p>
             <div className="mt-4">
               <DeleteDataButton userId={user?.id ?? null} />

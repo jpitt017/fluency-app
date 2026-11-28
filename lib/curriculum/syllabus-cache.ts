@@ -5,6 +5,29 @@ import { createAdminSupabase } from '@/utils/supabase/admin';
 
 const ONE_HOUR = 60 * 60;
 
+export type SafeSpeakingParts = {
+  questionsAboutYou: string[];
+  discussAndDecide: {
+    topic: string;
+    options: string[];
+    decisionTask: string;
+    openingLine: string;
+  };
+  followUpQuestions: string[];
+};
+
+export type SafeWritingInputEmail = {
+  from: string;
+  body: string;
+  signOff: string;
+  notes: string[];
+};
+
+export type SafeWritingCallForArticles = {
+  heading: string;
+  body: string;
+};
+
 export type SafeWeekDetails = {
   title?: string;
   canDo?: string;
@@ -12,9 +35,14 @@ export type SafeWeekDetails = {
     prompt?: string;
     cueCard?: string;
     record?: string;
+    parts?: SafeSpeakingParts;
     shadowingChunks?: { chunk: string; listenFor: string; audioUrl?: string }[];
   };
-  writing?: { prompt?: string };
+  writing?: {
+    prompt?: string;
+    inputEmail?: SafeWritingInputEmail;
+    callForArticles?: SafeWritingCallForArticles;
+  };
 };
 
 export type SafeInputItem = {
@@ -72,6 +100,35 @@ export function projectSafeWeekDetails(value: unknown): SafeWeekDetails | null {
       ...(typeof chunk.audioUrl === 'string' ? { audioUrl: chunk.audioUrl } : {}),
     }];
   });
+  const rawParts = record(rawSpeaking?.parts);
+  const rawDiscuss = record(rawParts?.discussAndDecide);
+  const parts: SafeSpeakingParts | undefined = rawParts && rawDiscuss
+    && Array.isArray(rawParts.questionsAboutYou) && rawParts.questionsAboutYou.every((q) => typeof q === 'string')
+    && Array.isArray(rawParts.followUpQuestions) && rawParts.followUpQuestions.every((q) => typeof q === 'string')
+    && typeof rawDiscuss.topic === 'string' && typeof rawDiscuss.decisionTask === 'string' && typeof rawDiscuss.openingLine === 'string'
+    && Array.isArray(rawDiscuss.options) && rawDiscuss.options.every((o) => typeof o === 'string')
+    ? {
+        questionsAboutYou: rawParts.questionsAboutYou as string[],
+        discussAndDecide: {
+          topic: rawDiscuss.topic,
+          options: rawDiscuss.options as string[],
+          decisionTask: rawDiscuss.decisionTask,
+          openingLine: rawDiscuss.openingLine,
+        },
+        followUpQuestions: rawParts.followUpQuestions as string[],
+      }
+    : undefined;
+  const rawEmail = record(rawWriting?.inputEmail);
+  const inputEmail: SafeWritingInputEmail | undefined = rawEmail
+    && typeof rawEmail.from === 'string' && typeof rawEmail.body === 'string' && typeof rawEmail.signOff === 'string'
+    && Array.isArray(rawEmail.notes) && rawEmail.notes.every((n) => typeof n === 'string')
+    ? { from: rawEmail.from, body: rawEmail.body, signOff: rawEmail.signOff, notes: rawEmail.notes as string[] }
+    : undefined;
+  const rawCall = record(rawWriting?.callForArticles);
+  const callForArticles: SafeWritingCallForArticles | undefined = rawCall
+    && typeof rawCall.heading === 'string' && typeof rawCall.body === 'string'
+    ? { heading: rawCall.heading, body: rawCall.body }
+    : undefined;
   return {
     ...(stringField(root.title) ? { title: stringField(root.title) } : {}),
     ...(stringField(root.canDo) ? { canDo: stringField(root.canDo) } : {}),
@@ -80,10 +137,17 @@ export function projectSafeWeekDetails(value: unknown): SafeWeekDetails | null {
         ...(stringField(rawSpeaking.prompt) ? { prompt: stringField(rawSpeaking.prompt) } : {}),
         ...(stringField(rawSpeaking.cueCard) ? { cueCard: stringField(rawSpeaking.cueCard) } : {}),
         ...(stringField(rawFlow?.record) ? { record: stringField(rawFlow?.record) } : {}),
+        ...(parts ? { parts } : {}),
         ...(shadowingChunks.length ? { shadowingChunks } : {}),
       },
     } : {}),
-    ...(rawWriting && stringField(rawWriting.prompt) ? { writing: { prompt: stringField(rawWriting.prompt) } } : {}),
+    ...(rawWriting && (stringField(rawWriting.prompt) || inputEmail || callForArticles) ? {
+      writing: {
+        ...(stringField(rawWriting.prompt) ? { prompt: stringField(rawWriting.prompt) } : {}),
+        ...(inputEmail ? { inputEmail } : {}),
+        ...(callForArticles ? { callForArticles } : {}),
+      },
+    } : {}),
   };
 }
 

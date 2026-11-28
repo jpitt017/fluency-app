@@ -6,23 +6,88 @@ import { Award, CheckCircle2, Mic, PenLine, UserCheck } from 'lucide-react';
 import WeekSpeakingRecordings from './WeekSpeakingRecordings';
 import type { TeacherRosterLearner } from '@/lib/b1b2/types';
 
+const SPEAKING_AREA_FIELDS = [
+  { key: 'grammar_and_vocabulary', label: 'Grammar & vocab' },
+  { key: 'discourse_management', label: 'Discourse' },
+  { key: 'pronunciation', label: 'Pronunciation (teacher)' },
+  { key: 'interactive_communication', label: 'Interaction' },
+] as const;
+
+const WRITING_AREA_FIELDS = [
+  { key: 'content', label: 'Content' },
+  { key: 'communicative_achievement', label: 'Communicative' },
+  { key: 'organisation', label: 'Organisation' },
+  { key: 'language', label: 'Language' },
+] as const;
+
+function readInitialMarks(
+  feedback: Record<string, unknown> | null | undefined,
+  fields: readonly { key: string; label: string }[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  const areas =
+    feedback?.areas && typeof feedback.areas === 'object'
+      ? (feedback.areas as Record<string, { score?: unknown } | null>)
+      : {};
+  const teacher =
+    feedback?.teacherAreaMarks && typeof feedback.teacherAreaMarks === 'object'
+      ? (feedback.teacherAreaMarks as Record<string, unknown>)
+      : {};
+  for (const field of fields) {
+    const tVal = teacher[field.key];
+    const aiVal = areas[field.key]?.score;
+    if (typeof tVal === 'number') out[field.key] = String(tVal);
+    else if (typeof aiVal === 'number') out[field.key] = String(aiVal);
+    else out[field.key] = '';
+  }
+  return out;
+}
+
 export default function TeacherConsoleClient({ learners }: { learners: TeacherRosterLearner[] }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string>(learners[0]?.user_id ?? '');
   const [notesByTarget, setNotesByTarget] = useState<Record<string, string>>({});
   const [pronNotesByTarget, setPronNotesByTarget] = useState<Record<string, string>>({});
-  const [decisionByTarget, setDecisionByTarget] = useState<Record<string, 'ready_for_b2_exam_prep' | 'named_next_step'>>({});
+  const [areaMarksByTarget, setAreaMarksByTarget] = useState<Record<string, Record<string, string>>>({});
+  const [decisionByTarget, setDecisionByTarget] = useState<
+    Record<string, 'ready_for_b2_exam_prep' | 'named_next_step'>
+  >({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [feedbackBanner, setFeedbackBanner] = useState<string>('');
 
   const selected = learners.find((l) => l.user_id === selectedId) ?? learners[0] ?? null;
+
+  function getAreaMarksState(
+    targetKey: string,
+    feedback: Record<string, unknown> | null | undefined,
+    fields: readonly { key: string; label: string }[],
+  ): Record<string, string> {
+    return areaMarksByTarget[targetKey] ?? readInitialMarks(feedback, fields);
+  }
+
+  function updateAreaMark(
+    targetKey: string,
+    feedback: Record<string, unknown> | null | undefined,
+    fields: readonly { key: string; label: string }[],
+    areaKey: string,
+    val: string,
+  ) {
+    setAreaMarksByTarget((prev) => {
+      const current = prev[targetKey] ?? readInitialMarks(feedback, fields);
+      return {
+        ...prev,
+        [targetKey]: { ...current, [areaKey]: val },
+      };
+    });
+  }
 
   async function setPilot(userId: string, enabled: boolean) {
     setSavingKey('pilot');
     setFeedbackBanner('');
     try {
       const response = await fetch('/api/teacher/pilot', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, enabled }),
       });
       const body = await response.json().catch(() => ({}));
@@ -31,17 +96,32 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
       router.refresh();
     } catch (error) {
       setFeedbackBanner(error instanceof Error ? error.message : 'Could not update pilot access.');
-    } finally { setSavingKey(null); }
+    } finally {
+      setSavingKey(null);
+    }
   }
 
   async function submitReview(params: {
-    targetType: 'speaking' | 'writing' | 'checkpoint';
+    targetType: 'speaking' | 'writing' | 'checkpoint' | 'week_speaking_take';
     targetId: string;
     teacherStatus: 'confirmed' | 'needs_work' | 'overridden';
+    feedback?: Record<string, unknown> | null;
   }) {
     const key = `${params.targetType}:${params.targetId}`;
     setSavingKey(key);
     setFeedbackBanner('');
+
+    let areaMarksPayload: Record<string, number | null> | undefined;
+    if (params.targetType !== 'checkpoint') {
+      const fields =
+        params.targetType === 'writing' ? WRITING_AREA_FIELDS : SPEAKING_AREA_FIELDS;
+      const currentMarks = getAreaMarksState(key, params.feedback, fields);
+      areaMarksPayload = {};
+      for (const f of fields) {
+        const raw = currentMarks[f.key];
+        areaMarksPayload[f.key] = raw !== '' && raw !== undefined ? Number(raw) : null;
+      }
+    }
 
     try {
       const res = await fetch('/api/teacher/review', {
@@ -52,8 +132,13 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
           targetId: params.targetId,
           teacherStatus: params.teacherStatus,
           teacherNotes: notesByTarget[key] ?? null,
-          pronunciationNote: params.targetType === 'speaking' ? (pronNotesByTarget[key] ?? null) : null,
-          readinessDecision: params.targetType === 'checkpoint' ? (decisionByTarget[key] ?? null) : null,
+          pronunciationNote:
+            params.targetType === 'speaking' || params.targetType === 'week_speaking_take'
+              ? (pronNotesByTarget[key] ?? null)
+              : null,
+          readinessDecision:
+            params.targetType === 'checkpoint' ? (decisionByTarget[key] ?? null) : null,
+          areaMarks: areaMarksPayload,
         }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -77,7 +162,6 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
 
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
-      {/* Roster sidebar */}
       <aside className="space-y-2 rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs lg:col-span-4">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <h2 className="font-serif text-base font-semibold text-stone-900">
@@ -101,7 +185,9 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-bold text-stone-900">{learner.full_name}</span>
+                  <span className="truncate text-sm font-bold text-stone-900">
+                    {learner.full_name}
+                  </span>
                   <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700 ring-1 ring-stone-200">
                     {learner.streak_days}d streak
                   </span>
@@ -109,7 +195,9 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-stone-600">
                   <span>{learner.learner_band.replace(/_/g, ' ')}</span>
                   <span>·</span>
-                  <span>{learner.recent_speaking.length} spk · {learner.recent_writing.length} wrt</span>
+                  <span>
+                    {learner.recent_speaking.length} spk · {learner.recent_writing.length} wrt
+                  </span>
                 </div>
               </button>
             );
@@ -117,16 +205,17 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
         </div>
       </aside>
 
-      {/* Selected learner detail */}
       {selected && (
         <section className="space-y-6 lg:col-span-8">
           {feedbackBanner && (
-            <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-900">
+            <div
+              role="status"
+              className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-900"
+            >
               {feedbackBanner}
             </div>
           )}
 
-          {/* Overview card */}
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -136,13 +225,16 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                     Learner Snapshot
                   </span>
                 </div>
-                <h2 className="mt-1 font-serif text-2xl font-semibold text-stone-900">{selected.full_name}</h2>
+                <h2 className="mt-1 font-serif text-2xl font-semibold text-stone-900">
+                  {selected.full_name}
+                </h2>
                 {selected.email && <p className="text-xs text-stone-500">{selected.email}</p>}
               </div>
 
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-800">
-                  Speaking: {selected.recent_speaking.length} · Writing: {selected.recent_writing.length}
+                  Speaking: {selected.recent_speaking.length} · Writing:{' '}
+                  {selected.recent_writing.length}
                 </span>
                 <span className="rounded-full bg-stone-100 px-3 py-1 font-semibold text-stone-700">
                   Streak: {selected.streak_days}d
@@ -151,12 +243,25 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             </div>
 
             <div className="mt-5 border-t border-stone-100 pt-4">
-              <p className="text-sm font-semibold">Pilot AI practice: {selected.pilot === null ? 'Unavailable' : selected.pilot ? 'On' : 'Off'}</p>
-              <p className="mt-1 text-xs text-stone-600">Pilot learners get 120 units a day. An active Pro subscription takes priority.</p>
-              {selected.pilot !== null && <button type="button" disabled={savingKey !== null} onClick={() => setPilot(selected.user_id, !selected.pilot)} className="mt-2 rounded-lg border border-indigo-700 px-3 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-50">{selected.pilot ? 'Remove pilot access' : 'Give pilot access'}</button>}
+              <p className="text-sm font-semibold">
+                Pilot AI practice:{' '}
+                {selected.pilot === null ? 'Unavailable' : selected.pilot ? 'On' : 'Off'}
+              </p>
+              <p className="mt-1 text-xs text-stone-600">
+                Pilot learners get 120 units a day. An active Pro subscription takes priority.
+              </p>
+              {selected.pilot !== null && (
+                <button
+                  type="button"
+                  disabled={savingKey !== null}
+                  onClick={() => setPilot(selected.user_id, !selected.pilot)}
+                  className="mt-2 rounded-lg border border-indigo-700 px-3 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-50"
+                >
+                  {selected.pilot ? 'Remove pilot access' : 'Give pilot access'}
+                </button>
+              )}
             </div>
 
-            {/* Top recurring errors */}
             {selected.top_errors.length > 0 && (
               <div className="mt-5 border-t border-stone-100 pt-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-stone-500">
@@ -176,7 +281,6 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             )}
           </div>
 
-          {/* Checkpoint confirmation & Checkpoint 4 Readiness Decision */}
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4 text-emerald-700" />
@@ -193,11 +297,17 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                   const isFinal = cp.code === 'final_b2_assessment';
                   const decisionVal =
                     decisionByTarget[key] ??
-                    (cp.teacher_readiness_decision as 'ready_for_b2_exam_prep' | 'named_next_step' | undefined) ??
+                    (cp.teacher_readiness_decision as
+                      | 'ready_for_b2_exam_prep'
+                      | 'named_next_step'
+                      | undefined) ??
                     'ready_for_b2_exam_prep';
 
                   return (
-                    <div key={cp.attempt_id} className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs">
+                    <div
+                      key={cp.attempt_id}
+                      className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <span className="font-bold text-stone-900">{cp.title}</span>{' '}
@@ -210,18 +320,24 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
 
                       {isFinal && (
                         <div className="flex flex-wrap items-center gap-2">
-                          <label className="font-semibold text-stone-700">Checkpoint 4 outcome:</label>
+                          <label className="font-semibold text-stone-700">
+                            Checkpoint 4 outcome:
+                          </label>
                           <select
                             value={decisionVal}
                             onChange={(e) =>
                               setDecisionByTarget((prev) => ({
                                 ...prev,
-                                [key]: e.target.value as 'ready_for_b2_exam_prep' | 'named_next_step',
+                                [key]: e.target.value as
+                                  | 'ready_for_b2_exam_prep'
+                                  | 'named_next_step',
                               }))
                             }
                             className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-800"
                           >
-                            <option value="ready_for_b2_exam_prep">Ready to start B2 exam preparation</option>
+                            <option value="ready_for_b2_exam_prep">
+                              Ready to start B2 exam preparation
+                            </option>
                             <option value="named_next_step">Named next step required</option>
                           </select>
                         </div>
@@ -230,10 +346,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                       <textarea
                         rows={2}
                         value={notesByTarget[key] ?? cp.teacher_notes ?? ''}
-                        onChange={(e) => setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
                         placeholder={
                           isFinal
-                            ? 'Add Checkpoint 4 confirmation or named next step (e.g., focus on hedging / articles)…'
+                            ? 'Add Checkpoint 4 confirmation or named next step…'
                             : 'Add teacher confirmation note or override reasoning…'
                         }
                         className="w-full rounded-lg border border-stone-300 bg-white p-2.5 text-xs text-stone-900"
@@ -291,16 +409,15 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             )}
           </div>
 
-          {/* Speaking review (teacher pronunciation + override) */}
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
             <div className="flex items-center gap-2">
               <Mic className="h-4 w-4 text-rose-700" />
               <h3 className="font-serif text-lg font-semibold text-stone-900">
-                Speaking Submissions &amp; Live Pronunciation Notes
+                Speaking Submissions, Area Marks (0–5) &amp; Pronunciation
               </h3>
             </div>
             <p className="mt-1 text-xs text-stone-500">
-              AI evaluates content, grammar, vocabulary, and coherence only; use this panel to log live pronunciation feedback and confirm readiness.
+              AI marks Grammar &amp; vocabulary and Discourse management (plus Interactive communication in Discuss &amp; decide). Pronunciation is marked by teachers only; you can set or change any 0–5 mark.
             </p>
             {selected.recent_speaking.length === 0 ? (
               <p className="mt-3 text-xs text-stone-500">No speaking recordings submitted yet.</p>
@@ -308,30 +425,69 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
               <div className="mt-4 space-y-4">
                 {selected.recent_speaking.map((spk) => {
                   const key = `speaking:${spk.id}`;
+                  const marks = getAreaMarksState(key, spk.feedback, SPEAKING_AREA_FIELDS);
                   return (
-                    <div key={spk.id} className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs">
+                    <div
+                      key={spk.id}
+                      className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-bold text-stone-900">
-                          {spk.task_title ?? 'Speaking recording'} · {spk.overall ?? '—'}/100
+                          {spk.task_title ?? 'Speaking recording'}
                         </span>
                         <span className="rounded-full bg-white px-2.5 py-0.5 font-semibold text-indigo-800 ring-1 ring-stone-200">
                           {spk.teacher_status}
                         </span>
                       </div>
                       {spk.transcript && (
-                        <p className="rounded-lg bg-white p-2.5 italic text-stone-700">&ldquo;{spk.transcript}&rdquo;</p>
+                        <p className="rounded-lg bg-white p-2.5 italic text-stone-700">
+                          &ldquo;{spk.transcript}&rdquo;
+                        </p>
                       )}
+                      <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+                        {SPEAKING_AREA_FIELDS.map((field) => (
+                          <label key={field.key} className="space-y-1">
+                            <span className="block font-semibold text-stone-700">
+                              {field.label}
+                            </span>
+                            <select
+                              value={marks[field.key] ?? ''}
+                              onChange={(e) =>
+                                updateAreaMark(
+                                  key,
+                                  spk.feedback,
+                                  SPEAKING_AREA_FIELDS,
+                                  field.key,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-900"
+                            >
+                              <option value="">Not marked</option>
+                              {[0, 1, 2, 3, 4, 5].map((n) => (
+                                <option key={n} value={String(n)}>
+                                  {n} / 5
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
                       <input
                         type="text"
                         value={pronNotesByTarget[key] ?? spk.teacher_pronunciation_note ?? ''}
-                        onChange={(e) => setPronNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))}
-                        placeholder="Teacher pronunciation & prosody note (e.g. final consonant clusters, sentence stress)…"
+                        onChange={(e) =>
+                          setPronNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
+                        placeholder="Teacher pronunciation note (stress, clear endings, intelligibility)…"
                         className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs text-stone-900"
                       />
                       <textarea
                         rows={2}
                         value={notesByTarget[key] ?? spk.teacher_notes ?? ''}
-                        onChange={(e) => setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
                         placeholder="General teacher note / override comment…"
                         className="w-full rounded-lg border border-stone-300 bg-white p-2.5 text-xs text-stone-900"
                       />
@@ -344,11 +500,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'speaking',
                               targetId: spk.id,
                               teacherStatus: 'confirmed',
+                              feedback: spk.feedback,
                             })
                           }
                           className="rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
                         >
-                          Confirm
+                          Confirm &amp; save marks
                         </button>
                         <button
                           type="button"
@@ -358,6 +515,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'speaking',
                               targetId: spk.id,
                               teacherStatus: 'needs_work',
+                              feedback: spk.feedback,
                             })
                           }
                           className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
@@ -372,11 +530,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'speaking',
                               targetId: spk.id,
                               teacherStatus: 'overridden',
+                              feedback: spk.feedback,
                             })
                           }
                           className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-50"
                         >
-                          Override AI
+                          Override marks
                         </button>
                       </div>
                     </div>
@@ -386,43 +545,161 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             )}
           </div>
 
-          {/* Weekly speaking recordings: staff playback uses the same short-lived
-              server-signed links as the learner's own week page. */}
           <WeekSpeakingRecordings
             recordings={selected.weekly_recordings ?? []}
             title="Weekly speaking recordings"
             emptyMessage="No weekly speaking recordings yet."
           />
 
-          {/* Writing review */}
+          {(selected.weekly_takes?.length ?? 0) > 0 && (
+            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Mic className="h-4 w-4 text-indigo-700" />
+                <h3 className="font-serif text-lg font-semibold text-stone-900">
+                  Checked Weekly Long-Turn Takes · Area Marks (0–5)
+                </h3>
+              </div>
+              <div className="mt-4 space-y-4">
+                {selected.weekly_takes?.map((take) => {
+                  const key = `week_speaking_take:${take.id}`;
+                  const marks = getAreaMarksState(key, take.feedback, SPEAKING_AREA_FIELDS);
+                  return (
+                    <div
+                      key={take.id}
+                      className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-bold text-stone-900">
+                          Week {take.week_number} · {take.kind === 'first' ? 'First kept recording' : `Retry ${take.sequence}`}
+                        </span>
+                        <span className="text-stone-500">
+                          {new Date(take.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      {take.transcript && (
+                        <p className="rounded-lg bg-white p-2.5 italic text-stone-700">
+                          &ldquo;{take.transcript}&rdquo;
+                        </p>
+                      )}
+                      <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+                        {SPEAKING_AREA_FIELDS.map((field) => (
+                          <label key={field.key} className="space-y-1">
+                            <span className="block font-semibold text-stone-700">
+                              {field.label}
+                            </span>
+                            <select
+                              value={marks[field.key] ?? ''}
+                              onChange={(e) =>
+                                updateAreaMark(
+                                  key,
+                                  take.feedback,
+                                  SPEAKING_AREA_FIELDS,
+                                  field.key,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-900"
+                            >
+                              <option value="">Not marked</option>
+                              {[0, 1, 2, 3, 4, 5].map((n) => (
+                                <option key={n} value={String(n)}>
+                                  {n} / 5
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={savingKey === key}
+                        onClick={() =>
+                          void submitReview({
+                            targetType: 'week_speaking_take',
+                            targetId: take.id,
+                            teacherStatus: 'overridden',
+                            feedback: take.feedback,
+                          })
+                        }
+                        className="rounded-lg bg-indigo-700 px-3 py-1.5 font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
+                      >
+                        Save weekly speaking marks
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
             <div className="flex items-center gap-2">
               <PenLine className="h-4 w-4 text-indigo-700" />
               <h3 className="font-serif text-lg font-semibold text-stone-900">
-                Writing Submissions &amp; Teacher Confirmation
+                Writing Submissions &amp; Area Marks (0–5)
               </h3>
             </div>
+            <p className="mt-1 text-xs text-stone-500">
+              Four areas (Content, Communicative achievement, Organisation, Language), marked 0–5 each with no overall score. Teachers can change any mark.
+            </p>
             {selected.recent_writing.length === 0 ? (
               <p className="mt-3 text-xs text-stone-500">No writing tasks submitted yet.</p>
             ) : (
               <div className="mt-4 space-y-4">
                 {selected.recent_writing.map((wrt) => {
                   const key = `writing:${wrt.id}`;
+                  const marks = getAreaMarksState(key, wrt.feedback, WRITING_AREA_FIELDS);
                   return (
-                    <div key={wrt.id} className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs">
+                    <div
+                      key={wrt.id}
+                      className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-bold text-stone-900">
-                          {wrt.task_title ?? 'Saturday writing'} · {wrt.word_count ?? '—'}w · {wrt.overall ?? '—'}/100
+                          {wrt.task_title ?? 'Weekly writing'} · {wrt.word_count ?? '—'} words
                         </span>
                         <span className="rounded-full bg-white px-2.5 py-0.5 font-semibold text-indigo-800 ring-1 ring-stone-200">
                           {wrt.teacher_status}
                         </span>
                       </div>
-                      <p className="whitespace-pre-line rounded-lg bg-white p-2.5 text-stone-800">{wrt.body}</p>
+                      <p className="whitespace-pre-line rounded-lg bg-white p-2.5 text-stone-800">
+                        {wrt.body}
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+                        {WRITING_AREA_FIELDS.map((field) => (
+                          <label key={field.key} className="space-y-1">
+                            <span className="block font-semibold text-stone-700">
+                              {field.label}
+                            </span>
+                            <select
+                              value={marks[field.key] ?? ''}
+                              onChange={(e) =>
+                                updateAreaMark(
+                                  key,
+                                  wrt.feedback,
+                                  WRITING_AREA_FIELDS,
+                                  field.key,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-900"
+                            >
+                              <option value="">Not marked</option>
+                              {[0, 1, 2, 3, 4, 5].map((n) => (
+                                <option key={n} value={String(n)}>
+                                  {n} / 5
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
                       <textarea
                         rows={2}
                         value={notesByTarget[key] ?? wrt.teacher_notes ?? ''}
-                        onChange={(e) => setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setNotesByTarget((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
                         placeholder="Teacher note or correction guidance…"
                         className="w-full rounded-lg border border-stone-300 bg-white p-2.5 text-xs text-stone-900"
                       />
@@ -435,11 +712,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'writing',
                               targetId: wrt.id,
                               teacherStatus: 'confirmed',
+                              feedback: wrt.feedback,
                             })
                           }
                           className="rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
                         >
-                          Confirm
+                          Confirm &amp; save marks
                         </button>
                         <button
                           type="button"
@@ -449,6 +727,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'writing',
                               targetId: wrt.id,
                               teacherStatus: 'needs_work',
+                              feedback: wrt.feedback,
                             })
                           }
                           className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
@@ -463,11 +742,12 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                               targetType: 'writing',
                               targetId: wrt.id,
                               teacherStatus: 'overridden',
+                              feedback: wrt.feedback,
                             })
                           }
                           className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-50"
                         >
-                          Override AI
+                          Override marks
                         </button>
                       </div>
                     </div>
@@ -476,7 +756,7 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
               </div>
             )}
           </div>
-          {/* Mediation attempts */}
+
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-2xs">
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4 text-indigo-700" />
@@ -484,7 +764,8 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
                 Mediation Attempts
               </h3>
               <span className="ml-auto text-[11px] text-stone-500">
-                {selected.mediation_attempts.filter((item) => item.needs_review).length} in review queue
+                {selected.mediation_attempts.filter((item) => item.needs_review).length} in review
+                queue
               </span>
             </div>
             {selected.mediation_attempts.length === 0 ? (
@@ -492,18 +773,27 @@ export default function TeacherConsoleClient({ learners }: { learners: TeacherRo
             ) : (
               <div className="mt-4 space-y-3">
                 {selected.mediation_attempts.map((attempt) => (
-                  <div key={attempt.id} className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs">
+                  <div
+                    key={attempt.id}
+                    className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-stone-900">Week {attempt.week} · {attempt.task_key}</span>
+                      <span className="font-bold text-stone-900">
+                        Week {attempt.week} · {attempt.task_key}
+                      </span>
                       {attempt.needs_review && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-900">
                           Review queue · {attempt.review_reason ?? 'flagged'}
                         </span>
                       )}
                       {attempt.disputed && (
-                        <span className="rounded-full bg-rose-100 px-2 py-0.5 font-bold text-rose-900">Disputed</span>
+                        <span className="rounded-full bg-rose-100 px-2 py-0.5 font-bold text-rose-900">
+                          Disputed
+                        </span>
                       )}
-                      <span className="ml-auto text-stone-500">{new Date(attempt.created_at).toLocaleString()}</span>
+                      <span className="ml-auto text-stone-500">
+                        {new Date(attempt.created_at).toLocaleString()}
+                      </span>
                     </div>
                     <p className="whitespace-pre-line rounded-lg bg-white p-2.5 text-stone-800">
                       {attempt.transcript || attempt.response_text || 'No response text recorded.'}

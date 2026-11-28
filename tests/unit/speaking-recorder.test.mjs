@@ -58,14 +58,18 @@ function fixture(kind, { constructorFails = false } = {}) {
         slots[i] = { effect: true, deps, cleanup: effect() };
       });
     },
+    useContext() { return {}; },
   };
   const jsx = (type, props) => ({ type, props: props ?? {} });
   const modules = {
     react,
     'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: Symbol('Fragment') },
-    '@/lib/b1b2/speech': { speakPhrase() {} },
-    '@/lib/b1b2/speaking-feedback.mjs': { structureUsed: () => false },
+    '@/lib/b1b2/speech': { speakPhrase() {}, playImprovedAnswerTts: async () => {} },
+    '@/lib/b1b2/speaking-feedback.mjs': { structureUsed: () => false, cueChecklistFromEvidence: () => [] },
     '@/components/b1b2/SpeakingFeedbackDetails': { __esModule: true, default() {} },
+    '@/components/b1b2/ImprovedAnswerCard': { __esModule: true, default() {} },
+    './ImprovedAnswerCard': { __esModule: true, default() {} },
+    '@/components/labs/LessonLabContext': { LessonLabContext: {} },
   };
   const file = kind === 'weekly' ? 'components/b1b2/SpeakingFeedbackDetails.tsx' : 'components/labs/SpeakingLab.tsx';
   const compiled = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: {

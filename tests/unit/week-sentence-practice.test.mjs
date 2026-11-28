@@ -78,12 +78,14 @@ test('writing ideas are only grammar from the selected week and use the newest u
   assert.deepEqual(Array.from(api.grammarWritingIdeas({ 'W1-U1': { first: version('Rejected.', 'Rejected.', false), second: null, draft: null } }, 1)), []);
 });
 
-test('weekly writing shows ideas only for an explicit signed-in weekly task, not free practice', () => {
+test('weekly writing shows useful phrases and folded matching grammar sentences only for an explicit weekly task', () => {
   const labs = read('src/app/labs/page.tsx');
   const ui = read('components/labs/WritingLab.tsx');
   assert.match(labs, /const selectedWeek = weekParam \? pronunciationWeek : null/);
   assert.match(labs, /selectedWeek && viewer\.signedIn/);
   assert.match(labs, /grammarWritingIdeas\(await loadWeekSentencePractice\(weekNumber\), weekNumber\)/);
   assert.match(labs, /grammarIdeas=\{grammarIdeas\}/);
-  assert.match(ui, /Ideas from your grammar practice/);
+  assert.match(ui, /Useful phrases/);
+  assert.doesNotMatch(ui, /Ideas from your grammar practice/);
+  assert.match(ui, /<details[\s\S]*?Your grammar-practice sentences/);
 });

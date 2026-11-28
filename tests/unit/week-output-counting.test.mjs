@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
-import { fluencyFromWhisper, soundTips } from '../../lib/b1b2/speaking-feedback.mjs';
+import { cueChecklistFromEvidence, fluencyFromWhisper, soundTips } from '../../lib/b1b2/speaking-feedback.mjs';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const details = JSON.parse(read('supabase-b1-b2/content/curriculum/weeks-01-04-details.json'));
@@ -97,13 +97,36 @@ function setup({ noAdmin = false, failWrite = false, throwWrite = false, failRef
     audio = { transcriptions: { create: async () => ({ text: 'I spoke about a change in my life.', duration }) } };
   }
   const validated = {
-    corrections: [], rubric: {}, score: 80, corrected: 'A clearer sentence.',
-    improvedResponse: 'A clearer response.', feedback: 'Good work.', notes: [],
-    errorPatterns: [], tips: [], strengths: [], improvements: [],
+    corrections: [],
+    wordCount: 7,
+    areas: {
+      content: { mark: 4, strength: 'Good content.', improvement: 'Add a detail.' },
+      communicative_achievement: { mark: 4, strength: 'Friendly tone.', improvement: 'Keep it natural.' },
+      organisation: { mark: 4, strength: 'Clear order.', improvement: 'Add a linker.' },
+      language: { mark: 4, strength: 'Good grammar.', improvement: 'Check past verbs.' },
+      grammar_and_vocabulary: { mark: 4, strength: 'Good words.', improvement: 'Try a new phrase.' },
+      discourse_management: { mark: 4, strength: 'Clear flow.', improvement: 'Connect ideas.' },
+      pronunciation: null,
+      interactive_communication: null,
+    },
+    corrected: 'A clearer sentence.',
+    improvedResponse: 'A clearer response.',
+    highlights: [],
+    showExampleFirst: false,
+    examplePromptMessage: null,
+    contentCappedUnder100: false,
+    wordCountTip: null,
+    feedback: 'Good work.',
+    notes: [],
+    errorPatterns: [],
+    tips: [],
+    strengths: [],
+    improvements: [],
   };
   const modules = {
     'next/server': { NextResponse: { json: (body, init = {}) => ({ body, status: init.status ?? 200 }) } },
     'groq-sdk': FakeGroq,
+    '@/supabase-b1-b2/content/curriculum/weeks-01-04-details.json': testDetails,
     '@/utils/supabase/server': server,
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
@@ -122,7 +145,7 @@ function setup({ noAdmin = false, failWrite = false, throwWrite = false, failRef
     },
     '@/lib/b1b2/groq-json': { createGroqJsonCompletion: async () => { throw new Error('The fake cached feedback must be used'); } },
     '@/lib/b1b2/speaking-evaluation': { evaluateSpeakingTranscript: async () => ({ validated, structure: null, cuePoints: [], cacheHit: true, promptTokens: 0, completionTokens: 0 }) },
-    '@/lib/b1b2/speaking-feedback.mjs': { fluencyFromWhisper, soundTips },
+    '@/lib/b1b2/speaking-feedback.mjs': { cueChecklistFromEvidence, fluencyFromWhisper, soundTips },
     '@/lib/b1b2/observability': { logAiRequest: async () => {} },
     '@/lib/b1b2/provider-failure-response': { providerFailureResponse: async ({ error }) => { throw error; } },
     '@/lib/curriculum/learner-week': { loadLearnerWeek: async (number) => number === 1 ? {

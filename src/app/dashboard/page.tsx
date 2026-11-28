@@ -52,6 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     <WeeklyPaceSelector currentHours={data.weeklyGoalHours} />
     {staff && obs && <details className="rounded-xl border border-stone-200 bg-white p-5"><summary>Service statistics</summary>
       <p>Requests: {obs.total_requests} · Average: {obs.avg_latency_ms} ms · Failures: {obs.failure_count}</p>
+      <p className="mt-1">TTS characters this month: {(obs.tts_monthly_chars ?? 0).toLocaleString('en-GB')} / {(obs.tts_monthly_char_limit ?? 40000).toLocaleString('en-GB')}</p>
     </details>}
   </main>;
 }

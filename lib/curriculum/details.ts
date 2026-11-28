@@ -55,6 +55,21 @@ export interface GrammarPractice {
   items: GrammarItem[];
 }
 
+export interface DiscussAndDecidePart {
+  topic: string;
+  options: string[];
+  decisionTask: string;
+  openingLine: string;
+}
+
+export interface SpeakingPartsSpec {
+  questionsAboutYou: string[];
+  discussAndDecide: DiscussAndDecidePart;
+  followUpQuestions: string[];
+}
+
+export type SpeakingParts = SpeakingPartsSpec;
+
 export interface SpeakingDetail {
   status: string;
   main: string;
@@ -63,6 +78,7 @@ export interface SpeakingDetail {
   flow: Record<string, string>;
   prompt: string;
   cueCard: string;
+  parts?: SpeakingPartsSpec;
   phraseBank: string[];
   model: string;
   onTarget: string;
@@ -120,12 +136,26 @@ export interface InputSpec {
   weeks: InputWeek[];
 }
 
+export interface WritingInputEmail {
+  from: string;
+  body: string;
+  signOff: string;
+  notes: string[];
+}
+
+export interface WritingCallForArticles {
+  heading: string;
+  body: string;
+}
+
 export interface WritingDetail {
   status: string;
   title: string;
   durationMinutes: number;
   words: number[];
   prompt: string;
+  inputEmail?: WritingInputEmail;
+  callForArticles?: WritingCallForArticles;
   grammar: string;
   featuredWords: string[];
   stretchWords: string[];
@@ -174,6 +204,9 @@ export interface WeekDetail {
     openingLine: string;
     learnerMoves: string;
     targetLanguage: string;
+    topic?: string;
+    options?: string[];
+    decisionTask?: string;
   };
   vocabulary: {
     core: VocabularyEntry[];
@@ -211,15 +244,22 @@ export interface AssessmentItem {
   reason: string;
 }
 
+export interface DescriptorCriterion {
+  key: string;
+  label: string;
+  question: string;
+  markedBy?: string;
+  band5: string;
+  band3: string;
+  band1: string;
+  beyondTarget?: string;
+  onTarget?: string;
+  gettingThere?: string;
+}
+
 export interface DescriptorSet {
   intro: string;
-  criteria: {
-    key: string;
-    label: string;
-    gettingThere: string;
-    onTarget: string;
-    beyondTarget: string;
-  }[];
+  criteria: DescriptorCriterion[];
   rules?: string[];
   notes?: string[];
   learnerFeedback?: string | string[];
@@ -234,13 +274,7 @@ export interface AssessmentsDocument {
   sources: string[];
   writingDescriptors: {
     intro: string;
-    criteria: {
-      key: string;
-      label: string;
-      gettingThere: string;
-      onTarget: string;
-      beyondTarget: string;
-    }[];
+    criteria: DescriptorCriterion[];
     rules: string[];
     learnerFeedback: string;
     wordRanges: { weeks: string; range: string; targetBand: string }[];
@@ -380,16 +414,33 @@ export async function loadDetailedContent({ includeAnswers = false }: { includeA
     }
 
     const byCode = Object.fromEntries(assessmentsRes.data.map((row) => [row.code, row.payload]));
+    const dbWriting = byCode['writing-descriptors'] as AssessmentsDocument['writingDescriptors'] | undefined;
+    const dbSpeaking = byCode['speaking-descriptors'] as DescriptorSet | undefined;
+    const hasUpdatedWriting = Boolean(dbWriting?.criteria?.[0]?.band5);
+    const hasUpdatedSpeaking = Boolean(dbSpeaking?.criteria?.[0]?.band5);
     return finish({
       weeks: weeksRes.data.map((row) => {
         const payload = row.payload as unknown as WeekDetail;
-        const bundledCefr = curriculumDetails.weeks.find((item) => item.number === payload.number)?.cefr;
-        return payload.cefr ? payload : { ...payload, cefr: bundledCefr! };
+        const bundledWeek = curriculumDetails.weeks.find((item) => item.number === payload.number);
+        return {
+          ...payload,
+          cefr: payload.cefr ?? bundledWeek?.cefr ?? { canDo: '', scale: '', level: '' },
+          speaking: {
+            ...payload.speaking,
+            parts: payload.speaking?.parts ?? bundledWeek?.speaking?.parts,
+          },
+          writing: {
+            ...payload.writing,
+            inputEmail: payload.writing?.inputEmail ?? bundledWeek?.writing?.inputEmail,
+            callForArticles: payload.writing?.callForArticles ?? bundledWeek?.writing?.callForArticles,
+          },
+          conversation: bundledWeek?.conversation ?? payload.conversation,
+        };
       }),
       assessments: {
         ...assessments,
-        writingDescriptors: (byCode['writing-descriptors'] ?? assessments.writingDescriptors) as AssessmentsDocument['writingDescriptors'],
-        speakingDescriptors: (byCode['speaking-descriptors'] ?? assessments.speakingDescriptors) as DescriptorSet,
+        writingDescriptors: hasUpdatedWriting ? dbWriting! : assessments.writingDescriptors,
+        speakingDescriptors: hasUpdatedSpeaking ? dbSpeaking! : assessments.speakingDescriptors,
         placement: (byCode.placement ?? assessments.placement) as AssessmentsDocument['placement'],
         checkpoint1: (byCode['checkpoint-1'] ?? assessments.checkpoint1) as AssessmentsDocument['checkpoint1'],
       },

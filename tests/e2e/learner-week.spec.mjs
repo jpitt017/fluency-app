@@ -211,3 +211,88 @@ test('learner navigation remembers the last opened week and hides staff links', 
   await page.reload();
   await expect(nav.getByRole('link', { name: 'This week' })).toHaveAttribute('href', '/week/4');
 });
+
+test('Labs loads week-specific B1 targets, hides C1 terms, steps through B1 writing plan -> write -> highlighted model -> improve it, and fits 375px viewports', async ({ page }) => {
+  // 1. /labs with no week selected: empty targets and zero C1 terms.
+  await page.goto('/labs');
+  const labsNoWeekText = await page.locator('body').innerText();
+  for (const forbidden of ['Hedging & concession', 'compelling evidence', 'concede a point', 'on balance']) {
+    expect(labsNoWeekText).not.toContain(forbidden);
+  }
+  await expect(page.locator('#writing').getByText('Grammar:', { exact: true })).toHaveCount(0);
+  await expect(page.locator('#writing').getByText('Target words:', { exact: true })).toHaveCount(0);
+
+  // 2. /labs?week=2#writing: Week 2 plain-English grammar + <= 4 target words + stepped B1 writing UI.
+  await page.goto('/labs?week=2#writing');
+  const writing = page.locator('#writing');
+  await expect(writing.getByText(/Plans: I'm going to start/)).toBeVisible();
+  for (const targetWord of ['goal', 'intend to', 'career', 'look forward to']) {
+    await expect(writing.getByText(targetWord, { exact: true }).first()).toBeVisible();
+  }
+  const labsWeek2Text = await page.locator('body').innerText();
+  for (const forbidden of ['Hedging & concession', 'compelling evidence', 'concede a point', 'on balance']) {
+    expect(labsWeek2Text).not.toContain(forbidden);
+  }
+
+  await expect(writing.getByText('1. Plan your 4 paragraphs')).toBeVisible();
+  await expect(writing.getByText('2. Write (100–120 words)')).toBeVisible();
+  await expect(writing.getByRole('heading', { name: 'Useful phrases' })).toBeVisible();
+  await expect(writing.locator('input[type="text"]')).toHaveCount(4);
+
+  // Tap a paragraph starter and verify it inserts into the textarea.
+  await writing.getByRole('button', { name: /\+ Next year, my goal is to/ }).first().click();
+  await expect(writing.locator('textarea')).toHaveValue(/Next year, my goal is to /);
+
+  // Mock AI evaluation to exercise live word counter + post-check highlighted Model answer + Improve it.
+  const calls = [];
+  await page.route('**/api/writing/correct', async (route) => {
+    const payload = route.request().postDataJSON();
+    calls.push(payload);
+    await route.fulfill({
+      json: {
+        submissionId: calls.length === 1 ? 'sub-first-1' : 'sub-second-2',
+        modelAnswer: details.weeks[1].writing.modelAnswer,
+        corrected: payload.text,
+        feedback: 'Clear friendly email to Sam with concrete plans.',
+        notes: [],
+        corrections: [],
+        errorPatterns: [],
+        areas: {
+          content: { score: 4, strength: 'Covered all four points.', improvement: 'Keep details concrete.' },
+          communicative_achievement: { score: 4, strength: 'Friendly email tone.', improvement: 'Good closing question.' },
+          organisation: { score: 4, strength: 'Four clear paragraphs.', improvement: 'Good linkers.' },
+          language: { score: 4, strength: 'Clear future forms.', improvement: 'Keep checking prepositions.' },
+        },
+        wordCount: 110,
+        contentCappedUnder100: false,
+        wordCountTip: null,
+      },
+    });
+  });
+
+  await writing.locator('textarea').fill(details.weeks[1].writing.modelAnswer);
+  await expect(writing.getByText(/Target met \(100–120 words\)/)).toBeVisible();
+  await writing.getByRole('button', { name: 'Evaluate writing' }).click();
+
+  // Highlighted Model answer unlocks after first check and reveals 1-line B1 reason on tap.
+  await expect(writing.getByText('Model answer', { exact: true })).toBeVisible();
+  await writing.getByRole('button', { name: /my goal is to/i }).first().click();
+  await expect(writing.getByText('States your main goal clearly at the start.')).toBeVisible();
+
+  // "Improve it" lets the learner revise once and links revisedFrom to the first submission.
+  await writing.getByRole('button', { name: 'Improve it' }).click();
+  await writing.locator('textarea').fill(`${details.weeks[1].writing.modelAnswer} Talk soon!`);
+  await writing.getByRole('button', { name: 'Check improved draft' }).click();
+  expect(calls).toHaveLength(2);
+  expect(calls[1].revisedFrom).toBe('sub-first-1');
+
+  // 3. 375px mobile viewport check on /week/1 and /labs?week=1#writing (zero horizontal overflow).
+  await page.setViewportSize({ width: 375, height: 812 });
+  for (const path of ['/week/1', '/week/1#speaking-practice', '/labs?week=1#writing']) {
+    await page.goto(path);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow, `Expected no horizontal overflow at 375px on ${path}`).toBeLessThanOrEqual(1);
+  }
+});
