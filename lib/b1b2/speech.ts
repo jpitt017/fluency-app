@@ -136,9 +136,9 @@ export function clearImprovedAnswerTtsCache() {
 }
 
 /**
- * Plays British English TTS for "Your answer, improved", cached per attempt/take
- * and spending 0 AI units. Uses server-cached British MP3 when available and
- * falls back to British Web Speech synthesis (`en-GB`).
+ * Plays British English TTS for "Your answer, improved", cached per attempt/take,
+ * capped at 5 new server syntheses a day, and spending 0 AI units. Uses
+ * server-cached British MP3 when available and falls back to British Web Speech (`en-GB`).
  */
 export async function playImprovedAnswerTts(params: {
   cacheKey: string;
@@ -147,12 +147,12 @@ export async function playImprovedAnswerTts(params: {
   id?: string | null;
   rate?: number;
   onEnd?: () => void;
-}): Promise<void> {
+}): Promise<'audio' | 'web-speech'> {
   const { cacheKey, text, kind, id, rate = 0.92, onEnd } = params;
   stopActiveAudio();
   if (!text.trim() || typeof window === 'undefined') {
     onEnd?.();
-    return;
+    return 'web-speech';
   }
 
   let cached = improvedTtsBlobCache.get(cacheKey);
@@ -167,7 +167,12 @@ export async function playImprovedAnswerTts(params: {
           cached = URL.createObjectURL(blob);
           improvedTtsBlobCache.set(cacheKey, cached);
         }
-      } else if (res.status === 204 || res.status === 401 || res.status === 404) {
+      } else if (
+        res.status === 204 ||
+        res.status === 401 ||
+        res.status === 404 ||
+        res.status === 429
+      ) {
         cached = 'web-speech';
         improvedTtsBlobCache.set(cacheKey, cached);
       }
@@ -191,7 +196,7 @@ export async function playImprovedAnswerTts(params: {
       };
       activeAudioElement = audio;
       await audio.play();
-      return;
+      return 'audio';
     } catch {
       activeAudioElement = null;
     }
@@ -199,7 +204,7 @@ export async function playImprovedAnswerTts(params: {
 
   if (!('speechSynthesis' in window)) {
     onEnd?.();
-    return;
+    return 'web-speech';
   }
   const synth = window.speechSynthesis;
   const voices = await loadEnglishVoices();
@@ -212,5 +217,6 @@ export async function playImprovedAnswerTts(params: {
   utterance.onend = () => onEnd?.();
   utterance.onerror = () => onEnd?.();
   synth.speak(utterance);
+  return 'web-speech';
 }
 

@@ -56,6 +56,7 @@ export default function ImprovedAnswerCard({
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(highlights.length > 0 ? 0 : null);
   const [playing, setPlaying] = useState(false);
+  const [usingWebSpeech, setUsingWebSpeech] = useState(false);
 
   const segments = segmentImprovedText(improvedResponse, highlights);
   const activeHighlight =
@@ -69,13 +70,14 @@ export default function ImprovedAnswerCard({
       return;
     }
     setPlaying(true);
-    await playImprovedAnswerTts({
+    const mode = await playImprovedAnswerTts({
       cacheKey,
       text: improvedResponse,
       kind: ttsKind,
       id: ttsId,
       onEnd: () => setPlaying(false),
     });
+    setUsingWebSpeech(mode === 'web-speech');
   }
 
   return (
@@ -90,24 +92,30 @@ export default function ImprovedAnswerCard({
             Your own ideas with errors fixed. Tap a highlighted phrase to see why it works.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void handleToggleAudio()}
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
-        >
-          {playing ? (
-            <>
-              <Square className="h-3.5 w-3.5" />
-              <span>Stop audio</span>
-            </>
-          ) : (
-            <>
-              <Volume2 className="h-3.5 w-3.5" />
-              <span>Listen (British voice)</span>
-            </>
+            <button
+              type="button"
+              onClick={() => void handleToggleAudio()}
+              aria-describedby={usingWebSpeech ? 'improved-tts-temporary-voice' : undefined}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
+            >
+              {playing ? (
+                <>
+                  <Square className="h-3.5 w-3.5" />
+                  <span>Stop audio</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-3.5 w-3.5" />
+                  <span>Listen (British voice)</span>
+                </>
+              )}
+            </button>
+          </div>
+          {usingWebSpeech && (
+            <p id="improved-tts-temporary-voice" className="text-xs text-amber-800">
+              Temporary computer voice
+            </p>
           )}
-        </button>
-      </div>
 
       <p className="rounded-lg border border-indigo-100 bg-white p-3.5 text-sm leading-7 text-stone-900">
         {segments.map((seg, i) =>

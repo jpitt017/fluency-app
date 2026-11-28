@@ -12,6 +12,7 @@ const ROUTES = [
   'src/app/api/speaking/evaluate/route.ts',
   'src/app/api/speaking/chat/route.ts',
   'src/app/api/speaking/transcribe/route.ts',
+  'src/app/api/speaking/improved-tts/route.ts',
   'src/app/api/review/check-rewrite/route.ts',
   'src/app/api/mediation/feedback/route.ts',
 ];
@@ -92,7 +93,11 @@ test('all current AI route call sites use the shared bounded logger', () => {
     const routeSource = readFileSync(new URL(`../../${route}`, import.meta.url), 'utf8');
     assert.match(routeSource, /}, isSignedIn\);/, `${route} must choose the session or service-role logger`);
   }
-  for (const route of ['src/app/api/issues/route.ts', 'src/app/api/week/sentence/route.ts']) {
+  for (const route of [
+    'src/app/api/issues/route.ts',
+    'src/app/api/week/sentence/route.ts',
+    'src/app/api/speaking/improved-tts/route.ts',
+  ]) {
     const routeSource = readFileSync(new URL(`../../${route}`, import.meta.url), 'utf8');
     assert.match(routeSource, /}, true\);/, `${route} is authenticated before logging`);
   }

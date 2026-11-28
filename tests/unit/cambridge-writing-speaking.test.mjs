@@ -7,7 +7,10 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import * as levelGuard from '../../lib/b1b2/level-guard.mjs';
 import * as speakingFeedback from '../../lib/b1b2/speaking-feedback.mjs';
+import * as improvedTtsConfig from '../../lib/b1b2/improved-tts-config.mjs';
 import * as diffModule from '../../lib/b1b2/diff.ts';
+import { B1_SPEECH_RATE, SPEAKER_VOICES, VOICE_SETTINGS } from '../../scripts/lib/course-audio/tts.mjs';
+import { BENCHMARK_SENTENCES, LIVE_GROQ_MODEL, runLiveGroqSuite } from '../../scripts/eval-prompts.mjs';
 
 const require = createRequire(import.meta.url);
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -236,28 +239,115 @@ test('B1-B2 level guard flags C1+ words, enforces <= 20-word sentences, and keep
   assert.equal(preserved, learner);
 });
 
-test('improved-tts route requires auth, spends zero AI units, caches MP3 per attempt in Storage, and delete-data removes cached TTS paths', async () => {
+test('improved-tts defaults to the approved British voice, enforces a 5-a-day synthesis limit, keeps cached replays unlimited, and spends zero AI units', async () => {
+  // 1. Approved British voice contract matches course-audio pipeline constants.
+  assert.equal(improvedTtsConfig.DAILY_TTS_LIMIT, 5);
+  assert.equal(improvedTtsConfig.DEFAULT_APPROVED_BRITISH_VOICE_ID, SPEAKER_VOICES.Host.voice);
+  assert.equal(improvedTtsConfig.DEFAULT_APPROVED_BRITISH_VOICE_ID, 'sp7QaEHmiNEd5HgrXuOo');
+  assert.equal(improvedTtsConfig.B1_TTS_SPEED, B1_SPEECH_RATE);
+  assert.deepEqual(
+    Object.fromEntries(
+      Object.entries(improvedTtsConfig.APPROVED_BRITISH_VOICES).map(([k, v]) => [k, v.voice]),
+    ),
+    Object.fromEntries(Object.entries(SPEAKER_VOICES).map(([k, v]) => [k, v.voice])),
+  );
+
+  const defaultVoice = improvedTtsConfig.resolveApprovedBritishVoice(undefined);
+  assert.equal(defaultVoice.voiceId, 'sp7QaEHmiNEd5HgrXuOo');
+  assert.deepEqual(defaultVoice.voiceSettings, { ...VOICE_SETTINGS, speed: 0.8 });
+
+  const unapprovedFallback = improvedTtsConfig.resolveApprovedBritishVoice('unapproved-voice-999');
+  assert.equal(unapprovedFallback.voiceId, 'sp7QaEHmiNEd5HgrXuOo');
+
+  const approvedOverride = improvedTtsConfig.resolveApprovedBritishVoice('Aisha');
+  assert.equal(approvedOverride.voiceId, SPEAKER_VOICES.Aisha.voice);
+  assert.equal(approvedOverride.voiceSettings.stability, 0.35);
+  assert.equal(approvedOverride.voiceSettings.style, 0.3);
+  assert.equal(approvedOverride.voiceSettings.speed, 0.8);
+
+  // Europe/Madrid midnight helper handles CET (UTC+1) and CEST (UTC+2).
+  assert.equal(
+    improvedTtsConfig.madridDayStartIso(new Date('2026-11-28T10:30:00.000Z')),
+    '2026-11-27T23:00:00.000Z',
+  );
+  assert.equal(
+    improvedTtsConfig.madridDayStartIso(new Date('2026-07-15T00:30:00.000Z')),
+    '2026-07-14T22:00:00.000Z',
+  );
+
+  // 2. Route behaviour: auth, default British voice URL, 5/day synthesis limit, unlimited cache replays, 0 AI units.
   const userId = '11111111-1111-4111-8111-111111111111';
-  const takeId = '22222222-2222-4222-8222-222222222222';
   const storedObjects = new Map();
-  let feedbackState = { improvedResponse: "Since then, I've made good friends in my town." };
-  let elevenLabsCalls = 0;
+  const takes = new Map();
+  for (let i = 1; i <= 6; i++) {
+    const id = `22222222-2222-4222-8222-22222222222${i}`;
+    takes.set(id, { improvedResponse: `Since then, I've made good friends in town ${i}.` });
+  }
+  const loggedSyntheses = [];
+  const fetchedUrls = [];
+  const fetchedBodies = [];
+  let countShouldError = false;
 
   const supabase = {
     auth: { getUser: async () => ({ data: { user: { id: userId } }, error: null }) },
+    rpc(name) {
+      assert.notEqual(name, 'consume_ai_usage', 'TTS must spend zero AI usage units');
+      throw new Error(`Unexpected supabase.rpc(${name})`);
+    },
   };
   const admin = {
     from(table) {
+      if (table === 'ai_request_logs') {
+        const filters = {};
+        const countChain = {
+          select(_cols, opts) {
+            assert.equal(opts?.count, 'exact');
+            assert.equal(opts?.head, true);
+            return countChain;
+          },
+          eq(col, val) {
+            filters[col] = val;
+            return countChain;
+          },
+          gte(col, val) {
+            filters[col] = val;
+            assert.equal(filters.user_id, userId);
+            assert.equal(filters.endpoint, '/api/speaking/improved-tts');
+            assert.equal(filters.cache_hit, false);
+            assert.equal(filters.status_code, 200);
+            if (countShouldError) {
+              return Promise.resolve({ count: null, error: { message: 'db unavailable' } });
+            }
+            return Promise.resolve({ count: loggedSyntheses.length, error: null });
+          },
+        };
+        return countChain;
+      }
       assert.equal(table, 'week_speaking_takes');
+      let targetId = null;
       const chain = {
         select() { return chain; },
-        eq() { return chain; },
+        eq(col, val) {
+          if (col === 'id') targetId = val;
+          return chain;
+        },
         async maybeSingle() {
-          return { data: { id: takeId, user_id: userId, feedback: feedbackState }, error: null };
+          const feedback = takes.get(targetId);
+          return feedback
+            ? { data: { id: targetId, user_id: userId, feedback }, error: null }
+            : { data: null, error: null };
         },
         update(patch) {
-          feedbackState = patch.feedback;
-          return { eq: () => ({ eq: async () => ({ error: null }) }) };
+          return {
+            eq(_c1, idVal) {
+              return {
+                eq: async () => {
+                  takes.set(idVal, patch.feedback);
+                  return { error: null };
+                },
+              };
+            },
+          };
         },
       };
       return chain;
@@ -268,7 +358,9 @@ test('improved-tts route requires auth, spends zero AI units, caches MP3 per att
         return {
           async download(path) {
             const bytes = storedObjects.get(path);
-            return bytes ? { data: new Blob([bytes], { type: 'audio/mpeg' }), error: null } : { data: null, error: { message: 'not found' } };
+            return bytes
+              ? { data: new Blob([bytes], { type: 'audio/mpeg' }), error: null }
+              : { data: null, error: { message: 'not found' } };
           },
           async upload(path, body) {
             storedObjects.set(path, body);
@@ -281,6 +373,8 @@ test('improved-tts route requires auth, spends zero AI units, caches MP3 per att
 
   const proxySource = read('src/proxy.ts');
   assert.equal(proxySource.includes('/api/speaking/improved-tts'), false, 'TTS playback must not be an AI-unit route');
+  const speechSource = read('lib/b1b2/speech.ts');
+  assert.match(speechSource, /res\.status === 429/, 'client speech helper must fall back smoothly on 429');
 
   const route = transpileLoad(
     'src/app/api/speaking/improved-tts/route.ts',
@@ -299,11 +393,19 @@ test('improved-tts route requires auth, spends zero AI units, caches MP3 per att
       },
       '@/utils/supabase/server': { createServerSupabase: async () => supabase },
       '@/utils/supabase/admin': { createAdminSupabase: () => admin },
+      '@/lib/b1b2/observability': {
+        async logAiRequest(_client, entry, isSignedIn) {
+          assert.equal(isSignedIn, true);
+          loggedSyntheses.push(entry);
+        },
+      },
+      '@/lib/b1b2/improved-tts-config.mjs': improvedTtsConfig,
     },
     {
       process: { env: { ELEVENLABS_API_KEY: 'fake-eleven-key' } },
-      fetch: async () => {
-        elevenLabsCalls += 1;
+      fetch: async (url, init) => {
+        fetchedUrls.push(url);
+        fetchedBodies.push(JSON.parse(init.body));
         return {
           ok: true,
           arrayBuffer: async () => new Uint8Array([1, 2, 3, 4]).buffer,
@@ -312,15 +414,177 @@ test('improved-tts route requires auth, spends zero AI units, caches MP3 per att
     },
   );
 
-  const req = { url: `https://example.test/api/speaking/improved-tts?kind=take&id=${takeId}` };
-  const first = await route.GET(req);
-  assert.equal(first.status, 200);
-  assert.equal(elevenLabsCalls, 1);
-  assert.equal(feedbackState.ttsAudioPath, `${userId}/tts/take/${takeId}.mp3`);
+  // Synthesize 5 distinct takes: all 5 succeed with the approved British voice and count down 4 -> 0.
+  for (let i = 1; i <= 5; i++) {
+    const id = `22222222-2222-4222-8222-22222222222${i}`;
+    const res = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${id}` });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers['X-TTS-Daily-Limit'], '5');
+    assert.equal(res.headers['X-TTS-Remaining-Day'], String(5 - i));
+    assert.equal(takes.get(id).ttsAudioPath, `${userId}/tts/take/${id}.mp3`);
+  }
+  assert.equal(fetchedUrls.length, 5);
+  assert.ok(
+    fetchedUrls.every((u) => u.includes('/v1/text-to-speech/sp7QaEHmiNEd5HgrXuOo?')),
+    'all syntheses must use the approved British Host voice by default',
+  );
+  assert.equal(fetchedBodies[0].model_id, 'eleven_multilingual_v2');
+  assert.equal(fetchedBodies[0].voice_settings.speed, 0.8);
+  assert.equal(loggedSyntheses.length, 5);
 
-  const second = await route.GET(req);
-  assert.equal(second.status, 200);
-  assert.equal(elevenLabsCalls, 1, 'second playback must serve cached audio without re-synthesizing');
+  // 6th new uncached take on the same day is blocked with 429 and does NOT call ElevenLabs.
+  const sixthId = '22222222-2222-4222-8222-222222222226';
+  const sixth = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${sixthId}` });
+  assert.equal(sixth.status, 429);
+  assert.equal(sixth.headers['X-TTS-Daily-Limit'], '5');
+  assert.equal(sixth.headers['X-TTS-Remaining-Day'], '0');
+  assert.equal(fetchedUrls.length, 5, '6th synthesis must not call ElevenLabs');
+
+  // Replaying an already-cached take STILL succeeds (unlimited cached replays) even after hitting 5/day!
+  const firstId = '22222222-2222-4222-8222-222222222221';
+  const cachedReplay = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${firstId}` });
+  assert.equal(cachedReplay.status, 200);
+  assert.equal(cachedReplay.headers['X-TTS-Cache'], 'HIT');
+  assert.equal(fetchedUrls.length, 5, 'cached replay must not call ElevenLabs');
+
+  // DB count failure fails closed with 204 so browser Web Speech takes over safely.
+  countShouldError = true;
+  const closedOnError = await route.GET({ url: `https://example.test/api/speaking/improved-tts?kind=take&id=${sixthId}` });
+  assert.equal(closedOnError.status, 204);
+  assert.equal(fetchedUrls.length, 5);
+});
+
+test('live prompt eval is wired exclusively to Groq (groq-sdk + GROQ_API_KEY + openai/gpt-oss-20b) without running live network calls', async () => {
+  const evalSource = read('scripts/eval-prompts.mjs');
+  const ciWorkflow = read('.github/workflows/ci.yml');
+
+  // Static audit: Groq SDK + GROQ_API_KEY only, manual workflow_dispatch gate, zero OpenAI SDK/key.
+  assert.equal(LIVE_GROQ_MODEL, 'openai/gpt-oss-20b');
+  assert.match(evalSource, /await import\('groq-sdk'\)/);
+  assert.match(evalSource, /process\.env\.GROQ_API_KEY/);
+  assert.doesNotMatch(evalSource, /OPENAI_API_KEY/);
+  assert.doesNotMatch(evalSource, /from\s+['"]openai['"]|import\(['"]openai['"]\)/);
+  assert.match(
+    ciWorkflow,
+    /live-prompt-evals:[\s\S]*?if:\s*github\.event_name == 'workflow_dispatch' && inputs\.live_prompt_evals == true/,
+  );
+  assert.match(ciWorkflow, /GROQ_API_KEY:\s*\$\{\{\s*secrets\.GROQ_API_KEY\s*\}\}/);
+  assert.doesNotMatch(ciWorkflow, /OPENAI_API_KEY/);
+
+  // Dry-run the full live Groq suite against an in-memory fake Groq client (0 network calls, 0 quota spent).
+  const recordedCalls = [];
+  const fakeGroq = {
+    chat: {
+      completions: {
+        async create(payload) {
+          recordedCalls.push(payload);
+          assert.equal(payload.model, 'openai/gpt-oss-20b');
+          assert.deepEqual(payload.response_format, { type: 'json_object' });
+          const sys = payload.messages[0]?.content ?? '';
+          const usr = payload.messages[1]?.content ?? '';
+
+          if (sys.includes('"fixed": boolean')) {
+            return {
+              choices: [{ message: { content: JSON.stringify({ fixed: false, reason: 'Error remains.' }) } }],
+            };
+          }
+
+          if (sys.includes('speaking coach for Week')) {
+            const includeInteractive = !sys.includes('"interactive_communication": null');
+            const improvedResponse =
+              "When I moved town, I didn't know anyone. Since then, I've joined a sports club and made good friends.";
+            return {
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      feedback: 'Clear B1 ideas.',
+                      improvedResponse,
+                      highlights: [
+                        {
+                          substring: "Since then, I've joined",
+                          label: 'Present perfect',
+                          explanation: 'Links the past change to now.',
+                        },
+                      ],
+                      areas: {
+                        grammar_and_vocabulary: { score: 4, strength: 'Clear words.', improvement: 'Check past forms.' },
+                        discourse_management: { score: 4, strength: 'Logical order.', improvement: 'Add one linker.' },
+                        pronunciation: null,
+                        interactive_communication: includeInteractive
+                          ? { score: 4, strength: 'Good turn-taking.', improvement: 'Ask one follow-up.' }
+                          : null,
+                      },
+                      corrections: [],
+                    }),
+                  },
+                },
+              ],
+            };
+          }
+
+          // Writing single-sentence benchmark + 3 B1 writing texts.
+          const matchedBench = BENCHMARK_SENTENCES.find((item) => {
+            const snippet = item.input.replace(/<[^>]*>/g, '').trim().slice(-28);
+            return usr.includes(snippet);
+          });
+          const isZeroError = Boolean(matchedBench?.zeroError);
+          const cats = matchedBench?.expectedCategories ?? [matchedBench?.category ?? 'preposition'];
+
+          const body = isZeroError
+            ? {
+                corrected: 'I usually work from home on Fridays.',
+                feedback: 'Clear and accurate sentence.',
+                notes: ['Good structure.'],
+                corrections: [],
+                errorPatterns: [],
+                areas: {
+                  content: { score: 5, strength: 'Clear message.', improvement: 'Keep going.' },
+                  communicative_achievement: { score: 4, strength: 'Natural tone.', improvement: 'Keep this style.' },
+                  organisation: { score: 4, strength: 'Smooth link.', improvement: 'Good flow.' },
+                  language: { score: 5, strength: 'Accurate grammar.', improvement: 'Try new phrases.' },
+                },
+              }
+            : {
+                corrected: 'I am responsible for the design team.',
+                feedback: 'Good effort. Check the highlighted pattern.',
+                notes: ['Review the preposition and verb form.'],
+                corrections: cats.slice(0, 2).map((cat) => ({
+                  original: 'sample phrase',
+                  corrected_sentence: 'I am responsible for the design team.',
+                  error_category: cat,
+                  explanation: 'Check this pattern.',
+                  severity: 'moderate',
+                })),
+                errorPatterns: cats.slice(0, 4),
+                areas: {
+                  content: { score: 4, strength: 'Clear idea.', improvement: 'Add one detail.' },
+                  communicative_achievement: { score: 4, strength: 'Good tone.', improvement: 'Stay consistent.' },
+                  organisation: { score: 4, strength: 'Logical order.', improvement: 'Add a linker.' },
+                  language: { score: 3, strength: 'Clear words.', improvement: 'Check prepositions.' },
+                },
+              };
+          return { choices: [{ message: { content: JSON.stringify(body) } }] };
+        },
+      },
+    },
+  };
+
+  const origLog = console.log;
+  const origWarn = console.warn;
+  console.log = () => {};
+  console.warn = () => {};
+  let gateFailures;
+  try {
+    gateFailures = await runLiveGroqSuite(fakeGroq);
+  } finally {
+    console.log = origLog;
+    console.warn = origWarn;
+  }
+
+  assert.equal(gateFailures, 0);
+  // 60 benchmark sentences + 2 rewrite injections + 3 B1 writing texts + 4 B1 speaking transcripts = 69 Groq calls.
+  assert.equal(recordedCalls.length, 69);
 });
 
 test('teacher review route lets teachers override 0-5 area marks including Pronunciation and rejects invalid marks', async () => {
