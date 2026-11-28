@@ -305,11 +305,13 @@ jobs:
           old="$RUNNER_TEMP/fluency-pre-0081"
           mkdir -p "$old"
           git archive 9888873324ee0ab55f5d194f6b703a590f982d30 | tar -x -C "$old"
-          # Reuse only an identical lockfile/dependency set. If it changes,
-          # fail and update this step to install the archived dependencies.
-          cmp "$old/package.json" "$GITHUB_WORKSPACE/package.json"
-          cmp "$old/package-lock.json" "$GITHUB_WORKSPACE/package-lock.json"
-          ln -s "$GITHUB_WORKSPACE/node_modules" "$old/node_modules"
+          # The archived app is outside the workspace; Turbopack refuses a
+          # node_modules symlink that escapes its inferred root. Install the
+          # exact archived lockfile instead of borrowing the newer app's tree.
+          exec > >(tee "$RUNNER_TEMP/pre-0081-build.log") 2>&1
+          report_failure() { while IFS= read -r line; do echo "::error::$line"; done < <(tail -n 25 "$RUNNER_TEMP/pre-0081-build.log"); }
+          trap report_failure ERR
+          npm --prefix "$old" ci
           npm --prefix "$old" run build
       - name: Test pre-0081 app against expanded isolated Supabase
         if: steps.apply_e2e_migrations.outputs.staged_0081 == 'true'
