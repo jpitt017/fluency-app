@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const weekNumber = body.week as number;
   const weekQuestions = details[skill].weeks.find((week) => week.week === weekNumber)?.questions as Item[] | undefined;
   const item = weekQuestions?.find((entry) => entry.id === body.id);
-  if (!item) return NextResponse.json({ error: 'This question is not available.' }, { status: 404 });
+  if (!weekQuestions || !item) return NextResponse.json({ error: 'This question is not available.' }, { status: 404 });
 
   // A question only opens with its week.
   const currentWeek = await readStoredCurrentWeek(client, user.id);
@@ -74,6 +74,33 @@ export async function POST(request: Request) {
     if (error) {
       console.error('[input] Failed to save attempt:', error);
       return NextResponse.json({ error: 'We could not save your answer. Please try again.' }, { status: 503 });
+    }
+
+    // Complete the task as soon as the final checked answer is persisted. This
+    // avoids leaving all ten listening answers saved but no task completion if
+    // the learner misses (or the browser loses) the separate Finish request.
+    const completionFailure = 'Your answer was saved, but task completion could not be saved. Check this answer again to retry.';
+    try {
+      const { data: savedAnswers, error: readError } = await admin.from('week_input_answers')
+        .select('item_id').eq('user_id', user.id).eq('week_number', weekNumber).eq('skill', skill);
+      if (readError) {
+        console.error('[input] Could not verify saved answers for completion:', readError);
+        return NextResponse.json({ error: completionFailure }, { status: 503 });
+      }
+      const savedIds = new Set((savedAnswers ?? []).map((row: { item_id: string }) => row.item_id));
+      if (weekQuestions.every((question) => savedIds.has(question.id))) {
+        const { error: completionError } = await admin.from('week_input_submissions').upsert(
+          { user_id: user.id, week_number: weekNumber, skill },
+          { onConflict: 'user_id,week_number,skill', ignoreDuplicates: true },
+        );
+        if (completionError) {
+          console.error('[input] Could not save task completion:', completionError);
+          return NextResponse.json({ error: completionFailure }, { status: 503 });
+        }
+      }
+    } catch (error) {
+      console.error('[input] Could not save task completion:', error);
+      return NextResponse.json({ error: completionFailure }, { status: 503 });
     }
   } catch (error) {
     console.error('[input] Failed to save attempt:', error);

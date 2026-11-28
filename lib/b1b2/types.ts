@@ -370,44 +370,6 @@ export type LearnerBand =
   | 'B2_developing'
   | 'B2_solid';
 
-export interface DashboardPayload {
-  profile: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    learner_band: LearnerBand;
-    target_band: LearnerBand;
-    role?: UserRole;
-    xp_total: number;
-    streak_days: number;
-    longest_streak: number;
-    daily_word_goal: number;
-    onboarding_completed: boolean;
-    subscription_status?: string | null;
-  } | null;
-  role?: UserRole;
-  xp_total: number;
-  learner_band: LearnerBand;
-  streak_days: number;
-  skills: Record<string, { score: number; lessons: number }>;
-  due_cards: number;
-  lessons_completed: number;
-  next_lesson: {
-    id: string;
-    lesson_number: number;
-    title: string;
-    can_do: string;
-    day_of_week?: string | null;
-    week_number?: number | null;
-    module_title: string;
-  } | null;
-  badges: {
-    code: string;
-    title: string;
-    earned_at: string;
-  }[];
-}
-
 export interface XpEventRow {
   id: string;
   source: string;
@@ -418,10 +380,7 @@ export interface XpEventRow {
 
 export interface HeaderSummary {
   signedIn: boolean;
-  xpTotal: number;
-  streakDays: number;
   band: LearnerBand;
-  lessonsCompleted: number;
   role?: UserRole;
 }
 
@@ -448,17 +407,6 @@ export interface VocabDeckSummary {
     band: string;
     teaching_role?: UseRole | null;
   }[];
-}
-
-export interface WeeklyReportRow {
-  id: string;
-  week_start: string;
-  study_minutes: number;
-  words_learned: number;
-  recordings: number;
-  writing_tasks: number;
-  weakest_skill: SkillArea | null;
-  payload: Record<string, unknown>;
 }
 
 export interface CheckpointDetail {
@@ -630,9 +578,6 @@ export interface DashboardSkillTelemetry {
   hasEnoughTrendData: boolean;
   minWordsRequired: number;
   totalWordsEvaluated: number;
-  dueErrorCards: number;
-  masteredErrorCards: number;
-  missedPracticeCount: number;
   placementRecommendation: {
     band?: string;
     recommended_lesson?: number;

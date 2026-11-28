@@ -4,45 +4,23 @@ import {
   Award,
   BookOpen,
   Compass,
-  Flame,
-  Headphones,
-  Layers,
-  MessageSquare,
   Mic,
   PenLine,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
-import { formatBandLabel, loadDashboard } from '@/lib/b1b2/data';
+import { formatBandLabel, loadDashboard, loadHeaderSummary, loadReviewQueue } from '@/lib/b1b2/data';
 import { currentLearnerWeek } from '@/lib/curriculum/current-week';
-import type { SkillArea } from '@/lib/b1b2/types';
+import WeekProgressList from '@/components/b1b2/WeekProgressList';
+import { loadWeekProgress } from '@/lib/curriculum/week-progress';
 
 export const dynamic = 'force-dynamic';
 
-const LIVE_SKILLS: { key: SkillArea; label: string; href: string; icon: typeof Mic }[] = [
-  { key: 'grammar', label: 'Grammar', href: '/review', icon: Sparkles },
-  { key: 'vocabulary', label: 'Vocabulary', href: '/review', icon: Layers },
-  { key: 'listening', label: 'Listening', href: '/labs', icon: Headphones },
-  { key: 'reading', label: 'Reading', href: '/labs', icon: MessageSquare },
-  { key: 'speaking', label: 'Speaking', href: '/labs', icon: Mic },
-  { key: 'writing', label: 'Writing', href: '/labs', icon: PenLine },
-];
-
 export default async function Home() {
-  const [{ signedIn, dashboard, weeklyGoalHours, telemetry }, week] = await Promise.all([loadDashboard(), currentLearnerWeek()]);
-
-  const streakDays = dashboard?.streak_days ?? 0;
-  const dueErrors = telemetry.dueErrorCards;
-
-  const liveSkills = LIVE_SKILLS.map((s) => ({
-    ...s,
-    href: s.key === 'reading' || s.key === 'listening' ? `/week/${week}` : s.key === 'speaking' || s.key === 'writing' ? `/labs?week=${week}#${s.key}` : s.href,
-    score: Math.round(Number(dashboard?.skills?.[s.key]?.score ?? 0)),
-  }));
-  const weakestSkill =
-    liveSkills.length > 0
-      ? liveSkills.reduce((min, cur) => (cur.score < min.score ? cur : min), liveSkills[0])
-      : null;
+  const [{ signedIn, userId, weeklyGoalHours, telemetry }, summary, week, review] = await Promise.all([
+    loadDashboard(), loadHeaderSummary(), currentLearnerWeek(), loadReviewQueue(),
+  ]);
+  const weekProgress = await loadWeekProgress(userId, week);
+  const dueErrors = review.totalDue;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
@@ -51,11 +29,7 @@ export default async function Home() {
           <div className="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_10px_28px_-14px_rgba(24,24,27,0.08)] lg:col-span-7">
             <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
               <span className="rounded-full bg-indigo-700 px-2.5 py-0.5 text-white">
-                {formatBandLabel(dashboard?.learner_band)}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-amber-800">
-                <Flame className="h-3 w-3" />
-                {streakDays}d streak
+                {formatBandLabel(summary.band)}
               </span>
               <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-stone-700">
                 {weeklyGoalHours}h/wk goal
@@ -134,49 +108,11 @@ export default async function Home() {
           </div>
 
           <aside className="space-y-4 rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_12px_32px_-16px_rgba(24,24,27,0.08)] lg:col-span-5">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Your skills</p>
-                <h2 className="font-serif text-lg font-semibold text-stone-900">How you are doing</h2>
-              </div>
-              {weakestSkill && (
-                <Link
-                  href={weakestSkill.href}
-                  className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/80 hover:bg-amber-100"
-                >
-                  Focus: {weakestSkill.label} →
-                </Link>
-              )}
+            <div className="border-b border-stone-100 pb-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Your progress</p>
+              <h2 className="font-serif text-lg font-semibold text-stone-900">This week&apos;s tasks</h2>
             </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {liveSkills.map(({ key, label, href, icon: Icon, score }) => {
-                const isWeakest = weakestSkill?.key === key && score < 85;
-                return (
-                  <Link
-                    key={key}
-                    href={href}
-                    className={`rounded-xl border p-2.5 transition hover:border-indigo-300 ${
-                      isWeakest ? 'border-amber-200 bg-amber-50/30' : 'border-stone-100 bg-stone-50/70'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="inline-flex items-center gap-1 font-semibold text-stone-800">
-                        <Icon className="h-3.5 w-3.5 text-indigo-600" />
-                        {label}
-                      </span>
-                      <span className="font-mono font-bold text-indigo-700">{score}%</span>
-                    </div>
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white ring-1 ring-stone-200/70">
-                      <div
-                        className={`h-full rounded-full ${isWeakest ? 'bg-amber-500' : 'bg-indigo-600'}`}
-                        style={{ width: `${Math.min(100, Math.max(4, score))}%` }}
-                      />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <WeekProgressList week={week} progress={weekProgress} />
 
             <div className="grid grid-cols-2 gap-2.5 border-t border-stone-100 pt-3">
               <Link href="/labs" className="rounded-xl bg-stone-50 p-3 transition hover:bg-stone-100">
