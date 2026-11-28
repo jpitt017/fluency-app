@@ -6,7 +6,8 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { validSupportNotes } from '../../lib/curriculum/speaking-support.mjs';
 import { parseWeekSpeakingTakePath } from '../../lib/b1b2/week-speaking-recordings.mjs';
-import { readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
+import { hasExplicitUploadGeneration, readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
+import { freshRecordingKeyId } from '../../lib/b1b2/recording-key.mjs';
 import { fluencyFromWhisper, soundTips, structureUsed } from '../../lib/b1b2/speaking-feedback.mjs';
 
 const support = JSON.parse(readFileSync('supabase-b1-b2/content/curriculum/speaking-support-weeks-01-04.json')).weeks[0];
@@ -29,11 +30,15 @@ function load(path, modules) {
 /** Exercise real route handlers with an isolated in-memory provider/storage/RPC. */
 function fixture(options = {}) {
   const takes = new Map(); const checks = new Map(); const objects = new Map();
-  const events = []; let checksUsed = 0;
+  const events = []; let checksUsed = 0; let allocated = 0;
   const auth = { auth: { getUser: async () => ({ data: { user: options.user === null ? null : { id: USER } }, error: null }) } };
   const admin = {
     async rpc(name, args) {
       events.push(name);
+      if (name === 'allocate_recording_key') {
+        if (options.keyError) return { data: null, error: { message: 'allocator offline' } };
+        return { data: `00000000-0000-8000-8000-${String(++allocated).padStart(12, '0')}`, error: null };
+      }
       if (name === 'reserve_week_speaking_take') {
         const path = `${args.p_user_id}/week-speaking/${args.p_week_number}/${ATTEMPT}/recording-${args.p_take_id}.${args.p_extension}`;
         takes.set(args.p_take_id, { id: args.p_take_id, user_id: args.p_user_id, week_number: args.p_week_number,
@@ -66,7 +71,13 @@ function fixture(options = {}) {
     storage: { from(bucket) {
       assert.equal(bucket, 'speaking-recordings');
       return {
-        async upload(path, file, opts) { events.push(['upload', path, opts]); objects.set(path, file); if (options.uploadError) return { error: { message: 'lost acknowledgement' } }; return { error: null }; },
+        async upload(path, file, opts) {
+          events.push(['upload', path, opts]);
+          if (options.conflictError) { objects.set(path, 'pre-existing recording'); return { error: options.conflictError }; }
+          objects.set(path, file);
+          if (options.uploadError) return { error: { message: 'lost acknowledgement' } };
+          return { error: null };
+        },
         async remove(paths) { events.push(['remove', ...paths]); for (const path of paths) objects.delete(path); return { error: null }; },
         async download(path) { events.push('download'); return { data: objects.get(path) ?? null, error: objects.has(path) ? null : { message: 'missing' } }; },
       };
@@ -75,6 +86,7 @@ function fixture(options = {}) {
       if (table === 'profiles') return { select: () => ({ eq: () => ({ maybeSingle: async () => options.oldSchema
         ? { data: null, error: { code: '42703' } }
         : { data: { data_deletion_generation: '44444444-4444-4444-8444-444444444444' }, error: null } }) }) };
+      if (table === 'data_deletion_safety_config') return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { enforce_legacy_fence: Boolean(options.fence) }, error: null }) }) }) };
       assert.equal(table, 'week_speaking_takes');
       const filters = {};
       const query = { select() { return query; }, eq(key, value) { filters[key] = value; return query; },
@@ -95,7 +107,8 @@ function fixture(options = {}) {
     'groq-sdk': FakeGroq,
     '@/utils/supabase/server': { createServerSupabase: async () => auth },
     '@/utils/supabase/admin': { createAdminSupabase: () => admin },
-    '@/lib/b1b2/deletion-generation.mjs': { readDeletionGeneration },
+    '@/lib/b1b2/deletion-generation.mjs': { hasExplicitUploadGeneration, readDeletionGeneration },
+    '@/lib/b1b2/recording-key.mjs': { freshRecordingKeyId },
     '@/lib/curriculum/speaking-support.mjs': { validSupportNotes },
     '@/lib/curriculum/week-speaking-support': { speakingSupportConfig: (week) => week === 1 ? support : null },
     '@/lib/b1b2/week-speaking-recordings.mjs': { parseWeekSpeakingTakePath },
@@ -124,14 +137,17 @@ function captureRequest(kind = 'first', extras = {}) {
     ['notes', JSON.stringify(kind === 'first' ? support.planNotes.map((label) => ({ label, note: '' })) : [])],
     ['phrases', JSON.stringify(extras.phrases || [])], ['sourceTakeId', extras.sourceTakeId || ''],
   ]);
-  return { formData: async () => ({ get: (key) => values.get(key) ?? null }) };
+  return { headers: extras.headers ?? new Headers({ 'x-fluency-data-owner': USER,
+    'x-fluency-data-generation': '44444444-4444-4444-8444-444444444444', 'x-fluency-upload-epoch-explicit': '1' }),
+  formData: async () => ({ get: (key) => values.get(key) ?? null }) };
 }
 const checkRequest = (takeId) => ({ json: async () => ({ takeId }) });
 
 test('first capture reserves an immutable private key, saves it, and spends no AI units', async () => {
   const f = fixture(); const response = await f.capture(captureRequest());
   assert.equal(response.status, 200);
-  assert.equal(f.events[0], 'reserve_week_speaking_take');
+  assert.equal(f.events[0], 'allocate_recording_key');
+  assert.equal(f.events[1], 'reserve_week_speaking_take');
   assert.equal(f.events.at(-1), 'finish_week_speaking_upload');
   assert.equal(f.events.some((item) => Array.isArray(item) && item[0] === 'guard'), false);
   const row = f.takes.get(response.body.takeId);
@@ -140,6 +156,7 @@ test('first capture reserves an immutable private key, saves it, and spends no A
   const options = f.events.find((item) => Array.isArray(item) && item[0] === 'upload')[2];
   assert.equal(options.upsert, false);
   assert.equal(options.metadata.data_deletion_generation, '44444444-4444-4444-8444-444444444444');
+  assert.equal(options.metadata.data_deletion_client, 'v1');
   assert.equal(JSON.stringify(response.body).includes('week-speaking/'), false);
 });
 
@@ -154,6 +171,58 @@ test('separate captures use fresh, non-overwriting recording keys', async () => 
   assert.equal(uploads.length, 2);
   assert.notEqual(uploads[0][1], uploads[1][1]);
   assert.ok(uploads.every((item) => item[2].upsert === false));
+});
+
+test('an unavailable 0081 key allocator fails closed before reservation or upload', async () => {
+  const f = fixture({ keyError: true });
+  assert.equal((await f.capture(captureRequest())).status, 503);
+  assert.deepEqual(f.events, ['allocate_recording_key']);
+  assert.equal(f.objects.size, 0);
+});
+
+test('retrying a failed or uncertain capture generates a different non-overwriting key on both schemas', async () => {
+  for (const oldSchema of [false, true]) {
+    for (const failure of ['uploadError', 'finaliseAmbiguous']) {
+      const options = { oldSchema, [failure]: true };
+      const f = fixture(options);
+      const first = await f.capture(captureRequest());
+      assert.equal(first.status, 503);
+      options[failure] = false;
+      const second = await f.capture(captureRequest());
+      assert.equal(second.status, 200);
+      const uploads = f.events.filter((event) => Array.isArray(event) && event[0] === 'upload');
+      assert.equal(uploads.length, 2);
+      assert.notEqual(uploads[0][1], uploads[1][1]);
+      assert.notEqual(parseWeekSpeakingTakePath(uploads[0][1]).takeId, parseWeekSpeakingTakePath(uploads[1][1]).takeId);
+      assert.ok(uploads.every((event) => event[2].upsert === false));
+      if (failure === 'finaliseAmbiguous') assert.ok(f.objects.has(uploads[0][1]), 'an uncertain first result must not be removed');
+    }
+  }
+});
+
+test('a rejected key collision never removes the pre-existing recording', async () => {
+  for (const conflictError of [{ status: 409, statusCode: '409' }, { status: 400, code: 'Duplicate' }]) {
+    const f = fixture({ conflictError });
+    assert.equal((await f.capture(captureRequest())).status, 503);
+    const upload = f.events.find((event) => Array.isArray(event) && event[0] === 'upload');
+    assert.equal(upload[2].upsert, false);
+    assert.equal(f.objects.get(upload[1]), 'pre-existing recording');
+    assert.equal([...f.takes.values()][0].status, 'upload_failed');
+    assert.ok(!f.events.some((event) => Array.isArray(event) && event[0] === 'remove'));
+  }
+});
+
+test('a stale browser is tagged during overlap and rejected after the fence', async () => {
+  const staleHeaders = new Headers({ 'x-fluency-data-owner': USER, 'x-fluency-data-generation': '44444444-4444-4444-8444-444444444444' });
+  const overlap = fixture();
+  assert.equal((await overlap.capture(captureRequest('first', { headers: staleHeaders }))).status, 200);
+  const upload = overlap.events.find((event) => Array.isArray(event) && event[0] === 'upload');
+  assert.equal(upload[2].metadata.data_deletion_client, 'legacy');
+  const fenced = fixture({ fence: true });
+  assert.equal((await fenced.capture(captureRequest('first', { headers: staleHeaders }))).status, 503);
+  assert.ok(!fenced.events.some((event) => Array.isArray(event) && event[0] === 'upload'));
+  const current = fixture({ fence: true });
+  assert.equal((await current.capture(captureRequest())).status, 200);
 });
 
 test('weekly capture remains usable with the old schema and legacy metadata', async () => {

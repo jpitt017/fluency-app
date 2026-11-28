@@ -38,6 +38,13 @@ async function claim(client, user, token) {
 
 try {
   await Promise.all(clients.map((client) => client.connect()));
+  // Concurrent database-issued IDs stay unique without any per-user history.
+  const allocations = await Promise.all([a, b].map((client) => client.query(
+    'select public.allocate_recording_key() as id from generate_series(1, 100)',
+  )));
+  const ids = allocations.flatMap((result) => result.rows.map((row) => row.id));
+  assert.equal(new Set(ids).size, 200);
+  assert.ok(ids.every((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/.test(id)));
   for (const u of [...users, staff]) await admin.query("insert into auth.users(id,email,raw_user_meta_data,raw_app_meta_data,aud,role) values ($1,$2,'{}','{}','authenticated','authenticated')", [u, `delete-race-${u}@example.test`]);
   await admin.query("update public.profiles set role='teacher' where id=$1", [staff]);
   const generations = (await admin.query('select id,data_deletion_generation from public.profiles where id=any($1::uuid[])', [users])).rows;
@@ -86,10 +93,12 @@ try {
   assert.ok(late.rows.some((row) => row.object_name === lateLegacy));
   await admin.query("delete from storage.objects where bucket_id='issue-attachments' and name=$1", [lateLegacy]);
   await admin.query('update public.data_deletion_safety_config set enforce_legacy_fence=true where singleton');
+  // Storage's service client carries service_role at both checks.
+  await admin.query("select set_config('request.jwt.claim.role','service_role',false), set_config('request.jwt.claims','{\"role\":\"service_role\"}',false), set_config('request.method','POST',false), set_config('request.path','/object/issue-attachments/synthetic',false)");
   await assert.rejects(() => admin.query("insert into storage.objects(bucket_id,name) values ('issue-attachments',$1)", [lateLegacy]), /legacy upload/i);
   const current = (await admin.query('select data_deletion_generation from public.profiles where id=$1', [users[1]])).rows[0].data_deletion_generation;
   const newPath = `${users[1]}/deletion-v1/${current}/fresh.png`;
-  await admin.query("insert into storage.objects(bucket_id,name) values ('issue-attachments',$1)", [newPath]);
+  await admin.query("insert into storage.objects(bucket_id,name,user_metadata) values ('issue-attachments',$1,'{\"data_deletion_client\":\"v1\"}'::jsonb)", [newPath]);
   assert.equal((await admin.query("select count(*)::int as n from public.list_late_deletion_files('', '', 100, $1) where object_name=$2", [users[1], newPath])).rows[0].n, 0);
 
   // A dead worker's claim is reclaimable, but the job and write barrier do not
@@ -182,9 +191,9 @@ try {
   async function prepareAlert(owner, other, hash) {
     const ids = [randomUUID(), randomUUID()];
     const token = randomUUID();
-    await admin.query(`insert into public.issue_reports(id,user_id,type,message,page_url) values
-      ($1,$2,'broken','other owner','https://example.test/page'),
-      ($3,$4,'broken','deleting owner','https://example.test/page')`, [ids[0], other, ids[1], owner]);
+    await admin.query(`insert into public.issue_reports(id,user_id,type,message,page_url,data_deletion_generation) values
+      ($1,$2,'broken','other owner','https://example.test/page',$5),
+      ($3,$4,'broken','deleting owner','https://example.test/page',$6)`, [ids[0], other, ids[1], owner, gen(other), gen(owner)]);
     await admin.query("select set_config('request.jwt.claim.role','service_role',false), set_config('request.jwt.claims','{\"role\":\"service_role\"}',false), set_config('request.headers',$1,false)",
       [JSON.stringify({ 'x-fluency-data-owner': other })]);
     assert.equal((await admin.query('select public.claim_issue_alert($1,$2,$3) as result', [ids[0], hash, token])).rows[0].result, 'send');

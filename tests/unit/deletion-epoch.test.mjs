@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
 import * as epoch from '../../lib/b1b2/deletion-epoch.mjs';
-import { readDeletionGeneration } from '../../lib/b1b2/deletion-generation.mjs';
+import { readDeletionGeneration, requireUploadEpochForFencedRequest } from '../../lib/b1b2/deletion-generation.mjs';
 
 const require = createRequire(import.meta.url);
 const { NextRequest, NextResponse } = require('next/server');
@@ -96,18 +96,23 @@ test('proxy issues a fresh epoch only on page navigation and preserves refreshed
 
 test('proxy pins POSTs to the pre-deletion cookie or explicit recording epoch, never a new database read', async () => {
   const f = proxyFixture();
-  const post = await f.proxy(inbound('/api/writing/correct', { method: 'POST', value: cookie(OLD), headers: { [epoch.DELETION_OWNER_HEADER]: OTHER } }));
+  const post = await f.proxy(inbound('/api/writing/correct', { method: 'POST', value: cookie(OLD), headers: {
+    [epoch.DELETION_OWNER_HEADER]: OTHER, [epoch.DELETION_UPLOAD_EXPLICIT_HEADER]: '1',
+  } }));
   assert.equal(forwarded(post, epoch.DELETION_OWNER_HEADER), USER);
   assert.equal(forwarded(post, epoch.DELETION_EPOCH_HEADER), OLD);
+  assert.equal(forwarded(post, epoch.DELETION_UPLOAD_EXPLICIT_HEADER), '0', 'a client cannot forge the internal marker');
   assert.equal(f.reads.length, 0);
   const recorded = await f.proxy(inbound('/api/week/speaking/capture', {
     method: 'POST', value: cookie(NEW), headers: { [epoch.DELETION_EPOCH_HEADER]: OLD },
   }));
   assert.equal(forwarded(recorded, epoch.DELETION_EPOCH_HEADER), OLD);
+  assert.equal(forwarded(recorded, epoch.DELETION_UPLOAD_EXPLICIT_HEADER), '1');
   const invalid = await f.proxy(inbound('/api/week/speaking/capture', {
-    method: 'POST', value: cookie(NEW), headers: { [epoch.DELETION_EPOCH_HEADER]: 'bad' },
+    method: 'POST', value: cookie(NEW), headers: { [epoch.DELETION_EPOCH_HEADER]: 'bad', [epoch.DELETION_UPLOAD_EXPLICIT_HEADER]: '1' },
   }));
   assert.equal(forwarded(invalid, epoch.DELETION_EPOCH_HEADER), 'missing');
+  assert.equal(forwarded(invalid, epoch.DELETION_UPLOAD_EXPLICIT_HEADER), '0');
   const wrongOwner = await f.proxy(inbound('/api/week/input', { method: 'POST', value: cookie(OLD, OTHER) }));
   assert.equal(forwarded(wrongOwner, epoch.DELETION_EPOCH_HEADER), 'missing');
   const unverified = await proxyFixture({ user: null }).proxy(inbound('/api/week/input', { method: 'POST' }));
@@ -117,17 +122,88 @@ test('proxy pins POSTs to the pre-deletion cookie or explicit recording epoch, n
   }));
   assert.equal(forwarded(anonymous, epoch.DELETION_OWNER_HEADER), null);
   assert.equal(forwarded(anonymous, epoch.DELETION_EPOCH_HEADER), null);
+  assert.equal(forwarded(anonymous, epoch.DELETION_UPLOAD_EXPLICIT_HEADER), null);
 });
 
-test('late uploads retain their starting epoch, and missing post-deletion context fails closed', async () => {
-  const client = (data, error = null) => ({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data, error }) }) }) }) });
+test('late uploads retain their start epoch; the contract rejects a stale tab even with a fresh shared cookie', async () => {
+  const client = (data, error = null, fence = false, configError = null) => ({
+    from: (table) => ({ select: () => ({ eq: () => ({ maybeSingle: async () => table === 'profiles'
+      ? { data, error } : { data: configError ? null : { enforce_legacy_fence: fence }, error: configError } }) }) }),
+  });
   const marker = { data_deletion_generation: NEW, data_deletion_completed_at: '2026-01-01T00:00:00Z' };
-  const headers = new Headers({ [epoch.DELETION_OWNER_HEADER]: USER, [epoch.DELETION_EPOCH_HEADER]: OLD });
-  assert.equal(await readDeletionGeneration(client(marker), USER, headers), OLD);
+  const headers = new Headers({ [epoch.DELETION_OWNER_HEADER]: USER, [epoch.DELETION_EPOCH_HEADER]: OLD,
+    [epoch.DELETION_UPLOAD_EXPLICIT_HEADER]: '1' });
+  assert.equal(await readDeletionGeneration(client(marker, null, true), USER, headers), OLD);
   await assert.rejects(() => readDeletionGeneration(client(marker), USER, new Headers()), /Refresh/);
-  assert.equal(await readDeletionGeneration(client({ ...marker, data_deletion_completed_at: null }), USER, new Headers()), NEW);
+  const untouched = { ...marker, data_deletion_completed_at: null };
+  assert.equal(await readDeletionGeneration(client(untouched), USER, new Headers()), NEW);
+  const staleTab = new Headers({ [epoch.DELETION_OWNER_HEADER]: USER, [epoch.DELETION_EPOCH_HEADER]: NEW,
+    [epoch.DELETION_UPLOAD_EXPLICIT_HEADER]: '0' });
+  assert.equal(await readDeletionGeneration(client(untouched), USER, staleTab), NEW);
+  await assert.rejects(() => readDeletionGeneration(client(untouched, null, true), USER, staleTab), /Refresh/);
+  await assert.rejects(() => readDeletionGeneration(client(untouched, null, false, { code: 'network' }), USER, staleTab), /unavailable/);
   assert.equal(await readDeletionGeneration(client(null, { code: '42703' }), USER, headers), null);
   await assert.rejects(() => readDeletionGeneration(client(null, { code: 'network' }), USER, headers), /unavailable/);
+});
+
+test('transient speaking endpoints reject old tabs before reading audio or charging quota', async () => {
+  let fence = true;
+  let oldSchema = false;
+  let formReads = 0;
+  let quota = 0;
+  const admin = { from: (table) => ({ select: () => ({ eq: () => ({ maybeSingle: async () => {
+    if (table === 'profiles') return oldSchema ? { data: null, error: { code: '42703' } }
+      : { data: { data_deletion_generation: NEW, data_deletion_completed_at: null }, error: null };
+    assert.equal(table, 'data_deletion_safety_config');
+    return { data: { enforce_legacy_fence: fence }, error: null };
+  } }) }) }) };
+  const modules = {
+    'next/server': { NextResponse: { json: (body, init = {}) => ({ body, status: init.status ?? 200 }) } },
+    'groq-sdk': class {},
+    '@/utils/supabase/server': { createServerSupabase: async () => ({}) },
+    '@/utils/supabase/admin': { createAdminSupabase: () => admin },
+    '@/lib/b1b2/deletion-generation.mjs': { requireUploadEpochForFencedRequest },
+    '@/lib/b1b2/transcription': { transcribeAudio: async () => { throw new Error('provider must not be called'); } },
+    '@/lib/b1b2/ai-guard': { enforceAiUsage: async () => { quota += 1; return { allowed: true, userId: USER, headers: {} }; } },
+    '@/lib/b1b2/feedback-schema': {},
+    '@/lib/b1b2/speaking-evaluation': {},
+    '@/lib/b1b2/speaking-feedback.mjs': {},
+    '@/lib/b1b2/observability': { logAiRequest: async () => {} },
+    '@/lib/b1b2/provider-failure-response': { providerFailureResponse: async ({ error }) => { throw error; } },
+    '@/lib/curriculum/learner-week': {},
+    '@/lib/curriculum/week-speaking-support': {},
+    '@/lib/curriculum/week-models': {},
+    '@/lib/b1b2/prompt-guard': { sanitizeLearnerText: () => ({ text: '' }) },
+  };
+  const evaluate = loadTs('src/app/api/speaking/evaluate/route.ts', modules, { process: { env: {} } }).POST;
+  const transcribe = loadTs('src/app/api/speaking/transcribe/route.ts', modules, { process: { env: {} } }).POST;
+  const request = (explicit = false) => ({
+    headers: new Headers({ 'content-type': 'multipart/form-data', [epoch.DELETION_OWNER_HEADER]: USER,
+      [epoch.DELETION_EPOCH_HEADER]: NEW, [epoch.DELETION_UPLOAD_EXPLICIT_HEADER]: explicit ? '1' : '0' }),
+    formData: async () => { formReads += 1; return { get: () => null }; },
+  });
+  for (const route of [evaluate, transcribe]) {
+    assert.equal((await route(request())).status, 409);
+    assert.equal(formReads, 0);
+    assert.equal(quota, 0);
+  }
+  for (const route of [evaluate, transcribe]) {
+    assert.equal((await route(request(true))).status, 400); // current request reaches validation
+  }
+  assert.equal(formReads, 2);
+  assert.equal(quota, 1); // transcription checks quota before validating its body
+  const staleRecording = request(true);
+  staleRecording.headers.set(epoch.DELETION_EPOCH_HEADER, OLD);
+  assert.equal((await evaluate(staleRecording)).status, 409);
+  assert.equal((await transcribe(staleRecording)).status, 409);
+  assert.equal(formReads, 2, 'a recording begun before deletion is not sent to AI');
+  fence = false;
+  assert.equal((await evaluate(request())).status, 400); // legacy overlap
+  fence = true; oldSchema = true;
+  assert.equal((await evaluate(request())).status, 400); // 0080 has no marker or fence
+  await assert.rejects(() => requireUploadEpochForFencedRequest(admin, new Headers({
+    [epoch.DELETION_OWNER_HEADER]: 'unverified',
+  })), /Refresh/);
 });
 
 test('server and service-role clients propagate only request-scoped generation context', async () => {

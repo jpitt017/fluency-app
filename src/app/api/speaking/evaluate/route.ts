@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
+import { requireUploadEpochForFencedRequest } from '@/lib/b1b2/deletion-generation.mjs';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { persistLearnerErrors } from '@/lib/b1b2/feedback-schema';
 import { evaluateSpeakingTranscript } from '@/lib/b1b2/speaking-evaluation';
@@ -31,6 +33,13 @@ export async function POST(req: NextRequest) {
   const isAudio = (req.headers.get('content-type') || '').includes('multipart/form-data');
 
   try {
+    if (isAudio) {
+      try { await requireUploadEpochForFencedRequest(createAdminSupabase(), req.headers); }
+      catch {
+        statusCode = 409;
+        return NextResponse.json({ error: 'Please refresh the page before recording again.' }, { status: 409 });
+      }
+    }
     let weekNumber: number | null = null;
     let grammarWeek: number | null = null;
     let transcript = '';

@@ -29,12 +29,39 @@ create table public.data_deletion_safety_config (
   singleton boolean primary key default true check (singleton),
   enforce_legacy_fence boolean not null default false,
   sweep_enabled boolean not null default false,
-  guard_secret uuid not null default gen_random_uuid()
+  guard_secret uuid not null default gen_random_uuid(),
+  -- This is a namespace/obfuscation salt, not an authentication secret.
+  recording_key_namespace uuid not null default gen_random_uuid()
 );
 insert into public.data_deletion_safety_config(singleton) values (true);
 alter table public.data_deletion_safety_config enable row level security;
-revoke all on public.data_deletion_safety_config from public, anon, authenticated;
-grant select, update on public.data_deletion_safety_config to service_role;
+revoke all on public.data_deletion_safety_config from public, anon, authenticated, service_role;
+grant select on public.data_deletion_safety_config to service_role;
+grant update (enforce_legacy_fence, sweep_enabled) on public.data_deletion_safety_config to service_role;
+
+-- One global, non-cycling counter issues new-app recording IDs without keeping
+-- per-learner history after deletion. A distinct UUIDv8 namespace cannot collide
+-- with the old app's UUIDv4 IDs. This is deliberately not owned by a learner
+-- row and must never be reset on deletion, restore, or ordinary maintenance.
+-- Postgres nextval values are not rolled back, so failed requests consume IDs.
+create sequence public.recording_key_sequence as bigint minvalue 1 maxvalue 1152921504606846975 no cycle cache 1;
+revoke all on sequence public.recording_key_sequence from public, anon, authenticated, service_role;
+create function public.allocate_recording_key() returns uuid
+language plpgsql security definer set search_path = pg_catalog, public as $$
+declare v_namespace text; v_counter bigint; v_mask bigint; v_encoded text;
+begin
+  select replace(recording_key_namespace::text, '-', '') into strict v_namespace
+    from public.data_deletion_safety_config where singleton;
+  v_counter := nextval('public.recording_key_sequence'::regclass);
+  -- XOR with a fixed 60-bit salt is a bijection: it obscures the counter but
+  -- never introduces collisions. It is not an authorization mechanism.
+  v_mask := (('x' || substr(v_namespace, 16, 15))::bit(60))::bigint;
+  v_encoded := lpad(to_hex(v_counter # v_mask), 15, '0');
+  return (substr(v_namespace, 1, 8) || '-' || substr(v_namespace, 9, 4) || '-8' ||
+    substr(v_namespace, 13, 3) || '-8' || substr(v_encoded, 1, 3) || '-' || substr(v_encoded, 4, 12))::uuid;
+end $$;
+revoke all on function public.allocate_recording_key() from public, anon, authenticated;
+grant execute on function public.allocate_recording_key() to service_role;
 
 create function public.protect_data_deletion_profile_marker()
 returns trigger language plpgsql set search_path = pg_catalog, public as $$
@@ -329,7 +356,10 @@ begin
        or (new.screenshot_path is not null and left(new.screenshot_path, length(v_prefix)) <> v_prefix) then
       raise exception 'Invalid report attachment generation' using errcode = 'P0001';
     end if;
-  elsif coalesce(v_enforce, false) and v_finished is not null then
+  elsif coalesce(v_enforce, false) and (tg_op = 'INSERT' or v_finished is not null) then
+    -- Once old clients retire, reject new untagged reports for every account.
+    -- Staff can still update an existing legacy report for an account that has
+    -- not deleted data; these older rows have no generation to supply.
     raise exception 'Refresh the app before sending a report' using errcode = 'P0001';
   end if;
   return new;
@@ -339,9 +369,10 @@ create trigger guard_issue_deletion_generation before insert or update on public
 
 -- Storage checks run both for the initial authorization and the final metadata
 -- write. Generation-tagged report paths are fenced even after a job completes.
--- Once legacy instances retire, the separate flag also rejects old untagged
--- uploads for an account that has deleted data. Deletes remain the Storage
--- API's responsibility; this trigger never removes metadata or bytes.
+-- Once legacy instances retire, the separate flag rejects old untagged
+-- uploads for every account, including those that have never deleted data.
+-- Deletes remain the Storage API's responsibility; this trigger never
+-- removes metadata or bytes.
 create function public.guard_pending_data_deletion_storage()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
 declare old_owner uuid; new_owner uuid; v_owner uuid; v_lock uuid;
@@ -365,13 +396,42 @@ begin
       raise exception 'Data deletion is pending; this upload cannot be saved' using errcode = 'P0001';
     end if;
   end loop;
+  select enforce_legacy_fence into v_enforce from public.data_deletion_safety_config where singleton;
+  if coalesce(v_enforce, false) and (
+      new.bucket_id in ('speaking-recordings', 'issue-attachments')
+      or (tg_op = 'UPDATE' and old.bucket_id in ('speaking-recordings', 'issue-attachments'))
+    ) then
+    -- The supported application writes both buckets through its server. A
+    -- browser must not bypass the contract by copying current metadata onto a
+    -- direct upload, even when it guesses an active recording reservation.
+    if auth.role() is distinct from 'service_role' then
+      raise exception 'Direct learner uploads are no longer supported; refresh the app' using errcode = 'P0001';
+    end if;
+    if new.bucket_id in ('speaking-recordings', 'issue-attachments') and new_owner is null then
+      raise exception 'An owned storage key is required' using errcode = 'P0001';
+    end if;
+    if tg_op = 'UPDATE' and (old.bucket_id is distinct from new.bucket_id or old.name is distinct from new.name) then
+      raise exception 'Protected storage keys cannot be moved' using errcode = 'P0001';
+    end if;
+    -- A previously signed upload URL can execute as Storage's service role.
+    -- Accept only the ordinary server POST endpoint used by this app; signed,
+    -- resumable and S3 upload paths are not supported after the contract step.
+    -- Fail closed if Storage does not supply its trusted request context.
+    if new.bucket_id in ('speaking-recordings', 'issue-attachments') and (
+        coalesce(current_setting('request.method', true), '') <> 'POST'
+        or not (
+          coalesce(current_setting('request.path', true), '') like '/object/' || new.bucket_id || '/%'
+          or coalesce(current_setting('request.path', true), '') like '/storage/v1/object/' || new.bucket_id || '/%'
+        )
+      ) then
+      raise exception 'Only current server uploads are supported; refresh the app' using errcode = 'P0001';
+    end if;
+  end if;
   if new_owner is null then return new; end if;
   select data_deletion_generation, data_deletion_completed_at into v_generation, v_finished
     from public.profiles where id = new_owner;
-  select enforce_legacy_fence into v_enforce from public.data_deletion_safety_config where singleton;
   if tg_op = 'UPDATE' and (old.bucket_id is distinct from new.bucket_id or old.name is distinct from new.name)
-     and (split_part(old.name, '/', 2) = 'deletion-v1' or split_part(new.name, '/', 2) = 'deletion-v1'
-       or (coalesce(v_enforce, false) and v_finished is not null)) then
+     and (split_part(old.name, '/', 2) = 'deletion-v1' or split_part(new.name, '/', 2) = 'deletion-v1') then
     raise exception 'Protected storage keys cannot be moved' using errcode = 'P0001';
   end if;
   if new.bucket_id = 'issue-attachments' and split_part(new.name, '/', 2) = 'deletion-v1' then
@@ -385,7 +445,7 @@ begin
     end if;
     -- A delayed Storage removal is key-based. After a deletion, do not let a
     -- current-generation upload reuse an arbitrary legacy key the worker may
-    -- already have snapshotted. Supported new uploads reserve a fresh random
+    -- already have snapshotted. Supported new uploads reserve a fresh
     -- weekly-take key before writing metadata, even with the legacy fence off.
     if v_finished is not null and not exists (
       select 1 from public.week_speaking_takes t join public.week_speaking_flows f
@@ -394,17 +454,26 @@ begin
         and f.active_since >= clock_timestamp() - interval '30 minutes'
     ) then raise exception 'A fresh recording key must be reserved' using errcode = 'P0001'; end if;
   end if;
-  if coalesce(v_enforce, false) and v_finished is not null then
+  -- This contract gate applies to every learner, not only those with an
+  -- existing deletion marker. Otherwise an obsolete browser could keep
+  -- uploading for accounts that have never deleted data after the pilot starts.
+  if coalesce(v_enforce, false) then
+    -- The new server labels the request according to the browser's explicit
+    -- start epoch. This check occurs in Storage's final write too: an old tab
+    -- whose request started just before activation cannot slip through later.
+    if coalesce(new.user_metadata->>'data_deletion_client', '') <> 'v1' then
+      raise exception 'This legacy upload is no longer supported; refresh the app' using errcode = 'P0001';
+    end if;
     if new.bucket_id = 'issue-attachments' and split_part(new.name, '/', 2) <> 'deletion-v1' then
-      raise exception 'This legacy upload cannot be saved after data deletion' using errcode = 'P0001';
+      raise exception 'This legacy upload is no longer supported; refresh the app' using errcode = 'P0001';
     elsif new.bucket_id = 'speaking-recordings' and (
-      coalesce(lower(new.user_metadata->>'data_deletion_generation'), '') <> v_generation::text or not exists (
+      v_generation is null or coalesce(lower(new.user_metadata->>'data_deletion_generation'), '') <> v_generation::text or not exists (
         select 1 from public.week_speaking_takes t join public.week_speaking_flows f
           on f.user_id = t.user_id and f.week_number = t.week_number and f.active_upload_id = t.id
         where t.user_id = new_owner and t.recording_path = new.name and t.status = 'uploading'
           and f.active_since >= clock_timestamp() - interval '30 minutes'
       )
-    ) then raise exception 'This legacy upload cannot be saved after data deletion' using errcode = 'P0001'; end if;
+    ) then raise exception 'This legacy upload is no longer supported; refresh the app' using errcode = 'P0001'; end if;
   end if;
   return new;
 end $$;

@@ -1,12 +1,13 @@
 # Retryable learning-data deletion: 0081 rollout notes
 
 **Proposed only.** Migration 0081, its cron, and both activation flags are not
-live merely because this PR exists. The owner accepted the existing
-mixed-version deletion/upload risk temporarily because there are no real
-learners yet. This is a specific exception, not a relaxation of the standing
-two-way compatibility rule. Do not deploy, alter production migration history,
-enable the sweep, or run a live deletion without the required separate owner
-approval.
+live merely because this PR exists. The owner accepted the legacy recording-key
+reuse/new-work-loss risk **only during the mixed-version overlap**, conditional
+on fresh non-overwriting keys for every new-app recording, enabling the fence
+and sweep before the pilot, and confirming old-version clients cannot upload.
+This does not approve any production action or relax the standing two-way
+compatibility rule. Obtain the owner's approval before **each** production step,
+including deployments, flag changes, probes and any deletion.
 
 ## What changes after deployment
 
@@ -55,18 +56,30 @@ approval.
   they arrive. Partial failure remains for a subsequent run. The retention
   marker is removed if the login account itself is deleted.
 - `data_deletion_safety_config.enforce_legacy_fence` and `sweep_enabled` both
-  default to **false**. The fence rejects stale untagged uploads for accounts
-  that have deleted data, and makes pre-receipt browser pages refresh before
-  deletion. Teacher pilot-access changes pin the target learner's generation
-  before the roster is loaded, so a stale teacher request cannot recreate a
-  deleted assignment. Existing Stripe billing updates and the scheduled
-  retention cleanup remain available during a pending deletion. A service-role
-  grouped issue alert may update only the email bookkeeping fields on an
-  existing report; its page-wide update cannot block another owner or recreate
-  a deleted report. The fence is a
-  contract step only after all old app instances and browser clients are
-  retired; an old teacher page for a deleted learner must refresh. Enabling the
-  sweep starts real Storage deletion.
+  default to **false**. After activation, the fence rejects legacy upload
+  shapes for **all** accounts, not only accounts with completed deletions.
+  Saved uploads must come through the current server's ordinary non-overwriting
+  Storage POST, with a current workflow marker; direct authenticated, signed,
+  resumable and S3 upload paths are not supported. Weekly uploads also require
+  a fresh active reservation and generation metadata. A stale browser must
+  explicitly refresh even if another tab has refreshed the shared cookie; an
+  upload started before activation is marked legacy and is rejected if its
+  Storage metadata would commit after activation. The current server rejects
+  stale browser audio requests to its transient speaking/transcription routes.
+  An older server still reachable at another URL has no such transient-audio
+  gate; an audio request already in flight may also finish after activation.
+  Drain and retire those servers and requests before claiming old uploads are
+  blocked. The provider must expose trusted Storage method/path to the trigger;
+  missing or different context fails closed. Existing legacy reports for
+  non-deleted accounts remain editable by staff.
+- The fence also makes pre-receipt browser pages refresh before deletion.
+  Teacher pilot-access changes pin the target learner's generation before the
+  roster is loaded, so a stale teacher request cannot recreate a deleted
+  assignment. Existing Stripe billing updates and scheduled retention cleanup
+  remain available during a pending deletion. A service-role grouped issue
+  alert may update only email bookkeeping fields on an existing report. The
+  fence is a contract step only after old app instances and browser clients are
+  retired. Enabling the sweep starts real Storage deletion.
 
 ## Accepted mixed-version limitations
 
@@ -75,7 +88,7 @@ approval.
 | Old app / new schema, flags off | Existing finite-lock deletion still works; successful completion records a marker and clears that learner's newly scoped cache. The old app still removes referenced paths only and does not create a durable job before Storage removal. The later sweep can find untagged late/orphan files. |
 | New app / old 0080 schema | The new route uses the existing lock row for the pending job and supports retry, uploads use legacy paths/metadata, and deletion clears the entire ownerless cache. New app instances skip that legacy cache. Old app instances can still repopulate it. The old schema cannot fence non-weekly uploads or record a completion marker for the sweep; its existing upload race remains. |
 | New app / new schema, flags off | The new job, generation checks and retry receipt work. Untagged legacy uploads can still arrive after completion until the fence is activated. |
-| New app / new schema, flags on | New-generation files are fenced and the daily safety net runs. An obsolete one-step browser page must refresh. This contract state is **not** compatible with restarting an old app for a learner who has deleted data; rollback needs the procedure below. |
+| New app / new schema, flags on | Current explicitly marked workflows save fresh keys and the daily safety net runs. Old upload protocols and obsolete browser pages are rejected for **all** accounts; this is intentionally incompatible with restarting an old app. Rollback needs the procedure below. |
 
 No scheme can tell an untagged legacy upload begun before deletion from an
 untagged legitimate upload begun after it. Consequently, after a learner has
@@ -87,18 +100,33 @@ may also have been saved after deletion in the overlap; the file sweep does not
 claim to remove or distinguish such rows. This is why the exception ends before
 pilot, not why it is safe to leave legacy instances running.
 
-Storage removal is by key, not a conditional object-version deletion. The
-supported app writers use fresh random, non-overwriting issue and recording
-keys, and the expanded schema requires a fresh reservation for tagged recordings
-following deletion. The existing `speaking-recordings` owner policy also allows
-legacy/direct clients to write arbitrary untagged keys while the fence is off.
-If such a client reuses an old key for genuinely new bytes, an already-snapshotted
-worker or sweep can remove those bytes, even before the sweep is enabled. The
-owner accepted a temporary overlap, but has not separately accepted this specific
-new-work loss risk. Review it explicitly before approving production rollout;
-retire all such writers before enabling the fence and sweep. Do not introduce a
-new key-reusing writer without a reviewed version-aware removal scheme. The old
-0080 schema cannot enforce this protection.
+On 0081 the new app obtains a **new database-issued UUIDv8** for every weekly
+capture and every report, including retries. A non-cycling global sequence and
+namespace persist across learner deletion, so normal allocations cannot reuse an
+ID after its object or learner rows are removed; issue audio and screenshots use
+different suffixes. `upsert: false` and duplicate-safe cleanup also protect an
+existing object. The counter carries no per-learner recording history. Protect
+its state: never reset the sequence or its namespace, and before a database
+restore/recovery with independently retained Storage, preserve/reseed the
+high-water mark or use a newly reviewed namespace before accepting uploads.
+Privileged manual writes, restore/reset errors and arbitrary old-client keys
+are outside this allocation guarantee.
+
+For the required **new app / 0080 schema** compatibility case, 0080 has no
+persistent allocator: the fallback is a fresh UUIDv4 on every request with no
+overwrite. UUIDv4 collision is extraordinarily unlikely but not a mathematical
+lifetime non-reuse proof after old rows are deleted. The production plan is
+schema-first, so the new app should not normally serve on 0080; do not claim an
+absolute guarantee for that fallback.
+
+Storage removal is by key, not a conditional object-version deletion. With the
+fence off, a legacy/direct client can reuse an untagged key after a worker
+snapshots it, and a delayed deletion or sweep can remove genuinely new bytes.
+The owner explicitly accepts this loss risk **only during overlap**, conditional
+on the new keys, fence and sweep before pilot, and confirmation old clients
+cannot upload. Retire such writers before the contract step; never introduce a
+new key-reusing writer without a reviewed version-aware removal scheme. The
+old 0080 schema cannot enforce this protection.
 
 The sweep cannot retroactively identify a deletion that completed entirely on
 0080 before its completion marker existed. Plan a schema-first rollout of 0081
@@ -108,9 +136,9 @@ risk; do not claim the sweep covers it. Do not backfill all accounts as deleted.
 
 ## Reviewed rollout / activation checklist
 
-1. Obtain approval for this exact rollout and separately for the first sweep's
-   potential Storage deletions. Check newest migration numbers on main, live
-   numeric history and open PRs. Recheck bucket privacy/versioning and the two
+1. Obtain approval for this **read-only preflight**; approval of one step does
+   not approve the next. Check newest migration numbers on main, live numeric
+   history and open PRs. Recheck bucket privacy/versioning and the two
    existing schema/deletion coverage verifiers. Count the shared cache entries
    that this migration will discard (23 on the read-only check during development;
    recheck at rollout). Capture and compare the **live** definitions of
@@ -134,23 +162,32 @@ risk; do not claim the sweep covers it. Do not backfill all accounts as deleted.
    deployment platform's instance/request drain evidence; a live `/api/version`
    alone does **not** prove every old in-flight request or browser page has retired.
 4. Inspect **count-only** candidate totals and ensure no known legitimate new
-   legacy work is among them. With separate approval and evidence all old
-   consumers have retired, set `enforce_legacy_fence = true` and
-   `sweep_enabled = true` as a reviewed operational change. Record when this
-   really happened. The daily cron then removes candidates and logs counts.
-   Do not claim activation until live read-only verification confirms both
-   flags and the deployed version; the first cron run is a real deletion.
-5. Verify logs/counts and both coverage functions without creating synthetic
-   production users or deleting learner data. The owner may separately approve
-   a live deletion test. Local replay, mocked provider tests, and isolated
-   Supabase tests do not prove provider retention or physical byte reclamation.
+   legacy work is among them. After approval, enable only
+   `enforce_legacy_fence`; record the change and verify it read-only. Before
+   asserting old uploads are blocked, establish that the deployed Storage
+   version supplies the same trusted method/path/metadata as the isolated test,
+   old deployments and in-flight requests are drained, and stale browser,
+   old-server, direct, move/copy and pre-existing signed-upload shapes are
+   rejected on the actual production path. A live write/probe needs its own
+   approval and safe cleanup plan. The explicit browser generation is a
+   **workflow freshness marker, not cryptographic attestation of client
+   version**: a modified old client can imitate the current protocol. The fence
+   does not block a stolen service-role credential or a privileged SQL writer.
+5. Separately approve and enable `sweep_enabled` only after reviewing candidates
+   and the first run's potential real Storage deletions. Verify both live flags,
+   cron authentication/schedule, run counts, and both coverage functions.
+   Keep the pilot closed unless both flags are on and the preceding evidence
+   supports the exact old-client-blocking claim. Synthetic production users or
+   a live deletion test require separate approval. Local replay, mocked tests,
+   and isolated Supabase do not prove provider retention or physical reclamation.
 
 ## Rollback constraints
 
 This is an additive forward fix, not a tested destructive reverse migration.
 Before returning to old code, stop and review: the active fence deliberately
-blocks old untagged uploads for accounts that deleted, old clients cannot resume
-new durable jobs, and turning off the fence restores the accepted legacy race.
+blocks old upload shapes for every account, old clients cannot resume new
+durable jobs, and turning off the fence restores the legacy race accepted only
+for overlap. Pause the pilot and obtain fresh approval before restoring overlap.
 Drain/complete pending jobs with the new worker and separately approve any
 change to flags or deployment. A schema rollback without a data-preserving plan
 could lose the security markers or orphan files; do not drop them casually.

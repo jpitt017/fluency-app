@@ -187,16 +187,16 @@ await supabase.from('lesson_progress').upsert({
 | `build_weekly_report(p_week_start?)` | Snapshot hours, words, recordings, weakest skill |
 | `import_course / import_modules / import_assessments` | Server-only content importer |
 
-Storage upload (audio):
-
-```ts
-const path = `${user.id}/${crypto.randomUUID()}.webm`
-await supabase.storage.from('speaking-recordings').upload(path, blob)
-await supabase.from('speaking_attempts').insert({
-  user_id: user.id, task_id, lesson_id, audio_path: path,
-  mime_type: 'audio/webm', duration_seconds: 92, status: 'submitted',
-})
-```
+Storage upload (audio): the supported weekly speaking workflow sends the audio
+from the browser to `/api/week/speaking/capture`. The server reserves a fresh
+take key and uploads without overwriting; issue-report audio is likewise saved
+through `/api/issues` under a fresh report key. With 0081, IDs come from a
+non-cycling database allocator; on 0080 the compatibility fallback is UUIDv4. Do not add browser-to-Storage
+recording uploads or reuse keys. After the 0081 contract fence is enabled, direct,
+signed, resumable and S3 writes to the learner audio/attachment buckets are no
+longer supported. Older `speaking_attempts.audio_path` entries remain available
+for playback; the speaking lab's transcription/evaluation routes do not save an
+additional Storage object.
 
 ---
 

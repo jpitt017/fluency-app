@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { transcribeAudio } from '@/lib/b1b2/transcription';
 import { createServerSupabase } from '@/utils/supabase/server';
+import { createAdminSupabase } from '@/utils/supabase/admin';
+import { requireUploadEpochForFencedRequest } from '@/lib/b1b2/deletion-generation.mjs';
 import { enforceAiUsage } from '@/lib/b1b2/ai-guard';
 import { logAiRequest } from '@/lib/b1b2/observability';
 import { providerFailureResponse } from '@/lib/b1b2/provider-failure-response';
@@ -20,6 +22,11 @@ export async function POST(req: NextRequest) {
   let isSignedIn = false;
 
   try {
+    try { await requireUploadEpochForFencedRequest(createAdminSupabase(), req.headers); }
+    catch {
+      statusCode = 409;
+      return NextResponse.json({ error: 'Please refresh the page before recording again.' }, { status: 409 });
+    }
     const guard = await enforceAiUsage(supabase, QUOTA_ENDPOINT, 2);
     isSignedIn = Boolean(guard.userId);
     if (!guard.allowed && guard.response) {

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import {
-  DELETION_EPOCH_COOKIE, DELETION_EPOCH_HEADER, DELETION_OWNER_HEADER,
+  DELETION_EPOCH_COOKIE, DELETION_EPOCH_HEADER, DELETION_OWNER_HEADER, DELETION_UPLOAD_EXPLICIT_HEADER,
   formatDeletionEpoch, parseDeletionEpoch,
 } from '@/lib/b1b2/deletion-epoch.mjs';
 
@@ -22,6 +22,7 @@ export async function proxy(request: NextRequest) {
   const forwarded = new Headers(request.headers);
   forwarded.delete(DELETION_EPOCH_HEADER);
   forwarded.delete(DELETION_OWNER_HEADER);
+  forwarded.delete(DELETION_UPLOAD_EXPLICIT_HEADER);
   let response = NextResponse.next({ request: { headers: forwarded } });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -94,6 +95,9 @@ export async function proxy(request: NextRequest) {
       const oldEpoch = parseDeletionEpoch(request.cookies.get(DELETION_EPOCH_COOKIE)?.value);
       const explicit = requestedEpoch === null ? null : parseDeletionEpoch(`${user.id}.${requestedEpoch}`);
       forwarded.set(DELETION_OWNER_HEADER, user.id);
+      // Old browser tabs do not send the workflow header. Do not mistake a
+      // cookie refreshed by another tab for proof that this tab is current.
+      forwarded.set(DELETION_UPLOAD_EXPLICIT_HEADER, explicit ? '1' : '0');
       forwarded.set(DELETION_EPOCH_HEADER, requestedEpoch !== null
         ? explicit?.generation ?? 'missing'
         : oldEpoch?.owner === user.id.toLowerCase() ? oldEpoch.generation : 'missing');

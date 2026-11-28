@@ -6,13 +6,24 @@ declare
   u uuid := gen_random_uuid(); other_user uuid := gen_random_uuid(); legacy_user uuid := gen_random_uuid(); staff_user uuid := gen_random_uuid();
   job uuid := gen_random_uuid(); old_job uuid := gen_random_uuid();
   first_claim jsonb; retry_claim jsonb; result jsonb; page1 jsonb; page2 jsonb; page3 jsonb; denied boolean; alert_finished boolean;
-  original_generation uuid; current_generation uuid; file_a text; file_b text; issue_file text;
-  late_issue text; later_issue text; late_speaking text; new_issue text; new_orphan text; legacy_orphan text; take_path text; take_path2 text;
-  take_id uuid := gen_random_uuid(); take_id2 uuid := gen_random_uuid(); orphan_take_id uuid := gen_random_uuid();
+  original_generation uuid; current_generation uuid; other_generation uuid; file_a text; file_b text; issue_file text;
+  late_issue text; later_issue text; late_speaking text; new_issue text; new_orphan text; legacy_orphan text; take_path text; take_path2 text; other_take_path text;
+  take_id uuid := gen_random_uuid(); take_id2 uuid := gen_random_uuid(); orphan_take_id uuid := gen_random_uuid(); other_take_id uuid := gen_random_uuid();
   alert_u uuid := gen_random_uuid(); alert_other uuid := gen_random_uuid(); alert_token uuid := gen_random_uuid();
   alert_hash text := repeat('a', 64);
   course_id uuid; module_id uuid; task_id uuid; expired_attempt uuid; retention_result jsonb;
+  allocated_before uuid; allocated_rolled_back uuid; allocated_after uuid;
 begin
+  allocated_before := public.allocate_recording_key();
+  begin
+    allocated_rolled_back := public.allocate_recording_key();
+    raise exception 'synthetic failed allocation transaction';
+  exception when raise_exception then null; end;
+  allocated_after := public.allocate_recording_key();
+  if allocated_before = allocated_rolled_back or allocated_after in (allocated_before, allocated_rolled_back)
+     or substring(allocated_before::text, 15, 1) <> '8' then
+    raise exception 'recording allocator reused an ID or did not use its UUIDv8 namespace';
+  end if;
   insert into auth.users(id, email, raw_user_meta_data, raw_app_meta_data, aud, role) values
     (u, 'retryable-deletion-owner@example.test', '{}', '{}', 'authenticated', 'authenticated'),
     (other_user, 'retryable-deletion-other@example.test', '{}', '{}', 'authenticated', 'authenticated'),
@@ -267,6 +278,9 @@ begin
   end if;
   select data_deletion_generation into current_generation from public.profiles where id=u and data_deletion_completed_at is not null;
   if current_generation is null or current_generation=original_generation then raise exception 'completion did not rotate the upload generation'; end if;
+  if public.allocate_recording_key() in (allocated_before, allocated_rolled_back, allocated_after) then
+    raise exception 'recording allocator reused an ID after deletion';
+  end if;
   if not exists (select 1 from public.week_input_submissions where user_id=other_user)
      or not exists (select 1 from storage.objects where bucket_id='issue-attachments' and name=other_user::text || '/other.png')
      or not exists (select 1 from public.issue_reports where id=alert_other and message='other owner' and email_sent_at is not null)
@@ -405,28 +419,129 @@ begin
   if public.get_owned_ai_eval_cache('fresh')->>'feedback' <> 'new work' then
     raise exception 'fresh learner cache write was rejected after deletion';
   end if;
+  -- Storage's caller-policy probe uses the requester JWT; actual new-app
+  -- uploads use service_role. Test both a completed deletion and an account
+  -- with no deletion marker, including an old server's active reservation.
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  perform set_config('request.method', 'POST', true);
+  perform set_config('request.path', '/object/issue-attachments/synthetic', true);
+  select data_deletion_generation into other_generation from public.profiles
+    where id=other_user and data_deletion_completed_at is null;
+  if other_generation is null then raise exception 'other account unexpectedly has a deletion marker'; end if;
   denied := false;
   begin insert into storage.objects(bucket_id,name) values ('issue-attachments',u::text||'/very-late.png');
   exception when raise_exception then denied := true; end;
-  if not denied then raise exception 'activated fence accepted a legacy issue upload'; end if;
+  if not denied then raise exception 'activated fence accepted a legacy issue upload after deletion'; end if;
   denied := false;
-  begin insert into storage.objects(bucket_id,name) values ('speaking-recordings',u::text||'/very-late.webm');
+  begin insert into storage.objects(bucket_id,name) values ('issue-attachments',other_user::text||'/other-after-fence.png');
   exception when raise_exception then denied := true; end;
-  if not denied then raise exception 'activated fence accepted a legacy speaking upload'; end if;
+  if not denied then raise exception 'activated fence accepted a legacy issue upload without a deletion'; end if;
+  perform set_config('request.path', '/object/speaking-recordings/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name) values ('speaking-recordings',other_user::text||'/legacy.webm');
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted an arbitrary legacy recording without a deletion'; end if;
+  perform set_config('request.path', '/object/issue-attachments/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name) values ('issue-attachments','missing-owner/legacy.png');
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted an invalid owner prefix'; end if;
   denied := false;
   begin insert into public.issue_reports(user_id,type,message,page_url) values(u,'feedback','legacy request','/week/1');
   exception when raise_exception then denied := true; end;
-  if not denied then raise exception 'activated fence accepted a legacy issue report'; end if;
-  insert into storage.objects(bucket_id,name) values ('issue-attachments',u::text||'/deletion-v1/'||current_generation::text||'/new-audio');
+  if not denied then raise exception 'activated fence accepted a legacy issue report after deletion'; end if;
+  denied := false;
+  begin insert into public.issue_reports(user_id,type,message,page_url) values(other_user,'feedback','legacy request','/week/1');
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted a legacy issue report without a deletion'; end if;
+  -- Existing reports without a marker remain maintainable by staff.
+  update public.issue_reports set status='Investigating' where id=alert_other;
+  if not exists (select 1 from public.issue_reports where id=alert_other and status='Investigating') then
+    raise exception 'activated fence blocked maintenance of an existing legacy report';
+  end if;
+
   take_path2 := public.reserve_week_speaking_take(u,2::smallint,take_id2,'first','webm','[]','[]',null)->>'path';
+  other_take_path := public.reserve_week_speaking_take(other_user,1::smallint,other_take_id,'first','webm','[]','[]',null)->>'path';
+  perform set_config('request.path', '/object/speaking-recordings/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name) values ('speaking-recordings',take_path2);
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted old weekly upload after deletion'; end if;
+  denied := false;
+  begin insert into storage.objects(bucket_id,name) values ('speaking-recordings',other_take_path);
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted old weekly upload without a deletion'; end if;
+  -- A direct browser cannot forge the current generation even with a live
+  -- reservation; only the server may write these buckets after cutover.
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"role":"authenticated"}', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name,user_metadata) values
+    ('speaking-recordings',other_take_path,jsonb_build_object('data_deletion_generation',other_generation,'data_deletion_client','v1'));
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted a direct generation-tagged recording'; end if;
+  perform set_config('request.path', '/object/issue-attachments/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name,user_metadata) values
+    ('issue-attachments',other_user::text||'/deletion-v1/'||other_generation::text||'/direct.png',jsonb_build_object('data_deletion_client','v1'));
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted a direct generation-tagged issue attachment'; end if;
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  -- A pre-signed URL may run as service_role, so valid metadata alone must not
+  -- let it bypass the cutover. Also fail closed if provider context is absent.
+  perform set_config('request.method', 'PUT', true);
+  perform set_config('request.path', '/object/upload/sign/speaking-recordings/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name,user_metadata) values
+    ('speaking-recordings',other_take_path,jsonb_build_object('data_deletion_generation',other_generation,'data_deletion_client','v1'));
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted a signed recording upload'; end if;
+  perform set_config('request.method', '', true);
+  perform set_config('request.path', '', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name) values
+    ('issue-attachments',other_user::text||'/deletion-v1/'||other_generation::text||'/no-context.png');
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted missing Storage request context'; end if;
+  perform set_config('request.method', 'POST', true);
+  perform set_config('request.path', '/object/issue-attachments/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name,user_metadata) values
+    ('issue-attachments',other_user::text||'/deletion-v1/'||other_generation::text||'/in-flight.png',jsonb_build_object('data_deletion_client','legacy'));
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted an in-flight old browser attachment'; end if;
   insert into storage.objects(bucket_id,name,user_metadata) values
-    ('speaking-recordings',take_path2,jsonb_build_object('data_deletion_generation',current_generation));
-  -- A user who never deleted data retains their legacy app behavior.
-  insert into storage.objects(bucket_id,name) values ('issue-attachments',other_user::text||'/other-after-fence.png');
+    ('issue-attachments',u::text||'/deletion-v1/'||current_generation::text||'/new-audio',jsonb_build_object('data_deletion_client','v1')),
+    ('issue-attachments',other_user::text||'/deletion-v1/'||other_generation::text||'/new-audio',jsonb_build_object('data_deletion_client','v1'));
+  perform set_config('request.path', '/object/speaking-recordings/synthetic', true);
+  denied := false;
+  begin insert into storage.objects(bucket_id,name,user_metadata) values
+    ('speaking-recordings',other_take_path,jsonb_build_object('data_deletion_generation',other_generation,'data_deletion_client','legacy'));
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence accepted an in-flight old browser recording'; end if;
+  insert into storage.objects(bucket_id,name,user_metadata) values
+    ('speaking-recordings',take_path2,jsonb_build_object('data_deletion_generation',current_generation,'data_deletion_client','v1')),
+    ('speaking-recordings',other_take_path,jsonb_build_object('data_deletion_generation',other_generation,'data_deletion_client','v1'));
+  denied := false;
+  begin update storage.objects set name='missing-owner/moved.png'
+    where bucket_id='issue-attachments' and name=other_user::text||'/deletion-v1/'||other_generation::text||'/new-audio';
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence let a protected object move outside its owner'; end if;
+  denied := false;
+  begin update storage.objects set bucket_id='course-audio'
+    where bucket_id='issue-attachments' and name=other_user::text||'/deletion-v1/'||other_generation::text||'/new-audio';
+  exception when raise_exception then denied := true; end;
+  if not denied then raise exception 'activated fence let a protected object move outside its bucket'; end if;
 
   if has_function_privilege('authenticated','public.promote_retryable_data_deletion(uuid,uuid)','execute')
      or has_function_privilege('authenticated','public.finish_retryable_data_deletion(uuid,uuid,timestamptz,uuid)','execute')
      or has_function_privilege('authenticated','public.list_late_deletion_files(text,text,integer,uuid)','execute')
+     or has_function_privilege('authenticated','public.allocate_recording_key()','execute')
+     or not has_function_privilege('service_role','public.allocate_recording_key()','execute')
+     or has_sequence_privilege('service_role','public.recording_key_sequence','usage')
+     or has_column_privilege('service_role','public.data_deletion_safety_config','recording_key_namespace','update')
      or has_table_privilege('authenticated','public.data_deletion_safety_config','select')
      or has_column_privilege('authenticated','public.profiles','data_deletion_generation','update') then
     raise exception 'learner can bypass the server or alter security markers';

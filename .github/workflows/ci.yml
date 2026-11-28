@@ -52,7 +52,7 @@ jobs:
       - run: node --test tests/unit/week-speaking-recordings.test.mjs
       # Short speaking feedback, fixed sound rules, saved-check quotas and
       # privacy-safe deletion. Provider and Storage calls are faked here.
-      - run: node --test tests/unit/speaking-feedback.test.mjs tests/unit/speaking-recorder.test.mjs tests/unit/week-speaking-server.test.mjs tests/unit/week-speaking-delete.test.mjs tests/unit/week-speaking-projection.test.mjs tests/unit/week-speaking-rollout.test.mjs tests/unit/database-load-boundaries.test.mjs tests/unit/delete-user-storage.test.mjs tests/unit/deletion-safety-sweep.test.mjs tests/unit/issue-deletion-generation.test.mjs tests/unit/deletion-epoch.test.mjs tests/unit/eval-cache-deletion.test.mjs tests/unit/teacher-deletion-generation.test.mjs
+      - run: node --test tests/unit/speaking-feedback.test.mjs tests/unit/speaking-recorder.test.mjs tests/unit/week-speaking-server.test.mjs tests/unit/week-speaking-delete.test.mjs tests/unit/week-speaking-projection.test.mjs tests/unit/week-speaking-rollout.test.mjs tests/unit/database-load-boundaries.test.mjs tests/unit/delete-user-storage.test.mjs tests/unit/deletion-safety-sweep.test.mjs tests/unit/issue-deletion-generation.test.mjs tests/unit/recording-key.test.mjs tests/unit/deletion-epoch.test.mjs tests/unit/eval-cache-deletion.test.mjs tests/unit/teacher-deletion-generation.test.mjs
       # The actual speaking/writing route and recording helper: weekly work
       # counts only when saved, while feedback survives a progress-save error.
       - run: node --test tests/unit/week-output-counting.test.mjs
@@ -359,6 +359,25 @@ jobs:
           E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
           E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           GROQ_API_KEY: ''
+
+      # This isolated contract temporarily enables the fence, tests the real
+      # browser/server and Storage against both deletion states, then resets it.
+      # It runs alone under the same project lock, never alongside other tests.
+      - name: Verify post-overlap upload fence on isolated E2E project
+        env:
+          E2E_OLD_APP_DIR: ${{ steps.apply_e2e_migrations.outputs.staged_0081 == 'true' && format('{0}/fluency-pre-0081', runner.temp) || '' }}
+          E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_PROJECT_REF: frkciyjvjlnqpaifkwtz
+          E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ vars.E2E_SUPABASE_ANON_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_TAG_TEST_USERS: 'true'
+          E2E_RUN_ID: ${{ github.run_id }}
+          E2E_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GROQ_API_KEY: ''
+        run: npx playwright test -c playwright-deletion-fence.config.mjs --reporter=line,github
 
       # Keep schema rebuild, browser tests and RLS/Storage tests in the same
       # e2e-isolated job lock. A second job would release the lock between the
