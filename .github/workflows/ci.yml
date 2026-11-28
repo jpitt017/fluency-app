@@ -29,7 +29,7 @@ jobs:
       - name: Check rolling migration compatibility evidence
         if: github.event_name == 'pull_request'
         run: node scripts/check-migration-compatibility.mjs "${{ github.event.pull_request.base.sha }}"
-      - run: node --test tests/unit/migration-compatibility-contract.test.mjs tests/unit/deletion-cors.test.mjs
+      - run: node --test tests/unit/migration-compatibility-contract.test.mjs tests/unit/deletion-cors.test.mjs tests/unit/retryable-deletion-rollout.test.mjs
       - run: npm run validate:syllabus
       - run: npm run validate:details
       - run: npm run lint

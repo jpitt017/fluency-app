@@ -10,6 +10,7 @@ import pg from 'pg';
 import ts from 'typescript';
 import * as deletion from '../../lib/b1b2/retryable-data-deletion.mjs';
 import { freshRecordingKeyId } from '../../lib/b1b2/recording-key.mjs';
+import { prepareRollout, REPLACED_FUNCTIONS } from '../../scripts/prepare-retryable-deletion-0081-rollout.mjs';
 
 const rawUrl = process.env.TEST_DATABASE_URL;
 if (!rawUrl) throw new Error('A disposable TEST_DATABASE_URL is required');
@@ -240,6 +241,54 @@ try {
   await client.query('reset role');
   await client.query('rollback to savepoint service_identity');
   assert.equal(new Set([keyBeforeDeletion, rolledBackKey, afterRollback, serviceKey]).size, 4);
+
+  // Exercise the print-only production transport on this disposable 0080 DB.
+  // Its one DO must reject drift/missing grants and keep the migration and
+  // numeric history together, including if the last SQL statement fails.
+  await client.query('create schema if not exists supabase_migrations');
+  await client.query('create table if not exists supabase_migrations.schema_migrations(version text primary key, name text, statements text[])');
+  await client.query('grant select,insert,delete on public.ai_request_logs to service_role');
+  const captured = { functions: {} };
+  for (const signature of REPLACED_FUNCTIONS) {
+    const definition = (await client.query('select pg_get_functiondef($1::regprocedure) as definition', [signature])).rows[0].definition;
+    captured.functions[signature] = { definition, definition_md5: crypto.createHash('md5').update(definition).digest('hex') };
+  }
+  await client.query("insert into public.ai_evaluation_cache(cache_key,endpoint,model,response) values('atomic-0081-fixture','writing','test','{}'::jsonb)");
+  await client.query('savepoint atomic_rollout');
+  for (const signature of REPLACED_FUNCTIONS) {
+    const drifted = structuredClone(captured);
+    const definition = `${drifted.functions[signature].definition}-- changed`;
+    drifted.functions[signature] = { definition, definition_md5: crypto.createHash('md5').update(definition).digest('hex') };
+    await assert.rejects(() => client.query(prepareRollout(migration, drifted)), /Captured function changed/);
+    await client.query('rollback to savepoint atomic_rollout');
+  }
+  await client.query('revoke select,insert,delete on public.ai_request_logs from public,anon,authenticated,service_role');
+  await assert.rejects(() => client.query(prepareRollout(migration, captured)), /compatibility grants are missing/);
+  await client.query('rollback to savepoint atomic_rollout');
+  const failingMigration = `${migration}\ndo $late_test$ begin
+    if to_regclass('public.data_deletion_safety_config') is null
+      or exists (select 1 from public.ai_evaluation_cache where cache_key='atomic-0081-fixture') then
+      raise exception 'Synthetic rollout did not reach its final statement';
+    end if;
+    raise exception 'Synthetic late transport failure';
+  end $late_test$;`;
+  await assert.rejects(() => client.query(prepareRollout(failingMigration, captured)), /Synthetic late transport failure/);
+  await client.query('rollback to savepoint atomic_rollout');
+  assert.equal((await client.query("select to_regclass('public.data_deletion_safety_config') as value")).rows[0].value, null);
+  assert.equal((await client.query("select count(*)::int as n from public.ai_evaluation_cache where cache_key='atomic-0081-fixture'")).rows[0].n, 1);
+  assert.equal((await client.query("select count(*)::int as n from supabase_migrations.schema_migrations where version='0081'")).rows[0].n, 0);
+  const atomic = prepareRollout(migration, captured);
+  await client.query(atomic);
+  const history = (await client.query("select name,statements from supabase_migrations.schema_migrations where version='0081'")).rows[0];
+  assert.equal(history.name, 'retryable_learning_data_deletion');
+  assert.deepEqual(history.statements, [migration]);
+  assert.equal((await client.query("select count(*)::int as n from public.ai_evaluation_cache where cache_key='atomic-0081-fixture'")).rows[0].n, 0);
+  assert.deepEqual((await client.query('select enforce_legacy_fence,sweep_enabled from public.data_deletion_safety_config')).rows[0],
+    { enforce_legacy_fence: false, sweep_enabled: false });
+  await client.query('savepoint duplicate_rollout');
+  await assert.rejects(() => client.query(atomic), /Migration 0081 or its objects already exist/);
+  await client.query('rollback to savepoint atomic_rollout');
+  await client.query("delete from public.ai_evaluation_cache where cache_key='atomic-0081-fixture'");
   for (const user of [ownerOldSchema, ownerNewSchema, ownerNewApp, other]) await seedUser(user);
   const oldSchemaPath = await seedObject(ownerOldSchema, 'issue-attachments', 'old-schema.png');
   const oldSchemaOther = await seedObject(other, 'issue-attachments', 'other.png');

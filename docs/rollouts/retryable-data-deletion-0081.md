@@ -119,12 +119,13 @@ allocated IDs do not recur after rollback, deletion or retry, and neither
 counter keeps per-learner recording history. The migration aborts if the old
 identity is not a positive, non-cycling bigint `GENERATED ALWAYS` identity;
 preflight must also verify the service-role table grants and live recovery
-state. Never reset either sequence or the 0081 namespace. Before restoring a
-database while independently retaining Storage, preserve/reseed both sequence
-high-water marks or use a newly reviewed non-overlapping namespace before
-accepting uploads. Never point independently advancing database clones at the
-same Storage. Privileged arbitrary writes, key reuse by old clients, resets and
-recovery errors remain outside the new-app allocation guarantee.
+state. Never reset either sequence or the 0081 namespace. Pause uploads after
+any restore or failover that might lose acknowledged sequence advances while
+Storage is independently retained. Preserve/reseed both high-water marks, or
+use a newly reviewed non-overlapping namespace, before accepting uploads.
+Never point independently advancing database clones at the same Storage.
+Privileged arbitrary writes, key reuse by old clients, resets and recovery
+errors remain outside the new-app allocation guarantee.
 
 Storage removal is by key, not a conditional object-version deletion. With the
 fence off, a legacy/direct client can reuse an untagged key after a worker
@@ -161,10 +162,33 @@ risk; do not claim the sweep covers it. Do not backfill all accounts as deleted.
    the entire body, including indirect or dynamic cache access that the textual
    guard cannot identify. A remaining textual table-name reference aborts.
    Never include cache contents, account emails or learner audio in evidence.
-2. After CI/review and approval, expand the schema with the exact reviewed 0081
-   migration and the numeric `0081` history record **atomically** according to
-   `docs/CONTENT_PIPELINE.md`. Leave both flags false. The old app can still
-   work; successful old-app deletions now record completion markers.
+2. Prepare and review the **print-only** atomic transport locally, using the
+   newly captured function definitions and their database `md5` digests. Store
+   the snapshot in a private, ignored `0700` directory; never commit it. Its
+   JSON shape is `{ "functions": { "<exact signature>": { "definition":
+   "<pg_get_functiondef output>", "definition_md5": "<lowercase md5>" } } }`,
+   with all four signatures above. For example, after capturing the snapshot:
+
+   ```sh
+   umask 077
+   mkdir -p .arena-work/rollout-0081-recovery
+   chmod 700 .arena-work/rollout-0081-recovery
+   node scripts/prepare-retryable-deletion-0081-rollout.mjs .arena-work/rollout-0081-recovery/functions.json \
+     > .arena-work/rollout-0081-recovery/rollout.sql
+   ```
+
+   Review the prepared SQL and its checksum against the approved commit. This
+   step connects nowhere. Its single `DO` statement checks function drift,
+   preexisting 0081 objects/history and the old-schema allocator grants,
+   applies the exact file, and records numeric history together. CI exercises
+   its late-failure rollback on disposable SQL.
+   **Never** execute it as a production probe, even inside `BEGIN`/`ROLLBACK`.
+   After CI/review and separate approval, execute that reviewed statement once
+   according to `docs/CONTENT_PIPELINE.md`. If the response is ambiguous, do not
+   retry: separately approve a read-only check of the history, object state and
+   whether the transaction is still running first. Leave both flags false. The
+   old app can still work; successful old-app deletions now record completion
+   markers.
 3. Before deploying the new app, confirm the hosted production gateway accepts
    the `x-fluency-data-generation` browser preflight for database writes. CI
    checks this read-only against the isolated E2E gateway; it does not prove the
