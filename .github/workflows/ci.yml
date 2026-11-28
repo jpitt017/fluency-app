@@ -262,7 +262,11 @@ jobs:
         run: |
           mkdir -p "$(dirname "$E2E_NETWORK_AUDIT_FILE")"
           : > "$E2E_NETWORK_AUDIT_FILE"
-          npm run test:e2e -- --reporter=line,github
+          # Run the deletion and recording integration cases first so failures
+          # reach annotations early. The second invocation excludes exactly
+          # those files and still runs every other browser test under this lock.
+          npm run test:e2e -- 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs' --reporter=line,github
+          npm run test:e2e -- --grep-invert 'week-speaking-feedback\.spec\.mjs|retryable-data-deletion\.spec\.mjs' --reporter=line,github
         env:
           E2E_NETWORK_AUDIT_FILE: ${{ runner.temp }}/e2e-live-host-requests.jsonl
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
@@ -492,9 +496,20 @@ jobs:
         run: supabase stop --no-backup
 
   # Preserve the required check name. Its tests run inside playwright-e2e's
-  # uninterrupted lock above; this job can succeed only if all of them passed.
+  # uninterrupted lock above. Run even if the prerequisite failed, was
+  # skipped, or was cancelled: GitHub can treat a skipped required check as
+  # successful, so only an explicit success may satisfy branch protection.
   rls-isolation:
+    if: always()
     needs: playwright-e2e
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'RLS and Storage checks passed in the isolated E2E job.'
+      - name: Require the isolated E2E and RLS/Storage job to succeed
+        env:
+          E2E_RESULT: ${{ needs.playwright-e2e.result }}
+        run: |
+          if [ "$E2E_RESULT" != success ]; then
+            echo "::error::Isolated E2E/RLS job concluded $E2E_RESULT, not success."
+            exit 1
+          fi
+          echo 'RLS and Storage checks passed in the isolated E2E job.'

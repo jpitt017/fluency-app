@@ -19,7 +19,13 @@ pinned, isolated E2E Supabase project; they never use the live service-role key.
 
 The schema rebuild and all tests using it share one `e2e-isolated` job lock.
 Splitting RLS into a later independently locked job would allow another run to
-rebuild the database between the browser and isolation phases. Before the reset,
+rebuild the database between the browser and isolation phases. The required
+`rls-isolation` gate runs even if its prerequisite fails, is skipped or is
+cancelled, and explicitly fails unless that job succeeded. This matters because
+GitHub can otherwise accept a skipped required check. An entirely cancelled
+workflow is still cancelled, not proof that any fixture passed. The critical
+deletion and weekly-recording browser cases run first; the remaining invocation
+excludes those files but runs the rest of the suite. Before the reset,
 the target guard requires the pinned project's exact direct host or Supabase
 session-pooler tenant and rejects connection-parameter overrides. An unfamiliar
 connection string fails closed and must be reviewed, not bypassed. The live

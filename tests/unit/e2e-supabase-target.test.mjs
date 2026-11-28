@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
   assertE2ESupabaseApiTarget,
@@ -201,8 +202,20 @@ test('RLS and real Storage tests run under the same lock as the rebuilt E2E sche
   }
   // Preserve the required check, but do not reacquire the shared schema in a
   // second job where a different run may have reset it in the meantime.
-  assert.match(rls, /needs: playwright-e2e/);
-  assert.doesNotMatch(rls, /node scripts\/test-|SUPABASE_|group: e2e-isolated/);
+  assert.match(rls, /^    if: always\(\)$/m);
+  assert.match(rls, /^    needs: playwright-e2e$/m);
+  assert.match(rls, /E2E_RESULT: \$\{\{ needs\.playwright-e2e\.result \}\}/);
+  assert.doesNotMatch(rls, /node scripts\/test-|SUPABASE_|group: e2e-isolated|continue-on-error/);
+
+  // Run the actual shell gate from the workflow, not an approximation of it.
+  // GitHub's always() schedules the job after a failed/skipped/cancelled
+  // prerequisite; the gate must explicitly fail for every non-success result.
+  const command = rls.match(/        run: \|\n((?: {10}[^\n]*\n?)+)/)?.[1]?.replace(/^ {10}/gm, '');
+  assert.ok(command, 'required-check gate has a shell command');
+  for (const result of ['success', 'failure', 'cancelled', 'skipped', '', 'unknown']) {
+    const gate = spawnSync('bash', ['-eo', 'pipefail', '-c', command], { env: { ...process.env, E2E_RESULT: result }, encoding: 'utf8' });
+    assert.equal(gate.status === 0, result === 'success', `required-check result ${JSON.stringify(result)}: ${gate.stdout} ${gate.stderr}`);
+  }
 });
 
 test('the live-schema script has no app-URL fallback', () => {
